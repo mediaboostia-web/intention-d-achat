@@ -101,6 +101,23 @@ Convention du kit : `id String @id @default(cuid())`, statuts en `String` (pas d
 - `SaleOrder { organizationId, respondentId, productId, campaignId String?, responseId String? @unique, buyerType, quantity Int, unitPrice Int, totalAmount Int, fulfillment String /* DELIVERY|PICKUP */, zoneId String?, status String @default("TO_CONFIRM") /* TO_CONFIRM|CONFIRMED|FULFILLED|CANCELLED */, paid Boolean @default(false), paidAt DateTime?, notes String?, confirmedAt DateTime?, fulfilledAt DateTime?, cancelledAt DateTime? }`, avec `@@index([organizationId, status])` et `@@index([respondentId])`.
 - **Lot 8** : on réutilise `Order` (existant) pour les paiements d'abonnement : `provider = 'saspay'`, `metadata = { organizationId, plan, months }`, statuts `PENDING | AWAITING_VERIFICATION | PAID | FAILED | EXPIRED`.
 
+### Identité et composants (lot 2)
+Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction « Cahier du marché ».
+- `frontend/src/lib/design/tokens.ts` :
+  - `colors` (19 tokens) et `type ColorToken` ;
+  - `type VerdictTone = 'success' | 'warning' | 'danger' | 'neutral' | 'primary'` et `verdictToneColor` ;
+  - `contrastPairs`, `relativeLuminance(hex)` et `contrastRatio(hexA, hexB)`.
+  - `globals.css` en est le miroir (`@theme`), et `tokens-sync.test.ts` vérifie l'égalité.
+- `frontend/src/lib/design/logo-paths.ts` : `MARK_PATH`, `CORDS_PATH`, `WORDMARK_PATH`, `WORDMARK_VIEWBOX` et `WORDMARK_ASPECT`.
+- `frontend/src/lib/tamani/verdict-display.ts` :
+  - `type VerdictCode = 'WAIT' | 'GO' | 'CAUTION' | 'STOP' | 'NEUTRAL'` et `VERDICT_TONE` ;
+  - `approxQuantity(n)`, `pluralizeUnit(unitLabel, n)`, `verdictDisplay({ code, realistic, completedResponses, reference, unitLabel?, minResponses? })` et `verdictBasis({ low, high, completedResponses, interestedCount, unitLabel? })`.
+- Composants (`frontend/src/components/ui/`, exportés par `index.ts`, composants serveur sans état) :
+  - `Button`, `ChoiceButton`, `Input`, `PhoneInput`, `Card`, `Badge` ;
+  - `BottomSheet` (avec l'auvent), `StatTile`, `VerdictCard`, `MoneyCard`, `FilterBar`, `DataList`, `EmptyState` ;
+  - `Logo`, `InkFilters` (dans le layout racine) et `CalcTable`.
+- Utilitaires CSS : `bg-paper`, `frame` (contour encre de 2,5 px), `highlight`, `stamp`, `pen`, `shadow-press`, `shadow-sheet`, `animate-sheet-up` et `rounded-case|control|card|sheet`. Polices : `font-sans` (Andika), `font-hand` (Kalam) et `font-sign` (Bowlby One).
+
 ### Modules partagés et purs : `frontend/src/lib/tamani/` (lot 3, sauf mention contraire)
 
 **`plans.ts`**
@@ -171,7 +188,7 @@ Convention du kit : `id String @id @default(cuid())`, statuts en `String` (pas d
 **Lot 6**
 - `coefficients.ts` : `coefficientsFor(org: { coefConsumer; coefReseller }, learned?: LearnedCoefficients | null): { consumer; reseller; source: { consumer: 'DEFAULT' | 'SHOP' | 'LEARNED'; reseller: … } }`. Au lot 6, `learned` est toujours absent ; il est fourni à partir du lot 7.
 - `verdict.ts` :
-  - `computeVerdict({ realistic, completedResponses, reference: number | null }): { code: 'WAIT' | 'GO' | 'CAUTION' | 'STOP' | 'NEUTRAL'; ratio: number | null; missingResponses: number }` ;
+  - `computeVerdict({ realistic, completedResponses, reference: number | null }): { code: VerdictCode; ratio: number | null; missingResponses: number }`, avec `VerdictCode` importé de `@/lib/tamani/verdict-display` (lot 2) ;
   - `MIN_RESPONSES_FOR_VERDICT = 20` ;
   - la référence est `plannedQuantity`, sinon `stockQuantity`.
 - `money.ts` : `computeMoney({ reference, estimate: DemandEstimate, costPrice: number | null, unitPrice, wholesalePrice: number | null }): { avoidedDeadStock: number | null; expectedProfit: number | null }`. Tout vaut `null` si `costPrice` est absent. Les revendeurs sont valorisés au prix de gros quand il existe.
@@ -298,6 +315,7 @@ Skills : `ui-ux-pro-max:design-system`, `ui-ux-pro-max:design` (logo), `ui-ux-pr
 4. **Produits** : liste, création et modification (photos via `POST /api/upload`, prix, prix d'achat facultatif présenté comme « pour calculer ton bénéfice », unité, options).
 5. **Campagnes** : un assistant de création (produit → disponibilité → stock et « combien tu prévois de commander » → fin → livraison → message), puis la page campagne avec son onglet Partage (copier, WhatsApp, liens de source verrouillés en FREE).
 6. **Réglages** : boutique, zones, coefficients, compte.
+7. **Palette** : une fois les pages du kit réécrites (`reglages`, `auth/error`, `error.tsx`, `ToastContext`), ajouter `--color-*: initial;` en tête du bloc `@theme` pour retirer la palette Tailwind par défaut. Ajouter aussi un garde-fou qui interdit les classes `gray-*`, `red-*`, etc. sous `src/`.
 
 Vérification : `pnpm build` et la liste de recette manuelle du plan détaillé.
 
