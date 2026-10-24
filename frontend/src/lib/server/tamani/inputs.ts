@@ -4,6 +4,7 @@
 import 'server-only';
 import { z } from 'zod';
 import { isSupportedCountry } from 'libphonenumber-js/min';
+import { checkProductRules } from '@/lib/tamani/product-rules';
 import { DEFAULT_SHARE_TEMPLATE } from '@/lib/tamani/share-message';
 
 /** Drops undefined keys (exactOptionalPropertyTypes vs. Prisma inputs). */
@@ -88,25 +89,7 @@ export const ProductCreate = ProductFields.extend({
 
 export const ProductPatch = ProductFields.partial().refine(nonEmpty, 'Nothing to update');
 
-/** Rules across fields, checked on a new product and on the merged product of a PATCH. */
-export function checkProductRules(p: {
-  unitPrice: number;
-  wholesalePrice: number | null;
-  wholesaleMinQty: number | null;
-  optionLabel: string | null;
-  options: readonly string[];
-}): string | null {
-  if ((p.wholesalePrice === null) !== (p.wholesaleMinQty === null)) {
-    return 'wholesalePrice and wholesaleMinQty go together';
-  }
-  if (p.wholesalePrice !== null && p.wholesalePrice >= p.unitPrice) {
-    return 'wholesalePrice must be below unitPrice';
-  }
-  if ((p.optionLabel === null) !== (p.options.length === 0)) {
-    return 'optionLabel and options go together';
-  }
-  return null;
-}
+export { checkProductRules };
 
 /** ISO 8601 date-time (the front end sends Date#toISOString()). */
 const isoDate = z.iso.datetime({ offset: true }).transform((s) => new Date(s));
