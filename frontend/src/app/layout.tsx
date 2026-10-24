@@ -1,10 +1,28 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
+import { Andika, Bowlby_One, Kalam } from 'next/font/google';
 import './globals.css';
 
-const inter = Inter({
+// Tamani type roles (docs/brand/tamani-brand.md): Andika for all text,
+// Kalam for hand-written titles and notes, Bowlby One for the figures
+// that matter. globals.css maps them to font-sans / font-hand / font-sign.
+const andika = Andika({
+  weight: ['400', '700'],
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-andika',
+  display: 'swap',
+});
+
+const kalam = Kalam({
+  weight: ['400', '700'],
+  subsets: ['latin'],
+  variable: '--font-kalam',
+  display: 'swap',
+});
+
+const bowlby = Bowlby_One({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-bowlby',
   display: 'swap',
 });
 
@@ -13,16 +31,20 @@ export const metadata: Metadata = {
   description: 'Ta communauté parle. Tu sais quoi acheter.',
 };
 
+export const viewport: Viewport = {
+  themeColor: '#1A4FBF',
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={inter.variable}>
+    <html lang="fr" className={`${andika.variable} ${kalam.variable} ${bowlby.variable}`}>
       {/* Session providers live in (app)/ and (admin)/ layouts so public
           pages (incl. the /c/[code] popup) ship no session JS. */}
-      <body className={inter.className}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

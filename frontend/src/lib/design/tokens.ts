@@ -23,3 +23,59 @@ export const colors = {
 } as const satisfies Record<string, `#${string}`>;
 
 export type ColorToken = keyof typeof colors;
+
+/** Color family of a verdict stamp (see lib/tamani/verdict-display.ts). */
+export type VerdictTone = 'success' | 'warning' | 'danger' | 'neutral' | 'primary';
+
+export const verdictToneColor: Readonly<Record<VerdictTone, ColorToken>> = {
+  success: 'success',
+  warning: 'warning',
+  danger: 'danger',
+  neutral: 'neutralVerdict',
+  primary: 'primary',
+};
+
+/** Every text/background pairing the UI uses. Each must reach 4.5:1. */
+export const contrastPairs: ReadonlyArray<{ fg: ColorToken; bg: ColorToken; use: string }> = [
+  { fg: 'ink', bg: 'bg', use: 'texte sur le papier' },
+  { fg: 'ink', bg: 'surface', use: 'texte sur une carte' },
+  { fg: 'inkSoft', bg: 'bg', use: 'texte secondaire sur le papier' },
+  { fg: 'inkSoft', bg: 'surface', use: 'texte secondaire sur une carte' },
+  { fg: 'inkMuted', bg: 'bg', use: 'notes au crayon' },
+  { fg: 'inkMuted', bg: 'surface', use: 'légendes sur une carte' },
+  { fg: 'primary', bg: 'bg', use: 'titres à la main' },
+  { fg: 'primary', bg: 'surface', use: 'liens sur une carte' },
+  { fg: 'primaryInk', bg: 'primary', use: 'bouton principal' },
+  { fg: 'primaryInk', bg: 'success', use: 'badge plein Commande' },
+  { fg: 'primaryInk', bg: 'warning', use: 'badge plein Prudence' },
+  { fg: 'primaryInk', bg: 'danger', use: "badge plein N'achète pas" },
+  { fg: 'accentInk', bg: 'accent', use: 'onglet actif, choix sélectionné' },
+  { fg: 'whatsappInk', bg: 'whatsapp', use: 'bouton WhatsApp' },
+  { fg: 'surface', bg: 'ink', use: 'texte sur une carte encre' },
+  { fg: 'accent', bg: 'ink', use: 'montant sur une carte encre' },
+  ...(['bg', 'surface'] as const).flatMap((bg) =>
+    Object.values(verdictToneColor).map((fg) => ({ fg, bg, use: 'tampon de verdict' })),
+  ),
+];
+
+const HEX = /^#([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})$/;
+
+/** WCAG 2.1 relative luminance of a `#RRGGBB` color. */
+export function relativeLuminance(hex: string): number {
+  const m = HEX.exec(hex);
+  if (!m) throw new Error(`not a #RRGGBB color: ${hex}`);
+  const [r, g, b] = m.slice(1).map((h) => {
+    const c = parseInt(h, 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  }) as [number, number, number];
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** WCAG 2.1 contrast ratio between two `#RRGGBB` colors (1 to 21). */
+export function contrastRatio(hexA: string, hexB: string): number {
+  const [hi, lo] = [relativeLuminance(hexA), relativeLuminance(hexB)].sort((a, b) => b - a) as [
+    number,
+    number,
+  ];
+  return (hi + 0.05) / (lo + 0.05);
+}
