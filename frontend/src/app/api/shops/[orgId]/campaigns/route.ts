@@ -46,8 +46,9 @@ export const POST = shopHandler('MEMBER', async (req, { params }) => {
   if (!parsed.success) return validationFailed();
   const { productId, title, status, ...fields } = parsed.data;
   const now = new Date();
-  if (fields.endsAt && fields.endsAt <= now)
+  if (fields.endsAt && fields.endsAt <= now) {
     return validationFailed('endsAt must be in the future');
+  }
 
   const product = await prisma.product.findFirst({
     where: { id: productId, organizationId: params.orgId, archivedAt: null },
