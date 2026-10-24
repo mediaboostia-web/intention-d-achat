@@ -86,3 +86,14 @@ describe('.env.example phase 5 additions (CRON-05 + Phase 5 ENV)', () => {
     expect(src).toContain('ORDER_EXPIRATION_MINUTES="30"');
   });
 });
+
+// Tamani lot 4 — the shop space (/app) and the back-office (/admin) need a
+// session: middleware.ts sends a visitor without one to the login page.
+describe('.env.example Tamani lot 4 (protected pages)', () => {
+  const src = readFileSync(ENV_EXAMPLE, 'utf8');
+
+  it('protects /app and /admin and names the login page', () => {
+    expect(src).toMatch(/^AUTH_PROTECTED_PREFIXES="\/app,\/admin"/m);
+    expect(src).toMatch(/^AUTH_LOGIN_PATH="\/login"/m);
+  });
+});
