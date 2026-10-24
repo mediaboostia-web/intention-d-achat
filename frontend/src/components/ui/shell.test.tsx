@@ -20,6 +20,7 @@ const ICONS = [
   'photo',
   'check',
   'lock',
+  'close',
 ] as const;
 
 describe('Textarea and Select', () => {
@@ -165,6 +166,14 @@ describe('BottomNav and SideNav', () => {
     expect(t).toContain('Réglages');
     expect(t).not.toContain('Plus');
     expect(anchor(side, '/app/produits')).toContain('aria-current="page"');
+  });
+
+  it('SideNav reaches the plan and sign-out page from the desktop', () => {
+    const side = html(<SideNav pathname="/app/plus" shopName="Diallo Import" />);
+    expect(anchor(side, '/app/plus')).toContain('aria-current="page"');
+    expect(text(<SideNav pathname="/app" shopName="Diallo Import" />)).toContain(
+      'Compte et forfait',
+    );
   });
 });
 

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { NavIcon } from '@/lib/tamani/nav';
 import { cn } from '@/lib/utils';
 
-export type IconName = NavIcon | 'plus' | 'copy' | 'link' | 'photo' | 'check' | 'lock';
+export type IconName = NavIcon | 'plus' | 'copy' | 'link' | 'photo' | 'check' | 'lock' | 'close';
 
 // Drawn with the pen: one 2px round stroke in currentColor, no fill, so an
 // icon takes the colour of the text next to it.
@@ -82,6 +82,7 @@ const SHAPES: Record<IconName, ReactNode> = {
       <path d="M8 11V8a4 4 0 0 1 8 0v3" />
     </>
   ),
+  close: <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />,
 };
 
 export function Icon({ name, className }: { name: IconName; className?: string | undefined }) {

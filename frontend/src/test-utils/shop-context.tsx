@@ -1,0 +1,39 @@
+// A shop as /api/shops/me returns it, and the contexts ShopGate would
+// provide, for rendering shop-space pages in tests without the gate.
+import type { ReactNode } from 'react';
+import {
+  ShopContext,
+  ShopGateContext,
+  type OrgRole,
+  type Shop,
+} from '@/components/app/shop-context';
+
+export const TEST_SHOP: Shop = {
+  id: 'org_1',
+  slug: 'diallo-import',
+  name: 'Diallo Import',
+  whatsappPhone: '+221771234567',
+  country: 'SN',
+  currency: 'XOF',
+  logoUrl: null,
+  coefConsumer: 0.4,
+  coefReseller: 0.7,
+  plan: { id: 'FREE', inGrace: false, currentPeriodEnd: null },
+};
+
+export function ShopTestProvider({
+  shop = TEST_SHOP,
+  role = 'OWNER',
+  children,
+}: {
+  shop?: Shop;
+  role?: OrgRole;
+  children: ReactNode;
+}) {
+  const reload = async () => {};
+  return (
+    <ShopGateContext.Provider value={{ reload, created: () => {} }}>
+      <ShopContext.Provider value={{ shop, role, reload }}>{children}</ShopContext.Provider>
+    </ShopGateContext.Provider>
+  );
+}

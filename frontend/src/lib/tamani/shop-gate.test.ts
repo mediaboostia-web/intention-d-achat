@@ -28,4 +28,17 @@ describe('gateDecision', () => {
     expect(gateDecision({ ...base, authLoading: true })).toEqual({ kind: 'wait' });
     expect(gateDecision({ ...base, shop: 'loading' })).toEqual({ kind: 'wait' });
   });
+
+  it('sends a shop created on the welcome page to the landing it asks for', () => {
+    expect(
+      gateDecision({
+        ...base,
+        pathname: '/app/bienvenue',
+        landing: '/app/produits/nouveau?premier=1',
+      }),
+    ).toEqual({ kind: 'redirect', to: '/app/produits/nouveau?premier=1' });
+    expect(gateDecision({ ...base, landing: '/app/produits/nouveau?premier=1' })).toEqual({
+      kind: 'shell',
+    });
+  });
 });
