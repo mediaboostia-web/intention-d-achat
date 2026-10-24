@@ -16,7 +16,7 @@
 
 **Spec :** [docs/superpowers/specs/2026-10-24-tamani-design.md](../specs/2026-10-24-tamani-design.md) §1 (piliers), §3 (anti-objectifs), §5.3 (pop-up), §5.4.0 (verdict), §5.8 (identité). **Feuille de route :** [2026-10-24-tamani-roadmap.md](2026-10-24-tamani-roadmap.md), lot 2.
 
-**Direction validée par le porteur du projet (2026-10-24)** : la fusion **« Cahier du marché »**, avec en plus l'**auvent d'étal** sur le pop-up, emprunté à la fusion « Enseigne et carnet ». La maquette de référence est `.superpowers/brainstorm/4627-1792818032/content/identite-fusion-v2.html` (fusion 1).
+**Direction validée par le porteur du projet (2026-10-24)** : la fusion **« Cahier du marché »**, avec en plus l'**auvent d'étal** sur le pop-up, emprunté à la fusion « Enseigne et carnet ». La maquette de référence est `docs/brand/mockups/2026-10-24-fusion-cahier-du-marche.html` (fusion 1).
 
 ## Global Constraints
 

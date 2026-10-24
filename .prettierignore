@@ -6,3 +6,5 @@ coverage
 pnpm-lock.yaml
 *.md
 backend/src/generated
+# Validated brand mockups (lot 2), kept verbatim as the decision record.
+docs/brand/mockups

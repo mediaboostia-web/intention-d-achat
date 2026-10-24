@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tamani : trois pistes d'identité</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Bowlby+One&family=Kalam:wght@400;700&family=Onest:wght@400;500;600;700&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Young+Serif&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#E8E8E5;color:#1c1c1e;font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+  .wrap{max-width:1340px;margin:0 auto;padding:40px 20px 96px}
+  .intro h1{font-size:28px;line-height:1.2;margin:0 0 10px;font-weight:650;letter-spacing:-.01em}
+  .intro p{max-width:72ch;color:#45454b;margin:0 0 6px}
+  .dirs{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:22px;margin-top:30px;align-items:start}
+  .dir{border-radius:28px;padding:26px 22px 22px;outline:3px solid transparent;outline-offset:3px;transition:outline-color .15s}
+  .dir.chosen{outline-color:#1c1c1e}
+  .lockup{display:flex;align-items:center;gap:12px}
+  .bd-top{display:flex;justify-content:space-between;align-items:center}
+  .bd-name{margin:22px 0 6px}
+  .bd-idea{margin:0;font-size:15px;line-height:1.5;max-width:46ch}
+  .sw{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}
+  .sw div{border-radius:12px;height:58px;display:flex;flex-direction:column;justify-content:flex-end;padding:7px 9px;font-size:11.5px;line-height:1.25}
+  .sw b{font-weight:600;font-size:12px}
+  .ty{margin-top:18px}
+  .ty p{margin:0}
+  .vd{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+  .vd span{font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:999px}
+  .pc{margin:16px 0 0;font-size:13.5px;line-height:1.45}
+  .pc dt{font-weight:700;margin-top:8px}
+  .pc dd{margin:2px 0 0}
+  .pick{display:block;width:100%;margin-top:22px;padding:14px;border-radius:16px;font:600 15px system-ui,sans-serif;cursor:pointer;border:2px solid currentColor;background:transparent}
+  .dir.chosen .pick{background:#1c1c1e;color:#fff;border-color:#1c1c1e}
+
+  /* ---------- phone frame (shared) ---------- */
+  .phone{width:356px;max-width:100%;margin:24px auto 0;padding:9px;background:#1d1d21;border-radius:50px;box-shadow:0 34px 60px -26px rgba(0,0,0,.45)}
+  .scr{height:760px;overflow-y:auto;border-radius:41px;position:relative;scrollbar-width:none}
+  .scr::-webkit-scrollbar{display:none}
+  .sb{display:flex;justify-content:space-between;align-items:center;padding:13px 28px 4px;font:600 14px/1 system-ui,sans-serif}
+  .sb span:last-child{display:flex;gap:6px;align-items:center}
+  .sb svg{display:block}
+  .tabs{position:sticky;bottom:0;display:flex;justify-content:space-around;padding:9px 4px 20px;z-index:2}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;min-width:58px}
+  .tab svg{width:23px;height:23px}
+
+  /* ================= A — INDIGO ================= */
+  .bdA{background:#F5F7FB;color:#16224F;font-family:Onest,sans-serif}
+  .bdA .bd-name{font:400 34px/1 'Young Serif',serif}
+  .bdA .pick{color:#16224F;font-family:Onest,sans-serif}
+  .A{background:#F5F7FB;color:#16224F;font-family:Onest,sans-serif}
+  .a-top{background:#16224F;color:#fff;position:relative;overflow:hidden;padding-bottom:20px}
+  .a-adire{position:absolute;right:-78px;top:-58px;width:260px;height:260px;opacity:.85;pointer-events:none}
+  .a-back{display:inline-block;padding:8px 20px 0;font-size:14px;color:#B9C4E6;position:relative}
+  .a-prod{display:flex;gap:12px;align-items:center;padding:14px 20px 0;position:relative}
+  .a-thumb{width:52px;height:52px;border-radius:15px;background:#DCE3F2;color:#2F4A9E;display:grid;place-items:center;flex:none}
+  .a-thumb svg{width:32px;height:32px}
+  .a-prod h1{font:400 23px/1.15 'Young Serif',serif;margin:0}
+  .a-prod p{margin:3px 0 0;font-size:13.5px;color:#B9C4E6}
+  .a-verdict{padding:24px 20px 0;position:relative}
+  .a-state{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;background:rgba(255,255,255,.1);padding:6px 13px 6px 11px;border-radius:999px}
+  .a-state i{width:10px;height:10px;border-radius:50%;background:#F59E2B;box-shadow:0 0 0 4px rgba(245,158,43,.22)}
+  .a-big{font:400 96px/.92 'Young Serif',serif;margin:16px 0 8px;letter-spacing:-.025em;display:flex;align-items:baseline;gap:10px}
+  .a-big small{font:500 16px/1 Onest,sans-serif;color:#B9C4E6;letter-spacing:0}
+  .a-say{font-size:17px;line-height:1.35;margin:0;max-width:24ch}
+  .a-gauge{display:block;margin:22px 20px 0;width:calc(100% - 40px);height:44px}
+  .a-legend{display:flex;justify-content:space-between;font-size:12.5px;color:#B9C4E6;margin:8px 20px 0}
+  .a-legend b{color:#F2B21B;font-weight:600}
+  .a-body{padding:20px 20px 26px}
+  .a-base{font-size:14px;line-height:1.5;color:#46527A;margin:0}
+  .a-base a{color:#2F4A9E;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+  .a-money{margin-top:22px;padding:18px;border-radius:22px;background:#fff;box-shadow:0 1px 0 #E3E8F3,0 14px 28px -20px rgba(22,34,79,.45)}
+  .a-money .k{margin:0;font-size:13.5px;color:#46527A}
+  .a-money .v{margin:4px 0 4px;font:400 33px/1.1 'Young Serif',serif}
+  .a-money mark{background:linear-gradient(transparent 60%,rgba(242,178,27,.6) 60%);color:inherit;padding:0 3px}
+  .a-money p{margin:0;font-size:14px;line-height:1.45}
+  .a-profit{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:12px;border-top:1px dashed #C9D2EA;font-size:14px}
+  .a-profit b{font:400 20px 'Young Serif',serif}
+  .a-h{font:400 19px/1.2 'Young Serif',serif;margin:30px 0 12px}
+  .a-who{display:grid;grid-template-columns:1fr 1fr;border-radius:20px;background:#DCE3F2;overflow:hidden}
+  .a-who>div{padding:15px 16px}
+  .a-who>div+div{border-left:2px solid #F5F7FB}
+  .a-who .n{font:400 36px/1 'Young Serif',serif}
+  .a-who .t{font-weight:600;font-size:14px;margin-top:4px}
+  .a-who .s{font-size:13px;color:#46527A}
+  .a-row{display:grid;grid-template-columns:118px 1fr 26px;align-items:center;gap:10px;padding:6px 0;font-size:14px}
+  .a-row .bar{height:8px;border-radius:4px;background:#DCE3F2;overflow:hidden}
+  .a-row .bar i{display:block;height:100%;background:#2F4A9E;border-radius:4px}
+  .a-row .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  .a-seg{display:flex;height:42px;border-radius:14px;overflow:hidden;gap:3px}
+  .a-seg span{display:flex;align-items:center;padding-left:12px;font-weight:600;font-size:14px}
+  .a-seglg{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:9px;font-size:13px;color:#46527A}
+  .a-seglg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+  .a-signal{margin-top:26px;display:flex;gap:12px;align-items:center;padding:14px 16px;border-radius:18px;background:#fff;font-size:14px;line-height:1.45;box-shadow:0 1px 0 #E3E8F3}
+  .a-signal svg{flex:none;width:36px;height:36px;padding:8px;border-radius:12px;background:#FCEFC9;color:#8A5A00}
+  .a-cta{display:flex;justify-content:center;align-items:center;gap:8px;padding:15px;border-radius:17px;font-weight:600;font-size:15.5px;margin-top:10px}
+  .a-cta svg{width:20px;height:20px}
+  .a-cta.p{background:#2F4A9E;color:#fff;margin-top:26px}
+  .a-cta.w{background:#25D366;color:#073B1F}
+  .A .tabs{background:rgba(245,247,251,.94);backdrop-filter:blur(10px);border-top:1px solid #E3E8F3;color:#6B7593}
+  .A .tab.on{color:#16224F;font-weight:600}
+
+  /* ================= B — MARCHÉ ================= */
+  .bdB{background:#fff;color:#10204A;font-family:Andika,sans-serif;position:relative;overflow:hidden}
+  .bdB .bd-name{font:400 34px/1 'Bowlby One',sans-serif;color:#1A56C4}
+  .bdB .pick{color:#10204A;font-family:Andika,sans-serif;font-weight:700;border-width:2.5px}
+  .bdB .bd-saw{position:absolute;left:0;top:0;width:100%;height:12px}
+  .B{background:#fff;color:#10204A;font-family:Andika,sans-serif}
+  .b-top{background:#1A56C4;color:#fff;padding-bottom:70px;position:relative}
+  .b-top .sb{color:#fff}
+  .b-band{display:block;width:100%;height:14px;margin-top:6px}
+  .b-back{display:inline-block;color:#DCE8FB;padding:10px 20px 0;font-weight:700;font-size:14.5px}
+  .b-title{font:400 27px/1.1 'Bowlby One',sans-serif;margin:12px 20px 0}
+  .b-meta{margin:6px 20px 0;font-size:15.5px;color:#DCE8FB}
+  .b-sign{position:relative;margin:-50px 16px 0;background:#FFCC1F;border:3px solid #10204A;border-radius:20px;padding:18px 18px 16px;box-shadow:6px 6px 0 #10204A}
+  .b-tab{display:inline-block;background:#C2410C;color:#fff;font-weight:700;font-size:14.5px;padding:4px 12px;border-radius:9px;border:2px solid #10204A}
+  .b-big{font:400 82px/.92 'Bowlby One',sans-serif;color:#1A56C4;text-shadow:4px 4px 0 #10204A;margin:14px 0 6px}
+  .b-say{font-weight:700;font-size:18.5px;margin:0;line-height:1.25}
+  .b-base{font-size:14.5px;margin:8px 0 0;line-height:1.4}
+  .b-how{display:inline-block;margin-top:10px;font-weight:700;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+  .b-blocks{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin:26px 16px 0}
+  .b-blocks i{height:30px;border:2px solid #10204A;border-radius:7px;background:#fff}
+  .b-blocks i.on{background:#1A56C4}
+  .b-blocks i.ann{background:#DCE8FB}
+  .b-leg{display:flex;justify-content:space-between;margin:9px 16px 0;font-size:13.5px;font-weight:700}
+  .b-leg span::before{content:"";display:inline-block;width:11px;height:11px;border:2px solid #10204A;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+  .b-money{margin:24px 16px 0;background:#10204A;color:#fff;border-radius:20px;padding:18px}
+  .b-money .k{font-weight:700;color:#DCE8FB;margin:0;font-size:15px}
+  .b-money .v{font:400 36px/1.05 'Bowlby One',sans-serif;color:#FFCC1F;margin:6px 0 4px}
+  .b-money .p{margin:0;font-size:15px;line-height:1.4}
+  .b-profit{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:12px;border-top:2px dashed rgba(255,255,255,.28);font-size:15px}
+  .b-profit b{font:400 20px 'Bowlby One',sans-serif}
+  .b-h{font:400 20px/1.2 'Bowlby One',sans-serif;margin:30px 16px 12px}
+  .b-who{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px}
+  .b-tile{border:2.5px solid #10204A;border-radius:17px;padding:14px}
+  .b-tile .n{font:400 42px/1 'Bowlby One',sans-serif;color:#1A56C4}
+  .b-tile .t{font-weight:700;font-size:16px;margin-top:8px}
+  .b-tile .s{font-size:14px}
+  .b-row{display:grid;grid-template-columns:120px 1fr 28px;gap:10px;align-items:center;margin:0 16px 10px;font-weight:700;font-size:15px}
+  .b-row .bar{height:18px;border:2px solid #10204A;border-radius:7px;background:#fff;overflow:hidden}
+  .b-row .bar i{display:block;height:100%;background:#1A56C4}
+  .b-row .num{text-align:right}
+  .b-when{display:flex;gap:8px;margin:0 16px;flex-wrap:wrap}
+  .b-when span{border:2px solid #10204A;border-radius:13px;padding:7px 12px;background:#fff;font-weight:700;font-size:14.5px}
+  .b-when span:first-child{background:#FFCC1F}
+  .b-when b{font:400 18px 'Bowlby One',sans-serif;color:#1A56C4;margin-right:6px}
+  .b-signal{margin:24px 16px 0;display:flex;gap:12px;align-items:center;background:#FFF6D1;border:2px dashed #10204A;border-radius:15px;padding:12px 14px;font-weight:700;font-size:15px;line-height:1.35}
+  .b-signal svg{flex:none;width:26px;height:26px}
+  .b-cta{display:flex;justify-content:center;align-items:center;gap:8px;margin:10px 16px 0;padding:15px;border-radius:17px;border:2.5px solid #10204A;font-weight:700;font-size:16.5px}
+  .b-cta svg{width:21px;height:21px}
+  .b-cta.p{background:#1A56C4;color:#fff;margin-top:26px}
+  .b-cta.w{background:#25D366;color:#073B1F}
+  .B .tabs{background:#fff;border-top:2.5px solid #10204A;color:#10204A;margin-top:26px}
+  .B .tab{font-weight:700}
+  .B .tab.on svg{background:#FFCC1F;border:2px solid #10204A;border-radius:10px;padding:2px 12px;width:52px;height:29px}
+
+  /* ================= C — CAHIER ================= */
+  .bdC,.C{background-color:#FDFDF8;background-image:linear-gradient(#DDE6F4 1px,transparent 1px),linear-gradient(90deg,#DDE6F4 1px,transparent 1px);background-size:18px 18px;color:#1F3A93;font-family:'Schibsted Grotesk',sans-serif}
+  .C{background-attachment:local}
+  .bdC .bd-name{font:700 40px/1 'Kalam',cursive}
+  .bdC .pick{color:#1F3A93;font-family:'Schibsted Grotesk',sans-serif;background:#FDFDF8}
+  .c-page{position:relative;padding:0 18px 4px 46px}
+  .c-page::before{content:"";position:absolute;left:31px;top:-40px;bottom:0;width:1.5px;background:#E2878A}
+  .C .sb{color:#1F3A93}
+  .c-head{display:flex;justify-content:space-between;align-items:baseline;padding-top:8px}
+  .c-back{font-weight:600;font-size:14px}
+  .c-date{font:400 17px 'Kalam',cursive;color:#596071}
+  .c-title{font:700 32px/1.05 'Kalam',cursive;margin:18px 0 0}
+  .c-ul{display:block;width:228px;height:13px;margin-top:2px}
+  .c-meta{margin:10px 0 0;font-size:14.5px;line-height:1.45;color:#3E4660}
+  .c-stampwrap{position:relative;height:158px;margin:24px 0 0}
+  .c-stamp{position:absolute;left:-8px;top:10px;transform:rotate(-5deg);color:#B8520A;border:3.5px solid currentColor;border-radius:16px;padding:11px 16px 11px;text-align:center;filter:url(#ink);mix-blend-mode:multiply}
+  .c-stamp::before{content:"";position:absolute;inset:5px;border:1.5px solid currentColor;border-radius:10px}
+  .c-stamp .w{font-weight:800;font-size:15px;letter-spacing:.34em;margin-right:-.34em}
+  .c-stamp .n{font-weight:800;font-size:60px;line-height:.92;letter-spacing:-.03em}
+  .c-stamp .u{font-weight:700;font-size:12.5px;letter-spacing:.2em;margin-right:-.2em}
+  .c-note{position:absolute;right:-14px;top:40px;width:92px;font:400 19px/1.1 'Kalam',cursive;color:#596071;transform:rotate(-4deg)}
+  .c-note svg{display:block;width:46px;height:26px;margin:0 0 2px -8px}
+  .c-base{font-size:14.5px;line-height:1.5;color:#3E4660;margin:4px 0 0}
+  .c-h{font:700 23px/1.2 'Kalam',cursive;margin:28px 0 6px}
+  .c-gtop{position:relative;height:22px;font:400 16px/1 'Kalam',cursive;color:#596071}
+  .c-gtop span{position:absolute;left:87.5%;transform:translateX(-50%);white-space:nowrap;bottom:2px}
+  .c-gauge{position:relative;height:30px;border:2px solid #1F3A93;border-radius:5px;filter:url(#pen)}
+  .c-gauge .fill{position:absolute;left:0;top:0;bottom:0;width:52.75%;background:repeating-linear-gradient(-55deg,#1F3A93 0 1.6px,transparent 1.6px 6px);border-right:2px solid #1F3A93}
+  .c-gauge .mk{position:absolute;top:-7px;bottom:-7px;left:87.5%;border-left:2px dashed #596071}
+  .c-gbot{display:flex;justify-content:space-between;margin-top:6px;font:400 17px/1.1 'Kalam',cursive;color:#596071}
+  .c-gbot b{color:#1F3A93;font-weight:700}
+  .c-calc{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:15px}
+  .c-calc td{height:36px;padding:0}
+  .c-calc .l{font-weight:600}
+  .c-calc .l small{font-weight:400;color:#596071;font-size:13px}
+  .c-calc .q{text-align:right;color:#3E4660}
+  .c-calc .op{text-align:right;color:#596071;font:400 18px 'Kalam',cursive;padding-left:6px}
+  .c-calc .r{text-align:right;font-weight:700;width:58px}
+  .c-calc tr.tot td{border-top:2px solid #1F3A93;font-size:17px}
+  .c-foot{margin:6px 0 0;font:400 17px/1.25 'Kalam',cursive;color:#596071}
+  .c-amt{font-weight:800;font-size:33px;letter-spacing:-.015em;margin:2px 0 0;line-height:1.2}
+  .hl{background:linear-gradient(100deg,rgba(255,240,122,0) .6%,#FFF07A 2.4%,#FFEB55 95%,rgba(255,240,122,0) 99%);border-radius:.25em .7em .3em .6em;padding:0 .18em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+  .c-p{margin:4px 0 0;font-size:14.5px;line-height:1.45;color:#3E4660}
+  .c-lead{display:flex;align-items:baseline;gap:6px;height:36px;line-height:36px;font-size:15px}
+  .c-lead .d{flex:1;border-bottom:2px dotted #93A3CB;transform:translateY(-6px)}
+  .c-lead b{font-variant-numeric:tabular-nums}
+  .c-sig{margin:26px 0 0;font:400 20px/1.3 'Kalam',cursive;color:#3E4660}
+  .c-sig .circ{display:inline-block;border:2px solid #D35A5E;border-radius:50%;padding:0 9px;transform:rotate(-3deg);color:#B42318;font-weight:700}
+  .c-cta{display:flex;justify-content:center;align-items:center;gap:8px;padding:15px;border-radius:15px;font-weight:700;font-size:15.5px;margin-top:10px}
+  .c-cta svg{width:20px;height:20px}
+  .c-cta.p{background:#1F3A93;color:#fff;margin-top:26px}
+  .c-cta.w{background:#25D366;color:#073B1F}
+  .C .tabs{background:#FDFDF8;border-top:1.5px solid #1F3A93;color:#596071;margin-top:24px}
+  .C .tab.on{color:#1F3A93;font-weight:700}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="mark" viewBox="0 0 48 48"><path d="M9 9 Q24 17 39 9 C46 13 46 31 39 35 Q29.5 29.9 20 31.3 L7 44 L13 33.2 Q11 33.9 9 35 C2 31 2 13 9 9 Z"/></symbol>
+    <symbol id="cords" viewBox="0 0 48 48"><path d="M11 17 Q24 20.2 37 17 M10 22 H38 M11 27 Q24 23.8 37 27" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-camp" viewBox="0 0 24 24"><path d="M4 10v4h3l8 4.5v-13L7 10z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M18.5 9.5a3.5 3.5 0 0 1 0 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-cmd" viewBox="0 0 24 24"><path d="M6 3.5h12v17l-3-1.8-3 1.8-3-1.8-3 1.8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8.5h6M9 12.5h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-cli" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 19.5c.4-3.3 3-5.3 6-5.3s5.6 2 6 5.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M15.5 5.2a3 3 0 0 1 0 5.6M17.5 14.6c2 .6 3.2 2.3 3.5 4.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="19" cy="12" r="1.7" fill="currentColor"/></symbol>
+    <symbol id="i-pot" viewBox="0 0 40 40"><path d="M9 17h22v10.5a6.5 6.5 0 0 1-6.5 6.5h-9A6.5 6.5 0 0 1 9 27.5z" fill="currentColor"/><path d="M6.5 17h27M4 20h5M31 20h5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M11 14.2c3-3.6 15-3.6 18 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="20" cy="9.5" r="2.2" fill="currentColor"/></symbol>
+    <symbol id="i-wa" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-7.8 13.4L3 21l4.7-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M8.8 8.6c.2-.5.5-.5.8-.5h.5c.2 0 .4 0 .6.5l.7 1.7c.1.2 0 .4-.1.6l-.5.6c-.1.2-.2.3 0 .6.5.9 1.2 1.6 2.1 2.1.3.2.4.1.6 0l.6-.7c.2-.2.4-.2.6-.1l1.6.8c.2.1.4.2.4.4 0 .5-.2 1.2-.7 1.5-.5.4-1.4.6-2.6.2a9.4 9.4 0 0 1-4.5-4c-.7-1.2-.6-2.2-.1-3.7z" fill="currentColor"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3a1.4 1.4 0 0 1 0 2l-6.7 6.7a1.4 1.4 0 0 1-2 0z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><circle cx="8.3" cy="8.3" r="1.7" fill="currentColor"/></symbol>
+    <symbol id="i-batt" viewBox="0 0 28 12"><rect x=".8" y=".8" width="23" height="10.4" rx="3" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".5"/><rect x="2.6" y="2.6" width="17" height="6.8" rx="1.6" fill="currentColor"/><path d="M25.8 4.2v3.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".5"/></symbol>
+    <symbol id="i-sig" viewBox="0 0 18 12"><rect y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor"/><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor"/><rect x="15" width="3" height="12" rx="1" fill="currentColor"/></symbol>
+    <pattern id="laceDim" width="12" height="36" patternUnits="userSpaceOnUse" y="4"><path d="M0 0 L6 36 L12 0" fill="none" stroke="#33478C" stroke-width="2"/></pattern>
+    <pattern id="laceGold" width="12" height="36" patternUnits="userSpaceOnUse" y="4"><path d="M0 0 L6 36 L12 0" fill="none" stroke="#F2B21B" stroke-width="2.6"/></pattern>
+    <pattern id="saw" width="14" height="10" patternUnits="userSpaceOnUse"><path d="M0 0 L7 10 L14 0Z" fill="#FFCC1F"/></pattern>
+    <filter id="ink" x="-6%" y="-6%" width="112%" height="112%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="2.4" result="d"/><feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="1" seed="8" result="s"/><feColorMatrix in="s" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -4.2 3.3" result="m"/><feComposite in="d" in2="m" operator="in"/></filter>
+    <filter id="pen" x="-4%" y="-20%" width="108%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="5" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="1.8"/></filter>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <div class="intro">
+    <h1>Trois pistes pour l'identité de Tamani</h1>
+    <p>Chaque piste a son logo, ses couleurs, ses polices et le même écran : la page de la campagne « Marmites inox 5 L », avec les mêmes chiffres. Fais défiler l'intérieur de chaque téléphone.</p>
+    <p>Le logo est le même dessin dans les trois : une bulle de parole dont les lignes de texte sont les cordes du tamani, pincées au milieu comme quand le batteur serre son tambour pour le faire parler.</p>
+  </div>
+
+  <div class="dirs">
+
+    <!-- ============ A — INDIGO ============ -->
+    <section class="dir bdA" id="dir-indigo">
+      <div class="bd-top">
+        <div class="lockup">
+          <svg width="58" height="58" viewBox="0 0 48 48" aria-hidden="true"><use href="#mark" fill="#2F4A9E"/><use href="#cords" stroke="#F5F7FB" stroke-width="2.6"/></svg>
+          <span style="font:400 40px/1 'Young Serif',serif;letter-spacing:-.01em">tamani</span>
+        </div>
+        <svg width="56" height="56" viewBox="0 0 56 56" aria-label="Icône de l'app"><rect width="56" height="56" rx="14" fill="#16224F"/><g transform="translate(8 7) scale(.83)"><use href="#mark" fill="#F5F7FB"/><use href="#cords" stroke="#16224F" stroke-width="2.8"/></g><circle cx="44" cy="12" r="3.2" fill="#F2B21B"/></svg>
+      </div>
+      <h2 class="bd-name">Indigo</h2>
+      <p class="bd-idea">Le bazin teint à la main : une seule couleur profonde, plus ou moins foncée selon le nombre de bains, et le jaune du curcuma réservé à l'argent. Calme, sûr, haut de gamme.</p>
+      <div class="sw">
+        <div style="background:#16224F;color:#fff"><b>Indigo 7 bains</b>#16224F</div>
+        <div style="background:#2F4A9E;color:#fff"><b>Indigo 4 bains</b>#2F4A9E</div>
+        <div style="background:#DCE3F2"><b>Indigo 1 bain</b>#DCE3F2</div>
+        <div style="background:#fff;box-shadow:inset 0 0 0 1px #DCE3F2"><b>Kaolin</b>#F5F7FB</div>
+        <div style="background:#F2B21B"><b>Curcuma</b>#F2B21B</div>
+        <div style="background:#25D366;color:#073B1F"><b>WhatsApp</b>bouton seul</div>
+      </div>
+      <div class="ty">
+        <p style="font:400 30px/1.15 'Young Serif',serif">Ta communauté parle.</p>
+        <p style="font-size:15px;margin-top:6px">Tu sais quoi acheter. Titres et grands chiffres en Young Serif, texte en Onest, lisible dès 14 px.</p>
+      </div>
+      <div class="vd">
+        <span style="background:#DDF2E6;color:#135C3A">Commande ~210</span>
+        <span style="background:#FCE8CC;color:#8A4300">Prudence ~210</span>
+        <span style="background:#FBDCDA;color:#9B1C1C">N'achète pas</span>
+        <span style="background:#E6E9F2;color:#3D4766">On attend 9/20</span>
+        <span style="background:#DCE3F2;color:#22367A">Demande ~210</span>
+      </div>
+      <dl class="pc">
+        <dt>Ce qu'elle apporte</dt><dd>La confiance, au moment où un inconnu donne son numéro. Elle se décline sans effort sur l'accueil et les tarifs.</dd>
+        <dt>Le risque</dt><dd>Le bleu foncé peut rappeler une banque si on perd les motifs et la chaleur du jaune.</dd>
+      </dl>
+
+      <div class="phone"><div class="scr A">
+        <div class="a-top">
+          <svg class="a-adire" viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke="#3A5BB8" stroke-width="2.2" stroke-dasharray="0.5 6" stroke-linecap="round"><circle cx="100" cy="100" r="18"/><circle cx="100" cy="100" r="31"/><circle cx="100" cy="100" r="44"/><circle cx="100" cy="100" r="57"/><circle cx="100" cy="100" r="70"/><circle cx="100" cy="100" r="83"/><circle cx="100" cy="100" r="96"/></g></svg>
+          <div class="sb"><span>9:41</span><span><svg width="18" height="12"><use href="#i-sig"/></svg><svg width="28" height="12"><use href="#i-batt"/></svg></span></div>
+          <span class="a-back">‹ Campagnes</span>
+          <div class="a-prod">
+            <div class="a-thumb"><svg><use href="#i-pot"/></svg></div>
+            <div><h1>Marmites inox 5 L</h1><p>Arrivage dans 10 jours</p></div>
+          </div>
+          <div class="a-verdict">
+            <span class="a-state"><i></i>Prudence</span>
+            <div class="a-big">~210<small>pièces</small></div>
+            <p class="a-say">Commande environ 210 pièces, pas les 400 que tu prévoyais.</p>
+          </div>
+          <svg class="a-gauge" viewBox="0 0 296 44" preserveAspectRatio="none" aria-hidden="true">
+            <line x1="0" y1="3" x2="296" y2="3" stroke="#33478C" stroke-width="2"/>
+            <line x1="0" y1="41" x2="296" y2="41" stroke="#33478C" stroke-width="2"/>
+            <rect x="0" y="4" width="296" height="36" fill="url(#laceDim)"/>
+            <rect x="0" y="4" width="156" height="36" fill="url(#laceGold)"/>
+            <line x1="0" y1="3" x2="156" y2="3" stroke="#F2B21B" stroke-width="2.6"/>
+            <line x1="0" y1="41" x2="156" y2="41" stroke="#F2B21B" stroke-width="2.6"/>
+            <line x1="259" y1="0" x2="259" y2="44" stroke="#B9C4E6" stroke-width="1.6" stroke-dasharray="3 3"/>
+          </svg>
+          <div class="a-legend"><span><b>211</b> réalistes</span><span>350 annoncées</span><span>400 prévues</span></div>
+        </div>
+        <div class="a-body">
+          <p class="a-base">Entre 176 et 246 pièces, d'après 94 réponses dont 64 intéressés. <a>Comment c'est calculé ?</a></p>
+          <div class="a-money">
+            <p class="k">Ce que tu évites</p>
+            <p class="v"><mark>850&#8239;500 FCFA</mark></p>
+            <p>de stock qui dormirait au dépôt si tu commandais 400.</p>
+            <div class="a-profit"><span>Bénéfice attendu</span><b>~444&#8239;000 FCFA</b></div>
+          </div>
+          <h2 class="a-h">Qui achète</h2>
+          <div class="a-who">
+            <div><div class="n">22</div><div class="t">revendeurs</div><div class="s">180 pièces annoncées, au prix de gros</div></div>
+            <div><div class="n">42</div><div class="t">usagers</div><div class="s">170 pièces annoncées, à l'unité</div></div>
+          </div>
+          <h2 class="a-h">Où livrer</h2>
+          <div class="a-row"><span>Médina</span><span class="bar"><i style="width:100%"></i></span><span class="num">24</span></div>
+          <div class="a-row"><span>Parcelles Assainies</span><span class="bar"><i style="width:71%"></i></span><span class="num">17</span></div>
+          <div class="a-row"><span>Guédiawaye</span><span class="bar"><i style="width:50%"></i></span><span class="num">12</span></div>
+          <div class="a-row"><span>Autres quartiers</span><span class="bar"><i style="width:46%"></i></span><span class="num">11</span></div>
+          <h2 class="a-h">Quand</h2>
+          <div class="a-seg"><span style="flex:60;background:#16224F;color:#fff">60 %</span><span style="flex:30;background:#2F4A9E;color:#fff">30 %</span><span style="flex:10;background:#DCE3F2"></span></div>
+          <div class="a-seglg"><span><i style="background:#16224F"></i>Dès l'arrivée</span><span><i style="background:#2F4A9E"></i>La semaine suivante</span><span><i style="background:#DCE3F2"></i>Plus tard, 10 %</span></div>
+          <div class="a-signal"><svg><use href="#i-tag"/></svg><span>7 des 30 personnes qui ont dit non trouvent ça trop cher.</span></div>
+          <div class="a-cta p">Voir les 64 intéressés</div>
+          <div class="a-cta w"><svg><use href="#i-wa"/></svg>Partager sur WhatsApp</div>
+        </div>
+        <nav class="tabs"><span class="tab"><svg><use href="#i-home"/></svg>Accueil</span><span class="tab on"><svg><use href="#i-camp"/></svg>Campagnes</span><span class="tab"><svg><use href="#i-cmd"/></svg>Commandes</span><span class="tab"><svg><use href="#i-cli"/></svg>Clients</span><span class="tab"><svg><use href="#i-more"/></svg>Plus</span></nav>
+      </div></div>
+      <button class="pick" data-choice="indigo" onclick="pick(this)">Je choisis Indigo</button>
+    </section>
+
+    <!-- ============ B — MARCHÉ ============ -->
+    <section class="dir bdB" id="dir-marche">
+      <svg class="bd-saw" aria-hidden="true"><rect width="100%" height="12" fill="#1A56C4"/><rect y="0" width="100%" height="10" fill="url(#saw)"/></svg>
+      <div class="bd-top" style="margin-top:8px">
+        <div class="lockup">
+          <svg width="60" height="60" viewBox="0 0 48 48" aria-hidden="true"><g transform="translate(1.6 1.6)"><use href="#mark" fill="#10204A"/></g><use href="#mark" fill="#FFCC1F" stroke="#10204A" stroke-width="2.2" stroke-linejoin="round"/><use href="#cords" stroke="#1A56C4" stroke-width="2.8"/></svg>
+          <span style="font:400 36px/1 'Bowlby One',sans-serif;color:#1A56C4;text-shadow:2.5px 2.5px 0 #10204A">Tamani</span>
+        </div>
+        <svg width="56" height="56" viewBox="0 0 56 56" aria-label="Icône de l'app"><rect width="56" height="56" rx="14" fill="#1A56C4"/><g transform="translate(7.5 6) scale(.85)"><g transform="translate(1.6 1.6)"><use href="#mark" fill="#10204A"/></g><use href="#mark" fill="#FFCC1F" stroke="#10204A" stroke-width="2.2" stroke-linejoin="round"/><use href="#cords" stroke="#1A56C4" stroke-width="2.8"/></g></svg>
+      </div>
+      <h2 class="bd-name">Marché</h2>
+      <p class="bd-idea">Les enseignes peintes à la main de Sandaga et les cars rapides : des aplats francs, des lettres épaisses, de la bonne humeur. Tout se lit d'un coup d'œil, même en plein soleil.</p>
+      <div class="sw">
+        <div style="background:#1A56C4;color:#fff"><b>Bleu car rapide</b>#1A56C4</div>
+        <div style="background:#FFCC1F"><b>Jaune enseigne</b>#FFCC1F</div>
+        <div style="background:#10204A;color:#fff"><b>Encre</b>#10204A</div>
+        <div style="background:#DCE8FB"><b>Ciel</b>#DCE8FB</div>
+        <div style="background:#fff;box-shadow:inset 0 0 0 2px #10204A"><b>Blanc de chaux</b>#FFFFFF</div>
+        <div style="background:#25D366;color:#073B1F"><b>WhatsApp</b>bouton seul</div>
+      </div>
+      <div class="ty">
+        <p style="font:400 27px/1.15 'Bowlby One',sans-serif;color:#10204A">Ta communauté parle.</p>
+        <p style="font-size:15.5px;margin-top:6px">Tu sais quoi acheter. Titres en Bowlby One, texte en Andika, une police dessinée pour l'alphabétisation et les langues africaines.</p>
+      </div>
+      <div class="vd">
+        <span style="background:#1F7A4D;color:#fff;border:2px solid #10204A">Commande ~210</span>
+        <span style="background:#C2410C;color:#fff;border:2px solid #10204A">Prudence ~210</span>
+        <span style="background:#B42318;color:#fff;border:2px solid #10204A">N'achète pas</span>
+        <span style="background:#fff;color:#10204A;border:2px solid #10204A">On attend 9/20</span>
+        <span style="background:#DCE8FB;color:#10204A;border:2px solid #10204A">Demande ~210</span>
+      </div>
+      <dl class="pc">
+        <dt>Ce qu'elle apporte</dt><dd>La plus joyeuse et la plus lisible dehors. Personne ne la confondra avec une autre app.</dd>
+        <dt>Le risque</dt><dd>Moins sérieuse pour parler d'argent. Il faudra beaucoup de rigueur pour qu'elle ne devienne pas bruyante.</dd>
+      </dl>
+
+      <div class="phone"><div class="scr B">
+        <div class="b-top">
+          <div class="sb"><span>9:41</span><span><svg width="18" height="12"><use href="#i-sig"/></svg><svg width="28" height="12"><use href="#i-batt"/></svg></span></div>
+          <svg class="b-band" aria-hidden="true"><rect width="100%" height="3" fill="#fff"/><rect y="4" width="100%" height="10" fill="url(#saw)"/></svg>
+          <span class="b-back">‹ Campagnes</span>
+          <h1 class="b-title">Marmites inox 5 L</h1>
+          <p class="b-meta">Arrivage dans 10 jours</p>
+        </div>
+        <div class="b-sign">
+          <span class="b-tab">Prudence</span>
+          <div class="b-big">~210</div>
+          <p class="b-say">pièces à commander, pas les 400 prévues</p>
+          <p class="b-base">Entre 176 et 246, d'après 94 réponses dont 64 intéressés.</p>
+          <span class="b-how">Comment c'est calculé ?</span>
+        </div>
+        <div class="b-blocks"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i style="background:linear-gradient(90deg,#1A56C4 27.5%,#DCE8FB 27.5%)"></i><i class="ann"></i><i class="ann"></i><i style="background:linear-gradient(90deg,#DCE8FB 75%,#fff 75%)"></i><i></i></div>
+        <div class="b-leg"><span style="--c:#1A56C4">211 réalistes</span><span style="--c:#DCE8FB">350 annoncées</span><span style="--c:#fff">400 prévues</span></div>
+        <div class="b-money">
+          <p class="k">Tu évites</p>
+          <p class="v">850&#8239;500 <span style="font-size:.5em">FCFA</span></p>
+          <p class="p">de stock qui dormirait au dépôt si tu commandais 400.</p>
+          <div class="b-profit"><span>Bénéfice attendu</span><b>~444&#8239;000 F</b></div>
+        </div>
+        <h2 class="b-h">Qui achète</h2>
+        <div class="b-who">
+          <div class="b-tile" style="background:#DCE8FB"><div class="n">22</div><div class="t">revendeurs</div><div class="s">180 pièces, au prix de gros</div></div>
+          <div class="b-tile"><div class="n">42</div><div class="t">usagers</div><div class="s">170 pièces, à l'unité</div></div>
+        </div>
+        <h2 class="b-h">Où livrer</h2>
+        <div class="b-row"><span>Médina</span><span class="bar"><i style="width:100%"></i></span><span class="num">24</span></div>
+        <div class="b-row"><span>Parcelles Assainies</span><span class="bar"><i style="width:71%"></i></span><span class="num">17</span></div>
+        <div class="b-row"><span>Guédiawaye</span><span class="bar"><i style="width:50%"></i></span><span class="num">12</span></div>
+        <div class="b-row"><span>Autres</span><span class="bar"><i style="width:46%"></i></span><span class="num">11</span></div>
+        <h2 class="b-h">Quand</h2>
+        <div class="b-when"><span><b>60 %</b>dès l'arrivée</span><span><b>30 %</b>semaine suivante</span><span><b>10 %</b>plus tard</span></div>
+        <div class="b-signal"><svg><use href="#i-tag"/></svg><span>7 « non » sur 30 : trop cher</span></div>
+        <div class="b-cta p">Voir les 64 intéressés</div>
+        <div class="b-cta w"><svg><use href="#i-wa"/></svg>Partager sur WhatsApp</div>
+        <nav class="tabs"><span class="tab"><svg><use href="#i-home"/></svg>Accueil</span><span class="tab on"><svg><use href="#i-camp"/></svg>Campagnes</span><span class="tab"><svg><use href="#i-cmd"/></svg>Commandes</span><span class="tab"><svg><use href="#i-cli"/></svg>Clients</span><span class="tab"><svg><use href="#i-more"/></svg>Plus</span></nav>
+      </div></div>
+      <button class="pick" data-choice="marche" onclick="pick(this)">Je choisis Marché</button>
+    </section>
+
+    <!-- ============ C — CAHIER ============ -->
+    <section class="dir bdC" id="dir-cahier">
+      <div class="bd-top">
+        <div class="lockup">
+          <svg width="60" height="60" viewBox="0 0 48 48" aria-hidden="true" style="filter:url(#pen)"><use href="#mark" fill="none" stroke="#1F3A93" stroke-width="2.3" stroke-linejoin="round"/><use href="#cords" stroke="#1F3A93" stroke-width="2.3"/></svg>
+          <span style="font:700 46px/1 'Kalam',cursive;color:#1F3A93">tamani</span>
+        </div>
+        <svg width="56" height="56" viewBox="0 0 56 56" aria-label="Icône de l'app"><rect width="56" height="56" rx="14" fill="#1F3A93"/><g transform="translate(7.5 6.5) scale(.85)" style="filter:url(#pen)"><use href="#mark" fill="none" stroke="#FDFDF8" stroke-width="2.5" stroke-linejoin="round"/><use href="#cords" stroke="#FFF07A" stroke-width="2.5"/></g></svg>
+      </div>
+      <h2 class="bd-name">Cahier</h2>
+      <p class="bd-idea">Le cahier à petits carreaux où le grossiste note déjà ses commandes, devenu intelligent : l'encre bleue du stylo, le surligneur, et un tampon qui tranche.</p>
+      <div class="sw">
+        <div style="background:#1F3A93;color:#fff"><b>Encre bleue</b>#1F3A93</div>
+        <div style="background:#FDFDF8;box-shadow:inset 0 0 0 1px #DDE6F4"><b>Papier</b>#FDFDF8</div>
+        <div style="background:#FFF07A"><b>Surligneur</b>#FFF07A</div>
+        <div style="background:#DDE6F4"><b>Carreaux</b>#DDE6F4</div>
+        <div style="background:#596071;color:#fff"><b>Crayon</b>#596071</div>
+        <div style="background:#25D366;color:#073B1F"><b>WhatsApp</b>bouton seul</div>
+      </div>
+      <div class="ty">
+        <p style="font:700 32px/1.1 'Kalam',cursive">Ta communauté parle.</p>
+        <p style="font-size:15px;margin-top:6px;color:#3E4660">Tu sais quoi acheter. Titres et notes à la main en Kalam, texte et chiffres en Schibsted Grotesk, nets et réguliers.</p>
+      </div>
+      <div class="vd">
+        <span style="color:#1B7344;border:2px solid #1B7344;border-radius:8px;font-weight:800;letter-spacing:.06em">Commande ~210</span>
+        <span style="color:#B8520A;border:2px solid #B8520A;border-radius:8px;font-weight:800;letter-spacing:.06em">Prudence ~210</span>
+        <span style="color:#B42318;border:2px solid #B42318;border-radius:8px;font-weight:800;letter-spacing:.06em">N'achète pas</span>
+        <span style="color:#596071;border:2px dashed #596071;border-radius:8px;font-weight:800;letter-spacing:.06em">On attend 9/20</span>
+        <span style="color:#1F3A93;border:2px solid #1F3A93;border-radius:8px;font-weight:800;letter-spacing:.06em">Demande ~210</span>
+      </div>
+      <dl class="pc" style="color:#3E4660">
+        <dt style="color:#1F3A93">Ce qu'elle apporte</dt><dd>La plus familière : le calcul est écrit sous ses yeux, comme il le ferait lui-même. Chaleureuse sans être enfantine.</dd>
+        <dt style="color:#1F3A93">Le risque</dt><dd>L'écriture à la main doit rester réservée aux titres et aux notes, sinon la lecture souffre.</dd>
+      </dl>
+
+      <div class="phone"><div class="scr C">
+        <div class="sb"><span>9:41</span><span><svg width="18" height="12"><use href="#i-sig"/></svg><svg width="28" height="12"><use href="#i-batt"/></svg></span></div>
+        <div class="c-page">
+          <div class="c-head"><span class="c-back">‹ Campagnes</span><span class="c-date">jeudi 24 octobre</span></div>
+          <h1 class="c-title">Marmites inox 5 L</h1>
+          <svg class="c-ul" viewBox="0 0 228 13" preserveAspectRatio="none" aria-hidden="true"><path d="M2 5 C 60 2.5, 140 7, 224 3.5" stroke="#D35A5E" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M8 10.5 C 70 8.5, 150 11.5, 214 9" stroke="#D35A5E" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+          <p class="c-meta">Arrivage dans 10 jours. Tu prévoyais d'en commander 400.</p>
+          <div class="c-stampwrap">
+            <div class="c-stamp"><div class="w">PRUDENCE</div><div class="n">~210</div><div class="u">PIÈCES</div></div>
+            <div class="c-note"><svg viewBox="0 0 46 26" aria-hidden="true"><path d="M42 22 C 30 6, 18 4, 6 9" fill="none" stroke="#596071" stroke-width="1.8" stroke-linecap="round"/><path d="M11 3.5 L5 9 L12 13" fill="none" stroke="#596071" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>et pas 400&nbsp;!</div>
+          </div>
+          <p class="c-base">Entre 176 et 246 pièces, d'après 94 réponses dont 64 intéressés.</p>
+
+          <div class="c-gtop" style="margin-top:22px"><span>annoncé 350</span></div>
+          <div class="c-gauge"><div class="fill"></div><div class="mk"></div></div>
+          <div class="c-gbot"><span>réaliste <b>211</b></span><span>prévu <b>400</b></span></div>
+
+          <h2 class="c-h">Le calcul</h2>
+          <table class="c-calc">
+            <tr><td class="l">Revendeurs <small>(22)</small></td><td class="q">180</td><td class="op">× 0,7</td><td class="r">126</td></tr>
+            <tr><td class="l">Usagers <small>(42)</small></td><td class="q">170</td><td class="op">× 0,5</td><td class="r">85</td></tr>
+            <tr class="tot"><td class="l">Total</td><td class="q">350</td><td class="op"></td><td class="r">≈ 211</td></tr>
+          </table>
+          <p class="c-foot">0,7 : sur 10 revendeurs qui disent oui, 7 achètent vraiment.</p>
+
+          <h2 class="c-h">Argent sauvé</h2>
+          <p class="c-amt"><span class="hl">850&#8239;500 FCFA</span></p>
+          <p class="c-p">de stock qui aurait dormi au dépôt si tu commandais 400.</p>
+          <div class="c-lead" style="margin-top:6px"><span>Bénéfice attendu</span><span class="d"></span><b>~444&#8239;000 FCFA</b></div>
+
+          <h2 class="c-h">Où livrer</h2>
+          <div class="c-lead"><span>Médina</span><span class="d"></span><b>24</b></div>
+          <div class="c-lead"><span>Parcelles Assainies</span><span class="d"></span><b>17</b></div>
+          <div class="c-lead"><span>Guédiawaye</span><span class="d"></span><b>12</b></div>
+          <div class="c-lead"><span>Autres quartiers</span><span class="d"></span><b>11</b></div>
+
+          <h2 class="c-h">Quand</h2>
+          <div class="c-lead"><span>Dès l'arrivée</span><span class="d"></span><b>60 %</b></div>
+          <div class="c-lead"><span>La semaine suivante</span><span class="d"></span><b>30 %</b></div>
+          <div class="c-lead"><span>Plus tard</span><span class="d"></span><b>10 %</b></div>
+
+          <p class="c-sig">7 « non » sur 30 : <span class="circ">trop cher</span></p>
+
+          <div class="c-cta p">Voir les 64 intéressés</div>
+          <div class="c-cta w"><svg><use href="#i-wa"/></svg>Partager sur WhatsApp</div>
+        </div>
+        <nav class="tabs"><span class="tab"><svg><use href="#i-home"/></svg>Accueil</span><span class="tab on"><svg><use href="#i-camp"/></svg>Campagnes</span><span class="tab"><svg><use href="#i-cmd"/></svg>Commandes</span><span class="tab"><svg><use href="#i-cli"/></svg>Clients</span><span class="tab"><svg><use href="#i-more"/></svg>Plus</span></nav>
+      </div></div>
+      <button class="pick" data-choice="cahier" onclick="pick(this)">Je choisis Cahier</button>
+    </section>
+
+  </div>
+</div>
+
+<script>
+  function pick(btn){
+    document.querySelectorAll('.dir').forEach(function(d){d.classList.remove('chosen')});
+    btn.closest('.dir').classList.add('chosen');
+  }
+</script>
+</body>
+</html>

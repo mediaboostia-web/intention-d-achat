@@ -1,6 +1,10 @@
 # Charte Tamani : « Cahier du marché »
 
-Validée par le porteur du projet le 2026-10-24. Les maquettes de référence sont dans `.superpowers/brainstorm/4627-1792818032/content/` : `identite-pistes-v2.html` montre les trois pistes, et `identite-fusion-v2.html` la fusion retenue.
+Validée par le porteur du projet le 2026-10-24. Les maquettes de référence sont à ouvrir dans un navigateur :
+- `docs/brand/mockups/2026-10-24-trois-pistes.html` : les trois pistes de départ (Indigo, Marché, Cahier) ;
+- `docs/brand/mockups/2026-10-24-fusion-cahier-du-marche.html` : les deux fusions. La fusion 1, « Cahier du marché », a été retenue, avec l'auvent du pop-up pris à la fusion 2.
+
+La page `/styleguide`, en développement, montre ces mêmes écrans refaits avec les vrais composants.
 
 ## L'idée
 

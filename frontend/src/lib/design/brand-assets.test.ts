@@ -4,6 +4,7 @@ import path from 'node:path';
 import { colors } from './tokens';
 
 const FRONTEND = path.resolve(__dirname, '../../..');
+const REPO = path.resolve(FRONTEND, '..');
 const at = (rel: string) => path.join(FRONTEND, rel);
 
 const SVGS = {
@@ -42,6 +43,19 @@ describe('brand assets (Tamani lot 2)', () => {
   it('PNG sizes are exact', () => {
     expect(pngSize('src/app/apple-icon.png')).toEqual({ width: 180, height: 180 });
     expect(pngSize('public/brand/og-default.png')).toEqual({ width: 1200, height: 630 });
+  });
+
+  // The validated mockups are the record of the porteur's decision: they must
+  // be committed, not left in the git-ignored .superpowers/ scratch folder.
+  it.each([
+    'docs/brand/tamani-brand.md',
+    'docs/superpowers/plans/2026-10-24-tamani-02-identite.md',
+  ])('%s only cites committed mockups', (rel) => {
+    const doc = readFileSync(path.join(REPO, rel), 'utf8');
+    expect(doc).not.toMatch(/\.superpowers\//);
+    const cited = doc.match(/docs\/brand\/mockups\/[\w.-]+\.html/g) ?? [];
+    expect(cited.length).toBeGreaterThan(0);
+    for (const file of cited) expect(existsSync(path.join(REPO, file)), file).toBe(true);
   });
 
   it('SVGs only use palette colors', () => {
