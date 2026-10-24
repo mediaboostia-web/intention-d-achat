@@ -27,4 +27,12 @@ describe('/styleguide', () => {
     expect(t).toContain('Commande environ 210 pièces, pas les 400 prévues.');
     expect(t).toContain("Ça t'intéresse ?");
   });
+
+  it('shows the shop space components', () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    const t = text(<StyleguidePage />);
+    expect(t).toContain('Espace grossiste');
+    expect(t).toContain('Étape 2 sur 6');
+    expect(t).toContain('Commandes');
+  });
 });
