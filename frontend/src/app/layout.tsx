@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Andika, Bowlby_One, Kalam } from 'next/font/google';
+import { InkFilters } from '@/components/ui/InkFilters';
 import './globals.css';
 
 // Tamani type roles (docs/brand/tamani-brand.md): Andika for all text,
@@ -44,7 +45,10 @@ export default function RootLayout({
     <html lang="fr" className={`${andika.variable} ${kalam.variable} ${bowlby.variable}`}>
       {/* Session providers live in (app)/ and (admin)/ layouts so public
           pages (incl. the /c/[code] popup) ship no session JS. */}
-      <body>{children}</body>
+      <body>
+        <InkFilters />
+        {children}
+      </body>
     </html>
   );
 }

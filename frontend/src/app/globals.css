@@ -116,6 +116,18 @@
   box-decoration-break: clone;
 }
 
+/* Market-stall awning on the popup sheet: striped band, scalloped edge. */
+@utility awning {
+  height: 18px;
+  background:
+    radial-gradient(circle at 7px 0, var(--color-primary) 7px, transparent 7.5px) 0 8px / 28px 10px
+      repeat-x,
+    radial-gradient(circle at 21px 0, var(--color-accent) 7px, transparent 7.5px) 0 8px / 28px 10px
+      repeat-x,
+    repeating-linear-gradient(90deg, var(--color-primary) 0 14px, var(--color-accent) 14px 28px) 0
+      0 / 100% 8px no-repeat;
+}
+
 /* Rubber-stamp ink (filter defined once by <InkFilters /> in the root layout). */
 @utility stamp {
   filter: url(#tm-ink);
