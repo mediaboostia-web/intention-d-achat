@@ -17,6 +17,9 @@ export default defineConfig({
     // test module imports `@/lib/server/auth` (which throws at import time
     // when JWT_SECRET is missing or < 32 chars).
     setupFiles: ['./vitest.setup.ts'],
+    // bcrypt-heavy signup rate-limit test takes ~3.5s alone and exceeds the
+    // 5s default under full-suite load on slower Windows machines.
+    testTimeout: 15_000,
   },
   resolve: {
     alias: {
