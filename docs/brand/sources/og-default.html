@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tamani — og-default (1200×630)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Bowlby+One&family=Kalam:wght@700&display=block"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+      }
+      body {
+        position: relative;
+        background-color: #fdfdf8;
+        background-image:
+          linear-gradient(#dde6f4 1.5px, transparent 1.5px),
+          linear-gradient(90deg, #dde6f4 1.5px, transparent 1.5px);
+        background-size: 30px 30px;
+        color: #10204a;
+        font-family: Andika, sans-serif;
+      }
+      body::before {
+        content: '';
+        position: absolute;
+        left: 104px;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: #e2878a;
+      }
+      .logo {
+        position: absolute;
+        left: 150px;
+        top: 72px;
+        height: 76px;
+      }
+      h1 {
+        position: absolute;
+        left: 150px;
+        top: 200px;
+        margin: 0;
+        font:
+          700 66px/1.12 Kalam,
+          cursive;
+        color: #1a4fbf;
+        white-space: nowrap;
+      }
+      p {
+        position: absolute;
+        left: 150px;
+        top: 392px;
+        margin: 0;
+        font-size: 30px;
+        line-height: 1.35;
+        color: #3e4660;
+        width: 540px;
+      }
+      .stamp {
+        position: absolute;
+        right: 84px;
+        top: 236px;
+        transform: rotate(-6deg);
+        color: #1b7344;
+        border: 6px solid currentColor;
+        border-radius: 26px;
+        padding: 20px 28px 18px;
+        text-align: center;
+        filter: url(#ink);
+        mix-blend-mode: multiply;
+      }
+      .stamp::before {
+        content: '';
+        position: absolute;
+        inset: 10px;
+        border: 3px solid currentColor;
+        border-radius: 20px;
+      }
+      .stamp .w {
+        font:
+          400 24px/1 'Bowlby One',
+          sans-serif;
+        letter-spacing: 0.3em;
+        margin-right: -0.3em;
+      }
+      .stamp .n {
+        font:
+          400 84px/1 'Bowlby One',
+          sans-serif;
+        margin-top: 8px;
+      }
+      .stamp .u {
+        font:
+          700 24px/1 Andika,
+          sans-serif;
+        letter-spacing: 0.22em;
+        margin-right: -0.22em;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <filter id="ink" x="-6%" y="-6%" width="112%" height="112%">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.02"
+            numOctaves="2"
+            seed="3"
+            result="w"
+          />
+          <feDisplacementMap in="SourceGraphic" in2="w" scale="4" result="d" />
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.6"
+            numOctaves="1"
+            seed="8"
+            result="s"
+          />
+          <feColorMatrix
+            in="s"
+            type="matrix"
+            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -4.2 3.3"
+            result="m"
+          />
+          <feComposite in="d" in2="m" operator="in" />
+        </filter>
+      </defs>
+    </svg>
+    <img class="logo" src="../../../frontend/public/brand/tamani-logo.svg" alt="Tamani" />
+    <h1>Ta communauté parle.<br />Tu sais quoi acheter.</h1>
+    <p>Demande à ta communauté avant d'acheter ton stock.</p>
+    <div class="stamp">
+      <div class="w">COMMANDE</div>
+      <div class="n">~240</div>
+      <div class="u">PIÈCES</div>
+    </div>
+  </body>
+</html>
