@@ -1,6 +1,7 @@
 import type { FormEvent, ReactNode } from 'react';
 import Link from 'next/link';
 import { Button, Notice } from '@/components/ui';
+import { frenchSpacing } from '@/lib/tamani/typography';
 
 // The frame shared by the sign-in pages: a handwritten title underlined in
 // the margin colour, the fields, the error, and one pressed button.
@@ -50,7 +51,9 @@ export function AuthForm({
 export function AuthTitle({ title, note }: { title: string; note?: ReactNode }) {
   return (
     <div>
-      <h1 className="font-hand text-4xl leading-tight font-bold text-primary">{title}</h1>
+      <h1 className="font-hand text-4xl leading-tight font-bold text-primary">
+        {frenchSpacing(title)}
+      </h1>
       <svg
         viewBox="0 0 228 13"
         preserveAspectRatio="none"

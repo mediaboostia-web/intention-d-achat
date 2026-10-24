@@ -1,3 +1,4 @@
+import { frenchSpacing } from '@/lib/tamani/typography';
 import { cn } from '@/lib/utils';
 
 /** Where the wholesaler is in a step-by-step form: "Étape 2 sur 6" and the question. */
@@ -25,7 +26,9 @@ export function Steps({
       <p className="mt-3 text-sm font-bold text-ink-soft">
         Étape {current} sur {total}
       </p>
-      <h2 className="font-hand text-3xl leading-tight font-bold text-primary">{title}</h2>
+      <h2 className="font-hand text-3xl leading-tight font-bold text-primary">
+        {frenchSpacing(title)}
+      </h2>
     </div>
   );
 }

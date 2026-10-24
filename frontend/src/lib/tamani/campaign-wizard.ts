@@ -107,11 +107,12 @@ export function canAdvance(s: WizardState): boolean {
   }
 }
 
-function arrival(s: WizardState, now: Date): string | null {
+/** The arrival date the campaign is sent with (null when in stock). */
+export function wizardAvailableAt(s: WizardValues, now: Date): Date | null {
   if (s.availability === 'IN_STOCK') return null;
   // Noon UTC keeps the chosen day whatever the reader's time zone.
-  if (isDay(s.availableOn)) return new Date(`${s.availableOn}T12:00:00.000Z`).toISOString();
-  return s.availableInDays === null ? null : addDays(now, s.availableInDays).toISOString();
+  if (isDay(s.availableOn)) return new Date(`${s.availableOn}T12:00:00.000Z`);
+  return s.availableInDays === null ? null : addDays(now, s.availableInDays);
 }
 
 const countOrNull = (raw: string, min: number) => (raw.trim() === '' ? null : parseCount(raw, min));
@@ -124,7 +125,7 @@ export function toCampaignBody(
   return {
     productId: s.productId,
     availability: s.availability,
-    availableAt: arrival(s, now),
+    availableAt: wizardAvailableAt(s, now)?.toISOString() ?? null,
     stockQuantity: countOrNull(s.stockQuantity, 0),
     plannedQuantity: countOrNull(s.plannedQuantity, 1),
     showStock: s.showStock,

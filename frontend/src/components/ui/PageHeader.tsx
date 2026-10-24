@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { frenchSpacing } from '@/lib/tamani/typography';
 import { cn } from '@/lib/utils';
 
 /** Top of a page: the title written by hand, a pencil note, one action. */
@@ -22,7 +23,7 @@ export function PageHeader({
     >
       <div className="min-w-0">
         <h1 className="font-hand text-3xl leading-tight font-bold text-primary sm:text-4xl">
-          {title}
+          {frenchSpacing(title)}
         </h1>
         {note && <p className="mt-1 text-sm text-ink-muted">{note}</p>}
       </div>

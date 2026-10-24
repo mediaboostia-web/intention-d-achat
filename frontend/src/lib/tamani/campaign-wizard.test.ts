@@ -5,6 +5,7 @@ import {
   canAdvance,
   initialWizardState,
   toCampaignBody,
+  wizardAvailableAt,
   wizardReducer,
 } from './campaign-wizard';
 
@@ -79,5 +80,16 @@ describe('campaign wizard', () => {
       endsAt: null,
       status: 'DRAFT',
     });
+  });
+});
+
+describe('wizardAvailableAt', () => {
+  it('gives the arrival date the campaign will be sent with', () => {
+    const incoming = { ...initialWizardState('p1'), availability: 'INCOMING' as const };
+    expect(wizardAvailableAt(incoming, now)?.toISOString()).toBe('2026-11-03T10:00:00.000Z');
+    expect(wizardAvailableAt({ ...incoming, availableOn: '2026-12-01' }, now)?.toISOString()).toBe(
+      '2026-12-01T12:00:00.000Z',
+    );
+    expect(wizardAvailableAt(initialWizardState('p1'), now)).toBeNull();
   });
 });
