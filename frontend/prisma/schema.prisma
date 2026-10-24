@@ -102,6 +102,21 @@ model Organization {
   createdAt DateTime             @default(now())
   updatedAt DateTime             @updatedAt
 
+  // Tamani lot 3: an Organization is a wholesaler's shop.
+  whatsappPhone String? // E.164
+  country       String  @default("SN") // ISO-2, default region for local phone numbers
+  currency      String  @default("XOF")
+  logoUrl       String?
+  coefConsumer  Float   @default(0.5) // share of announced consumer demand that turns real
+  coefReseller  Float   @default(0.7)
+
+  zones        DeliveryZone[]
+  products     Product[]
+  campaigns    Campaign[]
+  respondents  Respondent[]
+  responses    Response[]
+  subscription Subscription?
+
   @@index([ownerId])
 }
 
@@ -306,4 +321,157 @@ model Order {
   @@index([userId, createdAt])
   @@index([status, expiresAt])
   @@index([provider, providerChargeId])
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// Tamani core (lot 3, migration 6_tamani_core). Amounts are integer FCFA;
+// statuses are Strings, never Prisma enums. Every row carries its shop
+// (organizationId) so routes can scope every query to one shop.
+// ───────────────────────────────────────────────────────────────────────
+
+model DeliveryZone {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  sortOrder      Int          @default(0)
+  responses      Response[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, name])
+}
+
+model Product {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name            String
+  description     String?
+  unitLabel       String       @default("pièce")
+  unitPrice       Int
+  wholesalePrice  Int?
+  wholesaleMinQty Int?
+  costPrice       Int? // purchase price: never exposed to respondents
+  photos          Json         @default("[]") // Cloudinary URLs
+  optionLabel     String? // e.g. "Couleur"
+  options         String[]     @default([])
+  archivedAt      DateTime?
+  campaigns       Campaign[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([organizationId, createdAt])
+}
+
+// The status stored here is the wholesaler's last action; the effective
+// status (an ACTIVE campaign past endsAt reads CLOSED) is computed at read
+// time by lib/server/tamani/campaign-status.ts.
+model Campaign {
+  id              String         @id @default(cuid())
+  organizationId  String
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  productId       String
+  // NoAction: a product with campaigns is archived, never deleted, while
+  // deleting the whole shop still cascades.
+  product         Product        @relation(fields: [productId], references: [id], onDelete: NoAction)
+  title           String
+  availability    String // IN_STOCK | INCOMING
+  availableAt     DateTime?
+  stockQuantity   Int?
+  plannedQuantity Int? // what the wholesaler plans to order: the verdict's reference
+  showStock       Boolean        @default(false)
+  endsAt          DateTime?
+  deliveryEnabled Boolean        @default(false)
+  showLiveCounter Boolean        @default(true)
+  shareTemplate   String
+  status          String         @default("DRAFT") // DRAFT | ACTIVE | CLOSED | ARRIVED
+  closedAt        DateTime?
+  arrivedAt       DateTime?
+  links           CampaignLink[]
+  responses       Response[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([organizationId, status])
+  @@index([productId])
+}
+
+model CampaignLink {
+  id         String     @id @default(cuid())
+  campaignId String
+  campaign   Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  code       String     @unique // base62, 7 chars: /c/[code]
+  label      String
+  isDefault  Boolean    @default(false)
+  openCount  Int        @default(0)
+  responses  Response[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([campaignId])
+}
+
+// A "client" in the UI. Scoped to one shop: the same number at two shops
+// is two respondents. Postgres allows many NULL phoneE164 (anonymized rows)
+// under the unique key.
+model Respondent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  phoneE164      String?
+  firstName      String?
+  notes          String?
+  firstSeenAt    DateTime     @default(now())
+  lastSeenAt     DateTime     @default(now())
+  anonymizedAt   DateTime?
+  responses      Response[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, phoneE164])
+}
+
+model Response {
+  id                  String        @id @default(cuid())
+  campaignId          String
+  campaign            Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  organizationId      String // denormalized from the campaign: monthly quota and filters
+  organization        Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  linkId              String?
+  link                CampaignLink? @relation(fields: [linkId], references: [id], onDelete: SetNull)
+  respondentId        String?
+  respondent          Respondent?   @relation(fields: [respondentId], references: [id], onDelete: SetNull)
+  deviceId            String
+  interested          Boolean?
+  notInterestedReason String? // TOO_EXPENSIVE | NO_NEED | ALREADY_BOUGHT | OTHER
+  buyerType           String? // CONSUMER | RESELLER
+  quantity            Int?
+  option              String?
+  timing              String?
+  wantsDelivery       Boolean?
+  zoneId              String?
+  zone                DeliveryZone? @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  completedAt         DateTime?
+  locked              Boolean       @default(false) // over the monthly quota: kept, hidden until upgrade
+  suspicious          Boolean       @default(false)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@unique([campaignId, deviceId])
+  @@unique([campaignId, respondentId])
+  @@index([organizationId, completedAt])
+  @@index([campaignId, completedAt])
+  @@index([respondentId])
+}
+
+model Subscription {
+  id               String       @id @default(cuid())
+  organizationId   String       @unique
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan             String       @default("FREE") // FREE | PRO | BUSINESS
+  currentPeriodEnd DateTime?
+  graceUntil       DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 }
