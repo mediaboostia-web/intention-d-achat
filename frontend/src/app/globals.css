@@ -2,9 +2,10 @@
 
 /* Tamani — "Cahier du marché" (docs/brand/tamani-brand.md).
    Colors mirror src/lib/design/tokens.ts; tokens-sync.test.ts keeps them
-   identical. Tailwind's default palette is still on until lot 4 rewrites
-   the kit pages that use it. */
+   identical. Tailwind's default palette is off: only these colors exist
+   (no-default-palette.test.ts rejects a default class in src/). */
 @theme {
+  --color-*: initial;
   --color-bg: #fdfdf8;
   --color-surface: #ffffff;
   --color-grid: #dde6f4;

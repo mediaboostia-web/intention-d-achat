@@ -24,6 +24,14 @@ const ToastContext = createContext<ToastContextValue>({
 const TOAST_DURATION = 3000;
 const FADE_OUT_DURATION = 300;
 
+// A note pinned on the page, like the kit's Notice: the outline carries the
+// tone, the text stays ink.
+const TONE_BORDER: Record<ToastType, string> = {
+  success: 'border-success',
+  error: 'border-danger',
+  info: 'border-primary',
+};
+
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextIdRef = useRef(0);
@@ -51,15 +59,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto flex items-center gap-3 rounded-2xl border px-5 py-3.5 text-sm font-medium shadow-lg transition-opacity ${
+            className={`pointer-events-auto flex items-center gap-3 rounded-card border-[2.5px] bg-surface px-5 py-3.5 text-base font-bold text-ink transition-opacity motion-reduce:transition-none ${
               t.exiting ? 'opacity-0' : 'opacity-100'
-            } ${
-              t.type === 'success'
-                ? 'border-green-200 bg-white text-green-700'
-                : t.type === 'error'
-                  ? 'border-red-200 bg-white text-red-700'
-                  : 'border-gray-200 bg-white text-gray-700'
-            }`}
+            } ${TONE_BORDER[t.type]}`}
             style={{ maxWidth: '90vw' }}
           >
             {t.message}

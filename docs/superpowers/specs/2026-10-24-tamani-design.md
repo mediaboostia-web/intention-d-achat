@@ -278,7 +278,7 @@ Toutes respectent les invariants du kit : `export const runtime = 'nodejs'` et `
 ### 6.4 Pages
 - **Public** : `/` (accueil), `/tarifs`, `/c/[code]` (le pop-up), `/confidentialite`, `/cgu`.
 - **Auth** : `/login`, `/signup`, `/verify-email`, `/forgot-password`, `/reset-password`, adaptées des exemples dans `examples/frontend-pages/`.
-- **Grossiste** (`/app/*`, protégé par le `middleware.ts` du kit via `AUTH_PROTECTED_PREFIXES=/app,/admin`) : `/app` (vue d'ensemble), `/app/produits`, `/app/campagnes`, `/app/campagnes/nouvelle`, `/app/campagnes/[id]` (statistiques, répondants, commandes, liens, partage), `/app/commandes` (liste et « à livrer par quartier »), `/app/clients`, `/app/clients/[id]` (fiche), `/app/abonnement`, `/app/reglages`.
+- **Grossiste** (`/app/*`, protégé par le `src/proxy.ts` du kit, ex-`middleware.ts`, via `AUTH_PROTECTED_PREFIXES=/app,/admin`) : `/app` (vue d'ensemble), `/app/produits`, `/app/campagnes`, `/app/campagnes/nouvelle`, `/app/campagnes/[id]` (statistiques, répondants, commandes, liens, partage), `/app/commandes` (liste et « à livrer par quartier »), `/app/clients`, `/app/clients/[id]` (fiche), `/app/abonnement`, `/app/reglages`.
 - **Admin Tamani** : `/admin/*` (boutiques, abonnements, paiements, utilisateurs, journal).
 - **Mise en page** : utiliser des groupes de routes Next (`(public)`, `(app)`, `(admin)`). Les providers `AuthProvider` et `ToastProvider`, aujourd'hui dans la mise en page racine, descendent dans `(app)` et `(admin)`. Ainsi, le pop-up ne charge ni le JavaScript de session ni l'appel `/api/auth/me`.
 
