@@ -54,3 +54,55 @@ export const ZoneCreate = z.object({ name: zoneName, sortOrder: sortOrder.defaul
 export const ZonePatch = z
   .object({ name: zoneName.optional(), sortOrder: sortOrder.optional() })
   .refine(nonEmpty, 'Nothing to update');
+
+/** Integer FCFA, strictly positive. "7 500", 7500.5 and 0 are refused. */
+const price = z.number().int().min(1).max(100_000_000);
+
+const ProductFields = z.object({
+  name: z.string().trim().min(1).max(80),
+  description: z.string().trim().max(1000).nullable(),
+  unitLabel: z.string().trim().min(1).max(30),
+  unitPrice: price,
+  wholesalePrice: price.nullable(),
+  wholesaleMinQty: z.number().int().min(2).max(100_000).nullable(),
+  costPrice: price.nullable(),
+  photos: z.array(cloudinaryUrl).max(6),
+  optionLabel: z.string().trim().min(1).max(30).nullable(),
+  options: z
+    .array(z.string().trim().min(1).max(30))
+    .max(12)
+    .refine((o) => new Set(o).size === o.length, 'Duplicate option'),
+});
+
+export const ProductCreate = ProductFields.extend({
+  description: ProductFields.shape.description.default(null),
+  unitLabel: ProductFields.shape.unitLabel.default('pièce'),
+  wholesalePrice: ProductFields.shape.wholesalePrice.default(null),
+  wholesaleMinQty: ProductFields.shape.wholesaleMinQty.default(null),
+  costPrice: ProductFields.shape.costPrice.default(null),
+  photos: ProductFields.shape.photos.default([]),
+  optionLabel: ProductFields.shape.optionLabel.default(null),
+  options: ProductFields.shape.options.default([]),
+});
+
+export const ProductPatch = ProductFields.partial().refine(nonEmpty, 'Nothing to update');
+
+/** Rules across fields, checked on a new product and on the merged product of a PATCH. */
+export function checkProductRules(p: {
+  unitPrice: number;
+  wholesalePrice: number | null;
+  wholesaleMinQty: number | null;
+  optionLabel: string | null;
+  options: readonly string[];
+}): string | null {
+  if ((p.wholesalePrice === null) !== (p.wholesaleMinQty === null)) {
+    return 'wholesalePrice and wholesaleMinQty go together';
+  }
+  if (p.wholesalePrice !== null && p.wholesalePrice >= p.unitPrice) {
+    return 'wholesalePrice must be below unitPrice';
+  }
+  if ((p.optionLabel === null) !== (p.options.length === 0)) {
+    return 'optionLabel and options go together';
+  }
+  return null;
+}
