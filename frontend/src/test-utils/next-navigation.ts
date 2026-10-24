@@ -11,6 +11,7 @@ import { vi } from 'vitest';
 const state = {
   pathname: '/',
   search: '',
+  params: {} as Record<string, string>,
   push: vi.fn(),
   replace: vi.fn(),
 };
@@ -18,6 +19,7 @@ const state = {
 export const navigation = {
   usePathname: () => state.pathname,
   useSearchParams: () => new URLSearchParams(state.search),
+  useParams: () => state.params,
   useRouter: () => ({
     push: state.push,
     replace: state.replace,
@@ -37,9 +39,11 @@ export const navigation = {
 export function mockNextNavigation({
   pathname = '/',
   search = '',
-}: { pathname?: string; search?: string } = {}) {
+  params = {},
+}: { pathname?: string; search?: string; params?: Record<string, string> } = {}) {
   state.pathname = pathname;
   state.search = search;
+  state.params = params;
   state.push = vi.fn();
   state.replace = vi.fn();
   return { push: state.push, replace: state.replace };

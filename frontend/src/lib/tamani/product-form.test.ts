@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { emptyProductForm, productFormToBody } from './product-form';
+import {
+  emptyProductForm,
+  productFormToBody,
+  productToForm,
+  type ShopProduct,
+} from './product-form';
 
 const filled = {
   ...emptyProductForm,
@@ -42,5 +47,39 @@ describe('productFormToBody', () => {
         errors: { [field]: expect.any(String) },
       });
     }
+  });
+});
+
+describe('productToForm', () => {
+  it('turns a saved product back into what the form shows', () => {
+    const saved: ShopProduct = {
+      id: 'p1',
+      name: 'Marmites inox 5 L',
+      description: null,
+      unitLabel: 'pièce',
+      unitPrice: 7500,
+      wholesalePrice: 6000,
+      wholesaleMinQty: 12,
+      costPrice: null,
+      photos: ['https://res.cloudinary.com/demo/image/upload/v1/m.jpg'],
+      optionLabel: 'Couleur',
+      options: ['Rouge', 'Noir'],
+      archivedAt: null,
+      createdAt: '2026-10-24T10:00:00.000Z',
+    };
+    const form = productToForm(saved);
+    expect(form).toEqual({
+      name: 'Marmites inox 5 L',
+      description: '',
+      unitLabel: 'pièce',
+      unitPrice: '7 500',
+      wholesalePrice: '6 000',
+      wholesaleMinQty: '12',
+      costPrice: '',
+      photos: saved.photos,
+      optionLabel: 'Couleur',
+      options: ['Rouge', 'Noir'],
+    });
+    expect(productFormToBody(form)).toMatchObject({ ok: true, body: { unitPrice: 7500 } });
   });
 });

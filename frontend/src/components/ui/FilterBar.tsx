@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 /** Horizontally scrolling filter chips; each chip is a link (URL-synced filters). */
@@ -21,7 +22,7 @@ export function FilterBar({
       <ul className="flex w-max gap-2 py-1">
         {items.map((item) => (
           <li key={item.id}>
-            <a
+            <Link
               href={item.href}
               aria-current={item.active ? 'true' : undefined}
               className={cn(
@@ -33,7 +34,7 @@ export function FilterBar({
               {item.count !== undefined && (
                 <span className="font-normal text-ink-soft">{item.count}</span>
               )}
-            </a>
+            </Link>
           </li>
         ))}
       </ul>

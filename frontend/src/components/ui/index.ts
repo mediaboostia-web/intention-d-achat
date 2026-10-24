@@ -18,6 +18,7 @@ export { BottomNav, SideNav } from './NavBar';
 export { Notice } from './Notice';
 export { PageHeader } from './PageHeader';
 export { PhoneInput, type PhoneInputProps } from './PhoneInput';
+export { ProductCard, type ProductCardData } from './ProductCard';
 export { Select, type SelectProps } from './Select';
 export { StatTile } from './StatTile';
 export { Steps } from './Steps';

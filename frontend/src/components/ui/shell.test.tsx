@@ -168,6 +168,14 @@ describe('BottomNav and SideNav', () => {
     expect(anchor(side, '/app/produits')).toContain('aria-current="page"');
   });
 
+  it('BottomNav marks Plus on the pages it leads to', () => {
+    for (const pathname of ['/app/produits/p1', '/app/reglages', '/app/plus']) {
+      const out = html(<BottomNav pathname={pathname} />);
+      expect(out.match(/aria-current="page"/g), pathname).toHaveLength(1);
+      expect(anchor(out, '/app/plus'), pathname).toContain('aria-current="page"');
+    }
+  });
+
   it('SideNav reaches the plan and sign-out page from the desktop', () => {
     const side = html(<SideNav pathname="/app/plus" shopName="Diallo Import" />);
     expect(anchor(side, '/app/plus')).toContain('aria-current="page"');

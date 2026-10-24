@@ -1,5 +1,6 @@
 // The product form keeps what the wholesaler typed (strings); this turns
 // it into the API body, or into one message per field to fix.
+import { formatPrice } from '@/lib/utils';
 import { parseCount, parseFcfa } from './fcfa-input';
 import { productRuleViolation } from './product-rules';
 
@@ -42,7 +43,32 @@ export interface ProductBody {
   options: string[];
 }
 
+/** A product as the shop sees it (lib/server/tamani/serializers.ts toShopProduct). */
+export interface ShopProduct extends ProductBody {
+  id: string;
+  archivedAt: string | null;
+  createdAt: string;
+}
+
 export type ProductFormErrors = Partial<Record<keyof ProductFormValues, string>>;
+
+const typed = (n: number | null) => (n === null ? '' : formatPrice(n));
+
+/** The saved product as the form shows it: amounts written "7 500". */
+export function productToForm(p: ShopProduct): ProductFormValues {
+  return {
+    name: p.name,
+    description: p.description ?? '',
+    unitLabel: p.unitLabel,
+    unitPrice: typed(p.unitPrice),
+    wholesalePrice: typed(p.wholesalePrice),
+    wholesaleMinQty: p.wholesaleMinQty === null ? '' : String(p.wholesaleMinQty),
+    costPrice: typed(p.costPrice),
+    photos: [...p.photos],
+    optionLabel: p.optionLabel ?? '',
+    options: [...p.options],
+  };
+}
 
 const PRICE_HINT = 'Écris le prix en FCFA, sans virgule, par exemple 7 500.';
 

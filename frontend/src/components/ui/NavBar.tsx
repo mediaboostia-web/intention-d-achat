@@ -15,7 +15,10 @@ export function BottomNav({ pathname }: { pathname: string }) {
     >
       <ul className="mx-auto flex max-w-xl">
         {APP_NAV.map((item) => {
-          const active = isNavActive(item.href, pathname);
+          // Products and settings live behind "Plus" on a phone.
+          const active =
+            isNavActive(item.href, pathname) ||
+            (item.id === 'more' && DESKTOP_EXTRA_NAV.some((x) => isNavActive(x.href, pathname)));
           return (
             // Sized by content, not fifths: "Commandes" (70px) fits a 320px phone.
             <li key={item.id} className="min-w-0 flex-auto">
