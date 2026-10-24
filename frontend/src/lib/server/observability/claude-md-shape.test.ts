@@ -64,4 +64,11 @@ describe('CLAUDE.md doc tripwire (DOC-01)', () => {
     expect(content).toMatch(/webhook/i);
     expect(content).toMatch(/upload/i);
   });
+
+  it('identifies the project as Tamani and links the design spec + roadmap', () => {
+    const content = readFileSync(CLAUDE_MD_PATH, 'utf8');
+    expect(content).toMatch(/Tamani/);
+    expect(content).toContain('docs/superpowers/specs/2026-10-24-tamani-design.md');
+    expect(content).toContain('docs/superpowers/plans/2026-10-24-tamani-roadmap.md');
+  });
 });

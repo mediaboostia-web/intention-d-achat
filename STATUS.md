@@ -1,3 +1,5 @@
+> **2026-10-24 — fork du kit izikit en Tamani** (voir [docs/superpowers/plans/](docs/superpowers/plans/)). Le reste de ce document est l'historique du kit.
+
 # amadou-monolith — port status
 
 Cloned from [`amadou-template`](../amadou-template) on 2026-05-07 as a Next.js full-stack variant (no separate Express backend). This document is the source of truth for what's done and what's left.

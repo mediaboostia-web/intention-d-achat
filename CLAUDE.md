@@ -6,7 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project is
 
-**A v1-shipped, headless Next.js 16 monolith starter.** Single full-stack app (App Router API Route Handlers + Server Actions + Prisma 5 + Neon + Upstash + Cloudinary + Resend + Bictorys + Sentry). There is no separate Express backend anymore — server logic lives under `frontend/src/app/api/*` and `frontend/src/lib/server/*`. The app **ships only logic** — no UI components — so each fork designs its own UX.
+**Tamani** — a SaaS for African wholesalers: they share a link on WhatsApp, their community states its purchase intent in ~10 seconds in a popup, and the dashboard tells them what to order and how much, then helps them turn intents into orders and know their clients. Freemium, billed through SasPay. Product design: [docs/superpowers/specs/2026-10-24-tamani-design.md](docs/superpowers/specs/2026-10-24-tamani-design.md). Implementation roadmap (9 lots, cross-lot contracts — names, signatures, routes, error codes): [docs/superpowers/plans/2026-10-24-tamani-roadmap.md](docs/superpowers/plans/2026-10-24-tamani-roadmap.md). Read both before adding Tamani code; when they disagree with this file on Tamani behaviour, the spec wins and this file gets updated.
+
+Tamani is built on the izikit starter described below (withdrawals pruned in lot 1; Bictorys is swapped for SasPay in lot 8).
+
+**Base: a v1-shipped, headless Next.js 16 monolith starter.** Single full-stack app (App Router API Route Handlers + Server Actions + Prisma 5 + Neon + Upstash + Cloudinary + Resend + Bictorys + Sentry). There is no separate Express backend anymore — server logic lives under `frontend/src/app/api/*` and `frontend/src/lib/server/*`. The app **ships only logic** — no UI components — so each fork designs its own UX.
 
 Origin: bootstrapped from `amadou-template` (the legacy monorepo predecessor) on 2026-05-07; the port to a single Next.js 16 app shipped through 7 phases (auth → OAuth/notifs → admin → uploads/withdrawals → webhooks/cron → docs/tests → final pass). 555/555 unit tests green (the storage swap dropped the now-obsolete `/api/files/[...key]` proxy tests).
 
@@ -43,6 +47,16 @@ pnpm workspace — run from repo root unless noted. The root `package.json` is a
 Integration tests are deferred (no formal harness in v1) — `pnpm smoke:auth` provides a manual UAT script for the auth happy path against a running `pnpm dev`. See README.
 
 **Before committing:** `pnpm format && pnpm lint && pnpm typecheck && pnpm test` — must all pass.
+
+## Dev notes (Windows + Prisma)
+
+The porteur develops on Windows 11. These traps were hit during setup (2026-10-24):
+
+- **Prisma CLI does not read `frontend/.env.local`** (only `.env`). Run migrations from `frontend/` as `node --env-file=.env.local node_modules/prisma/build/index.js migrate deploy` (same for `migrate status`, `migrate diff`, `validate`). Use Git Bash, not PowerShell, when redirecting output (`>` in PowerShell 5.1 writes UTF-16).
+- **After a fresh `pnpm install`**, regenerate the client from `frontend/` with `node node_modules/prisma/build/index.js generate`. The postinstall run writes the client to the root `node_modules/.prisma/client`, where `@prisma/client/runtime/library.js` cannot be resolved (tsc errors on transaction clients, `Cannot find module` at runtime). Delete that root folder if it reappears.
+- **A running `next dev` locks Prisma's query-engine DLL** — stop the dev server before `prisma generate` (EPERM on rename otherwise). Killing `next dev` mid-write can leave a truncated `frontend/.next/dev/types/routes.d.ts`; delete `frontend/.next/dev` if `tsc` reports syntax errors there.
+- **Port 3000** is often taken by another local project; run `APP_URL=http://localhost:3001 pnpm exec next dev --port 3001 --turbopack` from `frontend/` and `SMOKE_BASE_URL=http://localhost:3001 pnpm smoke:auth`.
+- Neon free-tier compute sleeps; a first `P1001 Can't reach database server` usually succeeds on retry.
 
 ## High-level architecture
 

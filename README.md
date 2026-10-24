@@ -1,6 +1,15 @@
-# izi kit
+# Tamani
 
-Starter full-stack headless pour la stack Next.js 16 + Prisma 5 + Neon + Upstash + Cloudinary + Resend + Bictorys + Sentry. Une seule app Next.js déployable — aucun backend séparé. Les providers tiers (Cloudinary, Resend, Bictorys, Google OAuth, Sentry, Upstash) sont gated par variables d'environnement et inertes sans leurs clés ; l'app boote et `/api/auth` fonctionne avec juste `DATABASE_URL`, `JWT_SECRET`, `ENCRYPTION_KEY` et `CRON_SECRET`. Le starter ne ship que de la logique — aucun composant UI, aucune page — chaque fork designe son propre UX.
+**Ta communauté parle. Tu sais quoi acheter.**
+
+Tamani est un SaaS pour les grossistes africains. Ils partagent un lien sur WhatsApp, leur communauté donne son intention d'achat en ~10 secondes dans un pop-up, et le tableau de bord leur dit quoi commander et en quelle quantité, puis les aide à transformer ces intentions en commandes et à connaître leurs clients.
+
+- Conception : [docs/superpowers/specs/2026-10-24-tamani-design.md](docs/superpowers/specs/2026-10-24-tamani-design.md)
+- Plan d'implémentation (9 lots) : [docs/superpowers/plans/2026-10-24-tamani-roadmap.md](docs/superpowers/plans/2026-10-24-tamani-roadmap.md)
+
+## Base technique : le starter izi kit
+
+Tamani est construit sur le starter full-stack headless izi kit : Next.js 16 + Prisma 5 + Neon + Upstash + Cloudinary + Resend + Sentry (paiements Bictorys remplacés par SasPay au lot 8). Une seule app Next.js déployable — aucun backend séparé. Les providers tiers (Cloudinary, Resend, Bictorys, Google OAuth, Sentry, Upstash) sont gated par variables d'environnement et inertes sans leurs clés ; l'app boote et `/api/auth` fonctionne avec juste `DATABASE_URL`, `JWT_SECRET`, `ENCRYPTION_KEY` et `CRON_SECRET`. Le starter ne ship que de la logique — aucun composant UI, aucune page — chaque fork designe son propre UX.
 
 Voir [STATUS.md](STATUS.md) pour l'historique de migration.
 
@@ -25,8 +34,8 @@ Pré-requis avant de taper `/setup-kit` : avoir **Claude Code** installé (CLI o
 Le starter est **cloud-only par design** — aucun conteneur local, aucun daemon à installer. **[Neon](https://neon.tech) est le provider Postgres par défaut** : le kit est **tuned pour son comportement serverless** (le handler de webhooks évite le plafond de tx 2s en sortant les side-effects vers l'outbox, la mitigation timing-attack de `/forgot-password` calibre son floor à 350ms sur la base de la latence Neon-pooler, et un tripwire CI verrouille `.env.example` au format Neon). D'autres Postgres (Supabase, Railway, Render, RDS, self-hosted) fonctionnent — le SQL est standard — mais demandent du tuning user-side ; reste sur Neon sauf raison forte (équipe déjà sur Supabase, data residency…).
 
 ```bash
-gh repo clone faratasn-pixel/izikit my-project   # ou: git clone <fork-url> my-project
-cd my-project
+gh repo clone mediaboostia-web/intention-d-achat tamani   # ou: git clone https://github.com/mediaboostia-web/intention-d-achat.git tamani
+cd tamani
 cp .env.example frontend/.env.local              # remplis DATABASE_URL, JWT_SECRET, ENCRYPTION_KEY, CRON_SECRET au minimum
 pnpm install
 pnpm db:migrate:deploy                           # applique les migrations versionnées sur ta DB Neon
@@ -35,6 +44,8 @@ pnpm dev                                         # http://localhost:3000
 pnpm db:make-superadmin you@example.com
 pnpm smoke:auth                                  # vérifie le happy path auth de bout en bout
 ```
+
+⚠️ La CLI Prisma ne lit pas `frontend/.env.local` (seulement `.env`) : si `pnpm db:migrate:deploy` ne trouve pas `DATABASE_URL`, lance depuis `frontend/` `node --env-file=.env.local node_modules/prisma/build/index.js migrate deploy`. Voir « Dev notes » dans [CLAUDE.md](CLAUDE.md) (pièges Windows inclus).
 
 Pour obtenir `DATABASE_URL` + `DIRECT_URL` : crée un projet gratuit sur https://neon.tech, puis copie deux strings depuis le dashboard — la version avec **`-pooler`** dans le hostname comme `DATABASE_URL` (avec `?pgbouncer=true&connection_limit=1&pool_timeout=15&sslmode=require`) et la version sans `-pooler` comme `DIRECT_URL`. Exemples dans `.env.example`.
 

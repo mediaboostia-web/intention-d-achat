@@ -88,4 +88,9 @@ describe('README.md doc tripwire (DOC-02) — post-Wave-2 target shape', () => {
     const content = readFileSync(README_PATH, 'utf8');
     expect(content).toMatch(/pnpm smoke:auth|smoke-auth/);
   });
+
+  it('names the product Tamani', () => {
+    const content = readFileSync(README_PATH, 'utf8');
+    expect(content).toMatch(/^# Tamani/m);
+  });
 });

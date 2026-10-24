@@ -10,10 +10,9 @@ const inter = Inter({
   display: 'swap',
 });
 
-// Replace these with your app name + description per fork.
 export const metadata: Metadata = {
-  title: 'izi kit',
-  description: 'Headless Next.js 16 starter — auth, payments, admin, webhooks, cron.',
+  title: 'Tamani',
+  description: 'Ta communauté parle. Tu sais quoi acheter.',
 };
 
 export default function RootLayout({
@@ -22,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="fr" className={inter.variable}>
       <body className={inter.className}>
         <ToastProvider>
           <AuthProvider>{children}</AuthProvider>
