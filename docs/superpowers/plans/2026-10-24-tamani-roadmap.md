@@ -125,6 +125,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 - `interface PlanDefinition { id; label; monthlyPriceXof: number; maxActiveCampaigns: number | null; monthlyResponses: number; seats: number; features: { estimate: boolean; sourceLinks: boolean; respondentContacts: boolean; csvExport: boolean; reliability: boolean; poweredByBadge: boolean } }`
 - `PLANS: Readonly<Record<PlanId, PlanDefinition>>`. En FREE, toutes les fonctionnalités valent `false`, sauf `poweredByBadge: true`.
 - `priceFor(plan: 'PRO' | 'BUSINESS', months: 1 | 12): number`
+- `isPlanId(value: string): value is PlanId`
 
 **`timing.ts`**
 - `type Availability = 'IN_STOCK' | 'INCOMING'`
@@ -140,7 +141,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 
 **`share-message.ts`**
 - `DEFAULT_SHARE_TEMPLATE = '🔔 Nouveau : *{produit}* à {prix}. {disponibilite}. Tu en veux ? Réponds en 5 secondes 👉 {lien}'`
-- `renderShareMessage(template, vars: { produit; prix; disponibilite; lien }): string`. Une variable inconnue reste telle quelle.
+- `renderShareMessage(template, vars: { produit; prix; disponibilite; lien }): string`. Une variable inconnue reste telle quelle. `{disponibilité}`, avec l'accent, est remplacée comme `{disponibilite}`.
 - `formatXof(amount: number): string` → `'7 500 FCFA'`
 - `formatPriceLine(p: { unitPrice; wholesalePrice: number | null; wholesaleMinQty: number | null }): string` → `'7 500 FCFA (gros : 6 000 FCFA dès 12)'`
 - `formatAvailability(c: { availability; availableAt: Date | null }, now: Date): string` → `'Disponible maintenant'` ou `'Arrivage dans 10 jours'`
@@ -156,15 +157,23 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 ### Modules serveur : `frontend/src/lib/server/tamani/`
 
 **Lot 3**
-- `errors.ts` : liste figée `TAMANI_ERRORS`, avec `SHOP_ALREADY_EXISTS`, `SHOP_NOT_FOUND`, `PRODUCT_NOT_FOUND`, `PRODUCT_IN_USE`, `CAMPAIGN_NOT_FOUND`, `CAMPAIGN_CLOSED`, `CAMPAIGN_LIMIT_REACHED`, `PLAN_FEATURE_LOCKED`, `INVALID_PHONE`, `INVALID_RESPONSE_TOKEN`, `RATE_LIMITED`, `ORDER_NOT_FOUND`, `ORDER_ALREADY_EXISTS`, `INVALID_ORDER_TRANSITION`, `CLIENT_NOT_FOUND`, `BILLING_NOT_CONFIGURED`, `PAYMENT_VERIFY_FAILED`. Plus `tamaniError(code, status, message?) => NextResponse`, qui renvoie `{ error: code, message }`.
+- `errors.ts` : liste figée `TAMANI_ERRORS`, avec `SHOP_ALREADY_EXISTS`, `SHOP_NOT_FOUND`, `ZONE_NOT_FOUND`, `ZONE_ALREADY_EXISTS`, `PRODUCT_NOT_FOUND`, `PRODUCT_IN_USE`, `CAMPAIGN_NOT_FOUND`, `CAMPAIGN_CLOSED`, `CAMPAIGN_LIMIT_REACHED`, `INVALID_CAMPAIGN_TRANSITION`, `PLAN_FEATURE_LOCKED`, `INVALID_PHONE`, `INVALID_RESPONSE_TOKEN`, `RATE_LIMITED`, `ORDER_NOT_FOUND`, `ORDER_ALREADY_EXISTS`, `INVALID_ORDER_TRANSITION`, `CLIENT_NOT_FOUND`, `BILLING_NOT_CONFIGURED`, `PAYMENT_VERIFY_FAILED`. Plus `tamaniError(code, status, message?) => NextResponse`, qui renvoie `{ error: code, message }`, et `isUniqueViolation(err, field?)` (P2002 sur ce champ).
+- `http.ts` : `readJson(req)`, `jsonOk(data, status = 200)` (en-tête `x-request-id`) et `validationFailed(message?)` (400 `VALIDATION_FAILED`, code du kit).
+- `locks.ts` : `type Db = Prisma.TransactionClient` et `advisoryXactLock(tx, key)` (`pg_advisory_xact_lock(hashtext(key))`). Clés : `shop-create:<userId>`, `campaign-activate:<organizationId>`.
+- `inputs.ts` : schémas zod des corps (boutique, zone, produit, campagne, lien) et `checkProductRules`.
+- `serializers.ts` : seule sortie des données. `toShop`, `toZone`, `toShopProduct`, `toPublicProduct` (liste blanche, sans `costPrice`, réutilisée par le lot 5), `toCampaign` (statut effectif et `shareMessage` rendu), `toLink` et `shareUrl(code)` (`${APP_URL}/c/${code}`).
 - `phone.ts` :
   - `normalizePhone(raw: string, defaultCountry: CountryCode): string | null`, au format E.164, avec `libphonenumber-js/min` ;
-  - `maskPhone(e164: string): string` → `'77 •• •• 12'`.
-- `short-code.ts` : `generateShortCode(length = 7): string` (base62, `crypto.randomInt`) et `SHORT_CODE_REGEX = /^[0-9A-Za-z]{7}$/`.
+  - `maskPhone(e164: string): string` → `'77 •• •• 12'` ;
+  - `shopCountry(country: string): CountryCode` (repli `'SN'`).
+- `short-code.ts` : `generateShortCode(length = 7): string` (base62, `crypto.randomInt`), `SHORT_CODE_REGEX = /^[0-9A-Za-z]{7}$/` et `withUniqueCode(create, attempts = 5)` (nouvel essai sur une P2002 du champ `code` ; il enveloppe toute la transaction).
 - `campaign-status.ts` :
-  - `effectiveStatus(c: { status; endsAt: Date | null }, now): 'DRAFT' | 'ACTIVE' | 'CLOSED' | 'ARRIVED'` : une campagne `ACTIVE` dont `endsAt ≤ now` devient `CLOSED` ;
+  - `type CampaignStatus = 'DRAFT' | 'ACTIVE' | 'CLOSED' | 'ARRIVED'` ;
+  - `effectiveStatus(c: { status; endsAt: Date | null }, now): CampaignStatus` : une campagne `ACTIVE` dont `endsAt ≤ now` devient `CLOSED` ; un statut inconnu vaut `DRAFT` ;
   - `isAcceptingResponses(c, now)` : vrai pour `ACTIVE` et `ARRIVED` ;
-  - `isFinished(c, now)` : vrai pour `CLOSED` et `ARRIVED`.
+  - `isFinished(c, now)` : vrai pour `CLOSED` et `ARRIVED` ;
+  - `CAMPAIGN_TRANSITIONS` et `canTransitionCampaign(from, to)` : `DRAFT → ACTIVE`, `ACTIVE → CLOSED | ARRIVED`, `CLOSED → ACTIVE | ARRIVED`, `ARRIVED → CLOSED`, à partir du statut effectif ;
+  - `activeCampaignWhere(now)` et `effectiveStatusWhere(status, now)` : fragments `where` Prisma du statut effectif. La limite FREE compte les campagnes au statut effectif `ACTIVE` (pas `ARRIVED`).
 - `estimate.ts` :
   - `estimateDemand(rows: ReadonlyArray<{ buyerType: BuyerType; quantity: number }>, coefs: { consumer: number; reseller: number }): DemandEstimate` ;
   - `DemandEstimate = { announced; realistic; low; high; byBuyerType: Record<BuyerType, { respondents; announced; realistic }> }`, avec un `Math.round` sur chaque total.
@@ -289,6 +298,8 @@ Skills : `ui-ux-pro-max:design-system`, `ui-ux-pro-max:design` (logo), `ui-ux-pr
    - Test `no-motion-in-popup.test.ts` : `BottomSheet`, `ChoiceButton` et les fichiers sous `app/(public)/c/` n'importent ni `motion`, ni `framer-motion`, ni `gsap`.
 
 ### Lot 3 : Cœur métier (backend)
+Plan détaillé : [2026-10-24-tamani-03-coeur-metier.md](2026-10-24-tamani-03-coeur-metier.md). Rôles : lectures `MEMBER` ; réglages de la boutique et zones `ADMIN` ; produits et campagnes `MEMBER` ; suppression d'un produit `ADMIN`.
+
 1. **Schéma et migration `6_tamani_core`** (§Contrats).
    - Génération par `migrate diff --from-schema-datasource … --to-schema-datamodel … --script`, puis relecture du SQL et `migrate deploy`.
    - Test : `schema-tamani.test.ts`.
