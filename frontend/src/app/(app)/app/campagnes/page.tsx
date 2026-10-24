@@ -11,11 +11,12 @@ import type { CampaignStatus } from '@/lib/tamani/campaign-actions';
 import type { ShopCampaign } from '@/lib/tamani/campaign-view';
 
 const FILTERS: ReadonlyArray<{ status: CampaignStatus | null; label: string }> = [
+  // The default view comes first: a phone shows the start of the strip.
+  { status: null, label: 'Toutes' },
   { status: 'ACTIVE', label: 'En cours' },
   { status: 'DRAFT', label: 'Brouillons' },
   { status: 'CLOSED', label: 'Terminées' },
   { status: 'ARRIVED', label: 'Arrivées' },
-  { status: null, label: 'Toutes' },
 ];
 
 interface Listing {

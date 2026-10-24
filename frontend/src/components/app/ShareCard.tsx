@@ -46,11 +46,12 @@ export function ShareCard({ message, url }: { message: string; url: string }) {
           rel="noopener noreferrer"
           variant="whatsapp"
           size="lg"
-          className="shadow-press"
+          className="px-4 shadow-press"
         >
           Partager sur WhatsApp
         </Button>
-        <CopyButton text={message} label="Copier le message" size="lg" />
+        {/* px-4: both labels stay on one line in a 320px screen. */}
+        <CopyButton text={message} label="Copier le message" size="lg" className="px-4" />
       </div>
       <div>
         <p className="text-sm font-bold text-ink">Le lien de ta campagne</p>

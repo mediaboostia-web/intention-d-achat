@@ -44,6 +44,7 @@ export function shopFormErrors(v: ShopFormValues): ShopFormErrors {
 export function ShopForm({
   initial = emptyShopForm,
   withZones = true,
+  mode = 'create',
   submitLabel,
   submittingLabel,
   submitting,
@@ -53,6 +54,8 @@ export function ShopForm({
 }: {
   initial?: ShopFormValues;
   withZones?: boolean;
+  /** create: the welcome page's main gesture; edit: one save among the settings. */
+  mode?: 'create' | 'edit';
   submitLabel: string;
   submittingLabel: string;
   submitting: boolean;
@@ -129,7 +132,12 @@ export function ShopForm({
         />
       )}
       {error && <Notice tone="danger">{error}</Notice>}
-      <Button type="submit" size="lg" disabled={submitting} className="w-full shadow-press">
+      <Button
+        type="submit"
+        size={mode === 'create' ? 'lg' : 'md'}
+        disabled={submitting}
+        className={mode === 'create' ? 'w-full shadow-press' : 'self-start'}
+      >
         {submitting ? submittingLabel : submitLabel}
       </Button>
     </form>

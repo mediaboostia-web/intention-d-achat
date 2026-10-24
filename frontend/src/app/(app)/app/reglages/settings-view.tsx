@@ -105,6 +105,7 @@ export function SettingsView({ google }: { google: boolean }) {
                 zones: [],
               }}
               withZones={false}
+              mode="edit"
               submitLabel="Enregistrer la boutique"
               submittingLabel="Enregistrement…"
               submitting={savingShop}

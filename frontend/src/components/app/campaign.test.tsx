@@ -216,3 +216,27 @@ describe('CampaignEditForm', () => {
     expect(out).toContain('{produit}');
   });
 });
+
+describe('campaign list page', () => {
+  it('puts the default "Toutes" filter first, where a phone shows it', async () => {
+    const { mockNextNavigation } = await import('@/test-utils/next-navigation');
+    const { ShopTestProvider } = await import('@/test-utils/shop-context');
+    const { default: CampaignsPage } = await import('@/app/(app)/app/campagnes/page');
+    mockNextNavigation({ pathname: '/app/campagnes' });
+    const out = html(
+      <ShopTestProvider>
+        <CampaignsPage />
+      </ShopTestProvider>,
+    );
+    const nav = out.match(/<nav aria-label="Afficher"[\s\S]*?<\/nav>/)?.[0] ?? '';
+    const links = [...nav.matchAll(/<a [^>]*>([^<]*)/g)];
+    expect(links.map((m) => m[1])).toEqual([
+      'Toutes',
+      'En cours',
+      'Brouillons',
+      'Terminées',
+      'Arrivées',
+    ]);
+    expect(links[0]?.[0]).toContain('aria-current="true"');
+  });
+});

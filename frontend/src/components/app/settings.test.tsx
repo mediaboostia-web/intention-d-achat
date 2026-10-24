@@ -118,4 +118,19 @@ describe('SettingsView', () => {
       (out.match(/<input [^>]*>/g) ?? []).find((t) => t.includes('id="shop-phone"')) ?? '';
     expect(phone).toContain('value="771234567"');
   });
+
+  it('saves each section with a plain button: settings have no main gesture', () => {
+    mockNextNavigation({ pathname: '/app/reglages' });
+    const out = html(
+      <ShopTestProvider>
+        <SettingsView google={false} />
+      </ShopTestProvider>,
+    );
+    const save = (out.match(/<button [^>]*>[^<]*<\/button>/g) ?? []).find((t) =>
+      t.includes('Enregistrer la boutique'),
+    );
+    expect(save).toBeDefined();
+    expect(save).toContain('min-h-12');
+    expect(out).not.toContain('shadow-press');
+  });
 });
