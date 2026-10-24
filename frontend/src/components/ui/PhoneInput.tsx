@@ -35,7 +35,9 @@ export function PhoneInput({
           autoComplete="tel-national"
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          className="min-w-0 flex-1 bg-transparent px-3 text-base text-ink outline-none placeholder:text-ink-muted"
+          // w-full: an <input> otherwise keeps its intrinsic ~20ch width and
+          // pushes the row past a 320px screen.
+          className="w-full min-w-0 flex-1 bg-transparent px-3 text-base text-ink outline-none placeholder:text-ink-muted"
           {...rest}
         />
       </div>

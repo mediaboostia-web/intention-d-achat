@@ -1,5 +1,3 @@
-import { cn } from '@/lib/utils';
-
 const coef = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
 
 /**
@@ -38,7 +36,7 @@ export function CalcTable({
         <tbody>
           {rows.map((row) => (
             <tr key={row.label} className="h-9">
-              <th scope="row" className="text-left font-bold">
+              <th scope="row" className="pr-2 text-left font-bold">
                 {row.label}
                 {row.count !== undefined && (
                   <span className="ml-1 text-sm font-normal text-ink-muted">({row.count})</span>
@@ -48,18 +46,22 @@ export function CalcTable({
               <td className="pl-1.5 text-right whitespace-nowrap text-ink-muted">
                 × {coef.format(row.coef)}
               </td>
-              <td className="w-16 text-right font-sign">{row.realistic}</td>
+              <td className="pl-2 text-right whitespace-nowrap font-sign">{row.realistic}</td>
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr className="h-9 border-t-2 border-ink">
-            <th scope="row" className="text-left font-bold">
+            <th scope="row" className="pr-2 text-left font-bold">
               Total
             </th>
             <td className="text-right text-ink-soft tabular-nums">{total.announced}</td>
-            <td />
-            <td className={cn('text-right font-sign text-xl text-primary')}>≈ {total.realistic}</td>
+            {/* "≈" sits in the coefficient column so the last column stays
+                narrow enough for a 320px screen. */}
+            <td className="text-right text-lg text-ink-muted">≈</td>
+            <td className="pl-2 text-right whitespace-nowrap font-sign text-lg text-primary">
+              {total.realistic}
+            </td>
           </tr>
         </tfoot>
       </table>

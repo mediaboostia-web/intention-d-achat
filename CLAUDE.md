@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Tamani is built on the izikit starter described below (withdrawals pruned in lot 1; Bictorys is swapped for SasPay in lot 8).
 
-**Base: a v1-shipped, headless Next.js 16 monolith starter.** Single full-stack app (App Router API Route Handlers + Server Actions + Prisma 5 + Neon + Upstash + Cloudinary + Resend + Bictorys + Sentry). There is no separate Express backend anymore — server logic lives under `frontend/src/app/api/*` and `frontend/src/lib/server/*`. The app **ships only logic** — no UI components — so each fork designs its own UX.
+**Base: a v1-shipped, headless Next.js 16 monolith starter.** Single full-stack app (App Router API Route Handlers + Server Actions + Prisma 5 + Neon + Upstash + Cloudinary + Resend + Bictorys + Sentry). There is no separate Express backend anymore — server logic lives under `frontend/src/app/api/*` and `frontend/src/lib/server/*`. The kit shipped only logic; Tamani's own UI kit lives under `frontend/src/components/ui/` (see "Design system" below).
 
 Origin: bootstrapped from `amadou-template` (the legacy monorepo predecessor) on 2026-05-07; the port to a single Next.js 16 app shipped through 7 phases (auth → OAuth/notifs → admin → uploads/withdrawals → webhooks/cron → docs/tests → final pass). 555/555 unit tests green (the storage swap dropped the now-obsolete `/api/files/[...key]` proxy tests).
 
@@ -133,17 +133,20 @@ If a change is genuinely required in any of these, surface a brief "I am about t
 - Cookies stay `httpOnly` + `Secure` (prod) + `SameSite=Lax`.
 - Sentry init stays in [frontend/instrumentation.ts](frontend/instrumentation.ts) `register()` — do not move it into a route module (the hook fires before app code, route imports do not).
 
-## Design system — fully swappable (no UI shipped)
+## Design system — Tamani « Cahier du marché » (lot 2)
 
-The starter is **headless on purpose**. Touchpoints if a fork wants a specific design:
+The brand charter is [docs/brand/tamani-brand.md](docs/brand/tamani-brand.md) — read it before building any screen. In short: squared notebook paper, blue pen, sign-painter yellow, the verdict as a rubber stamp, the calculation always visible, one bold element per screen.
 
-- [frontend/src/app/page.tsx](frontend/src/app/page.tsx) — `return null`. Write your homepage here. No layout assumption is baked into the API.
-- [frontend/src/app/layout.tsx](frontend/src/app/layout.tsx) — Inter font + 2 client contexts (`AuthProvider`, `ToastProvider`). Both are logic-only — swap the font, restyle toasts in your own components, keep the providers (they wrap the `api()` wrapper's auto-refresh + the toast queue).
-- [frontend/src/app/globals.css](frontend/src/app/globals.css) — one line: `@import 'tailwindcss';` (Tailwind v4 zero-config). Drop it + remove `@tailwindcss/postcss` from [frontend/postcss.config.mjs](frontend/postcss.config.mjs) to leave Tailwind out entirely.
-- [frontend/src/app/error.tsx](frontend/src/app/error.tsx) — Tailwind-styled fallback. Replace freely.
-- [examples/frontend-pages/](examples/frontend-pages/) — 9 reference pages (login/signup/verify-email/forgot-reset-password/dashboard/payment-success+failure/auth-error/admin/*). They are NOT imported anywhere — they live as Tailwind references to copy or rebuild.
+- **Tokens** — [frontend/src/lib/design/tokens.ts](frontend/src/lib/design/tokens.ts) is the tested source (WCAG contrast on every declared text/background pair); the `@theme` block of [frontend/src/app/globals.css](frontend/src/app/globals.css) mirrors it (`tokens-sync.test.ts`). Use the semantic utilities (`bg-bg`, `text-ink`, `text-ink-soft`, `bg-primary`, `bg-accent`, `text-warning`…) plus `bg-paper`, `frame`, `highlight`, `stamp`, `pen`, `awning`, `shadow-press`, `rounded-control|card|sheet`. Tailwind's default palette is still on until lot 4 — do not use it in new code.
+- **Fonts** — [frontend/src/app/layout.tsx](frontend/src/app/layout.tsx) loads Andika (`font-sans`, all text), Kalam (`font-hand`, titles and margin notes only) and Bowlby One (`font-sign`, the figures that matter) via `next/font`, and renders `<InkFilters />` once. The root layout carries no session providers: those live in `(app)/` and `(admin)/` so public pages ship no session JS.
+- **Components** — [frontend/src/components/ui/](frontend/src/components/ui/) (`index.ts`): server components without state, tested as static HTML (`*.test.tsx`, `react-dom/server`). Compose them; extend the kit rather than restyling ad hoc.
+- **Verdict copy** — [frontend/src/lib/tamani/verdict-display.ts](frontend/src/lib/tamani/verdict-display.ts) owns every verdict word, figure and sentence (`VerdictCode` is consumed by the lot 6 `computeVerdict`).
+- **Logo** — geometry in [frontend/src/lib/design/logo-paths.ts](frontend/src/lib/design/logo-paths.ts); brand files under `frontend/public/brand/` and `frontend/src/app/icon.svg` / `apple-icon.png`; regeneration in [docs/brand/sources/README.md](docs/brand/sources/README.md).
+- **Living reference** — `/styleguide` (dev only, `notFound()` in production) shows every token and component and rebuilds the campaign page and the popup from the kit.
+- **Popup rule** — `BottomSheet`, `ChoiceButton` and `app/(public)/c/**` never import `motion`, `framer-motion` or `gsap` ([no-motion-in-popup.test.ts](frontend/src/lib/server/observability/no-motion-in-popup.test.ts)); animations are CSS and stop under `prefers-reduced-motion`.
+- [examples/frontend-pages/](examples/frontend-pages/) — 9 kit reference pages (login/signup/…/admin). Not imported anywhere; lot 4 rebuilds the auth pages from them with the Tamani kit.
 
-**No server lib reaches into the DOM.** Routes only return `NextResponse.json(...)`. The same backend feeds plain React, shadcn/ui, Mantine, a SwiftUI client, a Flutter app — pick anything.
+**No server lib reaches into the DOM.** Routes only return `NextResponse.json(...)`.
 
 ### Bundled Claude Code skills (under [.claude/skills/](.claude/skills/))
 

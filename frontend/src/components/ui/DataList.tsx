@@ -12,9 +12,11 @@ export function DataList({
   return (
     <dl className={cn('flex flex-col', className)}>
       {items.map((item) => (
-        <div key={item.id} className="flex h-9 items-baseline gap-1.5 leading-9">
+        // min-h-9, not h-9: on a narrow screen a long label wraps instead of
+        // being cut.
+        <div key={item.id} className="flex min-h-9 items-baseline gap-1.5 py-1.5 leading-6">
           <dt className="flex min-w-0 flex-1 items-baseline gap-1.5">
-            <span className="truncate">{item.label}</span>
+            <span className="min-w-0">{item.label}</span>
             <span
               aria-hidden="true"
               className="min-w-4 flex-1 -translate-y-1.5 border-b-2 border-dotted border-ink-muted/45"
