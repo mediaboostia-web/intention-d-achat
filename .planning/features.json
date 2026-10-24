@@ -14,7 +14,7 @@
         "models": ["Order"],
         "envVars": ["BICTORYS_API_KEY", "BICTORYS_API_URL", "COMMISSION_RATE_BP"]
       },
-      "cross_dependencies": ["notifications", "email-resend", "webhooks-bictorys", "withdrawals"],
+      "cross_dependencies": ["notifications", "email-resend", "webhooks-bictorys"],
       "surgical_edits": [
         {
           "file": "frontend/src/lib/server/outbox/dispatcher.ts",
@@ -36,38 +36,6 @@
         "frontend/src/lib/server/observability/vercel-json-shape.test.ts (remove order-expiration assertion)"
       ]
     },
-
-    "withdrawals": {
-      "description": "User withdrawals with PIN + advisory lock + balance guards",
-      "prune_complexity": "with-care",
-      "owns": {
-        "routes": ["api/withdrawals", "api/auth/withdrawal-pin"],
-        "libs": ["withdrawals/", "auth/pin.ts"],
-        "models": ["Withdrawal"],
-        "envVars": [
-          "WITHDRAWAL_MIN_AMOUNT",
-          "WITHDRAWAL_MAX_AMOUNT",
-          "WITHDRAWAL_DAILY_LIMIT",
-          "WITHDRAWAL_COOLDOWN_HOURS",
-          "WITHDRAWAL_REQUIRE_PIN",
-          "WITHDRAWAL_BALANCE_CHECK",
-          "BICTORYS_PRIVATE_KEY",
-          "BICTORYS_MERCHANT_SECRET_CODE"
-        ]
-      },
-      "cross_dependencies": ["payments-bictorys", "notifications", "admin-backoffice"],
-      "surgical_edits": [
-        {
-          "file": "frontend/src/lib/server/notifications/templates.ts",
-          "action": "remove withdrawalRequested template if defined"
-        }
-      ],
-      "cron_entries": [],
-      "prisma_user_relations": ["withdrawals Withdrawal[]", "withdrawalPinHash String?"],
-      "outbox_event_kinds": [],
-      "tripwires_to_update": []
-    },
-
     "webhooks-bictorys": {
       "description": "Bictorys webhook receiver with HMAC + replay window + outbox dispatch",
       "prune_complexity": "safe",
@@ -86,7 +54,6 @@
         "frontend/src/lib/server/observability/vercel-json-shape.test.ts (remove webhook-log-purge assertion)"
       ]
     },
-
     "oauth-google": {
       "description": "Sign-in with Google (arctic + PKCE)",
       "prune_complexity": "safe",
@@ -103,7 +70,6 @@
       "outbox_event_kinds": [],
       "tripwires_to_update": []
     },
-
     "uploads-cloudinary": {
       "description": "Authenticated multipart upload to Cloudinary (server-side validation + magic-byte sniff + CDN-served secure_url)",
       "prune_complexity": "safe",
@@ -127,7 +93,6 @@
       "outbox_event_kinds": [],
       "tripwires_to_update": []
     },
-
     "email-resend": {
       "description": "Durable email queue (EmailJob + Redis pointer) drained by cron, sent via Resend",
       "prune_complexity": "never",
@@ -168,11 +133,10 @@
         "frontend/src/lib/server/observability/vercel-json-shape.test.ts (remove email-queue-drain assertion)"
       ]
     },
-
     "notifications": {
       "description": "In-app notifications (list, mark-read, count, prefs)",
       "prune_complexity": "with-care",
-      "$prune_complexity_reason": "Tightly coupled to OAuth callback (welcomeNotification), withdrawals route (withdrawalRequested), outbox dispatcher (notification.payment_received). Pruning requires editing 3+ caller routes. Most projects keep notifications even if they don't render them in UI.",
+      "$prune_complexity_reason": "Tightly coupled to OAuth callback (welcomeNotification) and outbox dispatcher (notification.payment_received). Pruning requires editing the caller routes. Most projects keep notifications even if they don't render them in UI.",
       "owns": {
         "routes": ["api/notifications"],
         "libs": ["notifications/"],
@@ -184,10 +148,6 @@
         {
           "file": "frontend/src/app/api/auth/oauth/google/callback/route.ts",
           "action": "remove createNotification(welcomeNotification(...)) call + import"
-        },
-        {
-          "file": "frontend/src/app/api/withdrawals/route.ts",
-          "action": "remove createNotification(...) call + import (post-commit notification)"
         },
         {
           "file": "frontend/src/lib/server/outbox/dispatcher.ts",
@@ -206,9 +166,8 @@
       "outbox_event_kinds": ["notification.payment_received"],
       "tripwires_to_update": []
     },
-
     "admin-backoffice": {
-      "description": "Admin back-office (users / orders / withdrawals / audit-log / outbox / email-queue / rate-limits)",
+      "description": "Admin back-office (users / orders / audit-log / outbox / email-queue / rate-limits)",
       "prune_complexity": "safe",
       "owns": {
         "routes": ["api/admin"],
@@ -240,7 +199,6 @@
       "outbox_event_kinds": [],
       "tripwires_to_update": []
     },
-
     "multi-tenancy": {
       "description": "Organization / OrganizationMember models + requireOrgRole middleware (no routes shipped, opt-in plumbing)",
       "prune_complexity": "safe",
@@ -260,7 +218,6 @@
       "outbox_event_kinds": [],
       "tripwires_to_update": []
     },
-
     "observability-sentry": {
       "description": "Sentry error reporting + tracing (server + client + edge)",
       "prune_complexity": "with-care",
@@ -316,7 +273,6 @@
       ]
     }
   },
-
   "core": {
     "$comment": "Surfaces NEVER prunable — load-bearing for the entire starter. Pruning these breaks every other feature.",
     "always_required": [
@@ -330,6 +286,5 @@
       "User model core fields (id, email, passwordHash, emailVerifiedAt, tokenVersion)"
     ]
   },
-
   "$pruning_protocol": "AI agents: before pruning ANY feature, READ /PRUNING.md. It explains the order of operations (surgical_edits BEFORE deletions, cron_entries removed from vercel.json, prisma_user_relations removed from User model, tripwires updated, then `pnpm format && pnpm lint && pnpm typecheck && pnpm test && pnpm build` to validate, with rollback via `git checkout HEAD -- .` if red). Naive deletion based on `owns` only WILL break the build."
 }
