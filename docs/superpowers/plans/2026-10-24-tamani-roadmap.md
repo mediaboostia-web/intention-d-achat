@@ -320,6 +320,8 @@ Plan détaillé : [2026-10-24-tamani-03-coeur-metier.md](2026-10-24-tamani-03-co
 6. **API campagnes et liens.** Un lien par défaut est créé, avec un code unique et un nouvel essai en cas de collision. Tests : 3 campagnes actives au maximum en FREE, liens de source refusés en FREE, `DEFAULT_SHARE_TEMPLATE` par défaut.
 
 ### Lot 4 : Espace grossiste (UI)
+Plan détaillé : [2026-10-24-tamani-04-espace-grossiste.md](2026-10-24-tamani-04-espace-grossiste.md). `checkProductRules` passe dans `lib/tamani/product-rules.ts` (partagé avec le navigateur) ; les pages d'auth vivent dans le groupe `(auth)` ; l'envoi des photos passe par `uploadPhoto()` (`lib/tamani/upload.ts`), car `lib/api.ts` (protégé) n'envoie que du JSON.
+
 1. **Pages d'authentification** reprises des `examples/frontend-pages/` avec la charte. Ajouter `AUTH_PROTECTED_PREFIXES` et `AUTH_LOGIN_PATH`. Vérifier que `/app` sans session redirige vers `/login` et que le smoke test d'auth reste vert.
 2. **`/app/bienvenue`** : création de la boutique (nom, WhatsApp, pays, logo, zones).
 3. **Coquille** : navigation en bas sur mobile (Accueil, Campagnes, Commandes, Clients, Plus) et barre latérale sur ordinateur.
