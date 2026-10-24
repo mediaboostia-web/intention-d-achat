@@ -133,6 +133,18 @@ If a change is genuinely required in any of these, surface a brief "I am about t
 - Cookies stay `httpOnly` + `Secure` (prod) + `SameSite=Lax`.
 - Sentry init stays in [frontend/instrumentation.ts](frontend/instrumentation.ts) `register()` — do not move it into a route module (the hook fires before app code, route imports do not).
 
+## Tamani backend (lot 3)
+
+Contracts (names, signatures, error codes) live in the roadmap §Contrats; this is the map.
+
+- **Where things live** — [frontend/src/lib/tamani/](frontend/src/lib/tamani/) is pure and shared with the browser (plans, timing and labels, share message, `wa.me` links). [frontend/src/lib/server/tamani/](frontend/src/lib/server/tamani/) is server only: pure rules (`phone`, `short-code`, `campaign-status`, `estimate`, `subscription`), data helpers (`quota`, `shop`, `locks`, `campaign-limit`) and route plumbing (`http`, `errors`, `inputs`, `serializers`, `route`).
+- **Shop routes** — `/api/shops/[orgId]/**` handlers are built with `shopHandler(minRole, handler)` ([route.ts](frontend/src/lib/server/tamani/route.ts)): request context → `verifyCsrf` → the kit's `requireOrgRole` (404 to non-members). Roles: reads `MEMBER`; shop settings and zones `ADMIN`; products and campaigns `MEMBER`; product delete `ADMIN`.
+- **Isolation** — every query on a shop's resource carries `organizationId` in its `where` (`findFirst({ where: { id, organizationId } })`, `deleteMany`, `updateMany`); never `findUnique({ where: { id } })` alone. An id from another shop is a 404 with the resource's code. `organizationId` always comes from the URL: zod strips it from bodies.
+- **Errors** — `tamaniError(code, status)` with a code from `TAMANI_ERRORS` ([errors.ts](frontend/src/lib/server/tamani/errors.ts)); a bad body is the kit's `validationFailed()` (400 `VALIDATION_FAILED`). Every Tamani JSON reply carries `x-request-id` (`jsonOk`).
+- **Output** — data leaves only through [serializers.ts](frontend/src/lib/server/tamani/serializers.ts). `toPublicProduct` is the allowlist for respondents (no `costPrice`); campaigns are sent with their effective status and rendered `shareMessage`.
+- **Races** — `advisoryXactLock(tx, key)` (`pg_advisory_xact_lock`) inside the transaction: `shop-create:<userId>` (one shop per account) and `campaign-activate:<organizationId>` (FREE limit of 3 effectively active campaigns). Share-link codes retry on collision with `withUniqueCode`, which wraps the whole transaction.
+- **Tests** — route tests use [shop-fixtures.ts](frontend/src/test-utils/shop-fixtures.ts) (`signIn`, `asMember`, `asNonMember`, `apiRequest`, `routeParams`, `runTransactionsInline`): a real signed token and the real `requireOrgRole`, so the 404/403 gates are exercised, not mocked. Run one file with `npx vitest run <path>` from `frontend/` (quote paths with `[orgId]`).
+
 ## Design system — Tamani « Cahier du marché » (lot 2)
 
 The brand charter is [docs/brand/tamani-brand.md](docs/brand/tamani-brand.md) — read it before building any screen. In short: squared notebook paper, blue pen, sign-painter yellow, the verdict as a rubber stamp, the calculation always visible, one bold element per screen.

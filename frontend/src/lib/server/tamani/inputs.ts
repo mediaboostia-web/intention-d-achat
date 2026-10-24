@@ -4,6 +4,7 @@
 import 'server-only';
 import { z } from 'zod';
 import { isSupportedCountry } from 'libphonenumber-js/min';
+import { DEFAULT_SHARE_TEMPLATE } from '@/lib/tamani/share-message';
 
 /** Drops undefined keys (exactOptionalPropertyTypes vs. Prisma inputs). */
 export function compact<T extends object>(o: T): { [K in keyof T]?: Exclude<T[K], undefined> } {
@@ -106,3 +107,40 @@ export function checkProductRules(p: {
   }
   return null;
 }
+
+/** ISO 8601 date-time (the front end sends Date#toISOString()). */
+const isoDate = z.iso.datetime({ offset: true }).transform((s) => new Date(s));
+const quantity = z.number().int().max(10_000_000);
+
+const CampaignFields = z.object({
+  title: z.string().trim().min(1).max(80),
+  availability: z.enum(['IN_STOCK', 'INCOMING']),
+  availableAt: isoDate.nullable(),
+  stockQuantity: quantity.min(0).nullable(),
+  plannedQuantity: quantity.min(1).nullable(),
+  showStock: z.boolean(),
+  endsAt: isoDate.nullable(),
+  deliveryEnabled: z.boolean(),
+  showLiveCounter: z.boolean(),
+  shareTemplate: z.string().trim().min(1).max(1000),
+});
+
+export const CampaignCreate = CampaignFields.extend({
+  productId: z.string().min(1).max(40),
+  title: CampaignFields.shape.title.optional(),
+  availableAt: CampaignFields.shape.availableAt.default(null),
+  stockQuantity: CampaignFields.shape.stockQuantity.default(null),
+  plannedQuantity: CampaignFields.shape.plannedQuantity.default(null),
+  showStock: CampaignFields.shape.showStock.default(false),
+  endsAt: CampaignFields.shape.endsAt.default(null),
+  deliveryEnabled: CampaignFields.shape.deliveryEnabled.default(false),
+  showLiveCounter: CampaignFields.shape.showLiveCounter.default(true),
+  shareTemplate: CampaignFields.shape.shareTemplate.default(DEFAULT_SHARE_TEMPLATE),
+  status: z.enum(['DRAFT', 'ACTIVE']).default('ACTIVE'),
+});
+
+export const CampaignPatch = CampaignFields.partial()
+  .extend({ status: z.enum(['DRAFT', 'ACTIVE', 'CLOSED', 'ARRIVED']).optional() })
+  .refine(nonEmpty, 'Nothing to update');
+
+export const LinkCreate = z.object({ label: z.string().trim().min(1).max(60) });
