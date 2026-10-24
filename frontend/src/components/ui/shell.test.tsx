@@ -21,6 +21,8 @@ const ICONS = [
   'check',
   'lock',
   'close',
+  'pencil',
+  'trash',
 ] as const;
 
 describe('Textarea and Select', () => {

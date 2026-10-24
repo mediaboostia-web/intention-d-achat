@@ -17,3 +17,9 @@ export const SHOP_COUNTRIES: ReadonlyArray<{ code: string; label: string; dialCo
 export function dialCodeFor(code: string): string {
   return SHOP_COUNTRIES.find((c) => c.code === code)?.dialCode ?? '+221';
 }
+
+/** "+221771234567" → "771234567" for the phone field, which shows "+221" itself. */
+export function nationalNumber(e164: string, country: string): string {
+  const dial = dialCodeFor(country);
+  return e164.startsWith(dial) ? e164.slice(dial.length) : e164;
+}

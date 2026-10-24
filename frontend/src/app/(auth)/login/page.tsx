@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { googleSignInEnabled } from '../google';
+import { googleSignInEnabled } from '@/lib/server/oauth/google-enabled';
 import { LoginForm } from './login-form';
 
 export const metadata: Metadata = { title: 'Se connecter — Tamani' };
