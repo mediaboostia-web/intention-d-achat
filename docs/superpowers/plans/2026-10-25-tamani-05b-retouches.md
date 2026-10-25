@@ -18,7 +18,7 @@
 - Jamais de numéro ni de prénom de répondant dans `log.*` ou Sentry (on journalise des ids).
 - Un client visible = non anonymisé, avec au moins une réponse complète, non verrouillée et non suspecte.
 - Pastilles : une pastille n'apparaît que si son nombre est supérieur à 0 ; « Toutes » / « Tous » et la pastille active restent toujours.
-- Textes exacts : « Bonjour, {prénom} » (sinon « Bonjour, {boutique} ») ; « Cette semaine » ; « +{n} depuis hier » ; « Activité » ; « À venir » ; « Pour bien démarrer » ; « Avant de commander, demande à ta communauté. » ; « ou avec ton e-mail ».
+- Textes exacts : une salutation selon l'heure du téléphone, « Bonjour » de 5 h à midi, « Bon après-midi » de midi à 18 h, « Bonsoir » ensuite, suivie du prénom (sinon de la boutique) : « Bonsoir, Fatou » ; « Cette semaine » ; « +{n} depuis hier » ; « Activité » ; « À venir » ; « Pour bien démarrer » ; « Avant de commander, demande à ta communauté. » ; « ou avec ton e-mail ».
 - Description de boutique : 300 caractères au plus. Unité : 30 caractères au plus (inchangé).
 - Date d'arrivée : une date seule, refusée avant le jour courant (UTC, Dakar est à UTC+0).
 - Téléphone d'abord : pas de défilement horizontal à 320 px, cibles tactiles de 48 px (`min-h-12`) au moins.
@@ -37,6 +37,7 @@
 
 - **« Ouvertures »** : les ouvertures ne sont pas datées (`CampaignLink.openCount` est un total), donc la carte « Cette semaine » montre les ouvertures cumulées des campagnes en cours, sous le libellé « ouvertures en cours ». Les deux autres chiffres sont sur 7 jours glissants : « intéressés » et « nouveaux clients ».
 - **Prénom de l'accueil** : premier mot de `User.name`, envoyé par `GET /api/shops/me` (`me.firstName`). `AuthContext` et `/api/auth/me` restent tels que le kit les livre.
+- **Salutation selon l'heure** (demande du porteur) : heure locale du téléphone, car l'accueil est rendu dans le navigateur ; « Bonjour » de 5 h à 12 h, « Bon après-midi » de 12 h à 18 h, « Bonsoir » de 18 h à 5 h.
 - **Avatar** : le logo de la boutique, sinon les initiales du nom de l'utilisateur, sinon celles de la boutique. Il ouvre `/app/plus` (« Compte et forfait »).
 - **Recherche en Gratuit** : prénoms seulement ; les chiffres ne cherchent dans les numéros qu'avec `respondentContacts`.
 - **Réglages sur téléphone** : sections empilées, sans barre de navigation (la spec dit « un empilement »).
@@ -146,7 +147,7 @@ git commit -m "feat(app): notebook-cover sidebar, avatar and bell on the title l
   ```
   - `buildShopSummary(db: Db, organizationId: string, now: Date): Promise<ShopSummary>`.
   - `GET /api/shops/[orgId]/summary` (`MEMBER`) → `{ summary: ShopSummary }`.
-  - `greeting(firstName: string | null, shopName: string): string` ; `activityLine(item: ActivityItem): { title: string; detail: string; amount: string | null; tone: 'yes' | 'no' | 'neutral'; icon: IconName; href: string }` ; `upcomingLine(item: UpcomingItem, now: Date): { title: string; when: string; href: string }` ; `onboardingSteps(s: { hasProduct: boolean; hasCampaign: boolean }): Array<{ label: string; href: string; done: boolean }>`.
+  - `greeting(firstName: string | null, shopName: string, now: Date): string` (heure locale de `now`) ; `activityLine(item: ActivityItem): { title: string; detail: string; amount: string | null; tone: 'yes' | 'no' | 'neutral'; icon: IconName; href: string }` ; `upcomingLine(item: UpcomingItem, now: Date): { title: string; when: string; href: string }` ; `onboardingSteps(s: { hasProduct: boolean; hasCampaign: boolean }): Array<{ label: string; href: string; done: boolean }>`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -164,7 +165,7 @@ git commit -m "feat(app): notebook-cover sidebar, avatar and bell on the title l
 
 `summary/route.test.ts` : `members read the summary` (200, `summary.week`) ; `a non-member gets 404`.
 
-`home-view.test.ts` : `greeting('Fatou', 'Diallo Import')` → `'Bonjour, Fatou'`, `greeting(null, 'Diallo Import')` → `'Bonjour, Diallo Import'` ; `a yes shows its quantity in green` (`amount: '3 pièces'`, `tone: 'yes'`, `href: '/app/campagnes/c1'`) ; `a no says non in red` (`amount: 'non'`, `tone: 'no'`) ; `a locked answer hides its content` (`title: 'Réponse en attente'`, `detail: 'Forfait du mois plein'`, `amount: null`) ; `a new client opens the client page` (`href: '/app/clients/r1'`, `title` = prénom, sinon `'Nouveau client'`) ; `upcomingLine says tomorrow and in N days` (`'demain'`, `'dans 10 jours'`, `"aujourd'hui"`) ; `onboardingSteps marks what is done` (2 étapes : « Ajoute un produit » → `/app/produits/nouveau`, « Crée et partage une campagne » → `/app/campagnes/nouvelle`).
+`home-view.test.ts` : `greets by the hour` : à 9 h `greeting('Fatou', 'Diallo Import', now)` → `'Bonjour, Fatou'`, à 12 h → `'Bon après-midi, Fatou'`, à 18 h et à 2 h → `'Bonsoir, Fatou'`, à 5 h → `'Bonjour, Fatou'` ; `greeting(null, 'Diallo Import', now)` à 9 h → `'Bonjour, Diallo Import'` ; `a yes shows its quantity in green` (`amount: '3 pièces'`, `tone: 'yes'`, `href: '/app/campagnes/c1'`) ; `a no says non in red` (`amount: 'non'`, `tone: 'no'`) ; `a locked answer hides its content` (`title: 'Réponse en attente'`, `detail: 'Forfait du mois plein'`, `amount: null`) ; `a new client opens the client page` (`href: '/app/clients/r1'`, `title` = prénom, sinon `'Nouveau client'`) ; `upcomingLine says tomorrow and in N days` (`'demain'`, `'dans 10 jours'`, `"aujourd'hui"`) ; `onboardingSteps marks what is done` (2 étapes : « Ajoute un produit » → `/app/produits/nouveau`, « Crée et partage une campagne » → `/app/campagnes/nouvelle`).
 
 `home.test.tsx` (`HomeView` reçoit un `summary` en prop pour le rendu statique) :
 - `an empty shop sees the first steps, not the week card` : `hasCampaign: false` → « Pour bien démarrer », pas de « Cette semaine ».

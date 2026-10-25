@@ -61,7 +61,7 @@ Le porteur a refusé deux premières versions : elles ressemblaient à un tablea
 - **En-tête** : sur ordinateur, la cloche et l'avatar sont sur la ligne du titre de la page, sans bande vide au-dessus. Sur téléphone, la ligne du haut garde le symbole, le nom de la boutique, la cloche et l'avatar. L'avatar ouvre « Compte et forfait ».
 - **Barre latérale** : la couverture du cahier, en encre (`ink`) à petits carreaux clairs. Le symbole et « tamani » en haut, puis une carte de la boutique (avatar, nom, forfait), les onglets avec leurs icônes (l'onglet ouvert en jaune, un léger éclaircissement au survol) et, en bas, les réponses du mois face au quota, avec « Passer au Pro » en Gratuit.
 - **Accueil** :
-  - une salutation « Bonjour, {prénom} », sinon « Bonjour, {boutique} » ;
+  - une salutation « Bonjour, {prénom} », sinon « Bonjour, {boutique} ». Ajout du porteur à la validation du plan : elle suit l'heure, « Bon après-midi » à partir de midi et « Bonsoir » à partir de 18 h ;
   - **une seule carte bleue « Cette semaine »**, comme le solde d'une application de mobile money : le nombre de réponses en grand, « +n depuis hier », puis trois chiffres (intéressés, ouvertures, clients) qui ouvrent leur page ;
   - **quatre ronds** comme les raccourcis de WhatsApp (Campagne, Produit, Partager, Clients) sur téléphone, une rangée de boutons sur ordinateur ;
   - **« Activité »**, comme une liste de transactions : une icône ronde, ce qui s'est passé, à droite l'heure et la quantité en vert (oui) ou le mot « non » en rouge. Chaque ligne ouvre sa page : une réponse ouvre sa campagne, un nouveau client ouvre sa fiche ;
