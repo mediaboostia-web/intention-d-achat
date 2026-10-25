@@ -10,6 +10,7 @@ import { Button, Logo } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, ApiError } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
+import { PLANS } from '@/lib/tamani/plans';
 import { gateDecision } from '@/lib/tamani/shop-gate';
 import { AppShell } from './AppShell';
 import {
@@ -18,6 +19,8 @@ import {
   type OrgRole,
   type Shop,
   type ShopGateActions,
+  type ShopMe,
+  type ShopUsage,
 } from './shop-context';
 
 export {
@@ -29,13 +32,15 @@ export {
   type Shop,
   type ShopContextValue,
   type ShopGateActions,
+  type ShopMe,
+  type ShopUsage,
 } from './shop-context';
 
 type Loaded =
   | { status: 'loading' }
   | { status: 'none' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; shop: Shop; role: OrgRole };
+  | { status: 'ready'; shop: Shop; role: OrgRole; usage: ShopUsage; me: ShopMe };
 
 const WELCOME = '/app/bienvenue';
 
@@ -49,8 +54,10 @@ export function ShopGate({ children }: { children: ReactNode }) {
 
   const reload = useCallback(async () => {
     try {
-      const res = await api<{ shop: Shop; role: OrgRole }>('/api/shops/me');
-      setLoaded({ status: 'ready', shop: res.shop, role: res.role });
+      const res = await api<{ shop: Shop; role: OrgRole; usage: ShopUsage; me: ShopMe }>(
+        '/api/shops/me',
+      );
+      setLoaded({ status: 'ready', ...res });
     } catch (err) {
       if (err instanceof ApiError && err.code === 'SHOP_NOT_FOUND') setLoaded({ status: 'none' });
       else setLoaded({ status: 'error', message: errorMessage(err) });
@@ -87,7 +94,10 @@ export function ShopGate({ children }: { children: ReactNode }) {
       reload,
       created: (shop, role, to) => {
         setLanding(to);
-        setLoaded({ status: 'ready', shop, role });
+        // A new shop has no response yet; the reload brings the person's name.
+        const usage = { responsesThisMonth: 0, monthlyLimit: PLANS[shop.plan.id].monthlyResponses };
+        setLoaded({ status: 'ready', shop, role, usage, me: { firstName: null, name: null } });
+        void reload();
       },
     }),
     [reload],
@@ -119,7 +129,15 @@ export function ShopGate({ children }: { children: ReactNode }) {
   if (loaded.status !== 'ready') return <GateLoading />;
   return (
     <ShopGateContext.Provider value={actions}>
-      <ShopContext.Provider value={{ shop: loaded.shop, role: loaded.role, reload }}>
+      <ShopContext.Provider
+        value={{
+          shop: loaded.shop,
+          role: loaded.role,
+          usage: loaded.usage,
+          me: loaded.me,
+          reload,
+        }}
+      >
         <AppShell>{children}</AppShell>
       </ShopContext.Provider>
     </ShopGateContext.Provider>

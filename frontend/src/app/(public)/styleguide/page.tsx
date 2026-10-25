@@ -545,7 +545,12 @@ export default function StyleguidePage() {
               <BottomNav pathname="/app/campagnes/abc" />
             </div>
             <div className="frame hidden overflow-hidden rounded-card lg:block [&>nav]:static [&>nav]:h-auto">
-              <SideNav pathname="/app/produits" shopName="Diallo Import" />
+              <SideNav
+                pathname="/app/produits"
+                shop={{ name: 'Diallo Import', logoUrl: null, planLabel: 'Gratuit' }}
+                usage={{ used: 42, limit: 150 }}
+                upgrade
+              />
             </div>
           </div>
         </Section>

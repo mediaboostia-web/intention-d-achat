@@ -52,7 +52,7 @@ export default function PlusPage() {
         ))}
       </ul>
 
-      <section className="frame mt-8 rounded-card bg-surface p-5">
+      <section id="forfait" className="frame mt-8 scroll-mt-6 rounded-card bg-surface p-5">
         <h2 className="font-hand text-2xl font-bold text-primary">Ton forfait</h2>
         <p className="mt-2 text-lg font-bold text-ink">{planSentence(shop.plan)}</p>
         {plan.maxActiveCampaigns !== null && (

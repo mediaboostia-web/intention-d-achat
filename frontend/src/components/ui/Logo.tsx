@@ -34,13 +34,15 @@ function Mark() {
   );
 }
 
-/** The Tamani logo. `size` is the height in px. */
+/** The Tamani logo. `size` is the height in px; `inverse` writes the word on ink. */
 export function Logo({
   variant = 'lockup',
+  tone = 'default',
   size = 32,
   className,
 }: {
   variant?: 'mark' | 'lockup';
+  tone?: 'default' | 'inverse';
   size?: number;
   className?: string;
 }) {
@@ -69,7 +71,7 @@ export function Logo({
     >
       <Mark />
       <svg x={60} y={8} width={WORD_W} height={30} viewBox={WORDMARK_VIEWBOX}>
-        <path d={WORDMARK_PATH} fill={colors.primary} />
+        <path d={WORDMARK_PATH} fill={tone === 'inverse' ? colors.surface : colors.primary} />
       </svg>
     </svg>
   );
