@@ -127,14 +127,27 @@ describe('CampaignWizard', () => {
     expect(text(wizard(initialWizardState('p1')))).toContain('Étape 1 sur 6');
   });
 
-  it('wizard step 2 shows the 10 and 30 day shortcuts', () => {
+  it('the arrival step asks only for a date', () => {
     const s: WizardState = { ...initialWizardState('p1'), step: 1, availability: 'INCOMING' };
     const t = text(wizard(s));
     expect(t).toContain('Déjà disponible');
     expect(t).toContain('Arrive bientôt');
-    expect(t).toContain('Dans 10 jours');
-    expect(t).toContain('Dans 30 jours');
-    expect(html(wizard(s))).toMatch(/<input [^>]*type="date"/);
+    expect(t).toContain("Date d'arrivée");
+    expect(t).not.toContain('Dans 10 jours');
+    const input = html(wizard(s)).match(/<input [^>]*type="date"[^>]*>/)?.[0] ?? '';
+    expect(input).toMatch(/min="\d{4}-\d{2}-\d{2}"/);
+    const end: WizardState = { ...initialWizardState('p1'), step: 3 };
+    expect(text(wizard(end))).toContain('jours');
+  });
+
+  it('a past arrival date is explained under the field', () => {
+    const s: WizardState = {
+      ...initialWizardState('p1'),
+      step: 1,
+      availability: 'INCOMING',
+      availableOn: '2020-01-01',
+    };
+    expect(text(wizard(s))).toContain("Choisis une date à partir d'aujourd'hui.");
   });
 
   it('warns at the delivery step when the shop has no zone', () => {

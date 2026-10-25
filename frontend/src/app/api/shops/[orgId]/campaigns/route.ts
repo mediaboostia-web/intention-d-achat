@@ -14,7 +14,11 @@ import 'server-only';
 import { prisma } from '@/lib/server/prisma';
 import { buildPage, clampLimit, cursorWhere, decodeCursor } from '@/lib/server/pagination/paginate';
 import { CampaignLimitReached, assertActivationAllowed } from '@/lib/server/tamani/campaign-limit';
-import { effectiveStatusWhere, type CampaignStatus } from '@/lib/server/tamani/campaign-status';
+import {
+  effectiveStatusWhere,
+  isPastArrival,
+  type CampaignStatus,
+} from '@/lib/server/tamani/campaign-status';
 import { tamaniError } from '@/lib/server/tamani/errors';
 import { jsonOk, readJson, validationFailed } from '@/lib/server/tamani/http';
 import { CampaignCreate, SEARCH_MAX } from '@/lib/server/tamani/inputs';
@@ -88,6 +92,13 @@ export const POST = shopHandler('MEMBER', async (req, { params }) => {
   const now = new Date();
   if (fields.endsAt && fields.endsAt <= now) {
     return validationFailed('endsAt must be in the future');
+  }
+  if (
+    fields.availability === 'INCOMING' &&
+    fields.availableAt &&
+    isPastArrival(fields.availableAt, now)
+  ) {
+    return validationFailed('availableAt must not be in the past');
   }
 
   const product = await prisma.product.findFirst({

@@ -5,6 +5,7 @@ import {
   canAdvance,
   initialWizardState,
   toCampaignBody,
+  todayIso,
   wizardAvailableAt,
   wizardReducer,
 } from './campaign-wizard';
@@ -32,10 +33,25 @@ describe('campaign wizard', () => {
 
   it('needs a product before leaving the first step', () => {
     const s = initialWizardState();
-    expect(canAdvance(s)).toBe(false);
-    expect(canAdvance(wizardReducer(s, { type: 'set', field: 'productId', value: 'prod_1' }))).toBe(
-      true,
-    );
+    expect(canAdvance(s, now)).toBe(false);
+    expect(
+      canAdvance(wizardReducer(s, { type: 'set', field: 'productId', value: 'prod_1' }), now),
+    ).toBe(true);
+  });
+
+  it('an incoming campaign needs a date', () => {
+    const s = { ...initialWizardState('p1'), step: 1, availability: 'INCOMING' as const };
+    expect(canAdvance(s, now)).toBe(false);
+    expect(canAdvance({ ...s, availableOn: '2026-11-03' }, now)).toBe(true);
+    expect(canAdvance({ ...s, availability: 'IN_STOCK' }, now)).toBe(true);
+    expect('availableInDays' in s).toBe(false);
+  });
+
+  it('refuses a past arrival date', () => {
+    const s = { ...initialWizardState('p1'), step: 1, availability: 'INCOMING' as const };
+    expect(canAdvance({ ...s, availableOn: '2026-10-23' }, now)).toBe(false);
+    expect(canAdvance({ ...s, availableOn: '2026-10-24' }, now)).toBe(true);
+    expect(todayIso(now)).toBe('2026-10-24');
   });
 
   it('keeps every value after a failed launch', () => {
@@ -52,13 +68,13 @@ describe('campaign wizard', () => {
     let s = initialWizardState();
     s = wizardReducer(s, { type: 'set', field: 'productId', value: 'prod_1' });
     s = wizardReducer(s, { type: 'set', field: 'availability', value: 'INCOMING' });
-    s = wizardReducer(s, { type: 'set', field: 'availableInDays', value: 10 });
+    s = wizardReducer(s, { type: 'set', field: 'availableOn', value: '2026-11-03' });
     s = wizardReducer(s, { type: 'set', field: 'plannedQuantity', value: '200' });
     s = wizardReducer(s, { type: 'set', field: 'endsInDays', value: 14 });
     expect(toCampaignBody(s, 'ACTIVE', now)).toEqual({
       productId: 'prod_1',
       availability: 'INCOMING',
-      availableAt: '2026-11-03T10:00:00.000Z',
+      availableAt: '2026-11-03T12:00:00.000Z',
       stockQuantity: null,
       plannedQuantity: 200,
       showStock: false,
@@ -84,12 +100,12 @@ describe('campaign wizard', () => {
 });
 
 describe('wizardAvailableAt', () => {
-  it('gives the arrival date the campaign will be sent with', () => {
+  it('availableAt is noon UTC of the chosen day', () => {
     const incoming = { ...initialWizardState('p1'), availability: 'INCOMING' as const };
-    expect(wizardAvailableAt(incoming, now)?.toISOString()).toBe('2026-11-03T10:00:00.000Z');
-    expect(wizardAvailableAt({ ...incoming, availableOn: '2026-12-01' }, now)?.toISOString()).toBe(
+    expect(wizardAvailableAt(incoming)).toBeNull();
+    expect(wizardAvailableAt({ ...incoming, availableOn: '2026-12-01' })?.toISOString()).toBe(
       '2026-12-01T12:00:00.000Z',
     );
-    expect(wizardAvailableAt(initialWizardState('p1'), now)).toBeNull();
+    expect(wizardAvailableAt(initialWizardState('p1'))).toBeNull();
   });
 });

@@ -34,6 +34,13 @@ export const CAMPAIGN_TRANSITIONS: Readonly<Record<CampaignStatus, readonly Camp
   ARRIVED: ['CLOSED'],
 };
 
+/** An arrival before today (UTC day: Dakar is UTC+0) — refused when chosen (porteur's feedback §3). */
+export function isPastArrival(availableAt: Date, now: Date): boolean {
+  return (
+    availableAt < new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+  );
+}
+
 export function canTransitionCampaign(from: CampaignStatus, to: CampaignStatus): boolean {
   return CAMPAIGN_TRANSITIONS[from].includes(to);
 }

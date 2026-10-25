@@ -10,7 +10,11 @@ import 'server-only';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/server/prisma';
 import { CampaignLimitReached, assertActivationAllowed } from '@/lib/server/tamani/campaign-limit';
-import { canTransitionCampaign, effectiveStatus } from '@/lib/server/tamani/campaign-status';
+import {
+  canTransitionCampaign,
+  effectiveStatus,
+  isPastArrival,
+} from '@/lib/server/tamani/campaign-status';
 import { tamaniError } from '@/lib/server/tamani/errors';
 import { jsonOk, readJson, validationFailed } from '@/lib/server/tamani/http';
 import { CampaignPatch, compact } from '@/lib/server/tamani/inputs';
@@ -41,6 +45,16 @@ export const PATCH = shopHandler<Params>('MEMBER', async (req, { params }) => {
   const before = effectiveStatus(existing, now);
   if (status !== undefined && status !== before && !canTransitionCampaign(before, status)) {
     return tamaniError('INVALID_CAMPAIGN_TRANSITION', 409);
+  }
+  // A campaign that already arrived keeps its date; only a new past date is refused.
+  const arrival = fields.availableAt;
+  if (
+    arrival &&
+    (fields.availability ?? existing.availability) === 'INCOMING' &&
+    isPastArrival(arrival, now) &&
+    arrival.getTime() !== existing.availableAt?.getTime()
+  ) {
+    return validationFailed('availableAt must not be in the past');
   }
 
   const data: Prisma.CampaignUpdateInput = { ...fields };

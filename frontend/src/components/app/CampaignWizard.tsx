@@ -20,6 +20,8 @@ import { previewMessage } from '@/lib/tamani/campaign-view';
 import {
   WIZARD_STEPS,
   canAdvance,
+  isArrivalDay,
+  todayIso,
   wizardAvailableAt,
   wizardReducer,
   type WizardState,
@@ -72,7 +74,7 @@ export function CampaignWizard({
   const step = WIZARD_STEPS[s.step] ?? 'product';
   const last = s.step === WIZARD_STEPS.length - 1;
   const product = products.find((p) => p.id === s.productId) ?? null;
-  const ready = WIZARD_STEPS.every((_, i) => canAdvance({ ...s, step: i }));
+  const ready = WIZARD_STEPS.every((_, i) => canAdvance({ ...s, step: i }, now));
 
   // A new question starts at the top of the screen, and screen readers read it.
   useEffect(() => {
@@ -164,41 +166,25 @@ export function CampaignWizard({
           </ChoiceButton>
         </div>
         {s.availability === 'INCOMING' && (
-          <fieldset className="mt-6">
-            <legend className="font-bold text-ink">Il arrive quand ?</legend>
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              {[10, 30].map((d) => (
-                <ChoiceButton
-                  key={d}
-                  className="text-lg"
-                  selected={s.availableOn === '' && s.availableInDays === d}
-                  onClick={() => {
-                    set('availableOn', '');
-                    set('availableInDays', d);
-                  }}
-                >
-                  Dans {d} jours
-                </ChoiceButton>
-              ))}
-            </div>
-            <Input
-              id="wizard-arrival"
-              type="date"
-              label="Ou choisis la date"
-              className="mt-4"
-              min={now.toISOString().slice(0, 10)}
-              value={s.availableOn}
-              onChange={(e) => {
-                set('availableInDays', null);
-                set('availableOn', e.target.value);
-              }}
-            />
-          </fieldset>
+          <Input
+            id="wizard-arrival"
+            type="date"
+            label="Date d'arrivée"
+            className="mt-6"
+            min={todayIso(now)}
+            value={s.availableOn}
+            error={
+              s.availableOn !== '' && !isArrivalDay(s.availableOn, now)
+                ? "Choisis une date à partir d'aujourd'hui."
+                : undefined
+            }
+            onChange={(e) => set('availableOn', e.target.value)}
+          />
         )}
         <Pencil>
           Sur WhatsApp :{' '}
           {formatAvailability(
-            { availability: s.availability, availableAt: wizardAvailableAt(s, now) },
+            { availability: s.availability, availableAt: wizardAvailableAt(s) },
             now,
           )}
         </Pencil>
@@ -306,7 +292,7 @@ export function CampaignWizard({
                 ? previewMessage(
                     s.shareTemplate,
                     product,
-                    { availability: s.availability, availableAt: wizardAvailableAt(s, now) },
+                    { availability: s.availability, availableAt: wizardAvailableAt(s) },
                     now,
                   )
                 : s.shareTemplate
@@ -372,7 +358,7 @@ export function CampaignWizard({
         ) : (
           <Button
             className="w-full shadow-press sm:w-auto"
-            disabled={!canAdvance(s)}
+            disabled={!canAdvance(s, now)}
             onClick={() => dispatch({ type: 'next' })}
           >
             Continuer

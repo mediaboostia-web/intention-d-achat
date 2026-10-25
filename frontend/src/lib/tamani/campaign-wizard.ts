@@ -1,6 +1,8 @@
 // The campaign creation wizard (spec §5.2 step 4): one question per step,
-// state kept as typed, dates kept relative ("dans 10 jours") and resolved
-// only when the campaign is sent. A failed launch keeps every answer.
+// state kept as typed, the end kept relative ("dans 14 jours") and resolved
+// only when the campaign is sent. An incoming product asks for its arrival
+// date only (porteur's feedback §3), never before today. A failed launch
+// keeps every answer.
 import { addDays } from './dates';
 import { parseCount } from './fcfa-input';
 import { DEFAULT_SHARE_TEMPLATE } from './share-message';
@@ -19,9 +21,7 @@ export type WizardStep = (typeof WIZARD_STEPS)[number];
 export interface WizardValues {
   productId: string | null;
   availability: Availability;
-  /** Shortcut for an incoming product: arrives in N days. */
-  availableInDays: number | null;
-  /** A chosen arrival date (YYYY-MM-DD); wins over the shortcut. */
+  /** The arrival date of an incoming product (YYYY-MM-DD), '' until chosen. */
   availableOn: string;
   stockQuantity: string;
   showStock: boolean;
@@ -56,7 +56,6 @@ export function initialWizardState(productId: string | null = null): WizardState
   return {
     productId,
     availability: 'IN_STOCK',
-    availableInDays: 10,
     availableOn: '',
     stockQuantity: '',
     showStock: false,
@@ -89,15 +88,25 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
 }
 
 const isDay = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
+
+/** Today as a date field writes it (UTC: Dakar is UTC+0). */
+export function todayIso(now: Date): string {
+  return now.toISOString().slice(0, 10);
+}
+
+/** A chosen arrival day, today or later. */
+export function isArrivalDay(day: string, now: Date): boolean {
+  return isDay(day) && day >= todayIso(now);
+}
 const optionalCount = (raw: string, min: number) =>
   raw.trim() === '' || parseCount(raw, min) !== null;
 
-export function canAdvance(s: WizardState): boolean {
+export function canAdvance(s: WizardState, now: Date): boolean {
   switch (WIZARD_STEPS[s.step]) {
     case 'product':
       return s.productId !== null;
     case 'availability':
-      return s.availability === 'IN_STOCK' || s.availableInDays !== null || isDay(s.availableOn);
+      return s.availability === 'IN_STOCK' || isArrivalDay(s.availableOn, now);
     case 'quantities':
       return optionalCount(s.stockQuantity, 0) && optionalCount(s.plannedQuantity, 1);
     case 'message':
@@ -107,12 +116,11 @@ export function canAdvance(s: WizardState): boolean {
   }
 }
 
-/** The arrival date the campaign is sent with (null when in stock). */
-export function wizardAvailableAt(s: WizardValues, now: Date): Date | null {
-  if (s.availability === 'IN_STOCK') return null;
+/** The arrival date the campaign is sent with (null when in stock or not chosen). */
+export function wizardAvailableAt(s: WizardValues): Date | null {
+  if (s.availability === 'IN_STOCK' || !isDay(s.availableOn)) return null;
   // Noon UTC keeps the chosen day whatever the reader's time zone.
-  if (isDay(s.availableOn)) return new Date(`${s.availableOn}T12:00:00.000Z`);
-  return s.availableInDays === null ? null : addDays(now, s.availableInDays);
+  return new Date(`${s.availableOn}T12:00:00.000Z`);
 }
 
 const countOrNull = (raw: string, min: number) => (raw.trim() === '' ? null : parseCount(raw, min));
@@ -125,7 +133,7 @@ export function toCampaignBody(
   return {
     productId: s.productId,
     availability: s.availability,
-    availableAt: wizardAvailableAt(s, now)?.toISOString() ?? null,
+    availableAt: wizardAvailableAt(s)?.toISOString() ?? null,
     stockQuantity: countOrNull(s.stockQuantity, 0),
     plannedQuantity: countOrNull(s.plannedQuantity, 1),
     showStock: s.showStock,

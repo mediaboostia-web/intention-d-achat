@@ -202,6 +202,30 @@ describe('POST /api/shops/[orgId]/campaigns', () => {
     expect(res.status).toBe(400);
     expect(prismaMock.campaign.create).not.toHaveBeenCalled();
   });
+
+  it('POST refuses an arrival before today', async () => {
+    const yesterday = new Date(Date.now() - DAY);
+    yesterday.setUTCHours(12, 0, 0, 0);
+    const res = await create({
+      ...valid,
+      availability: 'INCOMING',
+      availableAt: yesterday.toISOString(),
+    });
+    expect(res.status).toBe(400);
+    expect(await errorOf(res)).toBe('VALIDATION_FAILED');
+    expect(prismaMock.campaign.create).not.toHaveBeenCalled();
+  });
+
+  it('POST accepts today', async () => {
+    const today = new Date();
+    today.setUTCHours(0, 0, 1, 0);
+    const res = await create({
+      ...valid,
+      availability: 'INCOMING',
+      availableAt: today.toISOString(),
+    });
+    expect(res.status).toBe(201);
+  });
 });
 
 describe('GET /api/shops/[orgId]/campaigns', () => {
@@ -304,6 +328,24 @@ describe('PATCH /api/shops/[orgId]/campaigns/[campaignId]', () => {
       status: 'CLOSED',
       closedAt: expect.any(Date),
     });
+  });
+
+  it('PATCH refuses a past arrival date it did not have', async () => {
+    prismaMock.campaign.findFirst.mockResolvedValue(
+      campaign({ availability: 'INCOMING', availableAt: later() }) as never,
+    );
+    const res = await patch({ availableAt: earlier().toISOString() });
+    expect(res.status).toBe(400);
+    expect(prismaMock.campaign.update).not.toHaveBeenCalled();
+  });
+
+  it('PATCH keeps an unchanged past date', async () => {
+    const past = new Date('2026-09-01T12:00:00.000Z');
+    prismaMock.campaign.findFirst.mockResolvedValue(
+      campaign({ availability: 'INCOMING', availableAt: past, status: 'CLOSED' }) as never,
+    );
+    const res = await patch({ availableAt: past.toISOString(), title: 'Marmites 5 L' });
+    expect(res.status).toBe(200);
   });
 
   it('returns 409 INVALID_CAMPAIGN_TRANSITION for DRAFT to ARRIVED', async () => {
