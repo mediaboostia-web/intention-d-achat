@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       select: { id: true, campaignId: true },
     });
     if (!link) return tamaniError('CAMPAIGN_NOT_FOUND', 404);
-    const limited = await enforcePublicRateLimit(req, link.campaignId);
+    const limited = await enforcePublicRateLimit(req, link.campaignId, deviceId);
     if (limited) return limited;
 
     if (await isFirstViewToday(link.id, deviceId, new Date())) {

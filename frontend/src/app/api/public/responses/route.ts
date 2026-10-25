@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       select: { campaignId: true },
     });
     if (!link) return tamaniError('CAMPAIGN_NOT_FOUND', 404);
-    const limited = await enforcePublicRateLimit(req, link.campaignId);
+    const limited = await enforcePublicRateLimit(req, link.campaignId, input.deviceId);
     if (limited) return limited;
 
     const token = req.headers.get('x-response-token');

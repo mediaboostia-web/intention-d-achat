@@ -12,7 +12,11 @@ import { prisma } from '@/lib/server/prisma';
 import { makeRequestContext, withRequestContext } from '@/lib/server/observability/request-context';
 import { jsonOk, readJson, validationFailed } from '@/lib/server/tamani/http';
 
-const endpoint = z.url({ protocol: /^https$/ }).max(1000);
+// The server posts to every stored endpoint: only the browsers' push
+// services (Chrome and Android, Firefox, Safari, Edge) are accepted.
+const PUSH_SERVICES =
+  /^(?:fcm\.googleapis\.com|android\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)$/;
+const endpoint = z.url({ protocol: /^https$/, hostname: PUSH_SERVICES }).max(1000);
 const Subscribe = z.object({
   endpoint,
   keys: z.object({ p256dh: z.string().min(1).max(200), auth: z.string().min(1).max(100) }),

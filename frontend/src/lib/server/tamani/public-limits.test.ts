@@ -14,16 +14,28 @@ function from(ip: string): NextRequest {
 }
 
 describe('public limits without Redis', () => {
-  it('allows 30 writes per 10 minutes per IP and campaign, then 429 RATE_LIMITED', async () => {
+  it('allows one phone 30 writes per 10 minutes and campaign, then 429 RATE_LIMITED', async () => {
     for (let i = 0; i < 30; i++) {
-      expect(await enforcePublicRateLimit(from('41.82.1.1'), 'camp_rl')).toBeNull();
+      expect(await enforcePublicRateLimit(from('41.82.1.1'), 'camp_rl', 'dev_a')).toBeNull();
     }
-    const blocked = await enforcePublicRateLimit(from('41.82.1.1'), 'camp_rl');
+    const blocked = await enforcePublicRateLimit(from('41.82.1.1'), 'camp_rl', 'dev_a');
     expect(blocked?.status).toBe(429);
     expect(await blocked?.json()).toMatchObject({ error: 'RATE_LIMITED' });
     expect(Number(blocked?.headers.get('Retry-After'))).toBeGreaterThan(0);
-    expect(await enforcePublicRateLimit(from('41.82.1.2'), 'camp_rl')).toBeNull();
-    expect(await enforcePublicRateLimit(from('41.82.1.1'), 'camp_other')).toBeNull();
+    expect(await enforcePublicRateLimit(from('41.82.1.1'), 'camp_other', 'dev_a')).toBeNull();
+  });
+
+  it('lets many phones behind one operator IP answer, up to 600 writes per 10 minutes', async () => {
+    // Mobile operators put many subscribers behind one public IP: 100 phones
+    // answering the same campaign stay under the IP's ceiling.
+    for (let i = 0; i < 600; i++) {
+      expect(
+        await enforcePublicRateLimit(from('41.82.2.1'), 'camp_nat', `dev_${i % 100}`),
+      ).toBeNull();
+    }
+    const blocked = await enforcePublicRateLimit(from('41.82.2.1'), 'camp_nat', 'dev_new');
+    expect(blocked?.status).toBe(429);
+    expect(await enforcePublicRateLimit(from('41.82.2.2'), 'camp_nat', 'dev_new')).toBeNull();
   });
 
   it('isFirstViewToday is true once per device and day', async () => {

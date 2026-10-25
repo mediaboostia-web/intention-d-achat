@@ -9,7 +9,10 @@ import { MemoryRateLimitStore, RedisRateLimitStore } from '@/lib/server/rate-lim
 import { tamaniError } from './errors';
 
 const WINDOW_MS = 10 * 60 * 1000;
-const MAX_WRITES = 30;
+const MAX_WRITES_PER_DEVICE = 30;
+// Mobile operators put many subscribers behind one public IP (carrier NAT):
+// the IP's ceiling lets about 70 complete answers through per window.
+const MAX_WRITES_PER_IP = 600;
 const VIEW_TTL_S = 48 * 3600;
 const DEVICE_NUMBERS_TTL_S = 90 * 24 * 3600;
 
@@ -25,17 +28,29 @@ function clientIp(req: NextRequest): string {
   return req.headers.get('x-real-ip') ?? 'unknown';
 }
 
-/** 30 writes per 10 minutes, per IP and per campaign; a 429 RATE_LIMITED beyond. */
+/**
+ * Per campaign and per 10 minutes: 30 writes per phone (IP and device id),
+ * 600 per IP whatever the device id; a 429 RATE_LIMITED beyond either.
+ */
 export async function enforcePublicRateLimit(
   req: NextRequest,
   campaignId: string,
+  deviceId: string,
 ): Promise<NextResponse | null> {
-  const { totalHits, resetTime } = await store.increment(
-    `rl:public:${campaignId}:${clientIp(req)}`,
-  );
-  if (totalHits <= MAX_WRITES) return null;
+  const key = `rl:public:${campaignId}:${clientIp(req)}`;
+  const [device, ip] = await Promise.all([
+    store.increment(`${key}:${deviceId}`),
+    store.increment(key),
+  ]);
+  const over =
+    device.totalHits > MAX_WRITES_PER_DEVICE
+      ? device
+      : ip.totalHits > MAX_WRITES_PER_IP
+        ? ip
+        : null;
+  if (!over) return null;
   const res = tamaniError('RATE_LIMITED', 429);
-  const retryAfter = Math.max(1, Math.ceil((resetTime.getTime() - Date.now()) / 1000));
+  const retryAfter = Math.max(1, Math.ceil((over.resetTime.getTime() - Date.now()) / 1000));
   res.headers.set('Retry-After', String(retryAfter));
   return res;
 }

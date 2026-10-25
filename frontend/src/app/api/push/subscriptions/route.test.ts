@@ -50,6 +50,29 @@ describe('POST /api/push/subscriptions', () => {
     expect(res.status).toBe(400);
     expect(prismaMock.pushSubscription.upsert).not.toHaveBeenCalled();
   });
+
+  it('accepts the browsers push services only, so the server never posts elsewhere', async () => {
+    await signIn();
+    const post = (endpoint: string) =>
+      POST(apiRequest('/api/push/subscriptions', { method: 'POST', body: { ...body, endpoint } }));
+    for (const ok of [
+      'https://fcm.googleapis.com/fcm/send/abc',
+      'https://updates.push.services.mozilla.com/wpush/v2/abc',
+      'https://web.push.apple.com/QGx2',
+      'https://wns2-par02p.notify.windows.com/w/?token=abc',
+    ]) {
+      expect((await post(ok)).status, ok).toBe(200);
+    }
+    for (const bad of [
+      'https://169.254.169.254/latest/meta-data',
+      'https://hooks.example.com/collect',
+      'https://storage.googleapis.com/bucket/object',
+      'https://fcm.googleapis.com.evil.example/fcm/send/abc',
+    ]) {
+      expect((await post(bad)).status, bad).toBe(400);
+    }
+    expect(prismaMock.pushSubscription.upsert).toHaveBeenCalledTimes(4);
+  });
 });
 
 describe('DELETE /api/push/subscriptions', () => {

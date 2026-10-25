@@ -196,7 +196,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
   - `verifyResponseToken(token): Promise<{ responseId; deviceId } | null>`.
 - `public-campaign.ts` : `getPublicCampaign(db, code, now): Promise<PublicCampaign | null>`. **Aucune** donnée de répondant, ni `whatsappPhone`, ni `costPrice`, ni `plannedQuantity`.
 - `responses.ts` : `upsertResponse(db, input: ResponseStepInput & { token: string | null }, now): Promise<UpsertResult>`, avec `UpsertResult = { responseId; token; completed; firstCompletion; respondent: { firstName; phoneE164; phoneMasked } | null; interestedCount: number | null }`. À la complétion, le `Respondent` est créé ou mis à jour : c'est ce qui l'ajoute au carnet de clients. `firstCompletion` déclenche la notification ; la route ne le renvoie pas.
-- `public-limits.ts` : `enforcePublicRateLimit(req, campaignId)`, `isFirstViewToday(linkId, deviceId, now)` et `recordDeviceNumber(campaignId, deviceId, phoneE164)` (numéro haché), sur Upstash, avec un repli en mémoire sans Redis.
+- `public-limits.ts` : `enforcePublicRateLimit(req, campaignId, deviceId)`, `isFirstViewToday(linkId, deviceId, now)` et `recordDeviceNumber(campaignId, deviceId, phoneE164)` (numéro haché), sur Upstash, avec un repli en mémoire sans Redis.
 - `notify-response.ts` : `responseNotificationText(...)` et `notifyShopOfResponse(db, responseId)`, lancée par `after()` ; `push/web-push.ts` : `pushConfigured()`, `vapidPublicKey()` et `sendPush(sub, payload) → 'SENT' | 'GONE' | 'FAILED'`.
 
 **Lot 6**
@@ -239,7 +239,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
   - `GET|PATCH …/campaigns/[campaignId]` (activation : `409 CAMPAIGN_LIMIT_REACHED`) ;
   - `GET|POST …/campaigns/[campaignId]/links` (liens de source : `403 PLAN_FEATURE_LOCKED` en FREE).
 - **Lot 5, public** : `POST /api/public/views` et `POST /api/public/responses`.
-- **Lot 5, notifications** : `GET /api/push/public-key` (`503 PUSH_NOT_CONFIGURED` sans clés VAPID), `POST|DELETE /api/push/subscriptions` (session et CSRF). La cloche utilise les routes `/api/notifications` du kit.
+- **Lot 5, notifications** : `GET /api/push/public-key` (`503 PUSH_NOT_CONFIGURED` sans clés VAPID), `POST|DELETE /api/push/subscriptions` (session et CSRF ; adresse https d'un service de push de navigateur seulement : FCM, Mozilla, Apple, Windows). La cloche utilise les routes `/api/notifications` du kit.
 - **Lot 6, tableau de bord** :
   - `GET /api/shops/[orgId]/summary` ;
   - `GET …/campaigns/[campaignId]/stats` ;
@@ -349,7 +349,7 @@ Vérification : `pnpm build` et la liste de recette manuelle du plan détaillé.
    - Étapes validées avec zod. Correspondance par `campaignId` et `deviceId`, puis jeton facultatif.
    - Numéro : `normalizePhone`, puis création ou mise à jour du `Respondent` (le client entre dans le carnet), puis fusion des appareils.
    - `suspicious` à partir de 3 numéros différents sur le même appareil. `locked` via `shouldLockNewCompletion`.
-   - Limite : 30 écritures par 10 min, par IP et par campagne. Champ piège `website`.
+   - Limite, par campagne et par 10 min : 30 écritures par téléphone (IP et identifiant d'appareil) et 600 par IP, car les opérateurs mobiles mettent beaucoup d'abonnés derrière une même IP. Champ piège `website`.
    - Tests : Review Focus 1, 2 et 3, `422 INVALID_PHONE`, `401 INVALID_RESPONSE_TOKEN`, `429 RATE_LIMITED`, et `Respondent` créé à la complétion avec `lastSeenAt` mis à jour.
 5. **Client du pop-up**.
    - `popupReducer` dans `frontend/src/lib/tamani/popup-machine.ts` (étapes de la spec §5.3). `deviceMemory` est protégé par un `try/catch`.
