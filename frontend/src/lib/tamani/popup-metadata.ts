@@ -13,7 +13,7 @@ export function popupMetadata(c: PublicCampaign | null, appUrl: string): Metadat
   if (!c) return { title: 'Lien introuvable · Tamani', robots: NO_INDEX };
   const base = appUrl.replace(/\/+$/, '');
   const title = `${c.product.name} · ${formatXof(c.product.unitPrice)}`;
-  const description = `${c.shop.name} · ${c.availabilityText}. Réponds en 5 secondes.`;
+  const description = `${c.shop.name} · ${c.availabilityText}. Réponds en moins de 30 secondes.`;
   const photo = c.product.photos[0];
   const image = {
     url: photo ? cloudinaryVariant(photo, OG_PHOTO) : `${base}/brand/og-default.png`,

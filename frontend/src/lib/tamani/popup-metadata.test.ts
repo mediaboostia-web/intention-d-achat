@@ -17,7 +17,9 @@ describe('popupMetadata', () => {
   it('previews the product photo, its name, its price and the shop', () => {
     const m = popupMetadata(campaign, 'https://tamani.app');
     expect(m.title).toBe('Marmites inox 5 L · 7 500 FCFA');
-    expect(m.description).toBe('Diallo Import · Arrivage dans 10 jours. Réponds en 5 secondes.');
+    expect(m.description).toBe(
+      'Diallo Import · Arrivage dans 10 jours. Réponds en moins de 30 secondes.',
+    );
     expect(m.openGraph).toMatchObject({
       type: 'website',
       siteName: 'Tamani',

@@ -4,7 +4,7 @@ import { formatPrice } from '@/lib/utils';
 import type { Availability } from './timing';
 
 export const DEFAULT_SHARE_TEMPLATE =
-  '🔔 Nouveau : *{produit}* à {prix}. {disponibilite}. Tu en veux ? Réponds en 5 secondes 👉 {lien}';
+  '🔔 Nouveau : *{produit}* à {prix}. {disponibilite}. Tu en veux ? Réponds en moins de 30 secondes 👉 {lien}';
 
 export interface ShareMessageVars {
   produit: string;

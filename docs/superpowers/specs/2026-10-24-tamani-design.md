@@ -90,7 +90,7 @@ Les trois piliers de marque sont donc : **proximité** (être en contact), **cla
 6. Suivi dans le tableau de bord (§5.4), puis relance des intéressés (§5.5).
 
 **Message de partage par défaut** [choix] : modèle avec des variables `{produit}`, `{prix}`, `{disponibilité}` et `{lien}`. Exemple :
-« 🔔 Nouveau : *Marmites inox 5 L* à 7 500 FCFA (gros : 6 000 FCFA dès 12). Arrivage dans 10 jours. Tu en veux ? Réponds en 5 secondes 👉 tamani.app/c/k3P9xQa »
+« 🔔 Nouveau : *Marmites inox 5 L* à 7 500 FCFA (gros : 6 000 FCFA dès 12). Arrivage dans 10 jours. Tu en veux ? Réponds en moins de 30 secondes 👉 tamani.app/c/k3P9xQa »
 
 ### 5.3 Le pop-up du répondant [décidé dans l'esprit, détails : choix]
 Un lien partagé sur WhatsApp s'ouvre dans le navigateur du téléphone. Le « pop-up » est donc une **page web très légère** qui affiche le produit en fond (photo floutée) avec une **feuille qui monte du bas**. Aucun compte à créer.

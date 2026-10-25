@@ -147,7 +147,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 - `ORDER_STATUS_LABELS` (lot 7) : « À confirmer », « Confirmée », « Livrée » ou « Récupérée » selon `fulfillment`, « Annulée ».
 
 **`share-message.ts`**
-- `DEFAULT_SHARE_TEMPLATE = '🔔 Nouveau : *{produit}* à {prix}. {disponibilite}. Tu en veux ? Réponds en 5 secondes 👉 {lien}'`
+- `DEFAULT_SHARE_TEMPLATE = '🔔 Nouveau : *{produit}* à {prix}. {disponibilite}. Tu en veux ? Réponds en moins de 30 secondes 👉 {lien}'`
 - `renderShareMessage(template, vars: { produit; prix; disponibilite; lien }): string`. Une variable inconnue reste telle quelle. `{disponibilité}`, avec l'accent, est remplacée comme `{disponibilite}`.
 - `formatXof(amount: number): string` → `'7 500 FCFA'`
 - `formatPriceLine(p: { unitPrice; wholesalePrice: number | null; wholesaleMinQty: number | null }): string` → `'7 500 FCFA (gros : 6 000 FCFA dès 12)'`
