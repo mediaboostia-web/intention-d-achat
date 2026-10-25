@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tamani — icônes de l'application installée</title>
+    <!--
+      ?size=192|512 &mark=0.8 (icônes « any ») ou &mark=0.6 (icône « maskable » :
+      Android découpe un cercle, le logo reste dans les 80 % centraux).
+      Le logo est centré sur son centre optique (24, 26.5 du viewBox de 48),
+      comme apple-icon.html.
+    -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #1a4fbf;
+      }
+      img {
+        position: absolute;
+      }
+    </style>
+  </head>
+  <body>
+    <img id="mark" src="../../../frontend/public/brand/tamani-mark.svg" alt="" />
+    <script>
+      const q = new URLSearchParams(location.search);
+      const size = Number(q.get('size') || 512);
+      const mark = size * Number(q.get('mark') || 0.8);
+      document.documentElement.style.width = document.body.style.width = size + 'px';
+      document.documentElement.style.height = document.body.style.height = size + 'px';
+      const img = document.getElementById('mark');
+      img.style.width = img.style.height = mark + 'px';
+      img.style.left = size / 2 - mark / 2 + 'px';
+      img.style.top = size / 2 - (mark * 26.5) / 48 + 'px';
+    </script>
+  </body>
+</html>

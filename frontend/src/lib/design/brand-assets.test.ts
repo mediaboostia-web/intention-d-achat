@@ -27,6 +27,9 @@ describe('brand assets (Tamani lot 2)', () => {
       ...Object.values(SVGS),
       'public/brand/og-default.png',
       'src/app/apple-icon.png',
+      'public/icons/icon-192.png',
+      'public/icons/icon-512.png',
+      'public/icons/icon-maskable-512.png',
       'src/lib/design/logo-paths.ts',
     ];
     for (const rel of files) expect(existsSync(at(rel)), rel).toBe(true);
@@ -43,6 +46,9 @@ describe('brand assets (Tamani lot 2)', () => {
   it('PNG sizes are exact', () => {
     expect(pngSize('src/app/apple-icon.png')).toEqual({ width: 180, height: 180 });
     expect(pngSize('public/brand/og-default.png')).toEqual({ width: 1200, height: 630 });
+    expect(pngSize('public/icons/icon-192.png')).toEqual({ width: 192, height: 192 });
+    expect(pngSize('public/icons/icon-512.png')).toEqual({ width: 512, height: 512 });
+    expect(pngSize('public/icons/icon-maskable-512.png')).toEqual({ width: 512, height: 512 });
   });
 
   // The validated mockups are the record of the porteur's decision: they must

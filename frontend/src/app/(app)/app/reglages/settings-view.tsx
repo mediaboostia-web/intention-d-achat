@@ -1,11 +1,13 @@
 'use client';
 
 // /app/reglages, four cards: the shop, its delivery zones, the estimate
-// coefficients and the account. The first three need the ADMIN role: a
+// coefficients and the account, plus the notifications card until this
+// browser receives them. The first three need the ADMIN role: a
 // MEMBER sees them, greyed out, with a word on why.
 import { useEffect, useState } from 'react';
 import { AccountSection } from '@/components/app/AccountSection';
 import { CoefficientsForm } from '@/components/app/CoefficientsForm';
+import { PushCard } from '@/components/app/PushCard';
 import { ShopForm, type ShopFormErrors, type ShopFormValues } from '@/components/app/ShopForm';
 import { useShop } from '@/components/app/ShopProvider';
 import { ZoneEditor, type Zone } from '@/components/app/ZoneEditor';
@@ -149,6 +151,8 @@ export function SettingsView({ google }: { google: boolean }) {
             />
           </fieldset>
         </Section>
+
+        <PushCard />
 
         <Section title="Ton compte">
           <AccountSection google={google} />
