@@ -40,6 +40,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { verifyCsrf } from '@/lib/server/auth';
 import { requireAuth } from '@/lib/server/middleware';
+import { log } from '@/lib/server/observability/log';
 import { makeRequestContext, withRequestContext } from '@/lib/server/observability/request-context';
 import { prisma } from '@/lib/server/prisma';
 import { StorageNotConfiguredError, uploadBuffer } from '@/lib/server/upload/cloudinary-client';
@@ -154,6 +155,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           { status: 503, headers: { 'x-request-id': ctx.requestId } },
         );
       }
+      // The status says why (401 = wrong API secret); the message can carry
+      // the string Cloudinary signed, so it stays out of the logs.
+      const httpCode = (e as { http_code?: unknown } | null)?.http_code;
+      log.warn('cloudinary upload failed', {
+        httpCode: typeof httpCode === 'number' ? httpCode : null,
+      });
       return NextResponse.json(
         { code: 'UPLOAD_FAILED', message: 'Storage write failed' },
         { status: 502, headers: { 'x-request-id': ctx.requestId } },

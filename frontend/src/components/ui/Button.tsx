@@ -1,4 +1,5 @@
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react';
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ComponentProps, ReactNode } from 'react';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 type Variant = 'primary' | 'secondary' | 'whatsapp' | 'ghost';
@@ -75,8 +76,22 @@ export function Button({
   );
 
   if (rest.href !== undefined) {
+    const { href, ...anchorRest } = rest as AnchorHTMLAttributes<HTMLAnchorElement> & {
+      href: string;
+    };
+    // App pages move client-side (the shop stays loaded); API routes such as
+    // the Google sign-in need a real browser navigation.
+    if (href.startsWith('/') && !href.startsWith('/api/')) {
+      // Same anchor attributes; Link's types only differ on `| undefined`.
+      const linkRest = anchorRest as Omit<ComponentProps<typeof Link>, 'href'>;
+      return (
+        <Link href={href} {...linkRest} className={classes}>
+          {content}
+        </Link>
+      );
+    }
     return (
-      <a {...(rest as AnchorHTMLAttributes<HTMLAnchorElement>)} className={classes}>
+      <a href={href} {...anchorRest} className={classes}>
         {content}
       </a>
     );

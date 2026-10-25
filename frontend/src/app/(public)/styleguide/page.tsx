@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 import {
   Badge,
+  BottomNav,
   BottomSheet,
   Button,
   CalcTable,
@@ -11,13 +12,24 @@ import {
   DataList,
   EmptyState,
   FilterBar,
+  Icon,
+  type IconName,
   Input,
   Logo,
   MoneyCard,
+  Notice,
+  PageHeader,
   PhoneInput,
+  Select,
+  SideNav,
   StatTile,
+  Steps,
+  Switch,
+  Tabs,
+  Textarea,
   VerdictCard,
 } from '@/components/ui';
+import { DEFAULT_SHARE_TEMPLATE } from '@/lib/tamani/share-message';
 import { colors } from '@/lib/design/tokens';
 
 // Dev-only living reference of docs/brand/tamani-brand.md: every token and
@@ -28,6 +40,22 @@ export const metadata: Metadata = {
 };
 
 const CAMPAIGN = { realistic: 211, completed: 94, reference: 400, interested: 64 };
+
+const ICONS: readonly IconName[] = [
+  'home',
+  'megaphone',
+  'receipt',
+  'people',
+  'more',
+  'box',
+  'gear',
+  'plus',
+  'copy',
+  'link',
+  'photo',
+  'check',
+  'lock',
+];
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -438,6 +466,87 @@ export default function StyleguidePage() {
             >
               Lance ta première campagne : ta communauté te dira quoi acheter.
             </EmptyState>
+          </div>
+        </Section>
+
+        <Section title="Espace grossiste">
+          <PageHeader
+            title="Mes campagnes"
+            note="2 en cours sur 3 avec le forfait Gratuit"
+            action={<Button href="#">Créer une campagne</Button>}
+          />
+          <Tabs
+            className="mt-6"
+            label="Campagne"
+            items={[
+              { id: 'share', label: 'Partager', href: '#', active: true },
+              { id: 'edit', label: 'Modifier', href: '#' },
+            ]}
+          />
+          <div className="mt-8 grid gap-8 md:grid-cols-2">
+            <div className="flex flex-col gap-5">
+              <Steps current={2} total={6} title="Quand le produit est là ?" />
+              <Select
+                id="sg-country"
+                label="Pays de la boutique"
+                defaultValue="SN"
+                options={[
+                  { value: 'SN', label: 'Sénégal (+221)' },
+                  { value: 'CI', label: "Côte d'Ivoire (+225)" },
+                  { value: 'ML', label: 'Mali (+223)' },
+                ]}
+              />
+              <Textarea
+                id="sg-message"
+                label="Message à partager"
+                defaultValue={DEFAULT_SHARE_TEMPLATE}
+                hint="Les mots entre accolades sont remplacés par ceux de ta campagne."
+              />
+              <Switch
+                id="sg-live"
+                label="Afficher le compteur de réponses"
+                hint="Tes clients voient combien de personnes ont déjà répondu."
+                checked
+              />
+              <Switch id="sg-delivery" label="Proposer la livraison" checked={false} />
+            </div>
+            <div className="flex flex-col gap-4">
+              <Notice tone="info">Brouillon enregistré. Tu peux le lancer quand tu veux.</Notice>
+              <Notice
+                tone="warning"
+                title="3 campagnes en cours"
+                action={
+                  <Button href="#" variant="secondary">
+                    Voir le forfait Pro
+                  </Button>
+                }
+              >
+                C&apos;est le maximum du forfait Gratuit. Termine-en une ou passe au Pro.
+              </Notice>
+              <Notice tone="danger">
+                Cette photo est trop lourde : 10 Mo au plus. Choisis-en une autre.
+              </Notice>
+              <ul className="frame flex flex-wrap gap-4 rounded-card bg-surface p-4 text-primary">
+                {ICONS.map((name) => (
+                  <li key={name} title={name}>
+                    <Icon name={name} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <p className="mt-10 font-hand text-lg text-ink-muted">
+            La barre du bas ne s&apos;affiche que sur téléphone, la colonne de gauche à partir de
+            1024 px.
+          </p>
+          <div className="mt-4 flex flex-wrap items-start gap-8">
+            {/* transform makes the fixed bar sit inside the frame instead of the window */}
+            <div className="frame relative h-40 w-[390px] max-w-full overflow-hidden rounded-card bg-paper [transform:translateZ(0)] lg:hidden">
+              <BottomNav pathname="/app/campagnes/abc" />
+            </div>
+            <div className="frame hidden overflow-hidden rounded-card lg:block [&>nav]:static [&>nav]:h-auto">
+              <SideNav pathname="/app/produits" shopName="Diallo Import" />
+            </div>
           </div>
         </Section>
       </div>

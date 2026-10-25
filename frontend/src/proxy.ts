@@ -2,6 +2,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 // Silent-refresh gate for protected pages.
 //
+// Next 16 reads this file as src/proxy.ts (next to app/) and calls `proxy`;
+// the kit shipped it as frontend/middleware.ts, a place Next never loads with
+// a src/ directory, so /app was not protected until Tamani lot 4.
+//
 // The (15-min) access cookie can expire while a (7-day) refresh cookie is
 // still valid — typically when a tab sat unfocused or the laptop slept. The
 // (authed) layout calling /api/auth/me would 401 and the user would be kicked
@@ -13,7 +17,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 // e.g. "/dashboard,/account"). Empty by default — the API surface is the only
 // thing shipped, so out-of-the-box this middleware is a no-op.
 //
-// Edge runtime: no DB, no bcrypt, no Prisma. We only inspect cookies and
+// No DB, no bcrypt, no Prisma here. We only inspect cookies and
 // build redirects — the heavy lifting happens in /api/auth/refresh-and-return
 // (runtime=nodejs).
 
@@ -31,7 +35,7 @@ function isAuthedPath(pathname: string): boolean {
   return AUTHED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-export function middleware(req: NextRequest): NextResponse {
+export function proxy(req: NextRequest): NextResponse {
   if (AUTHED_PREFIXES.length === 0) return NextResponse.next();
 
   const { pathname, search } = req.nextUrl;
