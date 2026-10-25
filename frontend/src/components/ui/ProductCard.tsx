@@ -3,6 +3,7 @@ import { formatPriceLine } from '@/lib/tamani/share-message';
 import { cn } from '@/lib/utils';
 import { Badge } from './Badge';
 import { Icon } from './icons';
+import { cloudinaryVariant, THUMB } from '@/lib/tamani/cloudinary-url';
 
 export interface ProductCardData {
   name: string;
@@ -24,7 +25,7 @@ export function ProductCard({
   href?: string | undefined;
   className?: string | undefined;
 }) {
-  const photo = product.photos[0];
+  const photo = product.photos[0] ? cloudinaryVariant(product.photos[0], THUMB) : undefined;
   const body = (
     <>
       {photo ? (

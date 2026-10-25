@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/Input';
 import { Logo } from '@/components/ui/Logo';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import type { PublicCampaign } from '@/lib/server/tamani/public-campaign';
-import { POPUP_PHOTO, cloudinaryVariant } from '@/lib/tamani/cloudinary-url';
+import { POPUP_PHOTO, cloudinaryVariant, THUMB } from '@/lib/tamani/cloudinary-url';
 import {
   loadDeviceMemory,
   safeStorage,
@@ -76,7 +76,11 @@ function ShopChip({ shop }: { shop: PublicCampaign['shop'] }) {
   return (
     <span className="mt-5 ml-4 inline-flex max-w-[calc(100%-2rem)] items-center gap-2 self-start rounded-full bg-surface/95 py-1 pr-3.5 pl-1 text-sm font-bold text-ink">
       {shop.logoUrl ? (
-        <img src={shop.logoUrl} alt="" className="size-7 rounded-full object-cover" />
+        <img
+          src={cloudinaryVariant(shop.logoUrl, THUMB)}
+          alt=""
+          className="size-7 rounded-full object-cover"
+        />
       ) : (
         <span className="grid size-7 place-items-center rounded-full bg-primary font-sign text-xs text-primary-ink">
           {initials}

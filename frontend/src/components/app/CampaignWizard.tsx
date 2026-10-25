@@ -33,6 +33,7 @@ import { parseCount } from '@/lib/tamani/fcfa-input';
 import type { ShopProduct } from '@/lib/tamani/product-form';
 import { formatAvailability, formatPriceLine } from '@/lib/tamani/share-message';
 import { WhatsAppBubble } from './ShareCard';
+import { cloudinaryVariant, THUMB } from '@/lib/tamani/cloudinary-url';
 
 const QUESTIONS: Record<WizardStep, string> = {
   product: 'Quel produit proposes-tu ?',
@@ -122,7 +123,7 @@ export function CampaignWizard({
                 >
                   {p.photos[0] ? (
                     <img
-                      src={p.photos[0]}
+                      src={cloudinaryVariant(p.photos[0], THUMB)}
                       alt=""
                       className="frame size-14 shrink-0 rounded-control bg-bg object-cover"
                     />

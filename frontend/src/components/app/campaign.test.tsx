@@ -125,6 +125,19 @@ describe('CampaignWizard', () => {
     expect(out).toMatch(/aria-pressed="true"[^>]*>.*Marmites inox 5 L/s);
     expect(out).toContain('href="/app/produits/nouveau"');
     expect(text(wizard(initialWizardState('p1')))).toContain('Étape 1 sur 6');
+    const photo = 'https://res.cloudinary.com/demo/image/upload/v1/m.jpg';
+    const withPhoto = html(
+      <CampaignWizard
+        products={[{ ...products[0]!, photos: [photo] }]}
+        zonesCount={2}
+        initial={initialWizardState('p1')}
+        now={now}
+        onSubmit={async () => null}
+      />,
+    );
+    expect(withPhoto).toContain(
+      'src="https://res.cloudinary.com/demo/image/upload/c_fill,g_auto,w_128,h_128,f_auto,q_auto/v1/m.jpg"',
+    );
   });
 
   it('the arrival step asks only for a date', () => {

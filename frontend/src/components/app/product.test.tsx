@@ -52,7 +52,9 @@ describe('ProductCard', () => {
     expect(t).toContain('pièce');
     expect(t).toContain('Archivé');
     const out = html(card);
-    expect(out).toContain(`src="${PHOTO_1}"`);
+    expect(out).toContain(
+      'src="https://res.cloudinary.com/demo/image/upload/c_fill,g_auto,w_128,h_128,f_auto,q_auto/v1/tamani/m1.jpg"',
+    );
     expect(out).toContain('href="/app/produits/p1"');
     expect(text(<ProductCard product={{ ...product, archivedAt: null }} />)).not.toContain(
       'Archivé',

@@ -1,5 +1,6 @@
 import { initials } from '@/lib/tamani/names';
 import { cn } from '@/lib/utils';
+import { cloudinaryVariant, THUMB } from '@/lib/tamani/cloudinary-url';
 
 const SIZES = {
   sm: 'size-9 text-sm',
@@ -30,7 +31,7 @@ export function Avatar({
   if (src) {
     return (
       <span className={cn(classes, 'bg-surface')}>
-        <img src={src} alt="" className="size-full object-cover" />
+        <img src={cloudinaryVariant(src, THUMB)} alt="" className="size-full object-cover" />
       </span>
     );
   }

@@ -58,6 +58,19 @@ describe('PopupView', () => {
     expect(html(<PopupView campaign={campaign} state={start} />)).toContain('aria-pressed');
   });
 
+  it('shows a small copy of the shop logo', () => {
+    const logo = {
+      ...campaign,
+      shop: {
+        ...campaign.shop,
+        logoUrl: 'https://res.cloudinary.com/demo/image/upload/v1/logo.png',
+      },
+    };
+    expect(html(<PopupView campaign={logo} state={start} />)).toContain(
+      'src="https://res.cloudinary.com/demo/image/upload/c_fill,g_auto,w_128,h_128,f_auto,q_auto/v1/logo.png"',
+    );
+  });
+
   it('says the price for 1 unit, whatever the unit', () => {
     for (const unitLabel of ['sac', 'carton', 'kg', 'douzaine', 'boîte de 6']) {
       const c = { ...campaign, product: { ...campaign.product, unitLabel } };

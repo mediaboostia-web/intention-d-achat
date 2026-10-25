@@ -5,6 +5,7 @@ import { availabilityLine, endLine, type ShopCampaign } from '@/lib/tamani/campa
 import { cn } from '@/lib/utils';
 import { Badge } from './Badge';
 import { Icon } from './icons';
+import { cloudinaryVariant, THUMB } from '@/lib/tamani/cloudinary-url';
 
 // The running campaign takes the yellow tab; a draft is dashed like
 // something not yet decided; the verdict colours stay for the verdict.
@@ -36,7 +37,9 @@ export function CampaignCard({
   now?: Date;
   className?: string | undefined;
 }) {
-  const photo = campaign.product.photos[0];
+  const photo = campaign.product.photos[0]
+    ? cloudinaryVariant(campaign.product.photos[0], THUMB)
+    : undefined;
   const body = (
     <>
       {photo ? (
