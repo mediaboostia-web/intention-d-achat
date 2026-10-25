@@ -24,6 +24,7 @@ export { PageHeader } from './PageHeader';
 export { PhoneInput, type PhoneInputProps } from './PhoneInput';
 export { ProductCard, type ProductCardData } from './ProductCard';
 export { Select, type SelectProps } from './Select';
+export { Stamp } from './Stamp';
 export { StatTile } from './StatTile';
 export { Steps } from './Steps';
 export { Switch } from './Switch';

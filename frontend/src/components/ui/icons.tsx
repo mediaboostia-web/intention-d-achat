@@ -25,7 +25,9 @@ export type IconName =
   | 'stop'
   | 'arrow-up-right'
   | 'arrow-down-left'
-  | 'chevron-right';
+  | 'chevron-left'
+  | 'chevron-right'
+  | 'menu';
 
 // Drawn with the pen: one 2px round stroke in currentColor, no fill, so an
 // icon takes the colour of the text next to it.
@@ -183,7 +185,9 @@ const SHAPES: Record<IconName, ReactNode> = {
   ),
   'arrow-up-right': <path d="M7 17 17 7M9 7h8v8" />,
   'arrow-down-left': <path d="M17 7 7 17M15 17H7V9" />,
+  'chevron-left': <path d="m14.5 5.5-6.5 6.5 6.5 6.5" />,
   'chevron-right': <path d="m9.5 5.5 6.5 6.5-6.5 6.5" />,
+  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
 };
 
 export function Icon({ name, className }: { name: IconName; className?: string | undefined }) {
