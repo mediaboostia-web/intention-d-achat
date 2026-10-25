@@ -1,7 +1,8 @@
 // Which "notifications" card the shop space shows (porteur's feedback §2).
 // iPhones receive Web Push only once Tamani is on the home screen (iOS 16.4
 // and later), so they are asked to install it first.
-export type PushCardState = 'hidden' | 'ask' | 'install-first' | 'denied' | 'unsupported';
+// Once subscribed, the home card goes away and Réglages says it is on.
+export type PushCardState = 'hidden' | 'ask' | 'install-first' | 'denied' | 'unsupported' | 'on';
 
 export interface PushEnv {
   /** The server has VAPID keys. */
@@ -16,8 +17,9 @@ export interface PushEnv {
   subscribed: boolean;
 }
 
-export function pushCardState(env: PushEnv): PushCardState {
-  if (!env.configured || env.subscribed) return 'hidden';
+export function pushCardState(env: PushEnv, place: 'home' | 'settings' = 'home'): PushCardState {
+  if (!env.configured) return 'hidden';
+  if (env.subscribed) return place === 'settings' ? 'on' : 'hidden';
   if (env.isIos && !env.standalone) return 'install-first';
   if (!env.supported) return 'unsupported';
   if (env.permission === 'denied') return 'denied';

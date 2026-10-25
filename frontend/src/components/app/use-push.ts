@@ -60,8 +60,10 @@ function saveSubscription(sub: PushSubscription) {
   return api('/api/push/subscriptions', { method: 'POST', body: { endpoint, keys } });
 }
 
-export function usePush(): {
+export function usePush(place: 'home' | 'settings' = 'home'): {
   state: PushCardState;
+  /** The browser has been looked at; until then the state is 'hidden'. */
+  ready: boolean;
   busy: boolean;
   error: string | null;
   enable: () => Promise<void>;
@@ -109,5 +111,11 @@ export function usePush(): {
     }
   }, []);
 
-  return { state: env ? pushCardState(env) : 'hidden', busy, error, enable };
+  return {
+    state: env ? pushCardState(env, place) : 'hidden',
+    ready: env !== null,
+    busy,
+    error,
+    enable,
+  };
 }

@@ -56,6 +56,8 @@ export function ShopForm({
   error,
   errors: serverErrors,
   onSubmit,
+  formId,
+  hideSubmit = false,
 }: {
   initial?: ShopFormValues;
   withZones?: boolean;
@@ -67,6 +69,10 @@ export function ShopForm({
   error?: string | null | undefined;
   errors?: ShopFormErrors | undefined;
   onSubmit: (values: ShopFormValues) => void;
+  /** Lets a button outside the form submit it (`form={formId}`). */
+  formId?: string;
+  /** The submit button lives elsewhere, e.g. in a section header. */
+  hideSubmit?: boolean;
 }) {
   const [values, setValues] = useState(initial);
   const [localErrors, setLocalErrors] = useState<ShopFormErrors>({});
@@ -93,7 +99,7 @@ export function ShopForm({
   }
 
   return (
-    <form onSubmit={submit} noValidate className="flex flex-col gap-6">
+    <form id={formId} onSubmit={submit} noValidate className="flex flex-col gap-6">
       <Input
         id="shop-name"
         label="Nom de ta boutique"
@@ -148,14 +154,16 @@ export function ShopForm({
         />
       )}
       {error && <Notice tone="danger">{error}</Notice>}
-      <Button
-        type="submit"
-        size={mode === 'create' ? 'lg' : 'md'}
-        disabled={submitting}
-        className={mode === 'create' ? 'w-full shadow-press' : 'self-start'}
-      >
-        {submitting ? submittingLabel : submitLabel}
-      </Button>
+      {!hideSubmit && (
+        <Button
+          type="submit"
+          size={mode === 'create' ? 'lg' : 'md'}
+          disabled={submitting}
+          className={mode === 'create' ? 'w-full shadow-press' : 'self-start'}
+        >
+          {submitting ? submittingLabel : submitLabel}
+        </Button>
+      )}
     </form>
   );
 }

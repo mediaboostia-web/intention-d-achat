@@ -26,6 +26,19 @@ describe('pushCardState', () => {
     expect(pushCardState({ ...android, isIos: true, standalone: true })).toBe('ask');
   });
 
+  it('settings says on once subscribed', () => {
+    const on = { ...android, permission: 'granted' as const, subscribed: true };
+    expect(pushCardState(on, 'settings')).toBe('on');
+    expect(pushCardState(android, 'settings')).toBe('ask');
+    expect(pushCardState({ ...on, configured: false }, 'settings')).toBe('hidden');
+  });
+
+  it('home stays hidden once subscribed', () => {
+    const on = { ...android, permission: 'granted' as const, subscribed: true };
+    expect(pushCardState(on, 'home')).toBe('hidden');
+    expect(pushCardState(on)).toBe('hidden');
+  });
+
   it('says when the browser refuses or cannot', () => {
     expect(pushCardState({ ...android, permission: 'denied' })).toBe('denied');
     expect(pushCardState({ ...android, supported: false })).toBe('unsupported');

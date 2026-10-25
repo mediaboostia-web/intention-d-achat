@@ -32,6 +32,24 @@ describe('PushCardView', () => {
     expect(html(<PushCardView state="hidden" />)).toBe('');
   });
 
+  it('says notifications are on, in Réglages', () => {
+    const t = text(<PushCardView state="on" place="settings" />);
+    expect(t).toContain('Les notifications sont activées sur cet appareil.');
+    expect(t).not.toContain('Activer les notifications');
+  });
+
+  it('in Réglages, says so when the server sends no notifications', () => {
+    expect(text(<PushCardView state="hidden" place="settings" />)).toContain(
+      'Les notifications ne sont pas encore disponibles.',
+    );
+  });
+
+  it('in Réglages, sits in its section without a card of its own', () => {
+    const outer = (el: React.ReactElement) => html(el).match(/^<[^>]+>/)?.[0] ?? '';
+    expect(outer(<PushCardView state="ask" place="settings" />)).not.toContain('frame');
+    expect(outer(<PushCardView state="ask" />)).toContain('frame');
+  });
+
   it('shows why enabling failed', () => {
     expect(text(<PushCardView state="ask" error="Réessaie." />)).toContain('Réessaie.');
   });
