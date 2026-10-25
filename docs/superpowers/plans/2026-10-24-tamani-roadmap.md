@@ -354,6 +354,25 @@ Vérification : `pnpm build` et la liste de recette manuelle du plan détaillé.
    - Garde-fou `public-routes.test.ts` : `runtime` présent, pas de `verifyCsrf`, appel de `enforcePublicRateLimit`.
    - JavaScript chargé au premier affichage de `/c/[code]` : ≤ 60 Ko.
    - Recette sur Android et iOS depuis WhatsApp.
+7. **Notifications des réponses** (ajout du 2026-10-25, voir [les retours du porteur](../specs/2026-10-25-tamani-retours-porteur.md) §2).
+   - À chaque réponse complète : `createNotification` pour chaque membre, puis Web Push (VAPID) envoyé avec `after()`, sans outbox.
+   - Modèle `PushSubscription`, routes `/api/push/*`, service worker, manifeste PWA.
+   - Cloche dans l'en-tête de l'espace grossiste, et carte « Activer les notifications ».
+
+### Lot 5b : Retouches de l'espace grossiste (ajout du 2026-10-25)
+Les onze demandes du porteur ([retours](../specs/2026-10-25-tamani-retours-porteur.md) §3) :
+- types d'unité ;
+- date d'arrivée seule ;
+- avatar et cloche ;
+- effets au survol ;
+- barre latérale ;
+- description de la boutique ;
+- pages plus remplies ;
+- disposition des Réglages ;
+- connexion et inscription en deux colonnes.
+
+### Page d'accueil publique (avancée du lot 9, le 2026-10-25)
+Elle vient juste après le lot 5b, avec son propre passage de conception et des maquettes ([retours](../specs/2026-10-25-tamani-retours-porteur.md) §4).
 
 ### Lot 6 : Tableau de bord
 1. **`coefficients`, `verdict`, `money`, `stats`**, avec leurs tests.
