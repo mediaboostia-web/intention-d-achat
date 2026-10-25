@@ -54,6 +54,23 @@ Les demandes du porteur, dans l'ordre où il les a données, avec ce qu'on en fa
 10. **Disposition des Réglages** : une navigation par sections à gauche sur ordinateur (Boutique, Zones, Estimation, Notifications, Compte), un empilement sur mobile, et le bouton d'enregistrement en haut de section.
 11. **Pages de connexion et d'inscription** : une mise en page en deux colonnes sur ordinateur, avec une illustration dans le style de la charte. Le bouton Google passe en haut. Sur mobile, la page reste simple.
 
+### 3 bis. Ce que les maquettes ont fixé (2026-10-25, troisième version validée)
+
+Le porteur a refusé deux premières versions : elles ressemblaient à un tableau de bord générique et ajoutaient trop d'éléments. Sa règle : **les gestes des applications de tous les jours** (WhatsApp, applications de mobile money), sans élément qui casse leur logique, dans le style « Cahier du marché ».
+
+- **En-tête** : sur ordinateur, la cloche et l'avatar sont sur la ligne du titre de la page, sans bande vide au-dessus. Sur téléphone, la ligne du haut garde le symbole, le nom de la boutique, la cloche et l'avatar. L'avatar ouvre « Compte et forfait ».
+- **Barre latérale** : la couverture du cahier, en encre (`ink`) à petits carreaux clairs. Le symbole et « tamani » en haut, puis une carte de la boutique (avatar, nom, forfait), les onglets avec leurs icônes (l'onglet ouvert en jaune, un léger éclaircissement au survol) et, en bas, les réponses du mois face au quota, avec « Passer au Pro » en Gratuit.
+- **Accueil** :
+  - une salutation « Bonjour, {prénom} », sinon « Bonjour, {boutique} » ;
+  - **une seule carte bleue « Cette semaine »**, comme le solde d'une application de mobile money : le nombre de réponses en grand, « +n depuis hier », puis trois chiffres (intéressés, ouvertures, clients) qui ouvrent leur page ;
+  - **quatre ronds** comme les raccourcis de WhatsApp (Campagne, Produit, Partager, Clients) sur téléphone, une rangée de boutons sur ordinateur ;
+  - **« Activité »**, comme une liste de transactions : une icône ronde, ce qui s'est passé, à droite l'heure et la quantité en vert (oui) ou le mot « non » en rouge. Chaque ligne ouvre sa page : une réponse ouvre sa campagne, un nouveau client ouvre sa fiche ;
+  - **« À venir »** : fins de campagne et arrivages, chacun ouvre sa campagne ;
+  - une boutique sans campagne voit « Pour bien démarrer » à la place de la carte et des listes.
+- **Filtres comme sur WhatsApp** : en haut de chaque liste, une barre « Rechercher » arrondie et une rangée de pastilles avec une icône et un nombre. Une pastille n'apparaît que si elle a quelque chose à montrer (« Tout » reste toujours). Sur téléphone, un grand bouton « + » en bas à droite fait l'action principale de la page.
+- **Clients, avancé du lot 7** : la liste des personnes ressemble à la liste des appels de WhatsApp (initiales dans un rond, prénom, dernier intérêt avec une flèche verte ou rouge, bouton WhatsApp à droite). La fiche montre tous les intérêts de la personne. **Il n'y a plus de vue « Intérêts » séparée** : les intérêts d'un produit se lisent dans sa campagne (lot 6). Le bouton WhatsApp ouvre la discussion avec un message déjà écrit, que le grossiste relit et envoie lui-même. En Gratuit, le numéro est masqué et le bouton verrouillé : « Passe au Pro pour contacter Awa » (§5.6 de la conception).
+- **Commandes** : la maquette (pastilles « À confirmer », « À livrer », « Livrées », « Non payées » ; « À livrer » range par quartier ; bouton WhatsApp avec un message selon le statut) guide le lot 7. Au lot 5b, la page garde son état vide.
+
 ## 4. Page d'accueil publique [décidé, à concevoir]
 
 Elle est sortie du lot 9 et vient juste après le lot 5b. C'est « le point de contact de conversion ». Le porteur la veut « ultra unique » : le visiteur doit comprendre sans chercher le besoin, la solution et la transformation. Elle aura son propre passage de conception, avec maquettes.
