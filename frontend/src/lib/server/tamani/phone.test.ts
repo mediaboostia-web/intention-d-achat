@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { maskPhone, normalizePhone, shopCountry } from './phone';
+import { displayPhone, maskPhone, normalizePhone, shopCountry } from './phone';
 
 describe('normalizePhone', () => {
   it('normalizePhone returns the same E.164 for local, +, and 00 forms', () => {
@@ -34,5 +34,12 @@ describe('shopCountry', () => {
     expect(shopCountry('SN')).toBe('SN');
     expect(shopCountry('ML')).toBe('ML');
     expect(shopCountry('XX')).toBe('SN');
+  });
+});
+
+describe('displayPhone', () => {
+  it('groups a number for reading', () => {
+    expect(displayPhone('+221771112233')).toBe('+221 77 111 22 33');
+    expect(displayPhone('nope')).toBe('nope');
   });
 });
