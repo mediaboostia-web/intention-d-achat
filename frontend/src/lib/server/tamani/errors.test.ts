@@ -25,6 +25,7 @@ describe('TAMANI_ERRORS', () => {
         'CLIENT_NOT_FOUND',
         'BILLING_NOT_CONFIGURED',
         'PAYMENT_VERIFY_FAILED',
+        'PUSH_NOT_CONFIGURED',
       ].sort(),
     );
   });

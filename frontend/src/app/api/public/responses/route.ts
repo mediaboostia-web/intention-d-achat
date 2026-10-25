@@ -3,16 +3,18 @@
 // No CSRF (spec §6.5): a respondent carries no auth cookie. The right to
 // change a finished answer is the signed token in x-response-token; writes
 // are limited per IP and per campaign, and a honeypot field drops bots.
+// The first completion notifies the shop's members (bell and Web Push).
 export const runtime = 'nodejs';
 
 import 'server-only';
-import type { NextRequest } from 'next/server';
+import { after, type NextRequest } from 'next/server';
 import { prisma } from '@/lib/server/prisma';
 import { log } from '@/lib/server/observability/log';
 import { makeRequestContext, withRequestContext } from '@/lib/server/observability/request-context';
 import { isUniqueViolation, tamaniError } from '@/lib/server/tamani/errors';
 import { jsonOk, readJson, validationFailed } from '@/lib/server/tamani/http';
 import { responseStepSchema } from '@/lib/server/tamani/inputs';
+import { notifyShopOfResponse } from '@/lib/server/tamani/notify-response';
 import { enforcePublicRateLimit } from '@/lib/server/tamani/public-limits';
 import { ResponseWriteError, upsertResponse } from '@/lib/server/tamani/responses';
 
@@ -47,6 +49,9 @@ export async function POST(req: NextRequest) {
         completed: result.completed,
         firstCompletion,
       });
+      // The shop hears about it once, past this reply (no outbox: its cron
+      // runs once a day on Vercel Hobby).
+      if (firstCompletion) after(() => notifyShopOfResponse(prisma, result.responseId));
       return jsonOk(reply);
     } catch (err) {
       if (!(err instanceof ResponseWriteError)) throw err;

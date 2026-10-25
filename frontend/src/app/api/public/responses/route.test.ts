@@ -6,6 +6,13 @@ import { DEVICE_A, fakePublicDb, publicLink } from '@/test-utils/public-fixtures
 import { log } from '@/lib/server/observability/log';
 
 vi.mock('@/lib/server/redis', () => ({ redis: null }));
+const later = vi.hoisted(() => ({ after: vi.fn() }));
+vi.mock('next/server', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('next/server')>()),
+  after: later.after,
+}));
+const notify = vi.hoisted(() => ({ notifyShopOfResponse: vi.fn(async () => {}) }));
+vi.mock('@/lib/server/tamani/notify-response', () => notify);
 
 const { POST } = await import('./route');
 
@@ -35,6 +42,8 @@ const full = {
 };
 
 beforeEach(() => {
+  later.after.mockClear();
+  notify.notifyShopOfResponse.mockClear();
   runTransactionsInline();
 });
 
@@ -138,5 +147,24 @@ describe('POST /api/public/responses', () => {
     expect(spies[0]!).toHaveBeenCalled();
     expect(logged).not.toContain('771234567');
     expect(logged).not.toContain('Awa');
+  });
+
+  it('notifies the shop after the first completion', async () => {
+    const { responses } = fakePublicDb();
+    await POST(post(full));
+    expect(later.after).toHaveBeenCalledTimes(1);
+    const task = later.after.mock.calls[0]![0] as () => Promise<void>;
+    await task();
+    expect(notify.notifyShopOfResponse).toHaveBeenCalledWith(prismaMock, responses[0]!.id);
+  });
+
+  it('does not notify on a step or an edit', async () => {
+    fakePublicDb();
+    await POST(post(step));
+    const done = await (await POST(post(full))).json();
+    later.after.mockClear();
+    await POST(post({ ...step, quantity: 24 }, { token: done.token }));
+    await POST(post(full, { token: done.token }));
+    expect(later.after).not.toHaveBeenCalled();
   });
 });
