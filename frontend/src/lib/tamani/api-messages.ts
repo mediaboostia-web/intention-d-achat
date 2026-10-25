@@ -25,6 +25,7 @@ export const TAMANI_ERROR_CODES = [
   'CLIENT_NOT_FOUND',
   'BILLING_NOT_CONFIGURED',
   'PAYMENT_VERIFY_FAILED',
+  'PUSH_NOT_CONFIGURED',
 ] as const;
 
 const NETWORK = 'Pas de connexion au serveur. Vérifie ton réseau et réessaie.';
@@ -53,6 +54,7 @@ const MESSAGES: Record<string, string> = {
   CLIENT_NOT_FOUND: "Ce client n'existe plus. Recharge la liste.",
   BILLING_NOT_CONFIGURED: "Le paiement en ligne n'est pas encore ouvert.",
   PAYMENT_VERIFY_FAILED: "On n'a pas pu vérifier ton paiement. Réessaie dans un instant.",
+  PUSH_NOT_CONFIGURED: 'Les notifications sur le téléphone ne sont pas encore disponibles.',
   // Kit: auth
   INVALID_CREDENTIALS: 'Email ou mot de passe incorrect.',
   EMAIL_NOT_VERIFIED: "Confirme d'abord ton email avec le code reçu.",

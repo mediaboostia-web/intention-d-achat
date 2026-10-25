@@ -14,7 +14,8 @@ export type IconName =
   | 'pencil'
   | 'trash'
   | 'eye'
-  | 'eye-off';
+  | 'eye-off'
+  | 'bell';
 
 // Drawn with the pen: one 2px round stroke in currentColor, no fill, so an
 // icon takes the colour of the text next to it.
@@ -119,6 +120,12 @@ const SHAPES: Record<IconName, ReactNode> = {
       <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
       <circle cx="12" cy="12" r="3" />
       <path d="M4 4l16 16" />
+    </>
+  ),
+  bell: (
+    <>
+      <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" />
+      <path d="M10 20.5a2 2 0 0 0 4 0" />
     </>
   ),
 };

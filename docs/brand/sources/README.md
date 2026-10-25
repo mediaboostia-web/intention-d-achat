@@ -7,6 +7,7 @@ Les fichiers de marque sont générés une fois, puis commités. Ce dossier gard
 | `frontend/public/brand/tamani-mark.svg`, `tamani-logo.svg`, `frontend/src/app/icon.svg` | `frontend/src/lib/design/logo-paths.ts` | Recopier `MARK_PATH`, `CORDS_PATH` et `WORDMARK_PATH`, avec les couleurs `accent`, `ink` et `primary` de `tokens.ts`. |
 | `frontend/src/app/apple-icon.png` (180×180) | `apple-icon.html` | Rendu Chrome headless (voir plus bas). |
 | `frontend/public/brand/og-default.png` (1200×630) | `og-default.html` | Rendu Chrome headless, avec une connexion pour charger les polices Google. |
+| `frontend/public/icons/icon-192.png`, `icon-512.png`, `icon-maskable-512.png` (application installée) | `pwa-icon.html` | Rendu Chrome headless, la taille et la part du logo passées dans l'adresse (voir plus bas). |
 
 Le test `frontend/src/lib/design/brand-assets.test.ts` vérifie la présence des fichiers, les dimensions des PNG et les couleurs des SVG.
 
@@ -23,6 +24,15 @@ SRC="file:///$(pwd -W | sed 's/ /%20/g')/docs/brand/sources"
 "$C" --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=1 \
   --window-size=1200,630 --virtual-time-budget=10000 \
   --screenshot="$(pwd -W)/frontend/public/brand/og-default.png" "$SRC/og-default.html"
+```
+
+Les icônes de l'application installée (le logo occupe 80 % du carré, 60 % pour la version « maskable », que Android découpe en cercle) :
+
+```bash
+for spec in "icon-192:192:0.8" "icon-512:512:0.8" "icon-maskable-512:512:0.6"; do
+  IFS=: read name size mark <<< "$spec"
+  "$C" --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=1     --allow-file-access-from-files --window-size=$size,$size --virtual-time-budget=5000     --screenshot="$(pwd -W)/frontend/public/icons/$name.png" "$SRC/pwa-icon.html?size=$size&mark=$mark"
+done
 ```
 
 ## Refaire le mot-symbole « tamani »

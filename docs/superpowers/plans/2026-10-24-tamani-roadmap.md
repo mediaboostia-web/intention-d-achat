@@ -97,7 +97,10 @@ Convention du kit : `id String @id @default(cuid())`, statuts en `String` (pas d
   - `@@index([respondentId])`
 - `Subscription { organizationId @unique, plan String @default("FREE"), currentPeriodEnd DateTime?, graceUntil DateTime? }`.
 
-**Lot 7, migration `7_sale_orders`**
+**Lot 5, migration `7_push_subscriptions`**
+- `PushSubscription { userId, endpoint String @unique, p256dh, auth }`, avec `@@index([userId])` et la relation `User.pushSubscriptions` (`onDelete: Cascade`).
+
+**Lot 7, migration `8_sale_orders`** (renumérotée le 2026-10-25 : le lot 5 a pris le n° 7)
 - `SaleOrder { organizationId, respondentId, productId, campaignId String?, responseId String? @unique, buyerType, quantity Int, unitPrice Int, totalAmount Int, fulfillment String /* DELIVERY|PICKUP */, zoneId String?, status String @default("TO_CONFIRM") /* TO_CONFIRM|CONFIRMED|FULFILLED|CANCELLED */, paid Boolean @default(false), paidAt DateTime?, notes String?, confirmedAt DateTime?, fulfilledAt DateTime?, cancelledAt DateTime? }`, avec `@@index([organizationId, status])` et `@@index([respondentId])`.
 - **Lot 8** : on réutilise `Order` (existant) pour les paiements d'abonnement : `provider = 'saspay'`, `metadata = { organizationId, plan, months }`, statuts `PENDING | AWAITING_VERIFICATION | PAID | FAILED | EXPIRED`.
 
@@ -157,7 +160,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 ### Modules serveur : `frontend/src/lib/server/tamani/`
 
 **Lot 3**
-- `errors.ts` : liste figée `TAMANI_ERRORS`, avec `SHOP_ALREADY_EXISTS`, `SHOP_NOT_FOUND`, `ZONE_NOT_FOUND`, `ZONE_ALREADY_EXISTS`, `PRODUCT_NOT_FOUND`, `PRODUCT_IN_USE`, `CAMPAIGN_NOT_FOUND`, `CAMPAIGN_CLOSED`, `CAMPAIGN_LIMIT_REACHED`, `INVALID_CAMPAIGN_TRANSITION`, `PLAN_FEATURE_LOCKED`, `INVALID_PHONE`, `INVALID_RESPONSE_TOKEN`, `RATE_LIMITED`, `ORDER_NOT_FOUND`, `ORDER_ALREADY_EXISTS`, `INVALID_ORDER_TRANSITION`, `CLIENT_NOT_FOUND`, `BILLING_NOT_CONFIGURED`, `PAYMENT_VERIFY_FAILED`. Plus `tamaniError(code, status, message?) => NextResponse`, qui renvoie `{ error: code, message }`, et `isUniqueViolation(err, field?)` (P2002 sur ce champ).
+- `errors.ts` : liste figée `TAMANI_ERRORS`, avec `SHOP_ALREADY_EXISTS`, `SHOP_NOT_FOUND`, `ZONE_NOT_FOUND`, `ZONE_ALREADY_EXISTS`, `PRODUCT_NOT_FOUND`, `PRODUCT_IN_USE`, `CAMPAIGN_NOT_FOUND`, `CAMPAIGN_CLOSED`, `CAMPAIGN_LIMIT_REACHED`, `INVALID_CAMPAIGN_TRANSITION`, `PLAN_FEATURE_LOCKED`, `INVALID_PHONE`, `INVALID_RESPONSE_TOKEN`, `RATE_LIMITED`, `ORDER_NOT_FOUND`, `ORDER_ALREADY_EXISTS`, `INVALID_ORDER_TRANSITION`, `CLIENT_NOT_FOUND`, `BILLING_NOT_CONFIGURED`, `PAYMENT_VERIFY_FAILED`, `PUSH_NOT_CONFIGURED` (lot 5). Plus `tamaniError(code, status, message?) => NextResponse`, qui renvoie `{ error: code, message }`, et `isUniqueViolation(err, field?)` (P2002 sur ce champ).
 - `http.ts` : `readJson(req)`, `jsonOk(data, status = 200)` (en-tête `x-request-id`) et `validationFailed(message?)` (400 `VALIDATION_FAILED`, code du kit).
 - `locks.ts` : `type Db = Prisma.TransactionClient` et `advisoryXactLock(tx, key)` (`pg_advisory_xact_lock(hashtext(key))`). Clés : `shop-create:<userId>`, `campaign-activate:<organizationId>`.
 - `inputs.ts` : schémas zod des corps (boutique, zone, produit, campagne, lien) et `checkProductRules`.
@@ -189,10 +192,12 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 
 **Lot 5**
 - `response-token.ts` :
-  - `signResponseToken({ responseId, deviceId }): Promise<string>` : HS256 avec `JWT_SECRET_BYTES` de `auth.ts`, `aud: 'tamani:response'`, valable 90 jours ;
+  - `signResponseToken({ responseId, deviceId }): Promise<string>` : HS256 avec une clé **dérivée** de `JWT_SECRET_BYTES` (HMAC-SHA256, étiquette `tamani:response-token`), `aud: 'tamani:response'`, valable 90 jours. La clé brute ne sert pas : `verifyToken` d'`auth.ts` ne vérifie pas l'audience, un jeton de réponse passerait pour un jeton d'accès ;
   - `verifyResponseToken(token): Promise<{ responseId; deviceId } | null>`.
 - `public-campaign.ts` : `getPublicCampaign(db, code, now): Promise<PublicCampaign | null>`. **Aucune** donnée de répondant, ni `whatsappPhone`, ni `costPrice`, ni `plannedQuantity`.
-- `responses.ts` : `upsertResponse(db, input: ResponseStepInput, now): Promise<{ responseId; token; completed: boolean }>`. À la complétion, le `Respondent` est créé ou mis à jour : c'est ce qui l'ajoute au carnet de clients.
+- `responses.ts` : `upsertResponse(db, input: ResponseStepInput & { token: string | null }, now): Promise<UpsertResult>`, avec `UpsertResult = { responseId; token; completed; firstCompletion; respondent: { firstName; phoneE164; phoneMasked } | null; interestedCount: number | null }`. À la complétion, le `Respondent` est créé ou mis à jour : c'est ce qui l'ajoute au carnet de clients. `firstCompletion` déclenche la notification ; la route ne le renvoie pas.
+- `public-limits.ts` : `enforcePublicRateLimit(req, campaignId, deviceId)`, `isFirstViewToday(linkId, deviceId, now)` et `recordDeviceNumber(campaignId, deviceId, phoneE164)` (numéro haché), sur Upstash, avec un repli en mémoire sans Redis.
+- `notify-response.ts` : `responseNotificationText(...)` et `notifyShopOfResponse(db, responseId)`, lancée par `after()` ; `push/web-push.ts` : `pushConfigured()`, `vapidPublicKey()` et `sendPush(sub, payload) → 'SENT' | 'GONE' | 'FAILED'`.
 
 **Lot 6**
 - `coefficients.ts` : `coefficientsFor(org: { coefConsumer; coefReseller }, learned?: LearnedCoefficients | null): { consumer; reseller; source: { consumer: 'DEFAULT' | 'SHOP' | 'LEARNED'; reseller: … } }`. Au lot 6, `learned` est toujours absent ; il est fourni à partir du lot 7.
@@ -234,6 +239,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
   - `GET|PATCH …/campaigns/[campaignId]` (activation : `409 CAMPAIGN_LIMIT_REACHED`) ;
   - `GET|POST …/campaigns/[campaignId]/links` (liens de source : `403 PLAN_FEATURE_LOCKED` en FREE).
 - **Lot 5, public** : `POST /api/public/views` et `POST /api/public/responses`.
+- **Lot 5, notifications** : `GET /api/push/public-key` (`503 PUSH_NOT_CONFIGURED` sans clés VAPID), `POST|DELETE /api/push/subscriptions` (session et CSRF ; adresse https d'un service de push de navigateur seulement : FCM, Mozilla, Apple, Windows). La cloche utilise les routes `/api/notifications` du kit.
 - **Lot 6, tableau de bord** :
   - `GET /api/shops/[orgId]/summary` ;
   - `GET …/campaigns/[campaignId]/stats` ;
@@ -258,6 +264,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 
 ### Variables d'environnement
 - **Lot 4** (ajout) : `AUTH_PROTECTED_PREFIXES="/app,/admin"` et `AUTH_LOGIN_PATH="/login"`.
+- **Lot 5** (ajout) : `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` et `VAPID_SUBJECT` (`mailto:` ou `https:`). Facultatives : sans elles, le push est inerte.
 - **Lot 8** (ajout) : `SASPAY_API_KEY`, `SASPAY_WEBHOOK_SECRET` et `SASPAY_API_URL="https://api.saspay.me/api/v1"`. Elles sont facultatives : si elles manquent, l'API renvoie `503 BILLING_NOT_CONFIGURED`.
 - **Retraits** : le lot 1 retire `WITHDRAWAL_*`, `BICTORYS_PRIVATE_KEY` et `BICTORYS_MERCHANT_SECRET_CODE`. Le lot 8 retire les autres `BICTORYS_*` et `COMMISSION_RATE_BP`.
 
@@ -336,13 +343,13 @@ Vérification : `pnpm build` et la liste de recette manuelle du plan détaillé.
 1. **`getPublicCampaign` et la page `/c/[code]`** : rendu serveur, photo floutée, `BottomSheet`, états « introuvable » et « terminée ».
    - `interestedCount` n'est inclus que si `showLiveCounter` est vrai, `stockQuantity` que si `showStock` est vrai, et `poweredByBadge` suit le forfait effectif.
    - Tests : jamais `whatsappPhone`, ni `costPrice`, ni `plannedQuantity`, ni répondant ; une campagne `CLOSED` donne `accepting: false`.
-2. **Aperçu WhatsApp** : `generateMetadata` et `opengraph-image.tsx`.
+2. **Aperçu WhatsApp** : `generateMetadata`. `og:image` est la photo du produit en JPEG 1200 × 630 servie par Cloudinary (`c_fill,g_auto,w_1200,h_630,f_jpg,q_auto`), et `/brand/og-default.png` sans photo. Pas d'`opengraph-image.tsx` : WhatsApp abandonne les grandes images, ce qu'un PNG composé avec une photo dépasse souvent.
 3. **`POST /api/public/views`** : déduplication par appareil et par jour (Redis `tamani:view:{linkId}:{deviceId}:{yyyymmdd}`, 48 h), puis `openCount`.
 4. **`POST /api/public/responses`**.
    - Étapes validées avec zod. Correspondance par `campaignId` et `deviceId`, puis jeton facultatif.
    - Numéro : `normalizePhone`, puis création ou mise à jour du `Respondent` (le client entre dans le carnet), puis fusion des appareils.
    - `suspicious` à partir de 3 numéros différents sur le même appareil. `locked` via `shouldLockNewCompletion`.
-   - Limite : 30 écritures par 10 min, par IP et par campagne. Champ piège `website`.
+   - Limite, par campagne et par 10 min : 30 écritures par téléphone (IP et identifiant d'appareil) et 600 par IP, car les opérateurs mobiles mettent beaucoup d'abonnés derrière une même IP. Champ piège `website`.
    - Tests : Review Focus 1, 2 et 3, `422 INVALID_PHONE`, `401 INVALID_RESPONSE_TOKEN`, `429 RATE_LIMITED`, et `Respondent` créé à la complétion avec `lastSeenAt` mis à jour.
 5. **Client du pop-up**.
    - `popupReducer` dans `frontend/src/lib/tamani/popup-machine.ts` (étapes de la spec §5.3). `deviceMemory` est protégé par un `try/catch`.
@@ -354,6 +361,25 @@ Vérification : `pnpm build` et la liste de recette manuelle du plan détaillé.
    - Garde-fou `public-routes.test.ts` : `runtime` présent, pas de `verifyCsrf`, appel de `enforcePublicRateLimit`.
    - JavaScript chargé au premier affichage de `/c/[code]` : ≤ 60 Ko.
    - Recette sur Android et iOS depuis WhatsApp.
+7. **Notifications des réponses** (ajout du 2026-10-25, voir [les retours du porteur](../specs/2026-10-25-tamani-retours-porteur.md) §2).
+   - À chaque réponse complète : `createNotification` pour chaque membre, puis Web Push (VAPID) envoyé avec `after()`, sans outbox.
+   - Modèle `PushSubscription`, routes `/api/push/*`, service worker, manifeste PWA.
+   - Cloche dans l'en-tête de l'espace grossiste, et carte « Activer les notifications ».
+
+### Lot 5b : Retouches de l'espace grossiste (ajout du 2026-10-25)
+Les onze demandes du porteur ([retours](../specs/2026-10-25-tamani-retours-porteur.md) §3) :
+- types d'unité ;
+- date d'arrivée seule ;
+- avatar et cloche ;
+- effets au survol ;
+- barre latérale ;
+- description de la boutique ;
+- pages plus remplies ;
+- disposition des Réglages ;
+- connexion et inscription en deux colonnes.
+
+### Page d'accueil publique (avancée du lot 9, le 2026-10-25)
+Elle vient juste après le lot 5b, avec son propre passage de conception et des maquettes ([retours](../specs/2026-10-25-tamani-retours-porteur.md) §4).
 
 ### Lot 6 : Tableau de bord
 1. **`coefficients`, `verdict`, `money`, `stats`**, avec leurs tests.

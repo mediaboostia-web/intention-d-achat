@@ -2,6 +2,7 @@
 
 // /app, for now: a greeting and the first step. The "bulletin du jour"
 // dashboard replaces it in lot 6.
+import { PushCard } from '@/components/app/PushCard';
 import { useShop } from '@/components/app/ShopProvider';
 import { Button, EmptyState, PageHeader } from '@/components/ui';
 import { formatDateFr } from '@/lib/tamani/dates';
@@ -14,6 +15,7 @@ export default function HomePage() {
         title={`Bonjour, ${shop.name}`}
         note={`Aujourd'hui, ${formatDateFr(new Date())}`}
       />
+      <PushCard className="mt-8" />
       <EmptyState
         className="mt-8"
         title="Lance ta première campagne"

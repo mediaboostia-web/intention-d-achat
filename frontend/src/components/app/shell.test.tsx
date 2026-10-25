@@ -43,6 +43,20 @@ describe('AppShell', () => {
     expect(out).toMatch(/pb-28[^"]*lg:pb-12|lg:pb-12[^"]*pb-28/);
     expect(text(page).match(/Diallo Import/g)?.length).toBeGreaterThanOrEqual(2);
   });
+
+  it('keeps the notification bell in the header at every width', () => {
+    mockNextNavigation({ pathname: '/app' });
+    const out = html(
+      <ShopTestProvider>
+        <AppShell>
+          <p>Page</p>
+        </AppShell>
+      </ShopTestProvider>,
+    );
+    const header = out.match(/<header[^>]*>.*?<\/header>/s)?.[0] ?? '';
+    expect(header).toContain('aria-label="Notifications"');
+    expect(header.match(/^<header[^>]*>/)?.[0]).not.toContain('lg:hidden');
+  });
 });
 
 describe('welcome', () => {
