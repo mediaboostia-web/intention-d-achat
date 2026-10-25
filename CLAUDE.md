@@ -189,6 +189,17 @@ A beginner's golden path: `gh repo create --template` → open in Claude Code �
 - **Installable app** — [manifest.ts](frontend/src/app/manifest.ts) (opens on `/app`, standalone) and [public/sw.js](frontend/public/sw.js), which shows pushes and opens the campaign on a tap; it has no fetch handler, so nothing is cached. `usePush` registers it from the shop space only. iPhones receive push only once Tamani is on the home screen, which `PushCard` explains.
 - **Link previews** — `generateMetadata` → `popupMetadata` ([popup-metadata.ts](frontend/src/lib/tamani/popup-metadata.ts)): `og:image` is the product photo as a 1200 × 630 Cloudinary JPEG (`cloudinaryVariant`), small enough for WhatsApp; `/brand/og-default.png` without a photo. Popup pages are `noindex`. WhatsApp's crawler cannot reach `localhost`: check a real preview only on a deployed URL.
 
+## Tamani shop-space retouches (lot 5b)
+
+The porteur's eleven requests ([retours](docs/superpowers/specs/2026-10-25-tamani-retours-porteur.md) §3, [plan](docs/superpowers/plans/2026-10-25-tamani-05b-retouches.md)); decisions are listed under « Lot 5b » in the roadmap.
+
+- **Shop context** — `GET /api/shops/me` also sends `usage { responsesThisMonth; monthlyLimit }` (`responsesThisMonth` in [quota.ts](frontend/src/lib/server/tamani/quota.ts)) and `me { firstName; name }`; `useShop()` exposes both. The sidebar (`SideNav`, `bg-cover`) shows the quota meter; the avatar (shop logo, else the user's initials) opens `/app/plus`. Tests pass them through `ShopTestProvider` (`TEST_USAGE`, `TEST_ME`).
+- **Home** — `buildShopSummary(db, organizationId, now)` ([summary.ts](frontend/src/lib/server/tamani/summary.ts)) behind `GET /api/shops/[orgId]/summary`: this week's card, activity, upcoming ends and arrivals. The type `ShopSummary` lives in [home-view.ts](frontend/src/lib/tamani/home-view.ts) with the greeting (phone's local hour) and the line builders; lot 6 extends it. Openings are not dated, so « ouvertures en cours » is the running campaigns' total.
+- **Clients** — [clients.ts](frontend/src/lib/server/tamani/clients.ts): a visible client (`visibleClientWhere`) is not anonymised and has at least one complete, unlocked, non-suspicious answer. On a plan without `respondentContacts` the number never leaves the server (`phoneE164: null`) and the search ignores digits, so a number cannot be guessed digit by digit. Shared view types and the WhatsApp message are in [client-view.ts](frontend/src/lib/tamani/client-view.ts).
+- **Lists** — `SearchField` writes `?q=` after 300 ms (`searchHref` drops the cursor). List routes send `counts` on the first page only, for the whole shop (not the search or the filter); `FilterBar` hides a chip whose count is 0 unless it is the active one. `Fab` is the phone-only « + ».
+- **Migration `8_shop_description`** — `Organization.description` (300 characters, blank → `null`), shown in the popup under « Oui / Non ». `shopCompleteness` ([shop-completeness.ts](frontend/src/lib/tamani/shop-completeness.ts)) feeds the Réglages notice. The lot 7 orders migration is `9_sale_orders`.
+- **Forms** — unit chips (`COMMON_UNITS` then the shop's own, `GET …/products/units`); an incoming campaign takes one arrival date, never before today (the API refuses a past one at creation, and at edit only when the date changes). Réglages: five sections with a left menu from `lg`, each save in its section header (`formId` / `hideSubmit` on `ShopForm` and `CoefficientsForm`). Sign-in pages: two columns from `lg`, Google first through `AuthForm`'s `before`.
+
 ## What is fair to modify
 
 Anything outside [Files Claude must NOT modify](#files-claude-must-not-modify) is the fork's surface area:
@@ -229,3 +240,22 @@ When the user asks for a capability that this starter does not ship, recommend t
 - Vitest for unit tests; setup file at [frontend/vitest.setup.ts](frontend/vitest.setup.ts), shared mocks under `frontend/src/test-utils/` (alias `server-only` to a no-op for jsdom).
 - Conventional Commits.
 - Node ≥ 20, pnpm ≥ 9 (see `engines` in [package.json](package.json)).
+
+
+## Intégration de l'API SasPay
+
+- Utilisez la documentation officielle : /llms.txt de la documentation SasPay.
+- Utilisez la spécification OpenAPI : /api-reference/openapi.json.
+- Utilisez l'URL de base `https://api.saspay.me/api/v1`.
+- Effectuez toutes les requêtes SasPay depuis le backend.
+- Stockez la clé API dans un gestionnaire de secrets ou une variable d'environnement.
+- Ne placez jamais la clé API dans le frontend, les logs ou le dépôt Git.
+- Envoyez la clé avec `Authorization: Bearer sk_test_...` en développement, `sk_live_...` en production.
+- Montants : chaînes décimales (`"2500.00"`), jamais de flottants.
+- Envoyez un `Idempotency-Key` sur `POST /payments/softpay/`, `POST /payouts/initialize/`, `POST /wallet-transfers/` et `POST /payments/{payment_id}/retry/`.
+- Ne livrez un produit ou n'activez un accès que lorsque `GET /payments/{payment_id}/verify/` renvoie `SUCCESS`.
+- Si `checkout_url` est non vide après un softpay, redirigez le client vers cette URL.
+- Vérifiez la signature des webhooks (`X-Webhook-Signature`, `X-Webhook-Timestamp`) sur le corps brut, et rejetez un horodatage de plus de 300 secondes.
+- Pour un retrait, whitelistez l'IP du serveur ; sinon l'appel renvoie `403 ip_not_whitelisted`.
+- Gérez les réponses `401`, `403`, `404`, `409`, `422` et `429` selon l'endpoint ; en cas de `429`, espacez les appels.
+- N'inventez aucun endpoint, champ, statut ou événement absent de la spécification OpenAPI.

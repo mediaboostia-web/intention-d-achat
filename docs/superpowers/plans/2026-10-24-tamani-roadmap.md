@@ -42,6 +42,7 @@
   - BUSINESS : 24 900 FCFA par mois, campagnes illimitées, 15 000 réponses par mois ;
   - annuel = mensuel × 10, période de grâce de 5 jours ;
   - commandes et carnet de clients ouverts à tous les forfaits. En FREE, les numéros sont masqués et le WhatsApp est verrouillé. La fiabilité et les coefficients appris commencent au PRO.
+- **Marge** (règle du porteur, 2026-10-25) : chaque abonnement garde **au moins 70 %** de marge une fois payés les forfaits et l'usage de chaque fournisseur (Vercel, Neon, Upstash, Cloudinary, Resend, Sentry) et les frais SasPay (pire cas : carte, 5 %). Une communauté de plus de 100 000 personnes ne doit jamais rendre une boutique déficitaire. Tamani n'envoie jamais d'email, de SMS ou de message WhatsApp par réponse sans que son coût soit compté dans le prix.
 - **Estimation** :
   - coefficients par défaut : usagers `0.5`, revendeurs `0.7` ;
   - fourchette : coefficient ± `0.1`, bornée à [0, 1] ;
@@ -100,7 +101,10 @@ Convention du kit : `id String @id @default(cuid())`, statuts en `String` (pas d
 **Lot 5, migration `7_push_subscriptions`**
 - `PushSubscription { userId, endpoint String @unique, p256dh, auth }`, avec `@@index([userId])` et la relation `User.pushSubscriptions` (`onDelete: Cascade`).
 
-**Lot 7, migration `8_sale_orders`** (renumérotée le 2026-10-25 : le lot 5 a pris le n° 7)
+**Lot 5b, migration `8_shop_description`**
+- `Organization.description String?` : 300 caractères au plus (validé par `inputs.ts`), vide → `null`. Le pop-up la montre sous « Oui / Non ».
+
+**Lot 7, migration `9_sale_orders`** (renumérotée deux fois le 2026-10-25 : le lot 5 a pris le n° 7, le lot 5b le n° 8)
 - `SaleOrder { organizationId, respondentId, productId, campaignId String?, responseId String? @unique, buyerType, quantity Int, unitPrice Int, totalAmount Int, fulfillment String /* DELIVERY|PICKUP */, zoneId String?, status String @default("TO_CONFIRM") /* TO_CONFIRM|CONFIRMED|FULFILLED|CANCELLED */, paid Boolean @default(false), paidAt DateTime?, notes String?, confirmedAt DateTime?, fulfilledAt DateTime?, cancelledAt DateTime? }`, avec `@@index([organizationId, status])` et `@@index([respondentId])`.
 - **Lot 8** : on réutilise `Order` (existant) pour les paiements d'abonnement : `provider = 'saspay'`, `metadata = { organizationId, plan, months }`, statuts `PENDING | AWAITING_VERIFICATION | PAID | FAILED | EXPIRED`.
 
@@ -207,7 +211,9 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
   - la référence est `plannedQuantity`, sinon `stockQuantity`.
 - `money.ts` : `computeMoney({ reference, estimate: DemandEstimate, costPrice: number | null, unitPrice, wholesalePrice: number | null }): { avoidedDeadStock: number | null; expectedProfit: number | null }`. Tout vaut `null` si `costPrice` est absent. Les revendeurs sont valorisés au prix de gros quand il existe.
 - `stats.ts` : `computeCampaignStats(responses, campaign, coefs): CampaignStats`. Le résultat contient `estimate`, `verdict`, `money`, des répartitions (statut, zone, échéance, option, source, raison du non), `opens`, `completed`, `incomplete`, `interestRate`, `lockedCount` et `stockStatus`.
-- `summary.ts` : `buildShopSummary(db, organizationId, now): Promise<ShopSummary>`. Le résultat contient `campaigns[] { id; title; verdict; estimate }`, `moneyProtectedThisMonth`, `sinceYesterday { completed; newResellers; bestLink: { label; count } | null }` et `todo[]`. Au lot 6, `todo` ne contient que les campagnes arrivées avec des intéressés à prévenir ; le lot 7 ajoute les commandes à confirmer et les livraisons par quartier.
+- `summary.ts` (lot 5b, étendu au lot 6) : `buildShopSummary(db, organizationId, now): Promise<ShopSummary>`, type partagé dans `lib/tamani/home-view.ts`.
+  - **Contrat 5b** : `week { completed; sinceYesterday; interested; opensRunning; newClients }` (7 jours glissants, `sinceYesterday` sur 24 h ; `opensRunning` = ouvertures cumulées des campagnes en cours, car les ouvertures ne sont pas datées), `activity[]` (8 au plus : réponses et nouveaux clients, les plus récents d'abord), `upcoming[]` (5 au plus : fins de campagne et arrivages dans les 30 jours), `hasCampaign`, `hasProduct`, `shareCampaign { id; title; shareMessage } | null`.
+  - **Le lot 6 ajoute** `campaigns[] { id; title; verdict; estimate }`, `moneyProtectedThisMonth` et `todo[]`. Au lot 6, `todo` ne contient que les campagnes arrivées avec des intéressés à prévenir ; le lot 7 ajoute les commandes à confirmer et les livraisons par quartier.
 - `csv.ts` : `toExcelCsv(columns: ReadonlyArray<{ key; header }>, rows): string`, avec BOM UTF-8, séparateur `;`, fins de ligne CRLF et guillemets RFC 4180.
 
 **Lot 7**
@@ -219,10 +225,16 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 - `reliability.ts` :
   - `clientReliability(rows: ReadonlyArray<{ interested: boolean; campaignFinished: boolean; fulfilled: boolean }>): { yesCount; fulfilledCount; rate: number | null }`. `rate` vaut `null` tant que les réponses « Oui » terminées sont moins de 2 ;
   - `learnedCoefficients(rows: ReadonlyArray<{ buyerType; campaignId; announced: number; fulfilledQty: number }>, fallback: { consumer; reseller }): LearnedCoefficients`, de la forme `{ consumer; reseller; learned: { consumer: boolean; reseller: boolean } }`. Seuil : 20 réponses « Oui » sur au moins 2 campagnes, par statut ; résultat borné à [0.1, 1].
+- `clients.ts` : livré au lot 5b (voir plus bas) ; le lot 7 étend `ClientFilters` (zone, produit, mois, `hasOrdered`) et ajoute la note, l'anonymisation et la fiabilité. La vue Intérêts (`listInterests`) est abandonnée.
+
+**Lot 5b**
 - `clients.ts` :
-  - `listClients(db, organizationId, filters: ClientFilters, cursor?)` pour la vue Personnes ;
-  - `listInterests(db, organizationId, filters, cursor?)` pour la vue Intérêts : client × produit × campagne × date.
-  - Les deux utilisent le curseur de `pagination/paginate.ts` du kit.
+  - `visibleClientWhere(organizationId)` : un client visible est non anonymisé, avec au moins une réponse complète, non verrouillée et non suspecte ;
+  - `parseClientFilters(params): ClientFilters | null` (`type=revendeurs|usagers`, `q` de 60 caractères au plus) ;
+  - `listClients(db, organizationId, filters, cursor, { canSeeContacts, limit })`, trié par dernière activité, curseur du kit, compteurs sur la première page ; en Gratuit (`respondentContacts` faux) les numéros ne sortent pas du serveur et la recherche ignore les chiffres ;
+  - `getClient(db, organizationId, respondentId, { canSeeContacts })` : la fiche et toutes ses réponses.
+- `quota.ts` : `responsesThisMonth(db, organizationId, now): Promise<{ used; limit }>` (barre latérale).
+- `shop.ts` : `shopPlan(db, organizationId, now): Promise<PlanDefinition>`.
 
 **Lot 8**
 - `billing.ts` : `activateFromPayment(tx, orderId, now): Promise<'ACTIVATED' | 'ALREADY_DONE' | 'NOT_PAID'>`.
@@ -240,8 +252,14 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
   - `GET|POST …/campaigns/[campaignId]/links` (liens de source : `403 PLAN_FEATURE_LOCKED` en FREE).
 - **Lot 5, public** : `POST /api/public/views` et `POST /api/public/responses`.
 - **Lot 5, notifications** : `GET /api/push/public-key` (`503 PUSH_NOT_CONFIGURED` sans clés VAPID), `POST|DELETE /api/push/subscriptions` (session et CSRF ; adresse https d'un service de push de navigateur seulement : FCM, Mozilla, Apple, Windows). La cloche utilise les routes `/api/notifications` du kit.
+- **Lot 5b** :
+  - `GET /api/shops/me` envoie en plus `usage { responsesThisMonth; monthlyLimit }` et `me { firstName; name }` ;
+  - `GET /api/shops/[orgId]/summary` (`MEMBER`) ;
+  - `GET /api/shops/[orgId]/clients` et `GET …/clients/[respondentId]` (`404 CLIENT_NOT_FOUND`) ;
+  - `GET /api/shops/[orgId]/products/units` (les unités déjà utilisées, 50 au plus) ;
+  - `GET …/campaigns` et `GET …/products` acceptent `q` et envoient `counts` sur la première page (sans tenir compte de la recherche ni du filtre) ; `GET …/products` accepte `inCampaign=1`.
 - **Lot 6, tableau de bord** :
-  - `GET /api/shops/[orgId]/summary` ;
+  - `GET /api/shops/[orgId]/summary` étendu (voir `summary.ts`) ;
   - `GET …/campaigns/[campaignId]/stats` ;
   - `GET …/campaigns/[campaignId]/responses` (curseur ; numéros masqués si `respondentContacts` est faux) ;
   - `GET …/campaigns/[campaignId]/export` (CSV ; `403 PLAN_FEATURE_LOCKED` en FREE).
@@ -249,9 +267,9 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
   - `GET|POST /api/shops/[orgId]/orders`, avec les filtres `status`, `campaignId`, `productId` et `zoneId`, et le paramètre `view=to-deliver`, qui groupe les commandes par zone ;
   - `GET|PATCH …/orders/[orderId]` (transitions, paiement, prix avant confirmation) ;
   - `POST …/campaigns/[campaignId]/responses/[responseId]/order` (conversion).
-- **Lot 7, clients** :
-  - `GET /api/shops/[orgId]/clients` (vue Personnes) et `GET /api/shops/[orgId]/interests` (vue Intérêts), tous deux avec `ClientFilters` ;
-  - `GET|PATCH …/clients/[respondentId]` (fiche et note) ;
+- **Lot 7, clients** (les deux `GET` existent depuis le lot 5b ; `/interests` est abandonné) :
+  - `GET /api/shops/[orgId]/clients` avec les filtres ajoutés à `ClientFilters` ;
+  - `PATCH …/clients/[respondentId]` (note) ;
   - `DELETE …/clients/[respondentId]` (anonymisation, rôle `ADMIN` minimum).
 - **Lot 8, facturation** : `POST /api/billing/checkout`, `GET /api/billing/return`, `GET /api/billing/subscription` et `POST /api/webhooks/saspay`.
 - **Lot 8, tâches planifiées** : `GET /api/cron/billing-verify` (`*/1`) et `GET /api/cron/subscription-renewals` (`0 8 * * *`). `vercel.json` en compte alors **8**.
@@ -259,7 +277,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 
 ### Pages
 - `(public)` : `/`, `/tarifs`, `/c/[code]`, `/login`, `/signup`, `/verify-email`, `/forgot-password`, `/reset-password`, `/auth/error`, `/confidentialite`, `/cgu`.
-- `(app)` : `/app`, `/app/bienvenue`, `/app/produits`, `/app/produits/nouveau`, `/app/produits/[id]`, `/app/campagnes`, `/app/campagnes/nouvelle`, `/app/campagnes/[id]`, `/app/commandes`, `/app/clients` (onglets Personnes et Intérêts), `/app/clients/[id]`, `/app/abonnement`, `/app/reglages`.
+- `(app)` : `/app`, `/app/bienvenue`, `/app/produits`, `/app/produits/nouveau`, `/app/produits/[id]`, `/app/campagnes`, `/app/campagnes/nouvelle`, `/app/campagnes/[id]`, `/app/commandes`, `/app/clients` (sans onglets), `/app/clients/[id]`, `/app/abonnement`, `/app/reglages`.
 - `(admin)` : `/admin`, `/admin/boutiques` et `/admin/boutiques/[id]`.
 
 ### Variables d'environnement
@@ -378,6 +396,20 @@ Les onze demandes du porteur ([retours](../specs/2026-10-25-tamani-retours-porte
 - disposition des Réglages ;
 - connexion et inscription en deux colonnes.
 
+Livré par le [plan 5b](2026-10-25-tamani-05b-retouches.md). Décisions prises :
+- **« Ouvertures »** : les ouvertures ne sont pas datées (`CampaignLink.openCount` est un total), donc la carte « Cette semaine » montre les ouvertures cumulées des campagnes en cours, sous le libellé « ouvertures en cours ». « intéressés » et « nouveaux clients » sont sur 7 jours glissants.
+- **Prénom de l'accueil** : premier mot de `User.name`, envoyé par `GET /api/shops/me` (`me.firstName`). `AuthContext` et `/api/auth/me` restent tels que le kit les livre.
+- **Salutation selon l'heure** (demande du porteur) : heure locale du téléphone ; « Bonjour » de 5 h à 12 h, « Bon après-midi » de 12 h à 18 h, « Bonsoir » de 18 h à 5 h.
+- **Avatar** : le logo de la boutique, sinon les initiales du nom de l'utilisateur, sinon celles de la boutique. Il ouvre `/app/plus` (« Compte et forfait »).
+- **Recherche en Gratuit** : prénoms seulement ; les chiffres ne cherchent dans les numéros qu'avec `respondentContacts`.
+- **Réglages sur téléphone** : sections empilées, sans barre de navigation ; le menu de gauche n'existe qu'à partir de `lg`.
+- **Unités courantes** : pièce, carton, sac, bouteille, flacon, paquet, douzaine, kg, litre (le poids va dans le nom du produit). Les unités déjà utilisées par la boutique suivent.
+- **Date passée** : refusée à la création ; à la modification, seulement si la date change (une campagne arrivée garde sa date).
+- **Compteurs des listes** : envoyés sur la première page seulement, sans tenir compte de la recherche ni du filtre (ils décrivent la boutique entière) ; une pastille à 0 est cachée, sauf si elle est active.
+- **Pas de « Voir tout »** sous « Activité » : il n'y a pas de page d'activité.
+- **Migration `8_shop_description`** ; celle des commandes du lot 7 devient `9_sale_orders`.
+- **Clients avancés du lot 7** : `GET …/clients` et `GET …/clients/[respondentId]` sont livrés ici ; la note, l'anonymisation, les filtres zone, produit, mois et « Ont commandé », et la fiabilité restent au lot 7. `GET …/interests` et l'onglet Intérêts sont abandonnés.
+
 ### Page d'accueil publique (avancée du lot 9, le 2026-10-25)
 Elle vient juste après le lot 5b, avec son propre passage de conception et des maquettes ([retours](../specs/2026-10-25-tamani-retours-porteur.md) §4).
 
@@ -386,7 +418,7 @@ Elle vient juste après le lot 5b, avec son propre passage de conception et des 
    - Verdict aux seuils exacts : 19 réponses → `WAIT` ; ratio 0.9 → `GO` ; 0.89 → `CAUTION` ; 0.4 → `CAUTION` ; 0.39 → `STOP` ; sans référence → `NEUTRAL`.
    - Argent : référence 400, estimation réaliste 210 et prix d'achat 6 000 donnent `avoidedDeadStock 1140000` ; sans prix d'achat, `null`.
    - Les réponses `suspicious` et `locked` sont exclues de l'estimation, et `lockedCount` est calculé à part.
-2. **`summary`** et `GET /api/shops/[orgId]/summary`. Tests : « Depuis hier » sur une fenêtre de 24 h glissantes, meilleur groupe sur 7 jours, campagnes arrivées avec intéressés à prévenir.
+2. **`summary`** : `buildShopSummary` et sa route existent depuis le lot 5b ; on ajoute `campaigns[]`, `moneyProtectedThisMonth` et `todo[]`. Tests : campagnes arrivées avec intéressés à prévenir, argent protégé sur le mois.
 3. **API statistiques et réponses de campagne, et export CSV.** Tests : cloisonnement, restrictions par forfait, numéros masqués en FREE, BOM, `;`, guillemets.
 4. **Interface**, avec la structure de la spec §5.4.0 et le style du lot 2 (skill `dataviz` pour les répartitions).
    - Accueil `/app` en « bulletin du jour ».
@@ -394,7 +426,7 @@ Elle vient juste après le lot 5b, avec son propre passage de conception et des 
    - Liste des intéressés avec un bouton WhatsApp, « Copier les numéros », et l'action « Le produit est arrivé ».
 
 ### Lot 7 : Commandes et clients
-1. **Migration `7_sale_orders`, puis `orders.ts`**, avec ses tests.
+1. **Migration `9_sale_orders`, puis `orders.ts`**, avec ses tests.
    - `orderUnitPrice` : un revendeur qui commande 12 pièces avec un minimum de 12 paie le prix de gros ; avec 11 pièces, le prix unitaire ; un usager paie toujours le prix unitaire.
    - Transitions autorisées et interdites, ces dernières renvoyant `409 INVALID_ORDER_TRANSITION`.
    - Conversion unique par réponse (Review Focus, à couvrir en plus).
@@ -408,7 +440,7 @@ Elle vient juste après le lot 5b, avec son propre passage de conception et des 
 3. **`reliability.ts` et branchement des coefficients appris** dans `coefficientsFor`, réservés au PRO et au-dessus.
    - Tests aux seuils : 19 réponses « Oui » donnent le coefficient de repli, 20 réponses sur 2 campagnes donnent le coefficient appris, et le résultat est borné à [0.1, 1].
    - `clientReliability` : `rate` vaut `null` sous 2 réponses, et 4 commandes livrées sur 5 réponses « Oui » donnent `0.8`.
-4. **`client-filters.ts`, `clients.ts` et les API Personnes, Intérêts, fiche, note et anonymisation.**
+4. **Filtres clients ajoutés à `clients.ts` (zone, produit, mois, `hasOrdered`), note et anonymisation.** La liste et la fiche existent depuis le lot 5b.
    - Tests de filtres combinés : par exemple, revendeurs + Médina + produit + octobre + `hasOrdered=false`.
    - Tests de pagination et de restriction par forfait (numéros masqués en FREE).
    - Le client anonymisé est toujours compté dans les statistiques, mais n'apparaît plus dans les listes.
@@ -417,7 +449,7 @@ Elle vient juste après le lot 5b, avec son propre passage de conception et des 
    - `/app/commandes` : liste avec filtres, « À livrer par quartier », bouton WhatsApp « Ta commande est confirmée… ».
    - Page campagne, onglet Commandes : stock restant affiché.
    - « Transformer en commande » sur chaque intéressé.
-   - `/app/clients` : onglets Personnes et Intérêts, `FilterBar` synchronisée avec l'URL.
+   - `/app/clients` (sans onglets) : les nouveaux filtres dans la `FilterBar` synchronisée avec l'URL.
    - `/app/clients/[id]` : historique, montant total, note, fiabilité.
 
 ### Lot 8 : Abonnements et SasPay
@@ -442,6 +474,12 @@ Elle vient juste après le lot 5b, avec son propre passage de conception et des 
    - Tests : Review Focus 3 et 5.
 5. **`subscription-renewals`** : rappel à J-3 (`EmailJob` et `Notification`, avec un `dedupeKey` par période), début de grâce, puis retour au FREE. Mettre à jour `vercel.json` et le garde-fou `vercel-json-shape` (8 tâches planifiées).
 6. **Interface** : `/app/abonnement` (forfait, jauge d'usage, passage au forfait supérieur sur 1 ou 12 mois), `/tarifs`, bandeau « N réponses en attente », bandeau de grâce. Recette de bout en bout en mode test SasPay.
+7. **Garde-fous de marge** (règle « Marge » ci-dessus).
+   - Lire les vrais tarifs par réseau avec `GET /pricing/my-rates/` avant de figer les prix.
+   - Un test pur qui échoue si un forfait payant, à quota plein, passe sous 70 % de marge (frais SasPay au pire cas, coût par réponse, frais de retrait).
+   - Gratuit : plafond de réponses enregistrées par boutique et par mois (1 000 proposé) ; ce qui se passe au-delà est **à décider par le porteur** (pop-up « réponses closes pour ce mois », ou réponse non enregistrée).
+   - Au-delà du quota, une notification groupée par jour (« N nouvelles réponses en attente ») au lieu d'une par réponse ; purge des notifications de plus de 90 jours.
+   - Alertes et plafonds de dépense chez chaque fournisseur ; photo du pop-up allégée.
 
 ### Lot 9 : Admin, accueil, légal, production
 1. **API admin des boutiques** : liste, détail, et attribution manuelle d'un forfait (`logAdminAction`, action `shop.plan_grant`). Tests : audit enregistré, `requireSuperadmin`.
