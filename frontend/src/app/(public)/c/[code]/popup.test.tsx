@@ -64,6 +64,10 @@ describe('PopupView', () => {
     const t = text(<PopupView campaign={campaign} state={at('contact', { remembered: awa })} />);
     expect(t).toContain('Tu réponds en tant que Awa · 77 •• •• 12');
     expect(t).toContain('pas toi ?');
+    // The masked number never breaks across two lines on a 320 px phone.
+    expect(
+      html(<PopupView campaign={campaign} state={at('contact', { remembered: awa })} />),
+    ).toMatch(/<span class="whitespace-nowrap">77 •• •• 12<\/span>/);
   });
 
   it('shows the wholesale price to a reseller', () => {
@@ -75,10 +79,50 @@ describe('PopupView', () => {
     for (const n of ['6', '12', '24', '50']) expect(t).toContain(n);
   });
 
+  it('asks for the option before the quantity', () => {
+    const withOptions = {
+      ...campaign,
+      product: { ...campaign.product, optionLabel: 'Couleur', options: ['Rouge', 'Noir'] },
+    };
+    const consumer = at('quantity', {
+      answers: { ...EMPTY_ANSWERS, interested: true, buyerType: 'CONSUMER' },
+    });
+    const out = html(<PopupView campaign={withOptions} state={consumer} />);
+    expect(text(<PopupView campaign={withOptions} state={consumer} />)).toContain(
+      "Choisis d'abord : couleur",
+    );
+    expect(out.match(/<button[^>]*disabled=""/g)?.length).toBe(5);
+    const chosen = { ...consumer, answers: { ...consumer.answers, option: 'Rouge' } };
+    expect(text(<PopupView campaign={withOptions} state={chosen} />)).not.toContain(
+      "Choisis d'abord",
+    );
+  });
+
+  it('keeps the page on one screen: the photo shrinks, the sheet scrolls', () => {
+    const out = html(<PopupView campaign={campaign} state={start} />);
+    expect(out).toMatch(/<main[^>]*class="[^"]*\bh-dvh\b/);
+    expect(out).toMatch(
+      /class="[^"]*\bmin-h-0\b[^"]*\bflex-1\b|class="[^"]*\bflex-1\b[^"]*\bmin-h-0\b/,
+    );
+    expect(out).toContain('overflow-y-auto');
+  });
+
   it('thanks the respondent by name and offers to edit', () => {
     const t = text(<PopupView campaign={campaign} state={at('thanks', { remembered: awa })} />);
     expect(t).toContain('Merci Awa ! Diallo Import te préviendra.');
     expect(t).toContain('Modifier ma réponse');
+  });
+
+  it('offers to close the page once the answer is sent', () => {
+    const thanks = at('thanks', { remembered: awa });
+    expect(text(<PopupView campaign={campaign} state={thanks} />)).toContain('Fermer la page');
+    // When the browser keeps the page open, say so instead of a dead button.
+    const t = text(<PopupView campaign={campaign} state={thanks} left />);
+    expect(t).toContain("C'est noté. Tu peux fermer cette page.");
+    expect(t).not.toContain('Fermer la page');
+    expect(text(<PopupView campaign={campaign} state={at('contact')} />)).not.toContain(
+      'Fermer la page',
+    );
   });
 
   it('says the campaign is over and shows no choice', () => {

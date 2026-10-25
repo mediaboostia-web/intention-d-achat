@@ -36,6 +36,7 @@ import {
   type PopupState,
   type ResponseStepBody,
 } from '@/lib/tamani/popup-machine';
+import { leavePage } from '@/lib/tamani/leave-page';
 import { formatXof } from '@/lib/tamani/share-message';
 import { TIMING_LABELS } from '@/lib/tamani/timing';
 import { pluralizeUnit } from '@/lib/tamani/verdict-display';
@@ -53,6 +54,9 @@ export interface PopupViewProps {
   interestedCount?: number | null;
   onAction?: (action: PopupAction) => void;
   onContact?: (contact: Contact) => void;
+  onLeave?: () => void;
+  /** The browser kept the page open after « Fermer la page ». */
+  left?: boolean;
 }
 
 function Question({ children }: { children: ReactNode }) {
@@ -144,6 +148,11 @@ function QuantityStep({ c, answers, onAction }: StepProps) {
               </ChoiceButton>
             ))}
           </div>
+          {needsOption && (
+            <p className="mt-2 text-sm text-ink-muted">
+              Choisis d&apos;abord : {(product.optionLabel ?? 'ton choix').toLowerCase()}
+            </p>
+          )}
         </div>
       )}
       {custom ? (
@@ -263,7 +272,8 @@ function ContactStep({
       <>
         <Question>{title}</Question>
         <p className="text-ink">
-          Tu réponds en tant que <b>{remembered.firstName}</b> · {remembered.phoneMasked}{' '}
+          Tu réponds en tant que <b>{remembered.firstName}</b> ·{' '}
+          <span className="whitespace-nowrap">{remembered.phoneMasked}</span>{' '}
           <button
             type="button"
             onClick={() => onAction({ type: 'notMe' })}
@@ -354,14 +364,18 @@ function StepContent({
   c,
   state,
   busy,
+  left,
   onAction,
   onContact,
+  onLeave,
 }: {
   c: PublicCampaign;
   state: PopupState;
   busy: boolean;
+  left: boolean;
   onAction: (action: PopupAction) => void;
   onContact: (contact: Contact) => void;
+  onLeave: () => void;
 }) {
   const a = state.answers;
   switch (state.step) {
@@ -481,6 +495,15 @@ function StepContent({
           >
             Modifier ma réponse
           </Button>
+          {left ? (
+            <p role="status" className="mt-3 text-center font-bold text-ink">
+              C&apos;est noté. Tu peux fermer cette page.
+            </p>
+          ) : (
+            <Button variant="ghost" className="mt-2 w-full" onClick={onLeave}>
+              Fermer la page
+            </Button>
+          )}
         </>
       );
   }
@@ -494,11 +517,13 @@ export function PopupView({
   interestedCount = c.interestedCount,
   onAction = () => {},
   onContact = () => {},
+  onLeave = () => {},
+  left = false,
 }: PopupViewProps) {
   const photo = c.product.photos[0] ? cloudinaryVariant(c.product.photos[0], POPUP_PHOTO) : null;
   const canGoBack = c.accepting && state.step !== 'interest' && state.step !== 'thanks';
   return (
-    <main className="relative flex min-h-dvh flex-col overflow-hidden bg-ink text-ink">
+    <main className="relative flex h-dvh flex-col overflow-hidden bg-ink text-ink">
       {photo && (
         <img
           src={photo}
@@ -507,75 +532,80 @@ export function PopupView({
           className="absolute inset-0 size-full scale-110 object-cover opacity-60 blur-2xl"
         />
       )}
-      <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col">
+      <div className="relative mx-auto flex h-full w-full max-w-md flex-col">
         <ShopChip shop={c.shop} />
-        <div className="flex min-h-20 flex-1 items-center justify-center px-6 py-4">
+        {/* The photo gives way to the sheet on a small screen. */}
+        <div className="flex min-h-0 flex-1 items-center justify-center px-6 py-3">
           {photo && (
             <img
               src={photo}
               alt={c.product.name}
               fetchPriority="high"
-              className="frame max-h-[36vh] w-auto max-w-full rounded-card bg-surface object-contain"
+              className="frame max-h-full w-auto max-w-full rounded-card bg-surface object-contain"
             />
           )}
         </div>
-        <BottomSheet label="Ta réponse">
-          <ProductHeader c={c} count={interestedCount} />
-          {!c.accepting ? (
-            <>
-              <Question>
-                {c.status === 'DRAFT'
-                  ? "Cette campagne n'est pas encore ouverte."
-                  : 'Cette campagne est terminée'}
-              </Question>
-              <p className="text-ink-soft">
-                Demande à <b className="text-ink">{c.shop.name}</b> ses prochains arrivages.
-              </p>
-            </>
-          ) : (
-            <>
-              {canGoBack && (
-                <button
-                  type="button"
-                  onClick={() => onAction({ type: 'back' })}
-                  className="mt-3 -mb-2 text-sm font-bold text-primary underline decoration-2 underline-offset-4"
-                >
-                  Retour
-                </button>
-              )}
-              <StepContent
-                c={c}
-                state={state}
-                busy={busy}
-                onAction={onAction}
-                onContact={onContact}
-              />
-              {error && (
-                <p role="alert" className="mt-3 font-bold text-danger">
-                  {error}
+        <BottomSheet label="Ta réponse" className="shrink-0">
+          <div className="max-h-[calc(100dvh-6.5rem)] overflow-y-auto overscroll-contain">
+            <ProductHeader c={c} count={interestedCount} />
+            {!c.accepting ? (
+              <>
+                <Question>
+                  {c.status === 'DRAFT'
+                    ? "Cette campagne n'est pas encore ouverte."
+                    : 'Cette campagne est terminée'}
+                </Question>
+                <p className="text-ink-soft">
+                  Demande à <b className="text-ink">{c.shop.name}</b> ses prochains arrivages.
                 </p>
-              )}
-              {state.step !== 'thanks' && (
-                <div className="mt-5 flex justify-center gap-1.5" aria-hidden="true">
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <span
-                      key={i}
-                      className={`size-3.5 rounded-case border-2 border-ink ${i <= progressIndex(state.step) ? 'bg-accent' : 'bg-surface'}`}
-                    />
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-          {c.poweredByBadge && (
-            <a
-              href={`/?ref=${encodeURIComponent(c.shop.slug)}`}
-              className="mt-4 flex items-center justify-center gap-1.5 text-xs text-ink-muted"
-            >
-              <Logo variant="mark" size={16} />
-              Propulsé par Tamani
-            </a>
-          )}
+              </>
+            ) : (
+              <>
+                {canGoBack && (
+                  <button
+                    type="button"
+                    onClick={() => onAction({ type: 'back' })}
+                    className="mt-3 -mb-2 text-sm font-bold text-primary underline decoration-2 underline-offset-4"
+                  >
+                    Retour
+                  </button>
+                )}
+                <StepContent
+                  c={c}
+                  state={state}
+                  busy={busy}
+                  left={left}
+                  onAction={onAction}
+                  onContact={onContact}
+                  onLeave={onLeave}
+                />
+                {error && (
+                  <p role="alert" className="mt-3 font-bold text-danger">
+                    {error}
+                  </p>
+                )}
+                {state.step !== 'thanks' && (
+                  <div className="mt-5 flex justify-center gap-1.5" aria-hidden="true">
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <span
+                        key={i}
+                        className={`size-3.5 rounded-case border-2 border-ink ${i <= progressIndex(state.step) ? 'bg-accent' : 'bg-surface'}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+            {c.poweredByBadge && (
+              <a
+                href={`/?ref=${encodeURIComponent(c.shop.slug)}`}
+                className="mt-4 flex items-center justify-center gap-1.5 text-xs text-ink-muted"
+              >
+                <Logo variant="mark" size={16} />
+                Propulsé par Tamani
+              </a>
+            )}
+          </div>
         </BottomSheet>
       </div>
     </main>
@@ -593,6 +623,7 @@ export function PopupSheet({ campaign }: { campaign: PublicCampaign }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [count, setCount] = useState(campaign.interestedCount);
+  const [left, setLeft] = useState(false);
   const storage = useRef<Storage | null>(null);
   const memory = useRef<DeviceMemory | null>(null);
   const token = useRef<string | null>(null);
@@ -665,6 +696,13 @@ export function PopupSheet({ campaign }: { campaign: PublicCampaign }) {
     dispatch({ type: 'completed', respondent });
   }
 
+  function onLeave() {
+    const outcome = leavePage(window);
+    if (outcome === 'stayed') setLeft(true);
+    // Some in-app browsers ignore « back »: the page is still here, say so.
+    if (outcome === 'back') window.setTimeout(() => setLeft(true), 800);
+  }
+
   return (
     <PopupView
       campaign={campaign}
@@ -674,6 +712,8 @@ export function PopupSheet({ campaign }: { campaign: PublicCampaign }) {
       interestedCount={count}
       onAction={onAction}
       onContact={onContact}
+      onLeave={onLeave}
+      left={left}
     />
   );
 }
