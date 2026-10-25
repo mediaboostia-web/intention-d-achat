@@ -61,6 +61,7 @@ export function SettingsView({ google }: { google: boolean }) {
           whatsappPhone: v.whatsappPhone,
           country: v.country,
           logoUrl: v.logoUrl,
+          description: v.description.trim() || null,
         },
       });
       await reload();
@@ -104,6 +105,7 @@ export function SettingsView({ google }: { google: boolean }) {
                 country: shop.country,
                 whatsappPhone: nationalNumber(shop.whatsappPhone, shop.country),
                 logoUrl: shop.logoUrl,
+                description: shop.description ?? '',
                 zones: [],
               }}
               withZones={false}

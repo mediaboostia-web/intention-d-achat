@@ -15,6 +15,7 @@ function fixture(over: { campaign?: object; product?: object; org?: object } = {
     country: 'SN',
     currency: 'XOF',
     logoUrl: null,
+    description: null,
     coefConsumer: 0.5,
     coefReseller: 0.7,
     subscription: null,
@@ -121,7 +122,13 @@ describe('getPublicCampaign', () => {
       accepting: true,
       availabilityText: 'Arrivage dans 10 jours',
       timingOptions: ['ON_ARRIVAL', 'WEEK_AFTER', 'LATER'],
-      shop: { name: 'Diallo Import', slug: 'diallo-import', logoUrl: null, dialCode: '+221' },
+      shop: {
+        name: 'Diallo Import',
+        slug: 'diallo-import',
+        logoUrl: null,
+        description: null,
+        dialCode: '+221',
+      },
       interestedCount: 64,
       stockQuantity: 200,
     });

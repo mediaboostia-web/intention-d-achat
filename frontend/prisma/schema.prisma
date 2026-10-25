@@ -108,6 +108,7 @@ model Organization {
   country       String  @default("SN") // ISO-2, default region for local phone numbers
   currency      String  @default("XOF")
   logoUrl       String?
+  description   String? // shown in the popup (lot 5b), 300 characters at most
   coefConsumer  Float   @default(0.5) // share of announced consumer demand that turns real
   coefReseller  Float   @default(0.7)
 

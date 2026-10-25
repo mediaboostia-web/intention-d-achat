@@ -30,7 +30,13 @@ const campaign: PublicCampaign = {
     optionLabel: null,
     options: [],
   },
-  shop: { name: 'Diallo Import', slug: 'diallo-import', logoUrl: null, dialCode: '+221' },
+  shop: {
+    name: 'Diallo Import',
+    slug: 'diallo-import',
+    logoUrl: null,
+    description: null,
+    dialCode: '+221',
+  },
   poweredByBadge: true,
 };
 
@@ -50,6 +56,20 @@ describe('PopupView', () => {
     expect(t).toContain('Arrivage dans 10 jours');
     expect(t).toContain("Ça t'intéresse ?");
     expect(html(<PopupView campaign={campaign} state={start} />)).toContain('aria-pressed');
+  });
+
+  it('shows the shop description on the first step', () => {
+    const described = {
+      ...campaign,
+      shop: { ...campaign.shop, description: 'Riz et huile en gros à la Médina.' },
+    };
+    expect(text(<PopupView campaign={described} state={start} />)).toContain(
+      'Riz et huile en gros à la Médina.',
+    );
+    expect(text(<PopupView campaign={described} state={at('contact')} />)).not.toContain(
+      'Riz et huile en gros à la Médina.',
+    );
+    expect(html(<PopupView campaign={campaign} state={start} />)).not.toContain('line-clamp-3');
   });
 
   it('shows the consent sentence under the number', () => {

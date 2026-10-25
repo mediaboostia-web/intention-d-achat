@@ -39,6 +39,31 @@ beforeEach(async () => {
   })) as never);
 });
 
+describe('PATCH /api/shops/[orgId] description', () => {
+  it('PATCH saves the description', async () => {
+    const res = await patch({ description: '  Riz, huile et sucre en gros à la Médina.  ' });
+    expect(res.status).toBe(200);
+    expect(prismaMock.organization.update.mock.calls[0]![0].data).toMatchObject({
+      description: 'Riz, huile et sucre en gros à la Médina.',
+    });
+    const body = (await res.json()) as { shop: { description: string | null } };
+    expect(body.shop.description).toBe('Riz, huile et sucre en gros à la Médina.');
+  });
+
+  it('an empty description becomes null', async () => {
+    await patch({ description: '   ' });
+    expect(prismaMock.organization.update.mock.calls[0]![0].data).toMatchObject({
+      description: null,
+    });
+  });
+
+  it('301 characters is a 400', async () => {
+    const res = await patch({ description: 'a'.repeat(301) });
+    expect(res.status).toBe(400);
+    expect(prismaMock.organization.update).not.toHaveBeenCalled();
+  });
+});
+
 describe('GET /api/shops/[orgId]', () => {
   it('returns the shop to a member', async () => {
     const res = await GET(apiRequest('/api/shops/org_1'), params);

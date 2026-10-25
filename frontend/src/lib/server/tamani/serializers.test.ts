@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { shareUrl, toCampaign, toPublicProduct, toShopProduct } from './serializers';
+import { shareUrl, toCampaign, toPublicProduct, toShop, toShopProduct } from './serializers';
 
 const product = {
   id: 'prod_1',
@@ -18,6 +18,29 @@ const product = {
   createdAt: new Date('2026-10-24T10:00:00Z'),
   updatedAt: new Date('2026-10-24T10:00:00Z'),
 };
+
+describe('toShop', () => {
+  it('toShop sends the description', () => {
+    const org = {
+      id: 'org_1',
+      slug: 'diallo-import',
+      name: 'Diallo Import',
+      ownerId: 'user_1',
+      whatsappPhone: '+221771234567',
+      country: 'SN',
+      currency: 'XOF',
+      logoUrl: null,
+      description: 'Riz et huile en gros.',
+      coefConsumer: 0.5,
+      coefReseller: 0.7,
+      createdAt: new Date('2026-10-24T10:00:00Z'),
+      updatedAt: new Date('2026-10-24T10:00:00Z'),
+    };
+    expect(toShop(org, null, new Date('2026-10-25T10:00:00Z')).description).toBe(
+      'Riz et huile en gros.',
+    );
+  });
+});
 
 describe('product serializers', () => {
   it('toPublicProduct never exposes costPrice', () => {

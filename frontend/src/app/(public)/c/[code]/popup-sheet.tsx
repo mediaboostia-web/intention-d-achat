@@ -398,6 +398,11 @@ function StepContent({
               Non
             </ChoiceButton>
           </div>
+          {c.shop.description && (
+            <p className="mt-4 line-clamp-3 text-sm leading-snug text-ink-soft">
+              {c.shop.description}
+            </p>
+          )}
         </>
       );
     case 'reason':

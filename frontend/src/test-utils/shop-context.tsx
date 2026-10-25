@@ -18,6 +18,7 @@ export const TEST_SHOP: Shop = {
   country: 'SN',
   currency: 'XOF',
   logoUrl: null,
+  description: null,
   coefConsumer: 0.4,
   coefReseller: 0.7,
   plan: { id: 'FREE', inGrace: false, currentPeriodEnd: null },

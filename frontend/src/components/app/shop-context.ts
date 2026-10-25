@@ -14,6 +14,7 @@ export interface Shop {
   country: string;
   currency: string;
   logoUrl: string | null;
+  description: string | null;
   coefConsumer: number;
   coefReseller: number;
   plan: { id: PlanId; inGrace: boolean; currentPeriodEnd: string | null };

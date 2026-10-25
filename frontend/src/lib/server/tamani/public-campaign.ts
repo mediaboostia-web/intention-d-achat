@@ -27,7 +27,13 @@ export interface PublicCampaign {
   interestedCount: number | null;
   stockQuantity: number | null;
   product: ReturnType<typeof toPublicProduct>;
-  shop: { name: string; slug: string; logoUrl: string | null; dialCode: string };
+  shop: {
+    name: string;
+    slug: string;
+    logoUrl: string | null;
+    description: string | null;
+    dialCode: string;
+  };
   poweredByBadge: boolean;
 }
 
@@ -85,6 +91,7 @@ export async function getPublicCampaign(
       name: org.name,
       slug: org.slug,
       logoUrl: org.logoUrl,
+      description: org.description,
       dialCode: SHOP_COUNTRIES.find((c) => c.code === org.country)?.dialCode ?? '+221',
     },
     poweredByBadge: PLANS[effectivePlan(org.subscription, now).plan].features.poweredByBadge,

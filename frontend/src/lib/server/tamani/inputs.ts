@@ -30,6 +30,13 @@ const country = z
   .regex(/^[A-Z]{2}$/)
   .refine((c) => isSupportedCountry(c), 'Unsupported country');
 const shopName = z.string().trim().min(1).max(60);
+/** What the popup shows of the shop (lot 5b); blank clears it. */
+const shopDescription = z
+  .string()
+  .trim()
+  .max(300)
+  .nullable()
+  .transform((s) => (s ? s : null));
 const rawPhone = z.string().trim().min(1).max(30);
 const coefficient = z.number().min(0).max(1);
 
@@ -46,6 +53,7 @@ export const ShopPatch = z
     whatsappPhone: rawPhone.optional(),
     country: country.optional(),
     logoUrl: cloudinaryUrl.nullable().optional(),
+    description: shopDescription.optional(),
     coefConsumer: coefficient.optional(),
     coefReseller: coefficient.optional(),
   })
