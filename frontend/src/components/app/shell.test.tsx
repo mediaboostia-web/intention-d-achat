@@ -216,18 +216,14 @@ describe('shop pages', () => {
     expect(pro).toContain("Pro jusqu'au 24 novembre");
   });
 
-  it('home greets the shop and invites a first campaign', () => {
+  it('home greets the person while the summary loads', () => {
     mockNextNavigation({ pathname: '/app' });
     const page = (
       <ShopTestProvider>
         <HomePage />
       </ShopTestProvider>
     );
-    const t = text(page);
-    expect(t).toContain('Bonjour, Diallo Import');
-    expect(t).toContain('Lance ta première campagne');
-    const out = html(page);
-    expect(out).toContain('href="/app/produits/nouveau"');
-    expect(out).toContain('href="/app/campagnes/nouvelle"');
+    expect(text(page)).toMatch(/^(Bonjour|Bon après-midi|Bonsoir), Fatou/);
+    expect(html(page)).toContain('role="status"');
   });
 });
