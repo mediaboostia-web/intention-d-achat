@@ -22,6 +22,11 @@ export function maskPhone(e164: string): string {
   return `${national.slice(0, 2)} •• •• ${national.slice(-2)}`;
 }
 
+/** "+221771112233" → "+221 77 111 22 33", for a plan that shows numbers. */
+export function displayPhone(e164: string): string {
+  return parsePhoneNumberFromString(e164)?.formatInternational() ?? e164;
+}
+
 /** The shop's country as a phone region, Senegal when unknown. */
 export function shopCountry(country: string): CountryCode {
   return isSupportedCountry(country) ? country : 'SN';

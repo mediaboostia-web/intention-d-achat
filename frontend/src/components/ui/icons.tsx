@@ -14,7 +14,18 @@ export type IconName =
   | 'pencil'
   | 'trash'
   | 'eye'
-  | 'eye-off';
+  | 'eye-off'
+  | 'bell'
+  | 'search'
+  | 'whatsapp'
+  | 'user'
+  | 'clock'
+  | 'truck'
+  | 'archive'
+  | 'stop'
+  | 'arrow-up-right'
+  | 'arrow-down-left'
+  | 'chevron-right';
 
 // Drawn with the pen: one 2px round stroke in currentColor, no fill, so an
 // icon takes the colour of the text next to it.
@@ -121,6 +132,58 @@ const SHAPES: Record<IconName, ReactNode> = {
       <path d="M4 4l16 16" />
     </>
   ),
+  bell: (
+    <>
+      <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" />
+      <path d="M10 20.5a2 2 0 0 0 4 0" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="6" />
+      <path d="m20 20-4.5-4.5" />
+    </>
+  ),
+  whatsapp: (
+    <>
+      <path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7l-1.1 4.3 4.4-1.1A8.5 8.5 0 1 0 12 3.5z" />
+      <path d="M9 9.2a5.8 5.8 0 0 0 5.8 5.8" />
+    </>
+  ),
+  user: (
+    <>
+      <circle cx="12" cy="8.5" r="3.5" />
+      <path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </>
+  ),
+  truck: (
+    <>
+      <path d="M3 6.5h11v9H3zM14 10h4l3 3v2.5h-7" />
+      <circle cx="7" cy="17.5" r="1.8" />
+      <circle cx="17" cy="17.5" r="1.8" />
+    </>
+  ),
+  archive: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="4" rx="1" />
+      <path d="M5.5 8.5V19h13V8.5M10 12.5h4" />
+    </>
+  ),
+  stop: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <rect x="9" y="9" width="6" height="6" rx="1" />
+    </>
+  ),
+  'arrow-up-right': <path d="M7 17 17 7M9 7h8v8" />,
+  'arrow-down-left': <path d="M17 7 7 17M15 17H7V9" />,
+  'chevron-right': <path d="m9.5 5.5 6.5 6.5-6.5 6.5" />,
 };
 
 export function Icon({ name, className }: { name: IconName; className?: string | undefined }) {

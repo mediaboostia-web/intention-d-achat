@@ -3,6 +3,7 @@ import { prismaMock } from '@/test-utils/prisma-mock';
 import { mockNextCookies, __cookieStore } from '@/test-utils/mock-cookies';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { apiRequest, asMember, routeParams, signIn } from '@/test-utils/shop-fixtures';
+import { activeCampaignWhere } from '@/lib/server/tamani/campaign-status';
 
 mockNextCookies();
 
@@ -123,6 +124,46 @@ describe('GET /api/shops/[orgId]/products', () => {
     const json = (await res.json()) as { items: unknown[]; nextCursor: string | null };
     expect(json.items).toHaveLength(20);
     expect(json.nextCursor).not.toBeNull();
+  });
+
+  it('inCampaign=1 keeps products with an open campaign', async () => {
+    prismaMock.product.findMany.mockResolvedValue([]);
+    await GET(apiRequest('/api/shops/org_1/products?inCampaign=1'), shop);
+    const where = prismaMock.product.findMany.mock.calls[0]![0]!.where;
+    expect(where).toEqual({
+      organizationId: 'org_1',
+      archivedAt: null,
+      campaigns: { some: activeCampaignWhere(expect.any(Date) as unknown as Date) },
+    });
+  });
+
+  it('q searches the name', async () => {
+    prismaMock.product.findMany.mockResolvedValue([]);
+    await GET(apiRequest('/api/shops/org_1/products?q=Marmite'), shop);
+    expect(prismaMock.product.findMany.mock.calls[0]![0]!.where).toEqual({
+      organizationId: 'org_1',
+      archivedAt: null,
+      name: { contains: 'Marmite', mode: 'insensitive' },
+    });
+  });
+
+  it('the first page carries sale, campaign and archived counts', async () => {
+    prismaMock.product.findMany.mockResolvedValue([]);
+    prismaMock.product.count
+      .mockResolvedValueOnce(7)
+      .mockResolvedValueOnce(2)
+      .mockResolvedValueOnce(1);
+    const res = await GET(apiRequest('/api/shops/org_1/products'), shop);
+    const json = (await res.json()) as { counts: Record<string, number> };
+    expect(json.counts).toEqual({ sale: 7, campaign: 2, archived: 1 });
+    expect(prismaMock.product.count).toHaveBeenCalledWith({
+      where: { organizationId: 'org_1', archivedAt: { not: null } },
+    });
+  });
+
+  it('a q over 60 characters is a 400', async () => {
+    const res = await GET(apiRequest(`/api/shops/org_1/products?q=${'a'.repeat(61)}`), shop);
+    expect(res.status).toBe(400);
   });
 
   it('includes archived products with ?archived=1', async () => {

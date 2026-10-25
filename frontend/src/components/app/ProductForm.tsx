@@ -14,11 +14,10 @@ import {
   type ProductFormValues,
 } from '@/lib/tamani/product-form';
 import { formatPriceLine } from '@/lib/tamani/share-message';
+import { unitChoices } from '@/lib/tamani/units';
 import { cn } from '@/lib/utils';
 import { ChipsInput } from './ChipsInput';
 import { PhotoPicker } from './PhotoPicker';
-
-const UNITS = ['pièce', 'carton', 'sac de 25 kg', 'paquet', 'douzaine', 'kg', 'litre'];
 
 const FIELD_IDS: Record<keyof ProductFormValues, string> = {
   name: 'product-name',
@@ -53,6 +52,7 @@ export function ProductForm({
   onSubmit,
   error,
   errors: serverErrors,
+  units = [],
   className,
 }: {
   initial?: ProductFormValues;
@@ -61,6 +61,8 @@ export function ProductForm({
   onSubmit: (body: ProductBody) => Promise<void>;
   error?: string | null | undefined;
   errors?: ProductFormErrors | undefined;
+  /** Units the shop already uses, shown after the common ones. */
+  units?: readonly string[];
   className?: string | undefined;
 }) {
   const [v, setV] = useState(initial);
@@ -158,18 +160,34 @@ export function ProductForm({
           <Input
             id={FIELD_IDS.unitLabel}
             label="Unité"
-            hint="Pièce, carton, sac…"
-            list="product-units"
+            hint="Touche une unité, ou écris la tienne."
             maxLength={30}
             value={v.unitLabel}
             error={errors.unitLabel}
             onChange={(e) => set('unitLabel', e.target.value)}
           />
-          <datalist id="product-units">
-            {UNITS.map((u) => (
-              <option key={u} value={u} />
-            ))}
-          </datalist>
+          <ul aria-label="Unités" className="mt-3 flex flex-wrap gap-2">
+            {unitChoices(units).map((u) => {
+              const on = v.unitLabel.trim().toLocaleLowerCase('fr') === u.toLocaleLowerCase('fr');
+              return (
+                <li key={u}>
+                  <button
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => set('unitLabel', u)}
+                    className={cn(
+                      'min-h-10 rounded-full border-2 px-3 text-sm font-bold',
+                      on
+                        ? 'border-ink bg-accent text-accent-ink'
+                        : 'border-grid bg-surface text-ink hover:border-ink',
+                    )}
+                  >
+                    {u}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </div>
 

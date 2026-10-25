@@ -52,7 +52,9 @@ describe('ProductCard', () => {
     expect(t).toContain('pièce');
     expect(t).toContain('Archivé');
     const out = html(card);
-    expect(out).toContain(`src="${PHOTO_1}"`);
+    expect(out).toContain(
+      'src="https://res.cloudinary.com/demo/image/upload/c_fill,g_auto,w_128,h_128,f_auto,q_auto/v1/tamani/m1.jpg"',
+    );
     expect(out).toContain('href="/app/produits/p1"');
     expect(text(<ProductCard product={{ ...product, archivedAt: null }} />)).not.toContain(
       'Archivé',
@@ -61,14 +63,28 @@ describe('ProductCard', () => {
 });
 
 describe('ProductForm', () => {
+  it('shows the units as chips, the current one pressed', () => {
+    const out = html(
+      form({ initial: { ...emptyProductForm, unitLabel: 'carton' }, units: ['bidon de 20 L'] }),
+    );
+    const chips =
+      out.match(/<button [^>]*aria-pressed="(?:true|false)"[^>]*>[^<]*<\/button>/g) ?? [];
+    const labels = chips.map((c) => c.replace(/<[^>]+>/g, ''));
+    expect(labels).toContain('pièce');
+    expect(labels).toContain('bidon de 20 L');
+    expect(chips.find((c) => c.endsWith('>carton</button>'))).toContain('aria-pressed="true"');
+    expect(chips.find((c) => c.endsWith('>pièce</button>'))).toContain('aria-pressed="false"');
+    expect(out).not.toContain('<datalist');
+  });
+
   it('ProductForm labels the purchase price as never shown to clients', () => {
     const out = html(form());
     expect(out).toContain('for="product-cost"');
     expect(tag(out, 'product-cost')).toContain('aria-describedby="product-cost-hint"');
     expect(text(form())).toContain('Pour calculer ton bénéfice. Jamais montré à tes clients.');
     expect(tag(out, 'product-unit-price')).toContain('inputMode="numeric"');
-    expect(tag(out, 'product-unit')).toContain('list="product-units"');
-    expect(out).toContain('<datalist id="product-units">');
+    // The units are chips under the field (lot 5b), no longer a datalist.
+    expect(out).toContain('aria-label="Unités"');
   });
 
   it('keeps the field order of the spec', () => {

@@ -4,7 +4,7 @@
 // creation, the delivery zones. The page sends the values and gives back
 // the server's answer (error notice or field errors).
 import { useState, type FormEvent } from 'react';
-import { Button, Input, Notice, PhoneInput, Select } from '@/components/ui';
+import { Button, Input, Notice, PhoneInput, Select, Textarea } from '@/components/ui';
 import { dialCodeFor, SHOP_COUNTRIES } from '@/lib/tamani/countries';
 import { PhotoPicker } from './PhotoPicker';
 import { ZonesInput } from './ZonesInput';
@@ -14,6 +14,8 @@ export interface ShopFormValues {
   country: string;
   whatsappPhone: string;
   logoUrl: string | null;
+  /** Edit mode only: what the popup shows of the shop. */
+  description: string;
   zones: string[];
 }
 
@@ -24,8 +26,11 @@ export const emptyShopForm: ShopFormValues = {
   country: 'SN',
   whatsappPhone: '',
   logoUrl: null,
+  description: '',
   zones: [],
 };
+
+export const SHOP_DESCRIPTION_MAX = 300;
 
 const COUNTRY_OPTIONS = SHOP_COUNTRIES.map((c) => ({
   value: c.code,
@@ -51,6 +56,8 @@ export function ShopForm({
   error,
   errors: serverErrors,
   onSubmit,
+  formId,
+  hideSubmit = false,
 }: {
   initial?: ShopFormValues;
   withZones?: boolean;
@@ -62,6 +69,10 @@ export function ShopForm({
   error?: string | null | undefined;
   errors?: ShopFormErrors | undefined;
   onSubmit: (values: ShopFormValues) => void;
+  /** Lets a button outside the form submit it (`form={formId}`). */
+  formId?: string;
+  /** The submit button lives elsewhere, e.g. in a section header. */
+  hideSubmit?: boolean;
 }) {
   const [values, setValues] = useState(initial);
   const [localErrors, setLocalErrors] = useState<ShopFormErrors>({});
@@ -88,7 +99,7 @@ export function ShopForm({
   }
 
   return (
-    <form onSubmit={submit} noValidate className="flex flex-col gap-6">
+    <form id={formId} onSubmit={submit} noValidate className="flex flex-col gap-6">
       <Input
         id="shop-name"
         label="Nom de ta boutique"
@@ -122,6 +133,17 @@ export function ShopForm({
         value={values.logoUrl ? [values.logoUrl] : []}
         onChange={(urls) => set('logoUrl', urls[0] ?? null)}
       />
+      {mode === 'edit' && (
+        <Textarea
+          id="shop-description"
+          label="Présente ta boutique (facultatif)"
+          hint={`Ce que tu vends, où tu es, quand tu livres. ${values.description.length} / ${SHOP_DESCRIPTION_MAX}`}
+          rows={3}
+          maxLength={SHOP_DESCRIPTION_MAX}
+          value={values.description}
+          onChange={(e) => set('description', e.target.value)}
+        />
+      )}
       {withZones && (
         <ZonesInput
           id="shop-zones"
@@ -132,14 +154,16 @@ export function ShopForm({
         />
       )}
       {error && <Notice tone="danger">{error}</Notice>}
-      <Button
-        type="submit"
-        size={mode === 'create' ? 'lg' : 'md'}
-        disabled={submitting}
-        className={mode === 'create' ? 'w-full shadow-press' : 'self-start'}
-      >
-        {submitting ? submittingLabel : submitLabel}
-      </Button>
+      {!hideSubmit && (
+        <Button
+          type="submit"
+          size={mode === 'create' ? 'lg' : 'md'}
+          disabled={submitting}
+          className={mode === 'create' ? 'w-full shadow-press' : 'self-start'}
+        >
+          {submitting ? submittingLabel : submitLabel}
+        </Button>
+      )}
     </form>
   );
 }

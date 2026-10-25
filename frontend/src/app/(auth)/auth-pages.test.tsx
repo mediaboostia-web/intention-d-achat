@@ -84,6 +84,54 @@ describe('signup', () => {
   });
 });
 
+describe('Google first', () => {
+  const GOOGLE = '/api/auth/oauth/google/start';
+
+  it('Google comes first on login and signup', () => {
+    withGoogle();
+    for (const [pathname, Page] of [
+      ['/login', LoginPage],
+      ['/signup', SignupPage],
+    ] as const) {
+      mockNextNavigation({ pathname });
+      const out = html(<Page />);
+      expect(out.indexOf(GOOGLE), pathname).toBeGreaterThan(-1);
+      expect(out.indexOf(GOOGLE), pathname).toBeLessThan(out.indexOf('id="email"'));
+      expect(text(<Page />), pathname).toContain('ou avec ton e-mail');
+      expect(text(<Page />).match(/\bou\b/g)?.length, pathname).toBe(1);
+    }
+  });
+
+  it('without Google there is no divider', () => {
+    vi.stubEnv('GOOGLE_CLIENT_ID', '');
+    for (const [pathname, Page] of [
+      ['/login', LoginPage],
+      ['/signup', SignupPage],
+    ] as const) {
+      mockNextNavigation({ pathname });
+      expect(text(<Page />), pathname).not.toContain('ou avec ton e-mail');
+    }
+  });
+});
+
+describe('layout', () => {
+  it('the desktop panel carries the sentence and the drawing', () => {
+    mockNextNavigation({ pathname: '/login' });
+    const out = html(
+      <AuthLayout>
+        <p>page</p>
+      </AuthLayout>,
+    );
+    const panel = out.match(/<aside [^>]*>[\s\S]*?<\/aside>/)?.[0] ?? '';
+    const classes = panel.match(/^<aside [^>]*class="([^"]*)"/)?.[1]?.split(' ') ?? [];
+    expect(classes).toEqual(expect.arrayContaining(['hidden', 'lg:flex', 'bg-primary']));
+    expect(panel).toContain('Avant de commander, demande à ta communauté.');
+    expect(panel).toMatch(/<svg [^>]*data-illustration="auth"[^>]*aria-hidden="true"/);
+    expect(out).toMatch(/class="[^"]*lg:grid-cols-2/);
+    expect(out).toContain('<p>page</p>');
+  });
+});
+
 describe('verify-email', () => {
   it('verify-email prefills the email and code from the URL', () => {
     mockNextNavigation({

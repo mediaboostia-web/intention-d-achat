@@ -11,6 +11,7 @@ import {
 } from '@/test-utils/shop-fixtures';
 import { DEFAULT_SHARE_TEMPLATE } from '@/lib/tamani/share-message';
 import { SHORT_CODE_REGEX } from '@/lib/server/tamani/short-code';
+import { encodeCursor } from '@/lib/server/notifications/cursor';
 
 mockNextCookies();
 
@@ -201,6 +202,30 @@ describe('POST /api/shops/[orgId]/campaigns', () => {
     expect(res.status).toBe(400);
     expect(prismaMock.campaign.create).not.toHaveBeenCalled();
   });
+
+  it('POST refuses an arrival before today', async () => {
+    const yesterday = new Date(Date.now() - DAY);
+    yesterday.setUTCHours(12, 0, 0, 0);
+    const res = await create({
+      ...valid,
+      availability: 'INCOMING',
+      availableAt: yesterday.toISOString(),
+    });
+    expect(res.status).toBe(400);
+    expect(await errorOf(res)).toBe('VALIDATION_FAILED');
+    expect(prismaMock.campaign.create).not.toHaveBeenCalled();
+  });
+
+  it('POST accepts today', async () => {
+    const today = new Date();
+    today.setUTCHours(0, 0, 1, 0);
+    const res = await create({
+      ...valid,
+      availability: 'INCOMING',
+      availableAt: today.toISOString(),
+    });
+    expect(res.status).toBe(201);
+  });
 });
 
 describe('GET /api/shops/[orgId]/campaigns', () => {
@@ -236,6 +261,52 @@ describe('GET /api/shops/[orgId]/campaigns', () => {
     expect(res.status).toBe(400);
   });
 
+  it('q matches the title or the product name, case-insensitively', async () => {
+    prismaMock.campaign.findMany.mockResolvedValue([]);
+    await GET(apiRequest('/api/shops/org_1/campaigns?q=%20riz%20'), shop);
+    const where = prismaMock.campaign.findMany.mock.calls[0]![0]!.where as { AND: unknown[] };
+    expect(where.AND).toContainEqual({
+      OR: [
+        { title: { contains: 'riz', mode: 'insensitive' } },
+        { product: { name: { contains: 'riz', mode: 'insensitive' } } },
+      ],
+    });
+  });
+
+  it('the first page carries the counts per effective status', async () => {
+    prismaMock.campaign.findMany.mockResolvedValue([]);
+    prismaMock.campaign.count
+      .mockResolvedValueOnce(9)
+      .mockResolvedValueOnce(3)
+      .mockResolvedValueOnce(2)
+      .mockResolvedValueOnce(4)
+      .mockResolvedValueOnce(0);
+    const res = await GET(apiRequest('/api/shops/org_1/campaigns?q=riz'), shop);
+    const json = (await res.json()) as { counts: Record<string, number> };
+    expect(json.counts).toEqual({ all: 9, ACTIVE: 3, DRAFT: 2, CLOSED: 4, ARRIVED: 0 });
+    // The counts describe the whole shop: no search, no status filter.
+    expect(prismaMock.campaign.count).toHaveBeenCalledWith({ where: { organizationId: 'org_1' } });
+    expect(prismaMock.campaign.count).toHaveBeenCalledWith({
+      where: { organizationId: 'org_1', status: 'DRAFT' },
+    });
+  });
+
+  it('a next page carries no counts', async () => {
+    prismaMock.campaign.findMany.mockResolvedValue([]);
+    const cursor = encodeCursor({ createdAt: new Date('2026-10-20T10:00:00Z'), id: 'camp_9' });
+    const res = await GET(
+      apiRequest(`/api/shops/org_1/campaigns?cursor=${encodeURIComponent(cursor)}`),
+      shop,
+    );
+    expect(((await res.json()) as { counts: unknown }).counts).toBeNull();
+    expect(prismaMock.campaign.count).not.toHaveBeenCalled();
+  });
+
+  it('a q over 60 characters is a 400', async () => {
+    const res = await GET(apiRequest(`/api/shops/org_1/campaigns?q=${'a'.repeat(61)}`), shop);
+    expect(res.status).toBe(400);
+  });
+
   it('GET campaign of another shop returns 404 CAMPAIGN_NOT_FOUND', async () => {
     prismaMock.campaign.findFirst.mockResolvedValue(null);
     const res = await GET_ONE(apiRequest('/api/shops/org_1/campaigns/camp_1'), one);
@@ -257,6 +328,24 @@ describe('PATCH /api/shops/[orgId]/campaigns/[campaignId]', () => {
       status: 'CLOSED',
       closedAt: expect.any(Date),
     });
+  });
+
+  it('PATCH refuses a past arrival date it did not have', async () => {
+    prismaMock.campaign.findFirst.mockResolvedValue(
+      campaign({ availability: 'INCOMING', availableAt: later() }) as never,
+    );
+    const res = await patch({ availableAt: earlier().toISOString() });
+    expect(res.status).toBe(400);
+    expect(prismaMock.campaign.update).not.toHaveBeenCalled();
+  });
+
+  it('PATCH keeps an unchanged past date', async () => {
+    const past = new Date('2026-09-01T12:00:00.000Z');
+    prismaMock.campaign.findFirst.mockResolvedValue(
+      campaign({ availability: 'INCOMING', availableAt: past, status: 'CLOSED' }) as never,
+    );
+    const res = await patch({ availableAt: past.toISOString(), title: 'Marmites 5 L' });
+    expect(res.status).toBe(200);
   });
 
   it('returns 409 INVALID_CAMPAIGN_TRANSITION for DRAFT to ARRIVED', async () => {

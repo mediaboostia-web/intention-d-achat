@@ -40,8 +40,64 @@ describe('AppShell', () => {
     expect(out.match(/aria-label="Menu principal"/g)).toHaveLength(2);
     expect(out).toMatch(/<main[^>]*id="contenu"[^>]*>.*Le contenu de la page/s);
     expect(out).toContain('href="#contenu"');
-    expect(out).toMatch(/pb-28[^"]*lg:pb-12|lg:pb-12[^"]*pb-28/);
+    expect(out).toMatch(/pb-36[^"]*lg:pb-12|lg:pb-12[^"]*pb-36/);
     expect(text(page).match(/Diallo Import/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('keeps the notification bell in the header at every width', () => {
+    mockNextNavigation({ pathname: '/app' });
+    const out = html(
+      <ShopTestProvider>
+        <AppShell>
+          <p>Page</p>
+        </AppShell>
+      </ShopTestProvider>,
+    );
+    const header = out.match(/<header[^>]*>.*?<\/header>/s)?.[0] ?? '';
+    expect(header).toContain('aria-label="Notifications"');
+    expect(header.match(/^<header[^>]*>/)?.[0]).not.toContain('lg:hidden');
+  });
+
+  it('the phone header carries the bell and the avatar', () => {
+    mockNextNavigation({ pathname: '/app' });
+    const out = html(
+      <ShopTestProvider>
+        <AppShell>
+          <p>Page</p>
+        </AppShell>
+      </ShopTestProvider>,
+    );
+    const header = out.match(/<header[^>]*>.*?<\/header>/s)?.[0] ?? '';
+    const account = (header.match(/<a [^>]*>/g) ?? []).find((t) => t.includes('href="/app/plus"'));
+    expect(account).toContain('aria-label="Compte et forfait"');
+    expect(text(<div dangerouslySetInnerHTML={{ __html: header }} />)).toContain('FN');
+  });
+
+  it("the avatar falls back to the shop's initials", () => {
+    mockNextNavigation({ pathname: '/app' });
+    const out = html(
+      <ShopTestProvider me={{ firstName: null, name: null }}>
+        <AppShell>
+          <p>Page</p>
+        </AppShell>
+      </ShopTestProvider>,
+    );
+    const header = out.match(/<header[^>]*>.*?<\/header>/s)?.[0] ?? '';
+    expect(text(<div dangerouslySetInnerHTML={{ __html: header }} />)).toContain('DI');
+  });
+
+  it('desktop tools sit on the title line', () => {
+    mockNextNavigation({ pathname: '/app' });
+    const out = html(
+      <ShopTestProvider>
+        <AppShell>
+          <p>Page</p>
+        </AppShell>
+      </ShopTestProvider>,
+    );
+    const header = out.match(/<header[^>]*>.*?<\/header>/s)?.[0] ?? '';
+    expect(header).toMatch(/class="[^"]*lg:absolute[^"]*"[^>]*>.*aria-label="Notifications"/s);
+    expect(out).toMatch(/<main[^>]*class="[^"]*lg:\[--shell-tools:7rem\]/);
   });
 });
 
@@ -160,18 +216,14 @@ describe('shop pages', () => {
     expect(pro).toContain("Pro jusqu'au 24 novembre");
   });
 
-  it('home greets the shop and invites a first campaign', () => {
+  it('home greets the person while the summary loads', () => {
     mockNextNavigation({ pathname: '/app' });
     const page = (
       <ShopTestProvider>
         <HomePage />
       </ShopTestProvider>
     );
-    const t = text(page);
-    expect(t).toContain('Bonjour, Diallo Import');
-    expect(t).toContain('Lance ta première campagne');
-    const out = html(page);
-    expect(out).toContain('href="/app/produits/nouveau"');
-    expect(out).toContain('href="/app/campagnes/nouvelle"');
+    expect(text(page)).toMatch(/^(Bonjour|Bon après-midi|Bonsoir), Fatou/);
+    expect(html(page)).toContain('role="status"');
   });
 });

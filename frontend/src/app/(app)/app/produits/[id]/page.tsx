@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ProductForm } from '@/components/app/ProductForm';
 import { useShop } from '@/components/app/ShopProvider';
+import { useShopUnits } from '@/components/app/use-shop-units';
 import { Badge, Button, Notice, PageHeader } from '@/components/ui';
 import { useToast } from '@/contexts/ToastContext';
 import { api } from '@/lib/api';
@@ -16,6 +17,7 @@ import { productToForm, type ProductBody, type ShopProduct } from '@/lib/tamani/
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
   const { shop, role } = useShop();
+  const units = useShopUnits(shop.id);
   const router = useRouter();
   const { toast } = useToast();
   const [product, setProduct] = useState<ShopProduct | null>(null);
@@ -109,6 +111,7 @@ export default function ProductPage() {
         className="mt-8"
         initial={productToForm(product)}
         submitLabel="Enregistrer le produit"
+        units={units}
         error={error}
         onSubmit={save}
       />

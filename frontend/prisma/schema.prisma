@@ -37,6 +37,7 @@ model User {
   uploads           FileUpload[]
   notifications     Notification[]
   notifPrefs        NotificationPreferences?
+  pushSubscriptions PushSubscription[]
   orders            Order[]
   oauthAccounts     OAuthAccount[]
   adminActions      AdminAction[]
@@ -107,6 +108,7 @@ model Organization {
   country       String  @default("SN") // ISO-2, default region for local phone numbers
   currency      String  @default("XOF")
   logoUrl       String?
+  description   String? // shown in the popup (lot 5b), 300 characters at most
   coefConsumer  Float   @default(0.5) // share of announced consumer demand that turns real
   coefReseller  Float   @default(0.7)
 
@@ -214,6 +216,21 @@ model EmailJob {
 // ───────────────────────────────────────────────────────────────────────
 // Phase 2 — notifications (at-most-once via dedupeKey)
 // ───────────────────────────────────────────────────────────────────────
+// Tamani lot 5: one row per browser that accepted Web Push notifications.
+// An endpoint the push service answers 404/410 for is deleted.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
 model Notification {
   id        String    @id @default(cuid())
   userId    String

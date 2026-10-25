@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { BottomNav, Icon, Notice, Select, SideNav, Steps, Switch, Tabs, Textarea } from '.';
+import { Avatar, BottomNav, Icon, Notice, Select, SideNav, Steps, Switch, Tabs, Textarea } from '.';
 import { html, text } from './test-html';
 
 /** The opening <a> tag pointing at href, whatever the attribute order. */
@@ -23,7 +23,26 @@ const ICONS = [
   'close',
   'pencil',
   'trash',
+  'eye',
+  'eye-off',
+  'bell',
+  'search',
+  'whatsapp',
+  'user',
+  'clock',
+  'truck',
+  'archive',
+  'stop',
+  'arrow-up-right',
+  'arrow-down-left',
+  'chevron-right',
 ] as const;
+
+const SHOP = { name: 'Diallo Import', logoUrl: null, planLabel: 'Gratuit' };
+const USAGE = { used: 42, limit: 150 };
+const side = (pathname: string, upgrade = true) => (
+  <SideNav pathname={pathname} shop={SHOP} usage={USAGE} upgrade={upgrade} />
+);
 
 describe('Textarea and Select', () => {
   it('Textarea and Select link their label, hint and error', () => {
@@ -160,14 +179,14 @@ describe('BottomNav and SideNav', () => {
     expect(bottom).toMatch(/^<nav[^>]*class="[^"]*fixed[^"]*bottom-0[^"]*lg:hidden/);
     expect(bottom).toContain('env(safe-area-inset-bottom)');
 
-    const side = html(<SideNav pathname="/app/produits" shopName="Diallo Import" />);
-    expect(side).toMatch(/^<nav[^>]*class="[^"]*hidden[^"]*lg:flex/);
-    const t = text(<SideNav pathname="/app/produits" shopName="Diallo Import" />);
+    const nav = html(side('/app/produits'));
+    expect(nav).toMatch(/^<nav[^>]*class="[^"]*hidden[^"]*lg:flex/);
+    const t = text(side('/app/produits'));
     expect(t).toContain('Diallo Import');
     expect(t).toContain('Produits');
     expect(t).toContain('Réglages');
     expect(t).not.toContain('Plus');
-    expect(anchor(side, '/app/produits')).toContain('aria-current="page"');
+    expect(anchor(nav, '/app/produits')).toContain('aria-current="page"');
   });
 
   it('BottomNav marks Plus on the pages it leads to', () => {
@@ -179,11 +198,47 @@ describe('BottomNav and SideNav', () => {
   });
 
   it('SideNav reaches the plan and sign-out page from the desktop', () => {
-    const side = html(<SideNav pathname="/app/plus" shopName="Diallo Import" />);
-    expect(anchor(side, '/app/plus')).toContain('aria-current="page"');
-    expect(text(<SideNav pathname="/app" shopName="Diallo Import" />)).toContain(
-      'Compte et forfait',
+    const nav = html(side('/app/plus'));
+    expect(anchor(nav, '/app/plus')).toContain('aria-current="page"');
+    expect(text(side('/app'))).toContain('Compte et forfait');
+  });
+
+  it('the sidebar is the notebook cover', () => {
+    const out = html(side('/app'));
+    expect(out).toMatch(/^<nav[^>]*class="[^"]*bg-cover/);
+    const t = text(side('/app'));
+    expect(t).toContain('Diallo Import');
+    expect(t).toContain('Gratuit');
+    expect(t).toContain('42 / 150 réponses ce mois');
+    expect(out).toMatch(/role="meter"/);
+    expect(out).toContain('aria-valuenow="42"');
+    expect(out).toContain('aria-valuemax="150"');
+    expect(t).toContain('Passer au Pro');
+    expect(text(side('/app', false))).not.toContain('Passer au Pro');
+  });
+
+  it('the open tab is yellow and the others lighten on hover', () => {
+    const out = html(side('/app/campagnes'));
+    const open = anchor(out, '/app/campagnes');
+    expect(open).toContain('aria-current="page"');
+    expect(open).toContain('bg-accent');
+    expect(anchor(out, '/app/produits')).toContain('hover:bg-surface/10');
+  });
+});
+
+describe('Avatar', () => {
+  it('Avatar shows the photo when there is one', () => {
+    const out = html(<Avatar name="Diallo Import" src="https://res.cloudinary.com/x/logo.png" />);
+    expect(out).toMatch(/<img[^>]*src="https:\/\/res\.cloudinary\.com\/x\/logo\.png"/);
+    expect(out).toMatch(/<img[^>]*alt=""/);
+    expect(text(<Avatar name="Diallo Import" src="https://res.cloudinary.com/x/logo.png" />)).toBe(
+      '',
     );
+  });
+
+  it('Avatar falls back to the initials', () => {
+    expect(text(<Avatar name="Diallo Import" />)).toBe('DI');
+    expect(html(<Avatar name="Diallo Import" src={null} />)).not.toContain('<img');
   });
 });
 

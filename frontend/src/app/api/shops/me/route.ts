@@ -1,5 +1,6 @@
-// GET /api/shops/me — the caller's shop and role, or 404 SHOP_NOT_FOUND
-// (the shop space sends a new account to /app/bienvenue).
+// GET /api/shops/me — the caller's shop and role, this month's responses
+// against the quota and the person's name (greeting, avatar), or 404
+// SHOP_NOT_FOUND (the shop space sends a new account to /app/bienvenue).
 export const runtime = 'nodejs';
 
 import 'server-only';
@@ -9,8 +10,10 @@ import { prisma } from '@/lib/server/prisma';
 import { makeRequestContext, withRequestContext } from '@/lib/server/observability/request-context';
 import { tamaniError } from '@/lib/server/tamani/errors';
 import { jsonOk } from '@/lib/server/tamani/http';
+import { responsesThisMonth } from '@/lib/server/tamani/quota';
 import { toShop } from '@/lib/server/tamani/serializers';
 import { getShopForUser } from '@/lib/server/tamani/shop';
+import { firstName } from '@/lib/tamani/names';
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   return withRequestContext(makeRequestContext(req.headers), async () => {
@@ -24,6 +27,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       include: { subscription: true },
     });
     if (!org) return tamaniError('SHOP_NOT_FOUND', 404);
-    return jsonOk({ shop: toShop(org, org.subscription, new Date()), role: found.role });
+    const now = new Date();
+    const [usage, user] = await Promise.all([
+      responsesThisMonth(prisma, org.id, now),
+      prisma.user.findUnique({ where: { id: auth.user.sub }, select: { name: true } }),
+    ]);
+    return jsonOk({
+      shop: toShop(org, org.subscription, now),
+      role: found.role,
+      usage: { responsesThisMonth: usage.used, monthlyLimit: usage.limit },
+      me: { firstName: firstName(user?.name), name: user?.name?.trim() || null },
+    });
   });
 }

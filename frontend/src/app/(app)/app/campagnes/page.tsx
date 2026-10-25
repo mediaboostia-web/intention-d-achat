@@ -1,88 +1,124 @@
 'use client';
 
-// /app/campagnes: every campaign, newest first, filtered by effective status.
+// /app/campagnes: every campaign, newest first, searched by name and
+// filtered by effective status. As on WhatsApp, a chip shows only when it
+// has campaigns to show, and the "+" creates one on a phone.
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { SearchField } from '@/components/app/SearchField';
 import { useShop } from '@/components/app/ShopProvider';
-import { Button, CampaignCard, EmptyState, FilterBar, Notice, PageHeader } from '@/components/ui';
+import {
+  Button,
+  CampaignCard,
+  EmptyState,
+  Fab,
+  FilterBar,
+  Notice,
+  PageHeader,
+  type IconName,
+} from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import type { CampaignStatus } from '@/lib/tamani/campaign-actions';
 import type { ShopCampaign } from '@/lib/tamani/campaign-view';
 
-const FILTERS: ReadonlyArray<{ status: CampaignStatus | null; label: string }> = [
+const FILTERS: ReadonlyArray<{ status: CampaignStatus | null; label: string; icon?: IconName }> = [
   // The default view comes first: a phone shows the start of the strip.
   { status: null, label: 'Toutes' },
-  { status: 'ACTIVE', label: 'En cours' },
-  { status: 'DRAFT', label: 'Brouillons' },
-  { status: 'CLOSED', label: 'Terminées' },
-  { status: 'ARRIVED', label: 'Arrivées' },
+  { status: 'ACTIVE', label: 'En cours', icon: 'megaphone' },
+  { status: 'DRAFT', label: 'Brouillons', icon: 'pencil' },
+  { status: 'CLOSED', label: 'Terminées', icon: 'stop' },
+  { status: 'ARRIVED', label: 'Arrivées', icon: 'truck' },
 ];
+
+type Counts = { all: number } & Record<CampaignStatus, number>;
 
 interface Listing {
   items: ShopCampaign[];
   next: string | null;
+  counts: Counts | null;
   loading: boolean;
   error: string | null;
 }
 
+const EMPTY: Listing = { items: [], next: null, counts: null, loading: true, error: null };
+
 function CampaignList() {
   const { shop } = useShop();
-  const raw = useSearchParams().get('statut');
+  const params = useSearchParams();
+  const raw = params.get('statut');
+  const q = (params.get('q') ?? '').trim();
   // An unknown or empty ?statut= means "Toutes": the API refuses an empty status.
   const status = FILTERS.find((f) => f.status !== null && f.status === raw)?.status ?? null;
-  const [list, setList] = useState<Listing>({ items: [], next: null, loading: true, error: null });
+  const [list, setList] = useState<Listing>(EMPTY);
 
   const load = useCallback(
     async (cursor: string | null, keep: ShopCampaign[]) => {
       setList((l) => ({ ...l, loading: true, error: null }));
-      const q = new URLSearchParams();
-      if (status) q.set('status', status);
-      if (cursor) q.set('cursor', cursor);
-      const qs = q.toString();
+      const query = new URLSearchParams();
+      if (status) query.set('status', status);
+      if (q) query.set('q', q);
+      if (cursor) query.set('cursor', cursor);
+      const qs = query.toString();
       try {
-        const page = await api<{ items: ShopCampaign[]; nextCursor: string | null }>(
-          `/api/shops/${shop.id}/campaigns${qs ? `?${qs}` : ''}`,
-        );
-        setList({
+        const page = await api<{
+          items: ShopCampaign[];
+          nextCursor: string | null;
+          counts: Counts | null;
+        }>(`/api/shops/${shop.id}/campaigns${qs ? `?${qs}` : ''}`);
+        setList((l) => ({
           items: [...keep, ...page.items],
           next: page.nextCursor,
+          counts: page.counts ?? l.counts,
           loading: false,
           error: null,
-        });
+        }));
       } catch (err) {
         setList((l) => ({ ...l, loading: false, error: errorMessage(err) }));
       }
     },
-    [shop.id, status],
+    [shop.id, status, q],
   );
 
   useEffect(() => {
-    setList({ items: [], next: null, loading: true, error: null });
+    setList((l) => ({ ...EMPTY, counts: l.counts }));
     void load(null, []);
   }, [load]);
 
   const empty = !list.loading && !list.error && list.items.length === 0;
   const now = new Date();
+  const href = (s: CampaignStatus | null) => {
+    const next = new URLSearchParams();
+    if (s) next.set('statut', s);
+    if (q) next.set('q', q);
+    const qs = next.toString();
+    return qs ? `/app/campagnes?${qs}` : '/app/campagnes';
+  };
 
   return (
     <>
       <PageHeader
         title="Campagnes"
         action={
-          <Button href="/app/campagnes/nouvelle" className="shadow-press">
+          <Button href="/app/campagnes/nouvelle" className="hidden shadow-press lg:inline-flex">
             Créer une campagne
           </Button>
         }
       />
+      <div className="mt-6">
+        <SearchField placeholder="Rechercher une campagne" />
+      </div>
       <FilterBar
-        className="mt-6"
+        className="mt-3"
         label="Afficher"
         items={FILTERS.map((f) => ({
           id: f.status ?? 'all',
           label: f.label,
-          href: f.status ? `/app/campagnes?statut=${f.status}` : '/app/campagnes',
+          href: href(f.status),
           active: f.status === status,
+          // Until the counts arrive, only "Toutes" and the open chip show.
+          ...(f.status ? { count: list.counts?.[f.status] ?? 0 } : {}),
+          ...(f.icon ? { icon: f.icon } : {}),
         }))}
       />
 
@@ -125,7 +161,7 @@ function CampaignList() {
         </Notice>
       )}
 
-      {empty && status === null && (
+      {empty && status === null && !q && (
         <EmptyState
           className="mt-6"
           title="Lance ta première campagne"
@@ -135,7 +171,8 @@ function CampaignList() {
           commander.
         </EmptyState>
       )}
-      {empty && status !== null && <p className="mt-6 text-ink-soft">Aucune campagne ici.</p>}
+      {empty && q && <p className="mt-6 text-ink-soft">Aucune campagne ne correspond à « {q} ».</p>}
+      {empty && !q && status !== null && <p className="mt-6 text-ink-soft">Aucune campagne ici.</p>}
 
       {list.next && !list.loading && (
         <Button
@@ -146,6 +183,7 @@ function CampaignList() {
           Voir plus
         </Button>
       )}
+      <Fab href="/app/campagnes/nouvelle" label="Créer une campagne" />
     </>
   );
 }

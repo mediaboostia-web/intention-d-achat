@@ -62,7 +62,9 @@ export function Button({
 }: ButtonProps) {
   const classes = cn(
     'inline-flex items-center justify-center gap-2 rounded-control font-bold',
-    'transition-transform active:translate-y-px motion-reduce:transition-none',
+    // Lifts under the pointer, presses down on a tap; still under reduced motion.
+    'transition-transform hover:-translate-y-0.5 active:translate-y-px',
+    'motion-reduce:transition-none motion-reduce:hover:translate-y-0',
     'disabled:opacity-50',
     SIZES[size],
     VARIANTS[variant],

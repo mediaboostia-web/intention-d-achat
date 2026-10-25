@@ -52,11 +52,17 @@ export function CoefficientsForm({
   coefReseller,
   onSave,
   error,
+  formId,
+  hideSubmit = false,
 }: {
   coefConsumer: number;
   coefReseller: number;
   onSave: (coefs: { coefConsumer: number; coefReseller: number }) => Promise<void>;
   error?: string | null | undefined;
+  /** Lets a button outside the form submit it (`form={formId}`). */
+  formId?: string;
+  /** The submit button lives elsewhere, e.g. in a section header. */
+  hideSubmit?: boolean;
 }) {
   const [consumer, setConsumer] = useState(Math.round(coefConsumer * 100));
   const [reseller, setReseller] = useState(Math.round(coefReseller * 100));
@@ -73,7 +79,7 @@ export function CoefficientsForm({
   }
 
   return (
-    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-6">
+    <form id={formId} onSubmit={(e) => void submit(e)} className="flex flex-col gap-6">
       <Slider
         id="coef-consumer"
         label="Sur 10 usagers intéressés, combien achètent vraiment ?"
@@ -90,9 +96,11 @@ export function CoefficientsForm({
         Par défaut : 5 usagers et 7 revendeurs sur 10. Tamani apprendra tes vrais chiffres.
       </p>
       {error && <Notice tone="danger">{error}</Notice>}
-      <Button type="submit" className="self-start" disabled={saving}>
-        {saving ? 'Enregistrement…' : "Enregistrer l'estimation"}
-      </Button>
+      {!hideSubmit && (
+        <Button type="submit" className="self-start" disabled={saving}>
+          {saving ? 'Enregistrement…' : "Enregistrer l'estimation"}
+        </Button>
+      )}
     </form>
   );
 }

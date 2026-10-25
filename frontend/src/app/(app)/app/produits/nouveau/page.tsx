@@ -6,6 +6,7 @@ import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ProductForm } from '@/components/app/ProductForm';
 import { useShop } from '@/components/app/ShopProvider';
+import { useShopUnits } from '@/components/app/use-shop-units';
 import { Button, Notice, PageHeader } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -16,6 +17,7 @@ function NewProduct() {
   const router = useRouter();
   const params = useSearchParams();
   const first = params.get('premier') === '1';
+  const units = useShopUnits(shop.id);
   const [error, setError] = useState<string | null>(null);
 
   async function create(body: ProductBody) {
@@ -59,6 +61,7 @@ function NewProduct() {
         className="mt-8"
         submitLabel="Ajouter le produit"
         submittingLabel="Ajout…"
+        units={units}
         error={error}
         onSubmit={create}
       />

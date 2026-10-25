@@ -14,6 +14,7 @@ export interface Shop {
   country: string;
   currency: string;
   logoUrl: string | null;
+  description: string | null;
   coefConsumer: number;
   coefReseller: number;
   plan: { id: PlanId; inGrace: boolean; currentPeriodEnd: string | null };
@@ -21,9 +22,23 @@ export interface Shop {
 
 export type OrgRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 
+/** This month's counted responses against the plan (the sidebar's quota). */
+export interface ShopUsage {
+  responsesThisMonth: number;
+  monthlyLimit: number;
+}
+
+/** The signed-in person: the greeting's first name, the avatar's initials. */
+export interface ShopMe {
+  firstName: string | null;
+  name: string | null;
+}
+
 export interface ShopContextValue {
   shop: Shop;
   role: OrgRole;
+  usage: ShopUsage;
+  me: ShopMe;
   reload: () => Promise<void>;
 }
 

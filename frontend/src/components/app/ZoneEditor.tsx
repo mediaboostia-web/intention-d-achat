@@ -2,7 +2,7 @@
 
 // The shop's delivery zones: rename in place, delete after a confirmation,
 // add at the bottom. Each change is saved at once (zones routes, ADMIN).
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Button, Icon, Input } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -16,8 +16,18 @@ export interface Zone {
 const iconButton =
   'flex size-11 shrink-0 items-center justify-center rounded-control text-ink-soft disabled:opacity-50';
 
-export function ZoneEditor({ shopId, zones }: { shopId: string; zones: Zone[] }) {
+export function ZoneEditor({
+  shopId,
+  zones,
+  onCountChange,
+}: {
+  shopId: string;
+  zones: Zone[];
+  /** Told how many zones there are, now and after each change. */
+  onCountChange?: (count: number) => void;
+}) {
   const [items, setItems] = useState(zones);
+  useEffect(() => onCountChange?.(items.length), [items.length, onCountChange]);
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [confirming, setConfirming] = useState<string | null>(null);

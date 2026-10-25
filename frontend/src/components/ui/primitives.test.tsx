@@ -24,6 +24,14 @@ describe('Button', () => {
   it('keeps a 48px touch target', () => {
     expect(html(<Button>OK</Button>)).toContain('min-h-12');
   });
+
+  it('buttons lift on hover, not under reduced motion', () => {
+    for (const variant of ['primary', 'secondary', 'whatsapp'] as const) {
+      const out = html(<Button variant={variant}>OK</Button>);
+      expect(out, variant).toContain('hover:-translate-y-0.5');
+      expect(out, variant).toContain('motion-reduce:hover:translate-y-0');
+    }
+  });
 });
 
 describe('ChoiceButton', () => {
@@ -90,5 +98,10 @@ describe('Logo', () => {
 
   it('lockup includes the outlined wordmark', () => {
     expect(html(<Logo />)).toContain(WORDMARK_PATH.slice(0, 40));
+  });
+
+  it('inverse lockup paints the wordmark white', () => {
+    expect(html(<Logo tone="inverse" />)).toContain('fill="#FFFFFF"');
+    expect(html(<Logo />)).not.toContain('fill="#FFFFFF"');
   });
 });

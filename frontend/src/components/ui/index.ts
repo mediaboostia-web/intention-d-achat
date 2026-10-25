@@ -1,5 +1,7 @@
 // Tamani UI kit — "Cahier du marché" (docs/brand/tamani-brand.md).
 // Server components without state; client pages compose them.
+export { AuthIllustration } from './AuthIllustration';
+export { Avatar } from './Avatar';
 export { Badge } from './Badge';
 export { BottomSheet } from './BottomSheet';
 export { Button, type ButtonProps } from './Button';
@@ -9,6 +11,7 @@ export { Card } from './Card';
 export { ChoiceButton, type ChoiceButtonProps } from './ChoiceButton';
 export { DataList } from './DataList';
 export { EmptyState } from './EmptyState';
+export { Fab } from './Fab';
 export { FilterBar } from './FilterBar';
 export { Icon, type IconName } from './icons';
 export { InkFilters } from './InkFilters';

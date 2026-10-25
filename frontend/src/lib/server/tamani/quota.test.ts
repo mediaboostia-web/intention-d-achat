@@ -1,6 +1,11 @@
 import { prismaMock } from '@/test-utils/prisma-mock';
 import { describe, it, expect } from 'vitest';
-import { monthWindowUtc, shouldLockNewCompletion, unlockCurrentMonth } from './quota';
+import {
+  monthWindowUtc,
+  responsesThisMonth,
+  shouldLockNewCompletion,
+  unlockCurrentMonth,
+} from './quota';
 
 const now = new Date('2026-10-24T15:00:00Z');
 const window = {
@@ -68,5 +73,16 @@ describe('unlockCurrentMonth', () => {
     expect(await unlockCurrentMonth(prismaMock, 'org_1', now)).toBe(0);
     expect(prismaMock.response.findMany).not.toHaveBeenCalled();
     expect(prismaMock.response.updateMany).not.toHaveBeenCalled();
+  });
+});
+
+describe('responsesThisMonth', () => {
+  it("responsesThisMonth counts this month's unlocked completions against the plan", async () => {
+    prismaMock.subscription.findUnique.mockResolvedValue(null);
+    prismaMock.response.count.mockResolvedValue(42);
+    expect(await responsesThisMonth(prismaMock, 'org_1', now)).toEqual({ used: 42, limit: 150 });
+    expect(prismaMock.response.count).toHaveBeenCalledWith({
+      where: { organizationId: 'org_1', locked: false, completedAt: window },
+    });
   });
 });

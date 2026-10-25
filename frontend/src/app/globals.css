@@ -97,6 +97,19 @@
   background-size: 18px 18px;
 }
 
+/* The notebook's cover: the same squares, faint on ink (the desktop sidebar). */
+@utility bg-cover {
+  background-color: var(--color-ink);
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--color-surface) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-surface) 7%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 18px 18px;
+}
+
 /* The ink outline of cards, buttons and fields. */
 @utility frame {
   border: 2.5px solid var(--color-ink);

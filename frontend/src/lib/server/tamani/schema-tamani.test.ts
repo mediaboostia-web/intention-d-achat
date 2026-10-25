@@ -135,6 +135,16 @@ describe('Tamani core schema (lot 3)', () => {
     }
   });
 
+  it('Organization has an optional description', () => {
+    expect(field(modelBlock('Organization'), 'description String?')).toBe(true);
+    const sql = readFileSync(
+      resolve(PRISMA, 'migrations/8_shop_description/migration.sql'),
+      'utf8',
+    );
+    expect(sql).toMatch(/ALTER TABLE "Organization" ADD COLUMN\s+"description" TEXT/);
+    expect(sql).not.toMatch(/\bDROP\b/);
+  });
+
   it.each(Object.entries(CONSTRAINTS))(
     'model %s declares its unique keys and indexes',
     (model, lines) => {

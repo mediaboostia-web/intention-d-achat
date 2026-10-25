@@ -26,6 +26,7 @@ export const TAMANI_ERRORS = [
   'CLIENT_NOT_FOUND',
   'BILLING_NOT_CONFIGURED',
   'PAYMENT_VERIFY_FAILED',
+  'PUSH_NOT_CONFIGURED',
 ] as const;
 
 export type TamaniErrorCode = (typeof TAMANI_ERRORS)[number];
@@ -51,6 +52,7 @@ const DEFAULT_MESSAGES: Record<TamaniErrorCode, string> = {
   CLIENT_NOT_FOUND: 'Ce client est introuvable.',
   BILLING_NOT_CONFIGURED: "Le paiement n'est pas encore disponible.",
   PAYMENT_VERIFY_FAILED: "Le paiement n'a pas pu être vérifié.",
+  PUSH_NOT_CONFIGURED: 'Les notifications sur le téléphone ne sont pas encore disponibles.',
 };
 
 export function tamaniError(code: TamaniErrorCode, status: number, message?: string): NextResponse {

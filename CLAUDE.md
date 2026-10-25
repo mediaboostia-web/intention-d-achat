@@ -180,6 +180,26 @@ Two design-system skills auto-load in any Claude Code session run from the repo:
 
 A beginner's golden path: `gh repo create --template` → open in Claude Code → describe the screen → either skill takes over → the API routes are already wired. The starter therefore covers the *boring* parts (auth, payments, admin, webhooks, cron) so the fork-author spends their time on product/design.
 
+## Tamani public popup and notifications (lot 5)
+
+- **Popup** — `/c/[code]` ([page.tsx](frontend/src/app/(public)/c/[code]/page.tsx)) renders on the server from `getPublicCampaign` ([public-campaign.ts](frontend/src/lib/server/tamani/public-campaign.ts)), an allowlist: never the shop's WhatsApp number, `costPrice`, `plannedQuantity` or other respondents. `PopupSheet` then runs `popupReducer` ([popup-machine.ts](frontend/src/lib/tamani/popup-machine.ts)). The phone's memory (device id, name and number, each answer's token) is [device-memory.ts](frontend/src/lib/tamani/device-memory.ts) and copes with a missing or throwing `localStorage`. The popup calls the API with plain `fetch` (`popup-client.ts`), never `@/lib/api`, to stay light.
+- **Public routes take no CSRF token** — `/api/public/responses` and `/api/public/views`: a respondent has no auth cookie to ride on (spec §6.5). What replaces it: the signed token in `x-response-token` ([response-token.ts](frontend/src/lib/server/tamani/response-token.ts); its key is derived from `JWT_SECRET` so it can never pass `verifyToken`), `enforcePublicRateLimit` (per campaign and 10 min: 30 writes per phone, i.e. IP and device id, and 600 per IP, since mobile operators put many subscribers behind one IP; [public-limits.ts](frontend/src/lib/server/tamani/public-limits.ts)) and the `website` honeypot. [public-routes.test.ts](frontend/src/lib/server/observability/public-routes.test.ts) fails if a public route calls `verifyCsrf` or skips the limit.
+- **Answers** — `upsertResponse` ([responses.ts](frontend/src/lib/server/tamani/responses.ts)) saves every tap. The number at the last step completes the answer, upserts the `Respondent` (the client book) and folds a second phone into the answer that number already gave. A completed answer changes only with its token. Over the monthly quota: `locked`. Three numbers from one device: `suspicious`.
+- **Notifications** — the first completion runs `after(() => notifyShopOfResponse(...))` ([notify-response.ts](frontend/src/lib/server/tamani/notify-response.ts)): one bell `Notification` per shop member through `createNotification` (dedupeKey per response and member), then Web Push ([push/web-push.ts](frontend/src/lib/server/push/web-push.ts), VAPID) with `tag = campaign:<id>`. Not through the outbox: its drain cron runs once a day on Vercel Hobby. Never a first name or a number in a notification. Without `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` push is inert and the bell still works. Browsers subscribe through `PushSubscription` and `/api/push/{public-key,subscriptions}`, which accepts only the browsers' push services (FCM, Mozilla, Apple, Windows): the server posts to every stored endpoint.
+- **Installable app** — [manifest.ts](frontend/src/app/manifest.ts) (opens on `/app`, standalone) and [public/sw.js](frontend/public/sw.js), which shows pushes and opens the campaign on a tap; it has no fetch handler, so nothing is cached. `usePush` registers it from the shop space only. iPhones receive push only once Tamani is on the home screen, which `PushCard` explains.
+- **Link previews** — `generateMetadata` → `popupMetadata` ([popup-metadata.ts](frontend/src/lib/tamani/popup-metadata.ts)): `og:image` is the product photo as a 1200 × 630 Cloudinary JPEG (`cloudinaryVariant`), small enough for WhatsApp; `/brand/og-default.png` without a photo. Popup pages are `noindex`. WhatsApp's crawler cannot reach `localhost`: check a real preview only on a deployed URL.
+
+## Tamani shop-space retouches (lot 5b)
+
+The porteur's eleven requests ([retours](docs/superpowers/specs/2026-10-25-tamani-retours-porteur.md) §3, [plan](docs/superpowers/plans/2026-10-25-tamani-05b-retouches.md)); decisions are listed under « Lot 5b » in the roadmap.
+
+- **Shop context** — `GET /api/shops/me` also sends `usage { responsesThisMonth; monthlyLimit }` (`responsesThisMonth` in [quota.ts](frontend/src/lib/server/tamani/quota.ts)) and `me { firstName; name }`; `useShop()` exposes both. The sidebar (`SideNav`, `bg-cover`) shows the quota meter; the avatar (shop logo, else the user's initials) opens `/app/plus`. Tests pass them through `ShopTestProvider` (`TEST_USAGE`, `TEST_ME`).
+- **Home** — `buildShopSummary(db, organizationId, now)` ([summary.ts](frontend/src/lib/server/tamani/summary.ts)) behind `GET /api/shops/[orgId]/summary`: this week's card, activity, upcoming ends and arrivals. The type `ShopSummary` lives in [home-view.ts](frontend/src/lib/tamani/home-view.ts) with the greeting (phone's local hour) and the line builders; lot 6 extends it. Openings are not dated, so « ouvertures en cours » is the running campaigns' total.
+- **Clients** — [clients.ts](frontend/src/lib/server/tamani/clients.ts): a visible client (`visibleClientWhere`) is not anonymised and has at least one complete, unlocked, non-suspicious answer. On a plan without `respondentContacts` the number never leaves the server (`phoneE164: null`) and the search ignores digits, so a number cannot be guessed digit by digit. Shared view types and the WhatsApp message are in [client-view.ts](frontend/src/lib/tamani/client-view.ts).
+- **Lists** — `SearchField` writes `?q=` after 300 ms (`searchHref` drops the cursor). List routes send `counts` on the first page only, for the whole shop (not the search or the filter); `FilterBar` hides a chip whose count is 0 unless it is the active one. `Fab` is the phone-only « + ».
+- **Migration `8_shop_description`** — `Organization.description` (300 characters, blank → `null`), shown in the popup under « Oui / Non ». `shopCompleteness` ([shop-completeness.ts](frontend/src/lib/tamani/shop-completeness.ts)) feeds the Réglages notice. The lot 7 orders migration is `9_sale_orders`.
+- **Forms** — unit chips (`COMMON_UNITS` then the shop's own, `GET …/products/units`); an incoming campaign takes one arrival date, never before today (the API refuses a past one at creation, and at edit only when the date changes). Réglages: five sections with a left menu from `lg`, each save in its section header (`formId` / `hideSubmit` on `ShopForm` and `CoefficientsForm`). Sign-in pages: two columns from `lg`, Google first through `AuthForm`'s `before`.
+
 ## What is fair to modify
 
 Anything outside [Files Claude must NOT modify](#files-claude-must-not-modify) is the fork's surface area:
@@ -220,3 +240,22 @@ When the user asks for a capability that this starter does not ship, recommend t
 - Vitest for unit tests; setup file at [frontend/vitest.setup.ts](frontend/vitest.setup.ts), shared mocks under `frontend/src/test-utils/` (alias `server-only` to a no-op for jsdom).
 - Conventional Commits.
 - Node ≥ 20, pnpm ≥ 9 (see `engines` in [package.json](package.json)).
+
+
+## Intégration de l'API SasPay
+
+- Utilisez la documentation officielle : /llms.txt de la documentation SasPay.
+- Utilisez la spécification OpenAPI : /api-reference/openapi.json.
+- Utilisez l'URL de base `https://api.saspay.me/api/v1`.
+- Effectuez toutes les requêtes SasPay depuis le backend.
+- Stockez la clé API dans un gestionnaire de secrets ou une variable d'environnement.
+- Ne placez jamais la clé API dans le frontend, les logs ou le dépôt Git.
+- Envoyez la clé avec `Authorization: Bearer sk_test_...` en développement, `sk_live_...` en production.
+- Montants : chaînes décimales (`"2500.00"`), jamais de flottants.
+- Envoyez un `Idempotency-Key` sur `POST /payments/softpay/`, `POST /payouts/initialize/`, `POST /wallet-transfers/` et `POST /payments/{payment_id}/retry/`.
+- Ne livrez un produit ou n'activez un accès que lorsque `GET /payments/{payment_id}/verify/` renvoie `SUCCESS`.
+- Si `checkout_url` est non vide après un softpay, redirigez le client vers cette URL.
+- Vérifiez la signature des webhooks (`X-Webhook-Signature`, `X-Webhook-Timestamp`) sur le corps brut, et rejetez un horodatage de plus de 300 secondes.
+- Pour un retrait, whitelistez l'IP du serveur ; sinon l'appel renvoie `403 ip_not_whitelisted`.
+- Gérez les réponses `401`, `403`, `404`, `409`, `422` et `429` selon l'endpoint ; en cas de `429`, espacez les appels.
+- N'inventez aucun endpoint, champ, statut ou événement absent de la spécification OpenAPI.

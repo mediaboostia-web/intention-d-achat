@@ -27,6 +27,7 @@ export function ChoiceButton({
       className={cn(
         'frame flex min-h-16 w-full items-center justify-center rounded-card px-4 text-xl font-bold',
         'transition-transform active:translate-x-0.5 active:translate-y-0.5 motion-reduce:transition-none',
+        'disabled:cursor-not-allowed disabled:opacity-40',
         selected
           ? 'bg-accent text-accent-ink'
           : emphasis

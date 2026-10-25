@@ -24,6 +24,16 @@ async function monthlyUsage(db: Db, organizationId: string, now: Date) {
   return { limit, used, completedAt };
 }
 
+/** This month's counted responses against the plan's limit (the sidebar's quota). */
+export async function responsesThisMonth(
+  db: Db,
+  organizationId: string,
+  now: Date,
+): Promise<{ used: number; limit: number }> {
+  const { limit, used } = await monthlyUsage(db, organizationId, now);
+  return { used, limit };
+}
+
 export async function shouldLockNewCompletion(
   db: Db,
   organizationId: string,

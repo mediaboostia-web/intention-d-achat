@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { html, text } from '@/components/ui/test-html';
 import { mockNextNavigation } from '@/test-utils/next-navigation';
-import { ShopTestProvider } from '@/test-utils/shop-context';
+import { ShopTestProvider, TEST_SHOP } from '@/test-utils/shop-context';
 
 vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigation')).navigation);
 
@@ -102,9 +102,12 @@ describe('SettingsView', () => {
       </ShopTestProvider>,
     );
     expect(owner).not.toMatch(/<fieldset disabled=""/);
-    for (const title of ['Ta boutique', 'Zones de livraison', 'Estimation', 'Ton compte']) {
-      expect(owner, title).toContain(title);
+    for (const title of ['Boutique', 'Zones', 'Estimation', 'Notifications', 'Compte']) {
+      expect(owner, title).toMatch(new RegExp(`<h2 [^>]*>${title}</h2>`));
     }
+    const headerSaves = member.match(/<button [^>]*form="(shop|coef)-form"[^>]*>/g) ?? [];
+    expect(headerSaves).toHaveLength(2);
+    for (const b of headerSaves) expect(b).toContain('disabled=""');
   });
 
   it('shows the WhatsApp number without the dial code the field already shows', () => {
@@ -127,10 +130,88 @@ describe('SettingsView', () => {
       </ShopTestProvider>,
     );
     const save = (out.match(/<button [^>]*>[^<]*<\/button>/g) ?? []).find((t) =>
-      t.includes('Enregistrer la boutique'),
+      t.includes('form="shop-form"'),
     );
     expect(save).toBeDefined();
+    expect(save).toContain('>Enregistrer</button>');
     expect(save).toContain('min-h-12');
     expect(out).not.toContain('shadow-press');
+  });
+
+  it('a section menu on desktop', () => {
+    mockNextNavigation({ pathname: '/app/reglages' });
+    const out = html(
+      <ShopTestProvider>
+        <SettingsView google={false} />
+      </ShopTestProvider>,
+    );
+    const nav = out.match(/<nav [^>]*aria-label="Sections des réglages"[\s\S]*?<\/nav>/)?.[0] ?? '';
+    const classes = nav.match(/^<nav [^>]*class="([^"]*)"/)?.[1]?.split(' ') ?? [];
+    expect(classes).toEqual(expect.arrayContaining(['hidden', 'lg:block', 'lg:sticky']));
+    expect(nav.match(/href="#[a-z]+"/g)).toEqual([
+      'href="#boutique"',
+      'href="#zones"',
+      'href="#estimation"',
+      'href="#notifications"',
+      'href="#compte"',
+    ]);
+    for (const id of ['boutique', 'zones', 'estimation', 'notifications', 'compte']) {
+      expect(out, id).toMatch(new RegExp(`<section [^>]*id="${id}"[^>]*class="[^"]*scroll-mt-6`));
+    }
+  });
+
+  it('the save button sits in the section header', () => {
+    mockNextNavigation({ pathname: '/app/reglages' });
+    const out = html(
+      <ShopTestProvider>
+        <SettingsView google={false} />
+      </ShopTestProvider>,
+    );
+    const boutique = out.match(/<section [^>]*id="boutique"[\s\S]*?<\/section>/)?.[0] ?? '';
+    const header = boutique.match(/<header[\s\S]*?<\/header>/)?.[0] ?? '';
+    expect(header).toContain('>Boutique</h2>');
+    expect(header).toMatch(/<button [^>]*form="shop-form"/);
+    expect(header).toMatch(/<button [^>]*type="submit"/);
+    const form = boutique.match(/<form [^>]*id="shop-form"[\s\S]*?<\/form>/)?.[0] ?? '';
+    expect(form).not.toBe('');
+    expect(form).not.toContain('type="submit"');
+
+    const estimation = out.match(/<section [^>]*id="estimation"[\s\S]*?<\/section>/)?.[0] ?? '';
+    expect(estimation.match(/<header[\s\S]*?<\/header>/)?.[0]).toMatch(
+      /<button [^>]*form="coef-form"/,
+    );
+    expect(estimation.match(/<form [^>]*id="coef-form"[\s\S]*?<\/form>/)?.[0]).not.toContain(
+      'type="submit"',
+    );
+  });
+
+  it('an incomplete shop is told what is missing', () => {
+    mockNextNavigation({ pathname: '/app/reglages' });
+    const view = (
+      <ShopTestProvider>
+        <SettingsView google={false} />
+      </ShopTestProvider>
+    );
+    expect(text(view)).toContain('Ajoute une description et un logo');
+    const out = html(view);
+    expect(out).toMatch(/<a [^>]*href="#boutique"[^>]*>une description<\/a>/);
+    expect(out).toMatch(/<a [^>]*href="#boutique"[^>]*>un logo<\/a>/);
+    // The zones are not loaded yet: nothing is said about them.
+    expect(text(view)).not.toContain('des zones de livraison');
+  });
+
+  it('a complete shop sees no notice', () => {
+    mockNextNavigation({ pathname: '/app/reglages' });
+    const shop = {
+      ...TEST_SHOP,
+      description: 'Riz et huile en gros à la Médina.',
+      logoUrl: 'https://res.cloudinary.com/demo/image/upload/logo.png',
+    };
+    const t = text(
+      <ShopTestProvider shop={shop}>
+        <SettingsView google={false} />
+      </ShopTestProvider>,
+    );
+    expect(t).not.toContain('Ajoute');
   });
 });

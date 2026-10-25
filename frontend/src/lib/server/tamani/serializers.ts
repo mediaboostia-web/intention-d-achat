@@ -36,6 +36,7 @@ export function toShop(org: Organization, sub: SubscriptionDates | null, now: Da
     country: org.country,
     currency: org.currency,
     logoUrl: org.logoUrl,
+    description: org.description,
     coefConsumer: org.coefConsumer,
     coefReseller: org.coefReseller,
     plan: {

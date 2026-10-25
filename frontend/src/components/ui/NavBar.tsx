@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { APP_NAV, DESKTOP_EXTRA_NAV, isNavActive, type NavItem } from '@/lib/tamani/nav';
 import { cn } from '@/lib/utils';
+import { Avatar } from './Avatar';
 import { Icon } from './icons';
 import { Logo } from './Logo';
 
@@ -45,29 +46,75 @@ export function BottomNav({ pathname }: { pathname: string }) {
   );
 }
 
-/** The desktop sidebar: the shop's name at the top, every section below. */
-export function SideNav({ pathname, shopName }: { pathname: string; shopName: string }) {
+/**
+ * The desktop sidebar, drawn as the notebook's cover: the shop's card at
+ * the top, every section below, this month's responses against the quota
+ * at the foot.
+ */
+export function SideNav({
+  pathname,
+  shop,
+  usage,
+  upgrade,
+}: {
+  pathname: string;
+  shop: { name: string; logoUrl: string | null; planLabel: string };
+  usage: { used: number; limit: number };
+  /** Free plan: offer the upgrade under the quota. */
+  upgrade: boolean;
+}) {
   const items = [...APP_NAV.filter((item) => item.id !== 'more'), ...DESKTOP_EXTRA_NAV];
+  const filled = usage.limit > 0 ? Math.min(100, Math.round((usage.used / usage.limit) * 100)) : 0;
   return (
     <nav
       aria-label="Menu principal"
-      className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r-[2.5px] border-ink bg-surface px-4 py-6 lg:flex"
+      className="bg-cover sticky top-0 hidden h-dvh w-64 shrink-0 flex-col overflow-y-auto border-r-[2.5px] border-ink px-4 py-6 text-surface lg:flex"
     >
-      <Link href="/app" className="flex flex-col gap-2 rounded-control px-2 pb-6">
-        <Logo size={30} />
-        <span className="font-hand text-xl leading-snug font-bold break-words text-primary">
-          {shopName}
-        </span>
+      <Link href="/app" className="self-start rounded-control px-2 focus-visible:outline-accent">
+        <Logo tone="inverse" size={30} />
       </Link>
-      <ul className="flex flex-col gap-1.5">
+      <div className="mt-6 flex items-center gap-3 rounded-card bg-surface/10 p-3">
+        <Avatar name={shop.name} src={shop.logoUrl} />
+        <div className="min-w-0">
+          <p className="font-hand text-lg leading-snug font-bold break-words">{shop.name}</p>
+          <p className="text-sm">Forfait {shop.planLabel}</p>
+        </div>
+      </div>
+      <ul className="mt-6 flex flex-col gap-1.5">
         {items.map((item) => (
           <li key={item.id}>
             <SideLink item={item} pathname={pathname} />
           </li>
         ))}
       </ul>
-      {/* The phone's "Plus" page: plan and sign-out, at the foot of the column. */}
-      <div className="mt-auto pt-6">
+      <div className="mt-auto flex flex-col gap-3 pt-6">
+        <div className="rounded-card bg-surface/10 p-3">
+          <p className="text-sm">
+            <span className="font-bold">
+              {usage.used} / {usage.limit}
+            </span>{' '}
+            réponses ce mois
+          </p>
+          <div
+            role="meter"
+            aria-label="Réponses du mois"
+            aria-valuemin={0}
+            aria-valuemax={usage.limit}
+            aria-valuenow={usage.used}
+            className="mt-2 h-2 overflow-hidden rounded-full bg-surface/20"
+          >
+            <div className="h-full rounded-full bg-accent" style={{ width: `${filled}%` }} />
+          </div>
+          {upgrade && (
+            <Link
+              href="/app/plus#forfait"
+              className="mt-3 inline-flex min-h-12 items-center font-bold text-accent underline decoration-2 underline-offset-4 focus-visible:outline-accent"
+            >
+              Passer au Pro
+            </Link>
+          )}
+        </div>
+        {/* The phone's "Plus" page: plan and sign-out. */}
         <SideLink item={ACCOUNT} pathname={pathname} />
       </div>
     </nav>
@@ -88,10 +135,11 @@ function SideLink({ item, pathname }: { item: NavItem; pathname: string }) {
       href={item.href}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex min-h-12 items-center gap-3 rounded-control border-2 px-3 font-bold',
+        'flex min-h-12 items-center gap-3 rounded-control border-2 px-3 font-bold focus-visible:outline-accent',
+        'transition-colors motion-reduce:transition-none',
         active
           ? 'border-ink bg-accent text-accent-ink'
-          : 'border-transparent text-ink hover:border-grid',
+          : 'border-transparent text-surface hover:bg-surface/10',
       )}
     >
       <Icon name={item.icon} />

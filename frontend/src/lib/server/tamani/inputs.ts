@@ -5,7 +5,10 @@ import 'server-only';
 import { z } from 'zod';
 import { isSupportedCountry } from 'libphonenumber-js/min';
 import { checkProductRules } from '@/lib/tamani/product-rules';
+import { BUYER_TYPES, NOT_INTERESTED_REASONS } from '@/lib/tamani/labels';
 import { DEFAULT_SHARE_TEMPLATE } from '@/lib/tamani/share-message';
+import { TIMING_OPTIONS, type Timing } from '@/lib/tamani/timing';
+import { SHORT_CODE_REGEX } from './short-code';
 
 /** Drops undefined keys (exactOptionalPropertyTypes vs. Prisma inputs). */
 export function compact<T extends object>(o: T): { [K in keyof T]?: Exclude<T[K], undefined> } {
@@ -27,6 +30,13 @@ const country = z
   .regex(/^[A-Z]{2}$/)
   .refine((c) => isSupportedCountry(c), 'Unsupported country');
 const shopName = z.string().trim().min(1).max(60);
+/** What the popup shows of the shop (lot 5b); blank clears it. */
+const shopDescription = z
+  .string()
+  .trim()
+  .max(300)
+  .nullable()
+  .transform((s) => (s ? s : null));
 const rawPhone = z.string().trim().min(1).max(30);
 const coefficient = z.number().min(0).max(1);
 
@@ -43,12 +53,16 @@ export const ShopPatch = z
     whatsappPhone: rawPhone.optional(),
     country: country.optional(),
     logoUrl: cloudinaryUrl.nullable().optional(),
+    description: shopDescription.optional(),
     coefConsumer: coefficient.optional(),
     coefReseller: coefficient.optional(),
   })
   .refine(nonEmpty, 'Nothing to update');
 
 const zoneName = z.string().trim().min(1).max(60);
+
+/** The lists' search bar (?q=): longer text is a 400. */
+export const SEARCH_MAX = 60;
 const sortOrder = z.number().int().min(0).max(10_000);
 
 export const ZoneCreate = z.object({ name: zoneName, sortOrder: sortOrder.default(0) });
@@ -127,3 +141,33 @@ export const CampaignPatch = CampaignFields.partial()
   .refine(nonEmpty, 'Nothing to update');
 
 export const LinkCreate = z.object({ label: z.string().trim().min(1).max(60) });
+
+// ── Public popup (lot 5) ────────────────────────────────────────────────
+// One step of a respondent's answer: every field is optional, the server
+// merges what each tap sends. `website` is a honeypot the popup never fills.
+const TIMINGS = [...TIMING_OPTIONS.IN_STOCK, ...TIMING_OPTIONS.INCOMING] as [Timing, ...Timing[]];
+const shareCode = z.string().regex(SHORT_CODE_REGEX);
+
+export const viewSchema = z.object({ code: shareCode, deviceId: z.uuid() });
+
+export const responseStepSchema = z
+  .object({
+    code: shareCode,
+    deviceId: z.uuid(),
+    website: z.string().max(200).optional(),
+    interested: z.boolean().optional(),
+    notInterestedReason: z.enum(NOT_INTERESTED_REASONS).nullable().optional(),
+    buyerType: z.enum(BUYER_TYPES).optional(),
+    quantity: z.number().int().min(1).max(100_000).optional(),
+    option: z.string().trim().min(1).max(60).nullable().optional(),
+    timing: z.enum(TIMINGS).optional(),
+    wantsDelivery: z.boolean().optional(),
+    zoneId: z.string().min(1).max(40).nullable().optional(),
+    firstName: z.string().trim().min(1).max(40).optional(),
+    phone: z.string().trim().min(6).max(30).optional(),
+  })
+  .refine((s) => (s.firstName === undefined) === (s.phone === undefined), {
+    message: 'firstName and phone go together',
+  });
+
+export type ResponseStepInput = z.infer<typeof responseStepSchema>;

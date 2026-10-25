@@ -125,16 +125,42 @@ describe('CampaignWizard', () => {
     expect(out).toMatch(/aria-pressed="true"[^>]*>.*Marmites inox 5 L/s);
     expect(out).toContain('href="/app/produits/nouveau"');
     expect(text(wizard(initialWizardState('p1')))).toContain('Étape 1 sur 6');
+    const photo = 'https://res.cloudinary.com/demo/image/upload/v1/m.jpg';
+    const withPhoto = html(
+      <CampaignWizard
+        products={[{ ...products[0]!, photos: [photo] }]}
+        zonesCount={2}
+        initial={initialWizardState('p1')}
+        now={now}
+        onSubmit={async () => null}
+      />,
+    );
+    expect(withPhoto).toContain(
+      'src="https://res.cloudinary.com/demo/image/upload/c_fill,g_auto,w_128,h_128,f_auto,q_auto/v1/m.jpg"',
+    );
   });
 
-  it('wizard step 2 shows the 10 and 30 day shortcuts', () => {
+  it('the arrival step asks only for a date', () => {
     const s: WizardState = { ...initialWizardState('p1'), step: 1, availability: 'INCOMING' };
     const t = text(wizard(s));
     expect(t).toContain('Déjà disponible');
     expect(t).toContain('Arrive bientôt');
-    expect(t).toContain('Dans 10 jours');
-    expect(t).toContain('Dans 30 jours');
-    expect(html(wizard(s))).toMatch(/<input [^>]*type="date"/);
+    expect(t).toContain("Date d'arrivée");
+    expect(t).not.toContain('Dans 10 jours');
+    const input = html(wizard(s)).match(/<input [^>]*type="date"[^>]*>/)?.[0] ?? '';
+    expect(input).toMatch(/min="\d{4}-\d{2}-\d{2}"/);
+    const end: WizardState = { ...initialWizardState('p1'), step: 3 };
+    expect(text(wizard(end))).toContain('jours');
+  });
+
+  it('a past arrival date is explained under the field', () => {
+    const s: WizardState = {
+      ...initialWizardState('p1'),
+      step: 1,
+      availability: 'INCOMING',
+      availableOn: '2020-01-01',
+    };
+    expect(text(wizard(s))).toContain("Choisis une date à partir d'aujourd'hui.");
   });
 
   it('warns at the delivery step when the shop has no zone', () => {
@@ -229,14 +255,28 @@ describe('campaign list page', () => {
       </ShopTestProvider>,
     );
     const nav = out.match(/<nav aria-label="Afficher"[\s\S]*?<\/nav>/)?.[0] ?? '';
-    const links = [...nav.matchAll(/<a [^>]*>([^<]*)/g)];
-    expect(links.map((m) => m[1])).toEqual([
-      'Toutes',
-      'En cours',
-      'Brouillons',
-      'Terminées',
-      'Arrivées',
-    ]);
+    const links = [...nav.matchAll(/<a [^>]*>(?:<svg[\s\S]*?<\/svg>)?([^<]*)/g)];
+    // Until the counts arrive, a chip with nothing to show stays hidden.
+    expect(links.map((m) => m[1])).toEqual(['Toutes']);
     expect(links[0]?.[0]).toContain('aria-current="true"');
+    expect(out).toMatch(/<form[^>]*role="search"/);
+    expect(out).toContain('aria-label="Créer une campagne"');
+  });
+
+  it('keeps the open chip and the search in the chip links', async () => {
+    const { mockNextNavigation } = await import('@/test-utils/next-navigation');
+    const { ShopTestProvider } = await import('@/test-utils/shop-context');
+    const { default: CampaignsPage } = await import('@/app/(app)/app/campagnes/page');
+    mockNextNavigation({ pathname: '/app/campagnes', search: 'statut=DRAFT&q=riz' });
+    const out = html(
+      <ShopTestProvider>
+        <CampaignsPage />
+      </ShopTestProvider>,
+    );
+    const nav = out.match(/<nav aria-label="Afficher"[\s\S]*?<\/nav>/)?.[0] ?? '';
+    expect(nav).toContain('href="/app/campagnes?q=riz"');
+    expect(nav).toMatch(
+      /<a [^>]*aria-current="true"[^>]*href="\/app\/campagnes\?statut=DRAFT&amp;q=riz"|href="\/app\/campagnes\?statut=DRAFT&amp;q=riz"[^>]*aria-current="true"/,
+    );
   });
 });

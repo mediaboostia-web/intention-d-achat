@@ -59,13 +59,11 @@ export function LoginForm({ google }: { google: boolean }) {
         submittingLabel="Connexion…"
         submitting={submitting}
         onSubmit={onSubmit}
+        before={google ? <GoogleButton next={next} /> : undefined}
         after={
-          <>
-            {google && <GoogleButton next={next} />}
-            <AuthLink question="Pas encore de compte ?" href="/signup">
-              Crée ton espace
-            </AuthLink>
-          </>
+          <AuthLink question="Pas encore de compte ?" href="/signup">
+            Crée ton espace
+          </AuthLink>
         }
       >
         <Input
