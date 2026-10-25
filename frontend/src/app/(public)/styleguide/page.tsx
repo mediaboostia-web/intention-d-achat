@@ -266,7 +266,7 @@ function PopupScreen() {
           <div>
             <p className="text-lg leading-tight font-bold">Marmites inox 5 L</p>
             <p className="mt-0.5 font-sign text-2xl leading-tight">
-              7 500 FCFA <span className="font-sans text-sm text-ink-muted">la pièce</span>
+              7 500 FCFA <span className="font-sans text-sm text-ink-muted">pour 1 pièce</span>
             </p>
           </div>
         </div>

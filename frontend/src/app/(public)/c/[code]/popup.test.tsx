@@ -52,10 +52,19 @@ describe('PopupView', () => {
   it('opens on the question with the product, its price and its arrival', () => {
     const t = text(<PopupView campaign={campaign} state={start} />);
     expect(t).toContain('Marmites inox 5 L');
-    expect(t).toContain('7 500 FCFA la pièce');
+    expect(t).toContain('7 500 FCFA pour 1 pièce');
     expect(t).toContain('Arrivage dans 10 jours');
     expect(t).toContain("Ça t'intéresse ?");
     expect(html(<PopupView campaign={campaign} state={start} />)).toContain('aria-pressed');
+  });
+
+  it('says the price for 1 unit, whatever the unit', () => {
+    for (const unitLabel of ['sac', 'carton', 'kg', 'douzaine', 'boîte de 6']) {
+      const c = { ...campaign, product: { ...campaign.product, unitLabel } };
+      const t = text(<PopupView campaign={c} state={start} />);
+      expect(t, unitLabel).toContain(`7 500 FCFA pour 1 ${unitLabel}`);
+      expect(t, unitLabel).not.toMatch(/ (la|le) /);
+    }
   });
 
   it('shows the shop description on the first step', () => {

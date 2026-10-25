@@ -94,7 +94,7 @@ function ProductHeader({ c, count }: { c: PublicCampaign; count: number | null }
       <p className="text-lg leading-tight font-bold">{product.name}</p>
       <p className="mt-0.5 font-sign text-2xl leading-tight">
         {formatXof(product.unitPrice)}{' '}
-        <span className="font-sans text-sm text-ink-muted">la {product.unitLabel}</span>
+        <span className="font-sans text-sm text-ink-muted">pour 1 {product.unitLabel}</span>
       </p>
       <p className="mt-3 text-ink-soft">
         {c.availabilityText}.
