@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthForm, AuthLink, GoogleButton } from '@/components/app/AuthForm';
+import { PasswordInput } from '@/components/app/PasswordInput';
 import { Input } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -64,11 +65,10 @@ export function SignupForm({ google }: { google: boolean }) {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
-      <Input
+      <PasswordInput
         id="password"
         label="Mot de passe"
         hint={`${PASSWORD_MIN} caractères au moins.`}
-        type="password"
         required
         minLength={PASSWORD_MIN}
         autoComplete="new-password"

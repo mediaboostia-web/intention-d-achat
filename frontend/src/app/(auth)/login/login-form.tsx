@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthForm, AuthLink, GoogleButton } from '@/components/app/AuthForm';
+import { PasswordInput } from '@/components/app/PasswordInput';
 import { Button, Input, Notice } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -77,10 +78,9 @@ export function LoginForm({ google }: { google: boolean }) {
           onChange={(e) => setEmail(e.target.value)}
         />
         <div className="flex flex-col gap-2">
-          <Input
+          <PasswordInput
             id="password"
             label="Mot de passe"
-            type="password"
             required
             autoComplete="current-password"
             value={password}

@@ -6,6 +6,7 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthForm, AuthLink } from '@/components/app/AuthForm';
+import { PasswordInput } from '@/components/app/PasswordInput';
 import { Input } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -71,11 +72,10 @@ export function ResetPasswordForm() {
         value={code}
         onChange={(e) => setCode(normalizeCode(e.target.value))}
       />
-      <Input
+      <PasswordInput
         id="password"
         label="Nouveau mot de passe"
         hint={`${PASSWORD_MIN} caractères au moins.`}
-        type="password"
         required
         minLength={PASSWORD_MIN}
         autoComplete="new-password"

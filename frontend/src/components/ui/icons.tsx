@@ -12,7 +12,9 @@ export type IconName =
   | 'lock'
   | 'close'
   | 'pencil'
-  | 'trash';
+  | 'trash'
+  | 'eye'
+  | 'eye-off';
 
 // Drawn with the pen: one 2px round stroke in currentColor, no fill, so an
 // icon takes the colour of the text next to it.
@@ -104,6 +106,19 @@ const SHAPES: Record<IconName, ReactNode> = {
       <path d="M4.5 7h15M9.5 7V4.5h5V7" />
       <path d="M6.5 7l1 13h9l1-13" />
       <path d="M10 11v5.5M14 11v5.5" />
+    </>
+  ),
+  eye: (
+    <>
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  'eye-off': (
+    <>
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M4 4l16 16" />
     </>
   ),
 };

@@ -4,9 +4,10 @@
 // change or set the password, link Google, sign out.
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Icon, Input, Notice } from '@/components/ui';
+import { Button, Icon, Notice } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { PasswordInput } from './PasswordInput';
 import { api, ApiError } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 
@@ -88,31 +89,28 @@ export function AccountSection({ google }: { google: boolean }) {
           </p>
         )}
         {hasPassword && (
-          <Input
+          <PasswordInput
             id="acc-current"
             label="Mot de passe actuel"
-            type="password"
             required
             autoComplete="current-password"
             value={current}
             onChange={(e) => setCurrent(e.target.value)}
           />
         )}
-        <Input
+        <PasswordInput
           id="acc-new"
           label="Nouveau mot de passe"
           hint={`${PASSWORD_MIN} caractères au moins.`}
-          type="password"
           required
           minLength={PASSWORD_MIN}
           autoComplete="new-password"
           value={next}
           onChange={(e) => setNext(e.target.value)}
         />
-        <Input
+        <PasswordInput
           id="acc-confirm"
           label="Écris-le une deuxième fois"
-          type="password"
           required
           autoComplete="new-password"
           value={confirm}

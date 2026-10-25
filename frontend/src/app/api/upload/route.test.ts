@@ -159,6 +159,23 @@ describe('POST /api/upload (Cloudinary)', () => {
     expect(body.code).toBe('UPLOAD_FAILED');
   });
 
+  it('logs why Cloudinary refused, without its message', async () => {
+    const { uploadBuffer } = await import('@/lib/server/upload/cloudinary-client');
+    const { log } = await import('@/lib/server/observability/log');
+    const warn = vi.spyOn(log, 'warn');
+    (uploadBuffer as unknown as Mock).mockImplementationOnce(async () => {
+      throw Object.assign(new Error('Invalid Signature 3f9a. String to sign …'), {
+        http_code: 401,
+      });
+    });
+    const { POST } = await import('./route');
+    const f = new File([new Uint8Array([0xff, 0xd8, 0xff])], 'a.jpg', { type: 'image/jpeg' });
+    expect((await POST(makeReq(f) as never)).status).toBe(502);
+    expect(warn).toHaveBeenCalledWith('cloudinary upload failed', { httpCode: 401 });
+    expect(JSON.stringify(warn.mock.calls)).not.toContain('Invalid Signature');
+    warn.mockRestore();
+  });
+
   it('csrf missing returns 403', async () => {
     const { verifyCsrf } = await import('@/lib/server/auth');
     (verifyCsrf as unknown as Mock).mockReturnValueOnce(new Response(null, { status: 403 }));
