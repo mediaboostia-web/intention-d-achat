@@ -25,7 +25,8 @@ Conséquence sur l'ordre des lots : le lot 5 (pop-up) passe maintenant, **avec l
 - **Quand** : à chaque réponse **complète** (étape 5 validée), qu'elle soit « oui » ou « non » [choix : un « non, trop cher » est une information utile pour le prix]. Les réponses incomplètes ne notifient pas.
 - **Texte** [choix] :
   - titre : « Nouvelle réponse · {titre de la campagne} » ;
-  - corps, pour un oui : « Quelqu'un en veut {quantité} ({pour lui | pour revendre}). {n} intéressés au total. » ;
+  - corps, pour un oui : « Quelqu'un en veut {quantité} {unités} (pour son usage | pour revendre). {n} intéressés au total. » ;
+  - corps, pour une réponse verrouillée (quota du mois atteint) : « Une nouvelle réponse t'attend. Ton forfait du mois est plein : passe à Pro pour la voir. » Son contenu reste caché, comme dans le tableau de bord ;
   - corps, pour un non : « Une personne n'est pas intéressée : {raison}. ».
   - Jamais de prénom ni de numéro : un téléphone se regarde par-dessus l'épaule.
 - **Regroupement** [choix] : une notification par campagne, remplacée à chaque nouvelle réponse (`tag` = campagne), pour éviter 200 alertes empilées. Un clic ouvre la page de la campagne.
