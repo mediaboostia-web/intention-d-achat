@@ -11,6 +11,7 @@ import {
 } from '@/test-utils/shop-fixtures';
 import { DEFAULT_SHARE_TEMPLATE } from '@/lib/tamani/share-message';
 import { SHORT_CODE_REGEX } from '@/lib/server/tamani/short-code';
+import { encodeCursor } from '@/lib/server/notifications/cursor';
 
 mockNextCookies();
 
@@ -233,6 +234,52 @@ describe('GET /api/shops/[orgId]/campaigns', () => {
 
   it('rejects an unknown status filter', async () => {
     const res = await GET(apiRequest('/api/shops/org_1/campaigns?status=LIVE'), shop);
+    expect(res.status).toBe(400);
+  });
+
+  it('q matches the title or the product name, case-insensitively', async () => {
+    prismaMock.campaign.findMany.mockResolvedValue([]);
+    await GET(apiRequest('/api/shops/org_1/campaigns?q=%20riz%20'), shop);
+    const where = prismaMock.campaign.findMany.mock.calls[0]![0]!.where as { AND: unknown[] };
+    expect(where.AND).toContainEqual({
+      OR: [
+        { title: { contains: 'riz', mode: 'insensitive' } },
+        { product: { name: { contains: 'riz', mode: 'insensitive' } } },
+      ],
+    });
+  });
+
+  it('the first page carries the counts per effective status', async () => {
+    prismaMock.campaign.findMany.mockResolvedValue([]);
+    prismaMock.campaign.count
+      .mockResolvedValueOnce(9)
+      .mockResolvedValueOnce(3)
+      .mockResolvedValueOnce(2)
+      .mockResolvedValueOnce(4)
+      .mockResolvedValueOnce(0);
+    const res = await GET(apiRequest('/api/shops/org_1/campaigns?q=riz'), shop);
+    const json = (await res.json()) as { counts: Record<string, number> };
+    expect(json.counts).toEqual({ all: 9, ACTIVE: 3, DRAFT: 2, CLOSED: 4, ARRIVED: 0 });
+    // The counts describe the whole shop: no search, no status filter.
+    expect(prismaMock.campaign.count).toHaveBeenCalledWith({ where: { organizationId: 'org_1' } });
+    expect(prismaMock.campaign.count).toHaveBeenCalledWith({
+      where: { organizationId: 'org_1', status: 'DRAFT' },
+    });
+  });
+
+  it('a next page carries no counts', async () => {
+    prismaMock.campaign.findMany.mockResolvedValue([]);
+    const cursor = encodeCursor({ createdAt: new Date('2026-10-20T10:00:00Z'), id: 'camp_9' });
+    const res = await GET(
+      apiRequest(`/api/shops/org_1/campaigns?cursor=${encodeURIComponent(cursor)}`),
+      shop,
+    );
+    expect(((await res.json()) as { counts: unknown }).counts).toBeNull();
+    expect(prismaMock.campaign.count).not.toHaveBeenCalled();
+  });
+
+  it('a q over 60 characters is a 400', async () => {
+    const res = await GET(apiRequest(`/api/shops/org_1/campaigns?q=${'a'.repeat(61)}`), shop);
     expect(res.status).toBe(400);
   });
 

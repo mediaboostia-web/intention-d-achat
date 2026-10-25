@@ -229,14 +229,28 @@ describe('campaign list page', () => {
       </ShopTestProvider>,
     );
     const nav = out.match(/<nav aria-label="Afficher"[\s\S]*?<\/nav>/)?.[0] ?? '';
-    const links = [...nav.matchAll(/<a [^>]*>([^<]*)/g)];
-    expect(links.map((m) => m[1])).toEqual([
-      'Toutes',
-      'En cours',
-      'Brouillons',
-      'Terminées',
-      'Arrivées',
-    ]);
+    const links = [...nav.matchAll(/<a [^>]*>(?:<svg[\s\S]*?<\/svg>)?([^<]*)/g)];
+    // Until the counts arrive, a chip with nothing to show stays hidden.
+    expect(links.map((m) => m[1])).toEqual(['Toutes']);
     expect(links[0]?.[0]).toContain('aria-current="true"');
+    expect(out).toMatch(/<form[^>]*role="search"/);
+    expect(out).toContain('aria-label="Créer une campagne"');
+  });
+
+  it('keeps the open chip and the search in the chip links', async () => {
+    const { mockNextNavigation } = await import('@/test-utils/next-navigation');
+    const { ShopTestProvider } = await import('@/test-utils/shop-context');
+    const { default: CampaignsPage } = await import('@/app/(app)/app/campagnes/page');
+    mockNextNavigation({ pathname: '/app/campagnes', search: 'statut=DRAFT&q=riz' });
+    const out = html(
+      <ShopTestProvider>
+        <CampaignsPage />
+      </ShopTestProvider>,
+    );
+    const nav = out.match(/<nav aria-label="Afficher"[\s\S]*?<\/nav>/)?.[0] ?? '';
+    expect(nav).toContain('href="/app/campagnes?q=riz"');
+    expect(nav).toMatch(
+      /<a [^>]*aria-current="true"[^>]*href="\/app\/campagnes\?statut=DRAFT&amp;q=riz"|href="\/app\/campagnes\?statut=DRAFT&amp;q=riz"[^>]*aria-current="true"/,
+    );
   });
 });

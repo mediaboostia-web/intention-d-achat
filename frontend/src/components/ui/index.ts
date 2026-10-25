@@ -10,6 +10,7 @@ export { Card } from './Card';
 export { ChoiceButton, type ChoiceButtonProps } from './ChoiceButton';
 export { DataList } from './DataList';
 export { EmptyState } from './EmptyState';
+export { Fab } from './Fab';
 export { FilterBar } from './FilterBar';
 export { Icon, type IconName } from './icons';
 export { InkFilters } from './InkFilters';

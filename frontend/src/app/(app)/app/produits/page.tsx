@@ -1,39 +1,61 @@
 'use client';
 
-// /app/produits: the catalogue, newest first. "Archivés" lists the products
-// taken out of sale (kept because past campaigns point to them).
+// /app/produits: the catalogue, newest first, searched by name. "En
+// campagne" keeps the products with an open campaign; "Archivés" lists
+// those taken out of sale (kept because past campaigns point to them).
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { SearchField } from '@/components/app/SearchField';
 import { useShop } from '@/components/app/ShopProvider';
-import { Button, EmptyState, FilterBar, Notice, PageHeader, ProductCard } from '@/components/ui';
+import {
+  Button,
+  EmptyState,
+  Fab,
+  FilterBar,
+  Notice,
+  PageHeader,
+  ProductCard,
+} from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import type { ShopProduct } from '@/lib/tamani/product-form';
 
+type View = 'sale' | 'campaign' | 'archived';
+type Counts = Record<View, number>;
+
+const VIEWS: Record<string, View> = { campagne: 'campaign', archives: 'archived' };
+
 interface Listing {
   items: ShopProduct[];
   next: string | null;
+  counts: Counts | null;
   loading: boolean;
   error: string | null;
 }
 
+const EMPTY: Listing = { items: [], next: null, counts: null, loading: true, error: null };
+
 function ProductList() {
   const { shop } = useShop();
-  const archivedView = useSearchParams().get('vue') === 'archives';
-  const [list, setList] = useState<Listing>({ items: [], next: null, loading: true, error: null });
+  const params = useSearchParams();
+  const view: View = VIEWS[params.get('vue') ?? ''] ?? 'sale';
+  const q = (params.get('q') ?? '').trim();
+  const [list, setList] = useState<Listing>(EMPTY);
 
   const fetchPage = useCallback(
     (cursor: string | null) => {
-      const q = new URLSearchParams();
+      const query = new URLSearchParams();
       // ?archived=1 returns every product; the "Archivés" view keeps the archived ones.
-      if (archivedView) q.set('archived', '1');
-      if (cursor) q.set('cursor', cursor);
-      const qs = q.toString();
-      return api<{ items: ShopProduct[]; nextCursor: string | null }>(
+      if (view === 'archived') query.set('archived', '1');
+      if (view === 'campaign') query.set('inCampaign', '1');
+      if (q) query.set('q', q);
+      if (cursor) query.set('cursor', cursor);
+      const qs = query.toString();
+      return api<{ items: ShopProduct[]; nextCursor: string | null; counts: Counts | null }>(
         `/api/shops/${shop.id}/products${qs ? `?${qs}` : ''}`,
       );
     },
-    [shop.id, archivedView],
+    [shop.id, view, q],
   );
 
   const load = useCallback(
@@ -41,42 +63,68 @@ function ProductList() {
       setList((l) => ({ ...l, loading: true, error: null }));
       try {
         const page = await fetchPage(cursor);
-        const items = archivedView ? page.items.filter((p) => p.archivedAt) : page.items;
-        setList({ items: [...keep, ...items], next: page.nextCursor, loading: false, error: null });
+        const items = view === 'archived' ? page.items.filter((p) => p.archivedAt) : page.items;
+        setList((l) => ({
+          items: [...keep, ...items],
+          next: page.nextCursor,
+          counts: page.counts ?? l.counts,
+          loading: false,
+          error: null,
+        }));
       } catch (err) {
         setList((l) => ({ ...l, loading: false, error: errorMessage(err) }));
       }
     },
-    [fetchPage, archivedView],
+    [fetchPage, view],
   );
 
   useEffect(() => {
-    setList({ items: [], next: null, loading: true, error: null });
+    setList((l) => ({ ...EMPTY, counts: l.counts }));
     void load(null, []);
   }, [load]);
 
   const empty = !list.loading && !list.error && list.items.length === 0;
+  const href = (vue: string | null) => {
+    const next = new URLSearchParams();
+    if (vue) next.set('vue', vue);
+    if (q) next.set('q', q);
+    const qs = next.toString();
+    return qs ? `/app/produits?${qs}` : '/app/produits';
+  };
 
   return (
     <>
       <PageHeader
         title="Produits"
         action={
-          <Button href="/app/produits/nouveau" className="shadow-press">
+          <Button href="/app/produits/nouveau" className="hidden shadow-press lg:inline-flex">
             Ajouter un produit
           </Button>
         }
       />
+      <div className="mt-6">
+        <SearchField placeholder="Rechercher un produit" />
+      </div>
       <FilterBar
-        className="mt-6"
+        className="mt-3"
         label="Afficher"
         items={[
-          { id: 'sale', label: 'En vente', href: '/app/produits', active: !archivedView },
+          { id: 'sale', label: 'Tous', href: href(null), active: view === 'sale' },
+          {
+            id: 'campaign',
+            label: 'En campagne',
+            icon: 'megaphone',
+            href: href('campagne'),
+            active: view === 'campaign',
+            count: list.counts?.campaign ?? 0,
+          },
           {
             id: 'archived',
             label: 'Archivés',
-            href: '/app/produits?vue=archives',
-            active: archivedView,
+            icon: 'archive',
+            href: href('archives'),
+            active: view === 'archived',
+            count: list.counts?.archived ?? 0,
           },
         ]}
       />
@@ -115,7 +163,7 @@ function ProductList() {
         </Notice>
       )}
 
-      {empty && !archivedView && (
+      {empty && view === 'sale' && !q && (
         <EmptyState
           className="mt-6"
           title="Ajoute ton premier produit"
@@ -124,7 +172,13 @@ function ProductList() {
           Un nom, une photo et un prix suffisent. Tu le mets ensuite en campagne.
         </EmptyState>
       )}
-      {empty && archivedView && <p className="mt-6 text-ink-soft">Aucun produit archivé.</p>}
+      {empty && q && <p className="mt-6 text-ink-soft">Aucun produit ne correspond à « {q} ».</p>}
+      {empty && !q && view === 'campaign' && (
+        <p className="mt-6 text-ink-soft">Aucun produit en campagne.</p>
+      )}
+      {empty && !q && view === 'archived' && (
+        <p className="mt-6 text-ink-soft">Aucun produit archivé.</p>
+      )}
 
       {list.next && !list.loading && (
         <Button
@@ -135,6 +189,7 @@ function ProductList() {
           Voir plus
         </Button>
       )}
+      <Fab href="/app/produits/nouveau" label="Ajouter un produit" />
     </>
   );
 }

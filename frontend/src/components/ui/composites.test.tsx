@@ -119,6 +119,42 @@ describe('FilterBar, DataList, StatTile, EmptyState, CalcTable', () => {
     expect(out.match(/aria-current/g)).toHaveLength(1);
   });
 
+  it('hides a chip whose count is 0 unless it is active', () => {
+    const items = [
+      { id: 'all', label: 'Toutes', href: '/app/campagnes' },
+      { id: 'draft', label: 'Brouillons', href: '/app/campagnes?statut=DRAFT', count: 0 },
+      { id: 'live', label: 'En cours', href: '/app/campagnes?statut=ACTIVE', count: 3 },
+    ];
+    const t = text(<FilterBar label="Afficher" items={items} />);
+    expect(t).not.toContain('Brouillons');
+    expect(t).toContain('En cours 3');
+    const active = items.map((i) => (i.id === 'draft' ? { ...i, active: true } : i));
+    expect(text(<FilterBar label="Afficher" items={active} />)).toContain('Brouillons 0');
+  });
+
+  it('keeps the all chip and items without a count', () => {
+    const t = text(
+      <FilterBar
+        label="Afficher"
+        items={[
+          { id: 'all', label: 'Tous', href: '/app/clients' },
+          { id: 'x', label: 'Revendeurs', href: '/app/clients?type=revendeurs' },
+        ]}
+      />,
+    );
+    expect(t).toBe('Tous Revendeurs');
+  });
+
+  it('renders the chip icon as a pill', () => {
+    const out = html(
+      <FilterBar
+        label="Afficher"
+        items={[{ id: 'live', label: 'En cours', href: '/x', icon: 'megaphone', count: 2 }]}
+      />,
+    );
+    expect(out).toMatch(/<a [^>]*class="[^"]*rounded-full[^"]*"[^>]*><svg[^>]*aria-hidden="true"/);
+  });
+
   it('DataList renders label and value', () => {
     const t = text(<DataList items={[{ id: 'm', label: 'Médina', value: 24 }]} />);
     expect(t).toContain('Médina');

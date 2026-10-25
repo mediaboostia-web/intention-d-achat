@@ -52,6 +52,9 @@ export const ShopPatch = z
   .refine(nonEmpty, 'Nothing to update');
 
 const zoneName = z.string().trim().min(1).max(60);
+
+/** The lists' search bar (?q=): longer text is a 400. */
+export const SEARCH_MAX = 60;
 const sortOrder = z.number().int().min(0).max(10_000);
 
 export const ZoneCreate = z.object({ name: zoneName, sortOrder: sortOrder.default(0) });
