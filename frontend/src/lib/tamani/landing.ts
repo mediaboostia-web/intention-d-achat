@@ -21,7 +21,9 @@ export type LandingLinkName = 'whatsappContact' | 'community' | 'facebook' | 'in
  * page never sends anyone to a dead end. whatsappContact is a wa.me link,
  * community the WhatsApp group invite.
  */
-export const LANDING_LINKS: Readonly<Record<LandingLinkName, string | null>> = {
+export type LandingLinks = Readonly<Record<LandingLinkName, string | null>>;
+
+export const LANDING_LINKS: LandingLinks = {
   whatsappContact: null,
   community: null,
   facebook: null,

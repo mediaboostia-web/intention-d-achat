@@ -2,12 +2,15 @@ import Link from 'next/link';
 import { Logo } from '@/components/ui';
 import { WORDMARK_PATH, WORDMARK_VIEWBOX } from '@/lib/design/logo-paths';
 import { colors } from '@/lib/design/tokens';
-import { LANDING_LINKS, LANDING_SLOGAN, type LandingLinkName } from '@/lib/tamani/landing';
+import {
+  LANDING_LINKS,
+  LANDING_SLOGAN,
+  type LandingLinkName,
+  type LandingLinks,
+} from '@/lib/tamani/landing';
 import { InView } from './InView';
 import { PlatformLogo } from './PlatformLogo';
 import type { PlatformSlug } from './platform-paths';
-
-type Links = Readonly<Record<LandingLinkName, string | null>>;
 
 const SOCIALS: readonly { link: LandingLinkName; slug: PlatformSlug; label: string }[] = [
   { link: 'whatsappContact', slug: 'whatsapp', label: 'Tamani sur WhatsApp' },
@@ -20,7 +23,7 @@ const SOCIALS: readonly { link: LandingLinkName; slug: PlatformSlug; label: stri
  * 10. The notebook's back cover: links, then the name written whole, then the
  * small print. The legal pages join the columns when they ship (lot 9).
  */
-export function LandingFooter({ links = LANDING_LINKS }: { links?: Links }) {
+export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks }) {
   const socials = SOCIALS.flatMap((s) => {
     const href = links[s.link];
     return href ? [{ ...s, href }] : [];

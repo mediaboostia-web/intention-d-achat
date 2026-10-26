@@ -1,10 +1,8 @@
 import { Button, Icon } from '@/components/ui';
-import { LANDING_FAQ, LANDING_LINKS, type LandingLinkName } from '@/lib/tamani/landing';
-
-type Links = Readonly<Record<LandingLinkName, string | null>>;
+import { LANDING_FAQ, LANDING_LINKS, type LandingLinks } from '@/lib/tamani/landing';
 
 /** 9. Questions: the same as the page's FAQPage structured data. */
-export function Faq({ links = LANDING_LINKS }: { links?: Links }) {
+export function Faq({ links = LANDING_LINKS }: { links?: LandingLinks }) {
   return (
     <section id="questions" className="lp-section" aria-labelledby="lp-faq-title">
       <div className="lp-wrap">

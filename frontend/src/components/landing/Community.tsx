@@ -1,14 +1,12 @@
 import { Button, Icon } from '@/components/ui';
-import { LANDING_LINKS, type LandingLinkName } from '@/lib/tamani/landing';
+import { LANDING_LINKS, type LandingLinks } from '@/lib/tamani/landing';
 import { Illustration } from './Illustration';
-
-type Links = Readonly<Record<LandingLinkName, string | null>>;
 
 /**
  * 8. Join the community. With the WhatsApp group link it invites to the group
  * and to the account; without it, to the account only, so no button leads nowhere.
  */
-export function Community({ links = LANDING_LINKS }: { links?: Links }) {
+export function Community({ links = LANDING_LINKS }: { links?: LandingLinks }) {
   const group = links.community;
   const perks = group
     ? [
