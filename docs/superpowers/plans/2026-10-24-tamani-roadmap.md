@@ -410,8 +410,33 @@ Livré par le [plan 5b](2026-10-25-tamani-05b-retouches.md). Décisions prises :
 - **Migration `8_shop_description`** ; celle des commandes du lot 7 devient `9_sale_orders`.
 - **Clients avancés du lot 7** : `GET …/clients` et `GET …/clients/[respondentId]` sont livrés ici ; la note, l'anonymisation, les filtres zone, produit, mois et « Ont commandé », et la fiabilité restent au lot 7. `GET …/interests` et l'onglet Intérêts sont abandonnés.
 
-### Page d'accueil publique (avancée du lot 9, le 2026-10-25)
-Elle vient juste après le lot 5b, avec son propre passage de conception et des maquettes ([retours](../specs/2026-10-25-tamani-retours-porteur.md) §4).
+### Page d'accueil publique (avancée du lot 9, le 2026-10-25) : lot 9a
+Elle vient juste après le lot 5b, avec son propre passage de conception et des maquettes ([retours](../specs/2026-10-25-tamani-retours-porteur.md) §4). Elle est livrée par le lot 9a ([plan](2026-10-26-tamani-09a-accueil.md)), d'après la [maquette v3](../../brand/mockups/2026-10-25-page-accueil-v3.html).
+
+Décisions du porteur, prises sur les maquettes v1 à v3 :
+- **Ordre des sections** :
+  1. hero ;
+  2. vidéo ;
+  3. problème ;
+  4. solution ;
+  5. comment ça marche ;
+  6. avant / après ;
+  7. tarifs ;
+  8. rejoindre la communauté ;
+  9. FAQ ;
+  10. pied de page.
+- **Ce qui disparaît** : aucun écran de téléphone dessiné, et un seul exemple sur toute la page (300 cartons commandés, 190 qui dorment, ≈ 120 à commander).
+- **Illustrations** : faites dans ChatGPT ([prompts](../../brand/prompts-images-accueil.md)).
+- **Barre de navigation** : flottante. Elle se cache quand on descend et revient quand on remonte.
+- **Orbite des réseaux** : gardée. Les logos vibrent quand une réponse arrive.
+- **Bande de logos qui défile** : gardée.
+- **Durée de réponse annoncée** : « moins de 30 secondes ». Cela vaut aussi pour `DEFAULT_SHARE_TEMPLATE` et pour l'aperçu du lien.
+- **À fournir par le porteur** (renseignés dans `LANDING_LINKS` et `LANDING_VIDEO`, boutons cachés tant qu'ils manquent) :
+  - le numéro WhatsApp de contact ;
+  - le lien du groupe WhatsApp ;
+  - les comptes Facebook, Instagram et TikTok ;
+  - la vidéo.
+- **Pages légales** (`/cgu`, `/confidentialite`) : elles restent au lot 9. Le pied de page les liera à ce moment-là.
 
 ### Lot 6 : Tableau de bord
 1. **`coefficients`, `verdict`, `money`, `stats`**, avec leurs tests.
