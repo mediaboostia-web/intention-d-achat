@@ -29,8 +29,14 @@ export const LANDING_LINKS: Readonly<Record<LandingLinkName, string | null>> = {
   tiktok: null,
 };
 
-/** The presentation video, once it exists (MP4 16:9, French captions). */
-export const LANDING_VIDEO: { src: string; captions?: string } | null = null;
+export interface LandingVideo {
+  src: string;
+  /** French captions (WebVTT). */
+  captions?: string;
+}
+
+/** The presentation video, once it exists (MP4 16:9, about 90 seconds). */
+export const LANDING_VIDEO: LandingVideo | null = null;
 
 const FREE = PLANS.FREE;
 
