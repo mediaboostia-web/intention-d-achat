@@ -139,7 +139,7 @@ describe('Problem', () => {
     expect(t).toContain('Tu as commandé 300 cartons');
     expect(t).toContain('190 dorment encore au dépôt');
     // Narrow no-break spaces: the amount never splits across two lines.
-    expect(html(<Problem />)).toContain('class="lp-hl">1 900 000 FCFA<');
+    expect(html(<Problem />)).toContain('class="lp-hl">1\u202f900\u202f000\u202fFCFA<');
   });
 });
 

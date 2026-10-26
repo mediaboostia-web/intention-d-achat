@@ -126,7 +126,7 @@ export const ORBIT_NETWORKS: readonly OrbitNetwork[] = [
 ];
 
 /** Numbers glued together, never split across two lines. */
-export const unbroken = (s: string) => s.replace(/ /g, ' ');
+export const unbroken = (s: string) => s.replace(/ /g, '\u202f');
 
 const UNSOLD = 190;
 const CARTON_PRICE = 10_000;
