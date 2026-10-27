@@ -3,7 +3,8 @@
 // the first steps of an empty shop. Pure and shared with the browser; the
 // summary itself is built by lib/server/tamani/summary.ts.
 import type { IconName } from '@/components/ui/icons';
-import { pluralizeUnit } from './verdict-display';
+import type { VerdictTone } from '@/lib/design/tokens';
+import { pluralizeUnit, VERDICT_TONE, verdictDisplay, type VerdictCode } from './verdict-display';
 
 /** What GET /api/shops/[orgId]/summary sends (lot 5b; lot 6 adds the verdicts). */
 export interface ShopSummary {
@@ -24,6 +25,33 @@ export interface ShopSummary {
   hasCampaign: boolean;
   hasProduct: boolean;
   shareCampaign: { id: string; title: string; shareMessage: string } | null;
+  /** The campaigns open now, newest first, 10 at most. */
+  campaigns: CampaignBulletinItem[];
+  /** Dead stock avoided by this month's campaigns whose verdict is shown, in FCFA. */
+  moneyProtectedThisMonth: number;
+  todo: TodoItem[];
+}
+
+export interface CampaignBulletinItem {
+  id: string;
+  title: string;
+  unitLabel: string;
+  /** Counted answers: completed, within the quota, not suspicious. */
+  completed: number;
+  /** null when the plan hides it. */
+  verdict: VerdictCode | null;
+  realistic: number | null;
+  reference: number | null;
+  /** The free plan's offered verdict. */
+  offered: boolean;
+}
+
+/** A campaign arrived within 7 days whose interested people are still to tell. */
+export interface TodoItem {
+  kind: 'NOTIFY_INTERESTED';
+  campaignId: string;
+  title: string;
+  interested: number;
 }
 
 export type ActivityItem =
@@ -140,4 +168,55 @@ export function onboardingSteps(s: {
     { label: 'Ajoute un produit', href: '/app/produits/nouveau', done: s.hasProduct },
     { label: 'Crée et partage une campagne', href: '/app/campagnes/nouvelle', done: s.hasCampaign },
   ];
+}
+
+export interface CampaignVerdictLine {
+  title: string;
+  /** The stamp word, coloured by the tone: "Commande", "On attend", "Verdict avec Pro". */
+  word: string;
+  /** "~120 sacs", "12/20"; null when the verdict is hidden. */
+  figure: string | null;
+  tone: VerdictTone;
+  locked: boolean;
+  href: string;
+}
+
+export function campaignVerdictLine(item: CampaignBulletinItem): CampaignVerdictLine {
+  const href = `/app/campagnes/${item.id}`;
+  if (item.verdict === null) {
+    return {
+      title: item.title,
+      word: 'Verdict avec Pro',
+      figure: null,
+      tone: 'neutral',
+      locked: true,
+      href,
+    };
+  }
+  const shown = verdictDisplay({
+    code: item.verdict,
+    realistic: item.realistic ?? 0,
+    completedResponses: item.completed,
+    reference: item.reference,
+    unitLabel: item.unitLabel,
+  });
+  return {
+    title: item.title,
+    word: shown.stampWord,
+    figure: item.verdict === 'WAIT' ? shown.figure : `${shown.figure} ${shown.unit}`,
+    tone: VERDICT_TONE[item.verdict],
+    locked: false,
+    href,
+  };
+}
+
+export function todoLine(item: TodoItem): { title: string; detail: string; href: string } {
+  return {
+    title:
+      item.interested === 1
+        ? 'Préviens ton intéressé'
+        : `Préviens tes ${item.interested} intéressés`,
+    detail: `Arrivage de ${item.title}`,
+    href: `/app/campagnes/${item.campaignId}?onglet=interesses`,
+  };
 }

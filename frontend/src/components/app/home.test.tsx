@@ -51,6 +51,9 @@ const SUMMARY: ShopSummary = {
     title: 'Riz parfumé',
     shareMessage: '*Riz parfumé* https://x/c/Ab3dE7x',
   },
+  campaigns: [],
+  moneyProtectedThisMonth: 0,
+  todo: [],
 };
 
 const render = (summary: ShopSummary) => {

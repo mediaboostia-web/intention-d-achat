@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
   activityLine,
+  campaignVerdictLine,
   greeting,
   onboardingSteps,
+  todoLine,
   upcomingLine,
   type ActivityItem,
+  type CampaignBulletinItem,
 } from './home-view';
 
 const at = (hour: number) => new Date(2026, 9, 25, hour, 0, 0);
@@ -104,5 +107,64 @@ describe('onboardingSteps', () => {
       { label: 'Ajoute un produit', href: '/app/produits/nouveau', done: true },
       { label: 'Crée et partage une campagne', href: '/app/campagnes/nouvelle', done: false },
     ]);
+  });
+});
+
+describe('campaignVerdictLine', () => {
+  const item = (over: Partial<CampaignBulletinItem> = {}): CampaignBulletinItem => ({
+    id: 'c1',
+    title: 'Riz parfumé',
+    unitLabel: 'sac',
+    completed: 34,
+    verdict: 'GO',
+    realistic: 120,
+    reference: 130,
+    offered: false,
+    ...over,
+  });
+
+  it('says how much to order, in the verdict tone', () => {
+    expect(campaignVerdictLine(item())).toEqual({
+      title: 'Riz parfumé',
+      word: 'Commande',
+      figure: '~120 sacs',
+      tone: 'success',
+      locked: false,
+      href: '/app/campagnes/c1',
+    });
+    expect(campaignVerdictLine(item({ verdict: 'STOP', realistic: 40 }))).toMatchObject({
+      word: "N'achète pas",
+      figure: '~40 sacs au plus',
+      tone: 'danger',
+    });
+  });
+
+  it('counts the answers while waiting', () => {
+    expect(
+      campaignVerdictLine(item({ verdict: 'WAIT', completed: 12, realistic: 30 })),
+    ).toMatchObject({ word: 'On attend', figure: '12/20', tone: 'neutral', locked: false });
+  });
+
+  it('a hidden verdict points to Pro', () => {
+    expect(
+      campaignVerdictLine(item({ verdict: null, realistic: null, reference: null })),
+    ).toMatchObject({ word: 'Verdict avec Pro', figure: null, tone: 'neutral', locked: true });
+  });
+});
+
+describe('todoLine', () => {
+  it('asks to tell the interested people and opens their list', () => {
+    const todo = {
+      kind: 'NOTIFY_INTERESTED' as const,
+      campaignId: 'c1',
+      title: 'Riz parfumé',
+      interested: 4,
+    };
+    expect(todoLine(todo)).toEqual({
+      title: 'Préviens tes 4 intéressés',
+      detail: 'Arrivage de Riz parfumé',
+      href: '/app/campagnes/c1?onglet=interesses',
+    });
+    expect(todoLine({ ...todo, interested: 1 }).title).toBe('Préviens ton intéressé');
   });
 });
