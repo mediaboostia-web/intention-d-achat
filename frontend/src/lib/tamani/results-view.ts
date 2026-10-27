@@ -69,6 +69,36 @@ export interface CampaignStats {
 /** PLAN: the plan has the estimate; OFFERED: the free plan's first verdict; LOCKED: hidden. */
 export type VerdictAccess = 'PLAN' | 'OFFERED' | 'LOCKED';
 
+/**
+ * One counted answer in the interested list (GET …/responses). Without the
+ * plan's contacts, `phone` is masked and `phoneE164` is null; an
+ * anonymized client has neither name nor number.
+ */
+export interface InterestedRow {
+  id: string;
+  respondentId: string | null;
+  firstName: string | null;
+  phone: string | null;
+  phoneE164: string | null;
+  interested: boolean;
+  reason: NotInterestedReason | null;
+  buyerType: BuyerType | null;
+  quantity: number | null;
+  option: string | null;
+  timing: Timing | null;
+  wantsDelivery: boolean | null;
+  zoneName: string | null;
+  sourceLabel: string | null;
+  completedAt: string;
+}
+
+export interface InterestedPage {
+  items: InterestedRow[];
+  nextCursor: string | null;
+  /** First page only: the campaign's yes and no answers. */
+  counts: { yes: number; no: number } | null;
+}
+
 /** What GET …/campaigns/[campaignId]/stats sends. */
 export interface CampaignStatsBody {
   stats: Omit<CampaignStats, 'result'> & { result: CampaignResult | null };
