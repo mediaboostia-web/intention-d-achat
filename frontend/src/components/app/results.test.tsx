@@ -142,6 +142,26 @@ describe('CampaignResults', () => {
     );
   });
 
+  it('the pending notice keeps a non-breaking space before its colon', () => {
+    expect(html(render({ stats: { ...stats, lockedCount: 3 }, access: 'PLAN' }))).toContain(
+      '3 réponses en attente : ton forfait',
+    );
+  });
+
+  it('leaves out a buyer type nobody chose', () => {
+    const t = text(
+      render({
+        stats: {
+          ...stats,
+          byBuyerType: { ...stats.byBuyerType, RESELLER: { respondents: 0, announced: 0 } },
+        },
+        access: 'PLAN',
+      }),
+    );
+    expect(t).toContain('Usagers 42 · 170 pièces');
+    expect(t).not.toMatch(/Revendeurs 0/);
+  });
+
   it('lists where, when and the price signal', () => {
     const t = text(render({ stats, access: 'PLAN' }));
     expect(t).toContain('Où livrer');

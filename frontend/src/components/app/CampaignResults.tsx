@@ -60,8 +60,9 @@ export function CampaignResults({
         </Button>
       }
     >
-      {stats.lockedCount} {plural(stats.lockedCount, 'réponse en attente', 'réponses en attente')} :
-      ton forfait du mois est plein. Elles s&apos;affichent dès que tu passes au forfait supérieur.
+      {stats.lockedCount} {plural(stats.lockedCount, 'réponse en attente', 'réponses en attente')}
+      &nbsp;: ton forfait du mois est plein. Elles s&apos;affichent dès que tu passes au forfait
+      supérieur.
     </Notice>
   );
 
@@ -101,6 +102,15 @@ export function CampaignResults({
       ? [{ id: 'pickup', label: 'Retrait sur place', value: stats.pickup.respondents }]
       : []),
   ];
+  // A buyer type nobody chose is left out.
+  const buyers = (['RESELLER', 'CONSUMER'] as const)
+    .map((t) => ({ t, ...stats.byBuyerType[t] }))
+    .filter((b) => b.respondents > 0)
+    .map((b) => ({
+      id: b.t,
+      label: b.t === 'RESELLER' ? 'Revendeurs' : 'Usagers',
+      value: `${b.respondents} · ${b.announced} ${units(b.announced)}`,
+    }));
   const rate = stats.interestRate === null ? '' : ` (${Math.round(stats.interestRate * 100)} %)`;
   const missing = Math.max(DEFAULT_MIN_RESPONSES - stats.completed, 0);
 
@@ -213,21 +223,12 @@ export function CampaignResults({
         ]}
       />
 
-      <Heading>Revendeurs et usagers</Heading>
-      <DataList
-        items={[
-          {
-            id: 'reseller',
-            label: 'Revendeurs',
-            value: `${stats.byBuyerType.RESELLER.respondents} · ${stats.byBuyerType.RESELLER.announced} ${units(stats.byBuyerType.RESELLER.announced)}`,
-          },
-          {
-            id: 'consumer',
-            label: 'Usagers',
-            value: `${stats.byBuyerType.CONSUMER.respondents} · ${stats.byBuyerType.CONSUMER.announced} ${units(stats.byBuyerType.CONSUMER.announced)}`,
-          },
-        ]}
-      />
+      {buyers.length > 0 && (
+        <>
+          <Heading>Revendeurs et usagers</Heading>
+          <DataList items={buyers} />
+        </>
+      )}
 
       {shortage && (
         <Notice tone="warning" className="mt-6">

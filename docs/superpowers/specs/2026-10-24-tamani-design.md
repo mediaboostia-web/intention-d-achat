@@ -217,6 +217,7 @@ Le prix du Grand compte se fixe après le pilote (voir plus bas).
 [choix] Les commandes et le carnet de clients sont **ouverts à tous**, y compris en Gratuit : ils rendent l'app indispensable et nourrissent l'apprentissage. En Gratuit, les numéros restent masqués et les boutons WhatsApp verrouillés (« Passe au Pro pour contacter Awa »), ce qui reste le principal argument pour prendre un pass.
 
 - **Recharges** : +1 000 réponses (~2 500 FCFA) ou +5 000 (~9 900 FCFA), payées quand le pass est épuisé avant sa fin. Elles valent jusqu'à la fin du pass en cours et ajoutent des réponses, pas des fonctions : il faut un pass actif.
+- **Toutes les campagnes partagent les réponses du pass** : les campagnes sont illimitées, mais chaque réponse, quelle que soit sa campagne, compte dans le même total. Un **compteur** le montre partout, téléphone compris (demande du porteur, 2026-10-27) : réponses utilisées sur le total, date de fin du pass, détail par campagne, alerte à 80 % et à 100 %, bouton de recharge.
 - **Période** : les réponses d'un pass se comptent sur sa durée (7 ou 30 jours à partir du paiement) ; celles du Gratuit sur le mois calendaire (fuseau Africa/Dakar, donc UTC).
 - **Pas de renouvellement automatique** : rappel 3 jours avant la fin, puis 3 jours de grâce, puis retour au Gratuit. Les campagnes continuent ; les numéros se masquent à nouveau.
 - **Pass 12 mois** (Pro et Business) : 10 mois payés pour 12.

@@ -527,7 +527,7 @@ Le porteur veut couvrir toute l'Afrique francophone. Aujourd'hui tout est en FCF
    - `billing-verify` (tâche planifiée) et `return` appellent `verifyPayment`, puis `activateFromPayment`, qui prolonge le pass ou ajoute la recharge, puis ouvre les réponses en attente.
    - Tests : Review Focus 3 et 5.
 5. **`subscription-renewals`** (aucun renouvellement automatique : un pass se rachète) : rappel à J-3 (`EmailJob` et `Notification`, avec un `dedupeKey` par période), début de grâce, puis retour au FREE. Mettre à jour `vercel.json` et le garde-fou `vercel-json-shape` (8 tâches planifiées).
-6. **Interface** : `/app/abonnement` (pass en cours, jauge des réponses, achat d'un pass ou d'une recharge, pass 12 mois), `/tarifs`, bandeau « N réponses en attente », bandeau de grâce. Recette de bout en bout en mode test SasPay.
+6. **Interface** : le **compteur de réponses** (demande du porteur, 2026-10-27) sur l'accueil et dans le menu, téléphone compris (aujourd'hui il n'est que dans la barre latérale, à partir de `lg`) : « 1 240 / 3 000 réponses, pass jusqu'au 12 novembre », le détail par campagne, une alerte à 80 % et à 100 %, et le bouton de recharge ; `/app/abonnement` (pass en cours, achat d'un pass ou d'une recharge, pass 12 mois), `/tarifs`, bandeau « N réponses en attente », bandeau de grâce. Recette de bout en bout en mode test SasPay.
 7. **Passes et recharges** (décision du porteur, 2026-10-27 ; spec §5.6).
    - `PLANS` gagne la durée de chaque offre et le Pass Semaine ; les recharges sont des offres à part, réservées à un pass actif.
    - Le pass enregistre son début, sa fin et ses réponses incluses ; chaque recharge ajoute des réponses jusqu'à la fin du pass. Le modèle exact se décide dans le plan du lot 8.
