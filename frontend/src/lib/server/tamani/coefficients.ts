@@ -2,16 +2,11 @@
 // (spec §5.4.1). Lot 6 reads the shop's settings; lot 7 adds the
 // coefficients learned from real orders.
 import 'server-only';
+import type { Coefficients } from '@/lib/tamani/results-view';
+
+export type { Coefficients };
 
 export const DEFAULT_COEFFICIENTS = { consumer: 0.5, reseller: 0.7 } as const;
-
-export type CoefficientSource = 'DEFAULT' | 'SHOP' | 'LEARNED';
-
-export interface Coefficients {
-  consumer: number;
-  reseller: number;
-  source: { consumer: CoefficientSource; reseller: CoefficientSource };
-}
 
 const same = (a: number, b: number) => Math.abs(a - b) < 1e-9;
 
