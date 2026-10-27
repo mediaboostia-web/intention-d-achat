@@ -10,6 +10,7 @@ export { CampaignCard, CampaignStatusBadge, type CampaignCardData } from './Camp
 export { Card } from './Card';
 export { ChoiceButton, type ChoiceButtonProps } from './ChoiceButton';
 export { DataList } from './DataList';
+export { DemandGauge } from './DemandGauge';
 export { EmptyState } from './EmptyState';
 export { Fab } from './Fab';
 export { FilterBar } from './FilterBar';

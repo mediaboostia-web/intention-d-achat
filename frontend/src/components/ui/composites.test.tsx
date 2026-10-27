@@ -3,6 +3,7 @@ import {
   BottomSheet,
   CalcTable,
   DataList,
+  DemandGauge,
   EmptyState,
   FilterBar,
   Icon,
@@ -130,6 +131,28 @@ describe('MoneyCard', () => {
     );
     expect(text(el)).toContain("Ajoute ton prix d'achat pour voir l'argent que tu évites.");
     expect(html(el)).toContain('href="/app/produits/p1"');
+  });
+});
+
+describe('DemandGauge', () => {
+  it('shows the three figures, ten squares and a sentence for screen readers', () => {
+    const el = <DemandGauge realistic={211} announced={350} reference={400} />;
+    const markup = html(el);
+    expect(text(el)).toContain('réaliste 211');
+    expect(text(el)).toContain('annoncé 350');
+    expect(text(el)).toContain('prévu 400');
+    expect(markup.match(/rounded-case/g)).toHaveLength(10);
+    expect(markup).toContain('aria-hidden="true"');
+    expect(markup).toMatch(
+      /class="sr-only">Demande réaliste 211, annoncée 350, pour 400 prévues\.</,
+    );
+  });
+
+  it('stops the squares at the reference', () => {
+    const markup = html(<DemandGauge realistic={900} announced={1200} reference={400} />);
+    // Every square is full: nothing goes past the tenth.
+    expect(markup.match(/var\(--color-primary\) 100%/g)).toHaveLength(10);
+    expect(markup.match(/rounded-case/g)).toHaveLength(10);
   });
 });
 
