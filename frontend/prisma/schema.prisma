@@ -104,13 +104,16 @@ model Organization {
   updatedAt DateTime             @updatedAt
 
   // Tamani lot 3: an Organization is a wholesaler's shop.
-  whatsappPhone String? // E.164
-  country       String  @default("SN") // ISO-2, default region for local phone numbers
-  currency      String  @default("XOF")
-  logoUrl       String?
-  description   String? // shown in the popup (lot 5b), 300 characters at most
-  coefConsumer  Float   @default(0.5) // share of announced consumer demand that turns real
-  coefReseller  Float   @default(0.7)
+  whatsappPhone         String? // E.164
+  country               String  @default("SN") // ISO-2, default region for local phone numbers
+  currency              String  @default("XOF")
+  logoUrl               String?
+  description           String? // shown in the popup (lot 5b), 300 characters at most
+  coefConsumer          Float   @default(0.5) // share of announced consumer demand that turns real
+  coefReseller          Float   @default(0.7)
+  // Lot 6: on the free plan, the one campaign whose verdict is offered (the
+  // first to reach 20 counted answers), reserved once by free-verdict.ts.
+  freeVerdictCampaignId String?
 
   zones        DeliveryZone[]
   products     Product[]
