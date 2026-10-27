@@ -112,6 +112,23 @@ export async function listCampaignResponses(
   };
 }
 
+const MAX_EXPORT_ROWS = 20_000;
+
+/** Every counted answer, oldest first, numbers included: the export route checks the plan. */
+export async function campaignExportRows(
+  db: Db,
+  organizationId: string,
+  campaignId: string,
+): Promise<InterestedRow[]> {
+  const rows = await db.response.findMany({
+    where: { campaignId, organizationId, ...COUNTED },
+    orderBy: [{ completedAt: 'asc' }, { id: 'asc' }],
+    take: MAX_EXPORT_ROWS,
+    select: ROW_SELECT,
+  });
+  return rows.map((r) => toRow(r, true));
+}
+
 /** The interested numbers, each once, as "+221 77 123 45 12". Pro only: the route checks. */
 export async function interestedNumbers(
   db: Db,
