@@ -125,4 +125,57 @@ describe('HomeView', () => {
     expect(render(SUMMARY).t).toContain('Arrivage de Riz parfumé');
     expect(render({ ...SUMMARY, upcoming: [] }).t).not.toContain('À venir');
   });
+  it('« À faire maintenant » asks to tell the interested people of an arrival', () => {
+    const { out, t } = render({
+      ...SUMMARY,
+      todo: [{ kind: 'NOTIFY_INTERESTED', campaignId: 'c2', title: 'Huile', interested: 4 }],
+    });
+    expect(t).toContain('À faire maintenant');
+    expect(t).toContain('Préviens tes 4 intéressés');
+    expect(t).toContain('Arrivage de Huile');
+    expect(hrefs(out)).toContain('/app/campagnes/c2?onglet=interesses');
+    expect(render(SUMMARY).t).not.toContain('À faire maintenant');
+  });
+
+  it('« Tes campagnes » gives one verdict line each, the word in the verdict tone', () => {
+    const { out, t } = render({
+      ...SUMMARY,
+      campaigns: [
+        {
+          id: 'c1',
+          title: 'Riz parfumé',
+          unitLabel: 'sac',
+          completed: 34,
+          verdict: 'GO',
+          realistic: 120,
+          reference: 130,
+          offered: false,
+        },
+        {
+          id: 'c3',
+          title: 'Sucre',
+          unitLabel: 'sac',
+          completed: 25,
+          verdict: null,
+          realistic: null,
+          reference: null,
+          offered: false,
+        },
+      ],
+    });
+    expect(t).toContain('Tes campagnes');
+    expect(t).toContain('~120 sacs');
+    expect(t).toContain('Verdict avec Pro');
+    expect(out).toMatch(/text-success[^>]*>Commande/);
+    expect(hrefs(out)).toContain('/app/campagnes/c3');
+    expect(render(SUMMARY).t).not.toContain('Tes campagnes');
+  });
+
+  it('« Argent protégé ce mois-ci » shows only above 0, in highlighter', () => {
+    const { out, t } = render({ ...SUMMARY, moneyProtectedThisMonth: 150_000 });
+    expect(t).toContain('Argent protégé ce mois-ci');
+    expect(t).toContain('150 000 FCFA');
+    expect(out).toMatch(/highlight[^>]*>150 000 FCFA/);
+    expect(render(SUMMARY).t).not.toContain('Argent protégé');
+  });
 });
