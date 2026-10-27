@@ -1,5 +1,22 @@
 import { describe, it, expect } from 'vitest';
-import { estimateDemand } from './estimate';
+import { estimateDemand, estimateFromTotals } from './estimate';
+
+describe('estimateFromTotals', () => {
+  it('gives what estimateDemand gives on the same rows', () => {
+    const coefs = { consumer: 0.5, reseller: 0.7 };
+    const rows = [
+      { buyerType: 'CONSUMER' as const, quantity: 4 },
+      { buyerType: 'RESELLER' as const, quantity: 50 },
+      { buyerType: 'RESELLER' as const, quantity: 7 },
+    ];
+    expect(
+      estimateFromTotals(
+        { CONSUMER: { respondents: 1, announced: 4 }, RESELLER: { respondents: 2, announced: 57 } },
+        coefs,
+      ),
+    ).toEqual(estimateDemand(rows, coefs));
+  });
+});
 
 describe('estimateDemand', () => {
   it('applies the conversion coefficient per buyer type, with a ±0.1 range', () => {

@@ -3,32 +3,21 @@
 // range on the coefficient.
 import 'server-only';
 import { BUYER_TYPES, type BuyerType } from '@/lib/tamani/labels';
+import type { DemandEstimate } from '@/lib/tamani/results-view';
 
-export interface DemandEstimate {
-  announced: number;
-  realistic: number;
-  low: number;
-  high: number;
-  byBuyerType: Record<BuyerType, { respondents: number; announced: number; realistic: number }>;
-}
+export type { DemandEstimate };
 
 const RANGE = 0.1;
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 
-export function estimateDemand(
-  rows: ReadonlyArray<{ buyerType: BuyerType; quantity: number }>,
+type Totals = Record<BuyerType, { respondents: number; announced: number }>;
+
+/** The estimate from per-type totals (the home page sums them in the database). */
+export function estimateFromTotals(
+  sums: Totals,
   coefs: { consumer: number; reseller: number },
 ): DemandEstimate {
   const coef: Record<BuyerType, number> = { CONSUMER: coefs.consumer, RESELLER: coefs.reseller };
-  const sums: Record<BuyerType, { respondents: number; announced: number }> = {
-    CONSUMER: { respondents: 0, announced: 0 },
-    RESELLER: { respondents: 0, announced: 0 },
-  };
-  for (const r of rows) {
-    sums[r.buyerType].respondents += 1;
-    sums[r.buyerType].announced += r.quantity;
-  }
-
   const total = (pick: (t: BuyerType) => number) =>
     Math.round(BUYER_TYPES.reduce((acc, t) => acc + sums[t].announced * pick(t), 0));
 
@@ -43,4 +32,19 @@ export function estimateDemand(
     high: total((t) => clamp01(coef[t] + RANGE)),
     byBuyerType,
   };
+}
+
+export function estimateDemand(
+  rows: ReadonlyArray<{ buyerType: BuyerType; quantity: number }>,
+  coefs: { consumer: number; reseller: number },
+): DemandEstimate {
+  const sums: Totals = {
+    CONSUMER: { respondents: 0, announced: 0 },
+    RESELLER: { respondents: 0, announced: 0 },
+  };
+  for (const r of rows) {
+    sums[r.buyerType].respondents += 1;
+    sums[r.buyerType].announced += r.quantity;
+  }
+  return estimateFromTotals(sums, coefs);
 }
