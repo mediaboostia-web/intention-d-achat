@@ -52,7 +52,7 @@ describe('previewMessage', () => {
         now,
       ),
     ).toBe(
-      `🔔 Nouveau : *Marmites inox 5 L* à 7 500 FCFA (gros : 6 000 FCFA dès 12). Arrivage dans 10 jours. Tu en veux ? Réponds en 5 secondes 👉 ${PREVIEW_LINK}`,
+      `🔔 Nouveau : *Marmites inox 5 L* à 7 500 FCFA (gros : 6 000 FCFA dès 12). Arrivage dans 10 jours. Tu en veux ? Réponds en moins de 30 secondes 👉 ${PREVIEW_LINK}`,
     );
   });
 });

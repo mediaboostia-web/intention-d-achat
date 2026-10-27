@@ -200,6 +200,35 @@ The porteur's eleven requests ([retours](docs/superpowers/specs/2026-10-25-taman
 - **Migration `8_shop_description`** — `Organization.description` (300 characters, blank → `null`), shown in the popup under « Oui / Non ». `shopCompleteness` ([shop-completeness.ts](frontend/src/lib/tamani/shop-completeness.ts)) feeds the Réglages notice. The lot 7 orders migration is `9_sale_orders`.
 - **Forms** — unit chips (`COMMON_UNITS` then the shop's own, `GET …/products/units`); an incoming campaign takes one arrival date, never before today (the API refuses a past one at creation, and at edit only when the date changes). Réglages: five sections with a left menu from `lg`, each save in its section header (`formId` / `hideSubmit` on `ShopForm` and `CoefficientsForm`). Sign-in pages: two columns from `lg`, Google first through `AuthForm`'s `before`.
 
+## Tamani home page (lot 9a)
+
+- **Route** — `/` is [app/(public)/page.tsx](frontend/src/app/(public)/page.tsx), static. It renders the sections of [components/landing/](frontend/src/components/landing/) in the porteur's order:
+  1. hero ;
+  2. video ;
+  3. problem ;
+  4. solution (the orbit) ;
+  5. how it works ;
+  6. before/after ;
+  7. pricing ;
+  8. community ;
+  9. FAQ ;
+  10. footer.
+
+  The visual and copy reference is [the v3 mockup](docs/brand/mockups/2026-10-25-page-accueil-v3.html). Sections are server components. The client leaves are only what moves:
+  - `LandingNav`, the floating bar that hides on the way down and shows on the way up (`navStep`) ;
+  - `Orbit`, where the networks buzz and a « +1 » travels to the link ;
+  - `CompareSlider` ;
+  - `PricingTags` ;
+  - `FilmPlayer` ;
+  - `StickyCta` ;
+  - `InView`, which sets `data-inview="true"` once on screen.
+- **Content and rules** — [lib/tamani/landing.ts](frontend/src/lib/tamani/landing.ts) holds the FAQ (also the FAQPage JSON-LD), `pricingTiers` (from `PLANS`), `landingJsonLd` and `landingMetadata` (from `APP_URL`).
+- **Links not given yet** — `LANDING_LINKS` and `LANDING_VIDEO` hold what the porteur has not given yet. A `null` link hides its button: WhatsApp contact, WhatsApp group, Facebook, Instagram, TikTok, and the video. [app/robots.ts](frontend/src/app/robots.ts) and [app/sitemap.ts](frontend/src/app/sitemap.ts) sit next to them.
+- **Styles** — [landing.css](frontend/src/components/landing/landing.css): `lp-*` classes, theme variables only, unlayered (they win over utilities). Everything stops under `prefers-reduced-motion`. No animation library.
+- **Illustrations** — the porteur makes them in ChatGPT ([prompts](docs/brand/prompts-images-accueil.md)) and saves the PNG in `docs/brand/mockups/images/` (git-ignored). `pnpm landing:images` writes the WebP the site serves, in `frontend/public/accueil/`; `next/image` resizes them. `Illustration ink` multiplies a drawing onto the paper, so never animate a transform on its parents.
+- **Footer wordmark** — draw `WORDMARK_PATH` in an svg whose `viewBox` is `WORDMARK_VIEWBOX`. A `<use>` of a symbol inside an svg with the same offset viewBox shifts it and cuts the top off.
+- **Answer time** — the page, the share message (`DEFAULT_SHARE_TEMPLATE`) and the link preview promise « moins de 30 secondes » (porteur, 2026-10-25).
+
 ## What is fair to modify
 
 Anything outside [Files Claude must NOT modify](#files-claude-must-not-modify) is the fork's surface area:

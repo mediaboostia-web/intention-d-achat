@@ -5,11 +5,41 @@ import {
   DataList,
   EmptyState,
   FilterBar,
+  Icon,
   MoneyCard,
+  Stamp,
   StatTile,
   VerdictCard,
 } from '.';
 import { html, text } from './test-html';
+
+describe('Stamp', () => {
+  it('renders the word, the figure and the unit in the tone colour', () => {
+    const el = <Stamp word="Commande" figure="≈120" unit="cartons" tone="success" />;
+    expect(text(el)).toBe('Commande ≈120 cartons');
+    const out = html(el);
+    expect(out).toContain('text-success');
+    expect(out).toContain('-rotate-[5deg]');
+    expect(out).toMatch(/class="[^"]*\bstamp\b/);
+    expect(out).toContain('border-solid');
+  });
+
+  it('is dashed for the neutral tone and keeps extra classes', () => {
+    const out = html(
+      <Stamp word="Attends" figure="9/20" unit="réponses" tone="neutral" className="x-y" />,
+    );
+    expect(out).toContain('border-dashed');
+    expect(out).toContain('text-neutral-verdict');
+    expect(out).toContain('x-y');
+  });
+});
+
+describe('Icon', () => {
+  it('draws the menu and the left chevron', () => {
+    expect(html(<Icon name="menu" />)).toContain('M4 7h16M4 12h16M4 17h16');
+    expect(html(<Icon name="chevron-left" />)).toContain('m14.5 5.5-6.5 6.5 6.5 6.5');
+  });
+});
 
 describe('BottomSheet disables its animation under reduced motion', () => {
   it('slides up with CSS only, and not under reduced motion', () => {

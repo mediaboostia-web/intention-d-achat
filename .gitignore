@@ -24,3 +24,7 @@ node-compile-cache/
 
 # Brainstorming visual companion mockups
 .superpowers/
+
+# Landing illustrations: the ChatGPT originals stay local; pnpm landing:images
+# writes the WebP files the site serves (frontend/public/accueil/).
+docs/brand/mockups/images/*.png

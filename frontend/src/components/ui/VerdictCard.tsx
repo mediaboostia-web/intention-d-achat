@@ -1,14 +1,6 @@
-import type { VerdictTone } from '@/lib/design/tokens';
 import { verdictBasis, verdictDisplay, type VerdictCode } from '@/lib/tamani/verdict-display';
 import { cn } from '@/lib/utils';
-
-const TONE_TEXT: Record<VerdictTone, string> = {
-  success: 'text-success',
-  warning: 'text-warning',
-  danger: 'text-danger',
-  neutral: 'text-neutral-verdict',
-  primary: 'text-primary',
-};
+import { Stamp } from './Stamp';
 
 function HandArrow() {
   return (
@@ -52,22 +44,7 @@ export function VerdictCard({
   return (
     <section aria-label={`Verdict : ${d.stampWord}`} className={cn('relative', className)}>
       <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
-        <div
-          className={cn(
-            'stamp relative inline-block max-w-full min-w-0 -rotate-[5deg] rounded-card border-[3.5px] px-4 pt-3.5 pb-3 text-center',
-            d.tone === 'neutral' ? 'border-dashed' : 'border-solid',
-            'border-current',
-            TONE_TEXT[d.tone],
-          )}
-        >
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-[5px] rounded-[10px] border-[1.5px] border-current"
-          />
-          <p className="font-sign text-sm tracking-[0.3em] uppercase">{d.stampWord}</p>
-          <p className="mt-1 font-sign text-5xl leading-none break-words">{d.figure}</p>
-          <p className="mt-1.5 text-xs font-bold tracking-[0.2em] uppercase">{d.unit}</p>
-        </div>
+        <Stamp word={d.stampWord} figure={d.figure} unit={d.unit} tone={d.tone} />
         {d.note && (
           <p className="mt-9 -rotate-[4deg] font-hand text-lg leading-tight whitespace-nowrap text-primary">
             <HandArrow />
