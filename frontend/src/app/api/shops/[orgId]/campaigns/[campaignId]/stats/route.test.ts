@@ -104,6 +104,7 @@ describe('GET /api/shops/[orgId]/campaigns/[campaignId]/stats', () => {
     expect(body.access).toBe('LOCKED');
     expect(body.stats.result).toBeNull();
     expect(body.stats.announced).toBe(75);
+    expect(body.offerOpen).toBe(true);
     expect(prismaMock.organization.updateMany).not.toHaveBeenCalled();
   });
 
@@ -114,6 +115,7 @@ describe('GET /api/shops/[orgId]/campaigns/[campaignId]/stats', () => {
     prismaMock.organization.updateMany.mockResolvedValue({ count: 1 });
     const { body } = await read();
     expect(body.access).toBe('OFFERED');
+    expect(body.offerOpen).toBe(false);
     expect(body.stats.result?.verdict.code).toBe('CAUTION');
     expect(prismaMock.organization.updateMany).toHaveBeenCalledWith({
       where: { id: 'org_1', freeVerdictCampaignId: null },
@@ -127,6 +129,7 @@ describe('GET /api/shops/[orgId]/campaigns/[campaignId]/stats', () => {
     );
     const { body } = await read();
     expect(body.access).toBe('LOCKED');
+    expect(body.offerOpen).toBe(false);
     expect(body.stats.result).toBeNull();
     expect(prismaMock.organization.updateMany).not.toHaveBeenCalled();
   });

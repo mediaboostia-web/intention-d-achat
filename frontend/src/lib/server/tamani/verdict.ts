@@ -1,9 +1,9 @@
 // The campaign verdict (spec §5.4.0): realistic demand against the quantity
 // the wholesaler means to order. The words are in lib/tamani/verdict-display.ts.
 import 'server-only';
-import type { VerdictCode } from '@/lib/tamani/verdict-display';
+import { DEFAULT_MIN_RESPONSES, type VerdictCode } from '@/lib/tamani/verdict-display';
 
-export const MIN_RESPONSES_FOR_VERDICT = 20;
+export const MIN_RESPONSES_FOR_VERDICT = DEFAULT_MIN_RESPONSES;
 
 const GO_RATIO = 0.9;
 const CAUTION_RATIO = 0.4;

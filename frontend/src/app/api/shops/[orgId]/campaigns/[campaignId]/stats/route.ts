@@ -79,6 +79,7 @@ export const GET = shopHandler<Params>('MEMBER', async (_req, { params }) => {
   const body: CampaignStatsBody = {
     stats: { ...stats, result: access === 'LOCKED' ? null : stats.result },
     access,
+    offerOpen: access === 'LOCKED' && offered === null,
   };
   return jsonOk(body);
 });

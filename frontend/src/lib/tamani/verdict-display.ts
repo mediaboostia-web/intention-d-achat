@@ -14,7 +14,8 @@ export const VERDICT_TONE: Readonly<Record<VerdictCode, VerdictTone>> = {
   NEUTRAL: 'primary',
 };
 
-const DEFAULT_MIN_RESPONSES = 20;
+/** Counted answers before a verdict (spec §5.4.0); lib/server/tamani/verdict.ts reads it. */
+export const DEFAULT_MIN_RESPONSES = 20;
 
 /** Quantities from 30 up are shown rounded to the ten ("~210" for 211). */
 export function approxQuantity(n: number): number {

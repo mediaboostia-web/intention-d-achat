@@ -1,10 +1,11 @@
 'use client';
 
-// /app/campagnes/[id]: share a campaign, change its status, edit it.
-// Lot 6 adds the "Résultats" tab.
+// /app/campagnes/[id]: a campaign's results, its interested people, its
+// share links and its settings, one tab each (?onglet=…).
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { CampaignActions } from '@/components/app/CampaignActions';
+import { CampaignResultsTab } from '@/components/app/CampaignResults';
 import { CampaignEditForm, type CampaignPatchBody } from '@/components/app/CampaignEditForm';
 import { ShareCard } from '@/components/app/ShareCard';
 import { useShop } from '@/components/app/ShopProvider';
@@ -16,6 +17,7 @@ import { errorMessage } from '@/lib/tamani/api-messages';
 import type { CampaignStatus } from '@/lib/tamani/campaign-actions';
 import type { ShopCampaign, ShopLink } from '@/lib/tamani/campaign-view';
 import { PLANS } from '@/lib/tamani/plans';
+import { campaignTab, campaignTabs } from '@/lib/tamani/results-view';
 import { formatPriceLine } from '@/lib/tamani/share-message';
 
 const NOT_LIVE: Record<Exclude<CampaignStatus, 'ACTIVE'>, string> = {
@@ -27,7 +29,6 @@ const NOT_LIVE: Record<Exclude<CampaignStatus, 'ACTIVE'>, string> = {
 function CampaignDetail() {
   const { id } = useParams<{ id: string }>();
   const params = useSearchParams();
-  const editing = params.get('onglet') === 'modifier';
   const justSent = params.get('partager') === '1';
   const { shop } = useShop();
   const { toast } = useToast();
@@ -113,6 +114,7 @@ function CampaignDetail() {
 
   const base = `/app/campagnes/${campaign.id}`;
   const locked = !PLANS[shop.plan.id].features.sourceLinks;
+  const tab = campaignTab(params.get('onglet'), params.get('partager'), campaign.status);
 
   return (
     <>
@@ -143,16 +145,18 @@ function CampaignDetail() {
           {moveError}
         </Notice>
       )}
-      <Tabs
-        className="mt-8"
-        label="Campagne"
-        items={[
-          { id: 'share', label: 'Partager', href: base, active: !editing },
-          { id: 'edit', label: 'Modifier', href: `${base}?onglet=modifier`, active: editing },
-        ]}
-      />
+      <Tabs className="mt-8" label="Campagne" items={campaignTabs(base, tab, campaign.status)} />
       <div className="mt-6">
-        {editing ? (
+        {tab === 'results' ? (
+          <CampaignResultsTab
+            shopId={shop.id}
+            campaignId={campaign.id}
+            productId={campaign.productId}
+            unitLabel={campaign.product.unitLabel}
+          />
+        ) : tab === 'interested' ? (
+          <Notice tone="info">La liste des intéressés arrive ici.</Notice>
+        ) : tab === 'edit' ? (
           <CampaignEditForm key={campaign.id} campaign={campaign} error={saveError} onSave={save} />
         ) : campaign.status === 'ACTIVE' && campaign.defaultLink ? (
           <div className="flex flex-col gap-10">

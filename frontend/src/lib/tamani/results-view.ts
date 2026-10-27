@@ -1,9 +1,9 @@
 // What the dashboard reads (lot 6): the shapes the stats, responses and
 // summary routes send, and the sentences the result screens write. Pure and
 // shared with the browser; the numbers are computed in lib/server/tamani/.
-import type { BuyerType, NotInterestedReason } from './labels';
+import { NOT_INTERESTED_REASON_LABELS, type BuyerType, type NotInterestedReason } from './labels';
 import type { Timing } from './timing';
-import type { VerdictCode } from './verdict-display';
+import { approxQuantity, pluralizeUnit, type VerdictCode } from './verdict-display';
 
 /** Realistic demand (spec §5.4.1), computed by lib/server/tamani/estimate.ts. */
 export interface DemandEstimate {
@@ -103,4 +103,95 @@ export interface InterestedPage {
 export interface CampaignStatsBody {
   stats: Omit<CampaignStats, 'result'> & { result: CampaignResult | null };
   access: VerdictAccess;
+  /** Free plan, no verdict offered yet: this campaign may receive it at 20 answers. */
+  offerOpen: boolean;
+}
+
+/** "75 %": each row's share of the rows' total. */
+export function percentRows(
+  rows: ReadonlyArray<{ id: string; label: string; count: number }>,
+): Array<{ id: string; label: string; value: string }> {
+  const total = rows.reduce((n, r) => n + r.count, 0);
+  if (total === 0) return [];
+  return rows.map((r) => ({
+    id: r.id,
+    label: r.label,
+    value: `${Math.round((r.count / total) * 100)} %`,
+  }));
+}
+
+/** The most frequent "no" reason, circled on screen: "7 « non » sur 30 :" + "trop cher". */
+export function priceSignal(
+  reasons: ReadonlyArray<{ reason: NotInterestedReason; count: number }>,
+  notInterested: number,
+): { lead: string; word: string } | null {
+  const top = [...reasons].sort((a, b) => b.count - a.count)[0];
+  if (!top || top.count === 0 || notInterested === 0) return null;
+  return {
+    lead: `${top.count} « non » sur ${notInterested} :`,
+    word: NOT_INTERESTED_REASON_LABELS[top.reason].toLowerCase(),
+  };
+}
+
+export function stockLine(i: {
+  status: CampaignResult['stockStatus'];
+  realistic: number;
+  stock: number | null;
+  unitLabel: string;
+}): string | null {
+  if (i.status !== 'SHORTAGE' || i.stock === null) return null;
+  const q = approxQuantity(i.realistic);
+  return `La demande réaliste (~${q} ${pluralizeUnit(i.unitLabel, q)}) dépasse ton stock de ${i.stock}. Prévois de recommander.`;
+}
+
+/** 0.45 → "4,5": how many buy out of 10 who say yes. */
+const outOfTen = (coef: number) => String(Math.round(coef * 100) / 10).replace('.', ',');
+
+export function coefNote(coefs: Coefficients): string {
+  const base = `Sur 10 revendeurs qui disent oui, ${outOfTen(coefs.reseller)} achètent vraiment ; sur 10 usagers, ${outOfTen(coefs.consumer)}.`;
+  const defaults = coefs.source.consumer === 'DEFAULT' && coefs.source.reseller === 'DEFAULT';
+  return defaults
+    ? `${base} Ce sont les valeurs de départ, tu peux les régler dans Réglages.`
+    : `${base} Ce sont tes réglages.`;
+}
+
+export type CampaignTab = 'results' | 'interested' | 'share' | 'edit';
+
+const TAB_PARAM: Readonly<Record<CampaignTab, string>> = {
+  results: 'resultats',
+  interested: 'interesses',
+  share: 'partager',
+  edit: 'modifier',
+};
+
+const TAB_LABEL: Readonly<Record<CampaignTab, string>> = {
+  results: 'Résultats',
+  interested: 'Intéressés',
+  share: 'Partager',
+  edit: 'Modifier',
+};
+
+/** ?onglet= picks the tab; a draft, or a campaign just sent (?partager=1), opens on Share. */
+export function campaignTab(
+  onglet: string | null,
+  partager: string | null,
+  status: string,
+): CampaignTab {
+  const named = (Object.keys(TAB_PARAM) as CampaignTab[]).find((t) => TAB_PARAM[t] === onglet);
+  if (named) return named;
+  return partager === '1' || status === 'DRAFT' ? 'share' : 'results';
+}
+
+export function campaignTabs(
+  base: string,
+  active: CampaignTab,
+  status: string,
+): Array<{ id: CampaignTab; label: string; href: string; active: boolean }> {
+  return (Object.keys(TAB_PARAM) as CampaignTab[]).map((id) => ({
+    id,
+    label: TAB_LABEL[id],
+    // Results is the default tab, except for a draft, which opens on Share.
+    href: id === 'results' && status !== 'DRAFT' ? base : `${base}?onglet=${TAB_PARAM[id]}`,
+    active: id === active,
+  }));
 }
