@@ -6,6 +6,7 @@ import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { CampaignActions } from '@/components/app/CampaignActions';
 import { CampaignResultsTab } from '@/components/app/CampaignResults';
+import { InterestedTab } from '@/components/app/InterestedList';
 import { CampaignEditForm, type CampaignPatchBody } from '@/components/app/CampaignEditForm';
 import { ShareCard } from '@/components/app/ShareCard';
 import { useShop } from '@/components/app/ShopProvider';
@@ -113,7 +114,8 @@ function CampaignDetail() {
   }
 
   const base = `/app/campagnes/${campaign.id}`;
-  const locked = !PLANS[shop.plan.id].features.sourceLinks;
+  const features = PLANS[shop.plan.id].features;
+  const locked = !features.sourceLinks;
   const tab = campaignTab(params.get('onglet'), params.get('partager'), campaign.status);
 
   return (
@@ -155,7 +157,21 @@ function CampaignDetail() {
             unitLabel={campaign.product.unitLabel}
           />
         ) : tab === 'interested' ? (
-          <Notice tone="info">La liste des intéressés arrive ici.</Notice>
+          <InterestedTab
+            shopId={shop.id}
+            shopName={shop.name}
+            campaign={{
+              id: campaign.id,
+              productName: campaign.product.name,
+              unitLabel: campaign.product.unitLabel,
+              status: campaign.status,
+              availability: campaign.availability,
+            }}
+            contacts={features.respondentContacts}
+            exportable={features.respondentContacts && features.csvExport}
+            busy={busy}
+            onArrived={() => void move('ARRIVED')}
+          />
         ) : tab === 'edit' ? (
           <CampaignEditForm key={campaign.id} campaign={campaign} error={saveError} onSave={save} />
         ) : campaign.status === 'ACTIVE' && campaign.defaultLink ? (

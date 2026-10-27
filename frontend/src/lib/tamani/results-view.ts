@@ -1,8 +1,13 @@
 // What the dashboard reads (lot 6): the shapes the stats, responses and
 // summary routes send, and the sentences the result screens write. Pure and
 // shared with the browser; the numbers are computed in lib/server/tamani/.
-import { NOT_INTERESTED_REASON_LABELS, type BuyerType, type NotInterestedReason } from './labels';
-import type { Timing } from './timing';
+import {
+  BUYER_TYPE_LABELS,
+  NOT_INTERESTED_REASON_LABELS,
+  type BuyerType,
+  type NotInterestedReason,
+} from './labels';
+import { TIMING_LABELS, type Timing } from './timing';
 import { approxQuantity, pluralizeUnit, type VerdictCode } from './verdict-display';
 
 /** Realistic demand (spec §5.4.1), computed by lib/server/tamani/estimate.ts. */
@@ -194,4 +199,50 @@ export function campaignTabs(
     href: id === 'results' && status !== 'DRAFT' ? base : `${base}?onglet=${TAB_PARAM[id]}`,
     active: id === active,
   }));
+}
+
+/** ARRIVED once the product is in; otherwise the campaign's availability. */
+export type ResponseMoment = 'ARRIVED' | 'IN_STOCK' | 'INCOMING';
+
+/** The WhatsApp message to one interested person; the wholesaler reads it and sends it. */
+export function interestedMessage(p: {
+  firstName: string | null;
+  productName: string;
+  quantity: number | null;
+  unitLabel: string;
+  shopName: string;
+  moment: ResponseMoment;
+}): string {
+  const hello = `${p.firstName ? `Bonjour ${p.firstName}` : 'Bonjour'}, c'est ${p.shopName}.`;
+  const amount =
+    p.quantity === null ? null : `${p.quantity} ${pluralizeUnit(p.unitLabel, p.quantity)}`;
+  if (p.moment === 'ARRIVED') {
+    // "les" for several; one piece reads "ça", since the unit's gender is unknown.
+    const keep =
+      amount === null
+        ? "Je t'en garde ?"
+        : `Tu voulais ${amount}, ${p.quantity === 1 ? 'je te garde ça' : 'je te les garde'} ?`;
+    return `${hello} *${p.productName}* : c'est arrivé ! ${keep}`;
+  }
+  const thanks = `Merci pour ta réponse sur *${p.productName}*${amount === null ? '' : ` (${amount})`}.`;
+  return p.moment === 'IN_STOCK'
+    ? `${hello} ${thanks} C'est disponible : tu passes quand ?`
+    : `${hello} ${thanks} Je te préviens dès que c'est là.`;
+}
+
+/** "3 pièces · Revendeur · Médina · Dès l'arrivée" for a yes, the reason for a no. */
+export function interestedDetail(row: InterestedRow, unitLabel: string): string {
+  if (!row.interested) {
+    return row.reason ? NOT_INTERESTED_REASON_LABELS[row.reason] : 'Pas intéressé';
+  }
+  const where = row.zoneName ?? (row.wantsDelivery === false ? 'Retrait' : null);
+  return [
+    row.quantity === null ? null : `${row.quantity} ${pluralizeUnit(unitLabel, row.quantity)}`,
+    row.option,
+    row.buyerType ? BUYER_TYPE_LABELS[row.buyerType] : null,
+    where,
+    row.timing ? TIMING_LABELS[row.timing] : null,
+  ]
+    .filter((part): part is string => part !== null && part !== '')
+    .join(' · ');
 }
