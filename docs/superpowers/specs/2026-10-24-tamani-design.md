@@ -185,29 +185,47 @@ Pas d'envoi WhatsApp automatique en v1, car l'API officielle de Meta est payante
 - **Fiabilité d'un client** = nombre de réponses « Oui » suivies d'une commande livrée ou récupérée, divisé par le nombre de réponses « Oui » sur des campagnes terminées (`CLOSED` ou `ARRIVED`). Elle s'affiche à partir de 2 réponses « Oui » terminées.
 - **Coefficient appris par statut** (usagers et revendeurs) = Σ quantités livrées ou récupérées / Σ quantités annoncées, calculé sur les réponses « Oui » des campagnes terminées de la boutique. Il ne s'applique qu'à partir de **20 réponses « Oui » réparties sur au moins 2 campagnes terminées**. En dessous, on garde le coefficient par défaut ou celui saisi dans les réglages. Le résultat est borné à [0,1 ; 1].
 
-### 5.6 Freemium [proposé, prix à ajuster]
+### 5.6 Forfaits prépayés [décidé dans le principe, 2026-10-27 ; prix à ajuster après le pilote]
 
-| | **Gratuit** | **Pro** · 9 900 FCFA/mois | **Business** · 24 900 FCFA/mois |
-|---|---|---|---|
-| Campagnes actives | 3 | Illimitées | Illimitées |
-| Réponses complètes par mois | 150 | 3 000 | 15 000 |
-| Statistiques de base | ✅ | ✅ | ✅ |
-| Quantité recommandée | — | ✅ | ✅ |
-| Liens par source | — | ✅ | ✅ |
-| Liste des intéressés avec boutons WhatsApp, export CSV | — | ✅ | ✅ |
-| Commandes, vue « à livrer par quartier », carnet de clients | ✅ (numéros masqués) | ✅ | ✅ |
-| Fiabilité des clients et coefficients appris | — | ✅ | ✅ |
-| Mention « Propulsé par Tamani » | Oui | Non | Non |
-| Membres d'équipe | 1 | 1 | 3 (v1.1) |
+**Principe du porteur (2026-10-27), comme le crédit téléphone :**
+- on paie des **réponses**, jamais des campagnes ;
+- tout est **prépayé** : avec Mobile Money, rien n'est prélevé tout seul ;
+- le lien d'une campagne **ne s'arrête jamais** à cause d'un paiement.
 
-[choix] Les commandes et le carnet de clients sont **ouverts à tous**, y compris en Gratuit : ils rendent l'app indispensable et nourrissent l'apprentissage. En Gratuit, les numéros restent masqués et les boutons WhatsApp verrouillés (« Passe au Pro pour contacter Awa »), ce qui reste le principal argument de passage au Pro.
+Pourquoi (observations du porteur dans les communautés du Bénin, du Togo et du Gabon) :
+- des grossistes ont 10 000 à 111 000 membres et publient 5 à 25 produits par jour. Avec 1 % de réponses, 111 000 membres et 20 produits font environ 22 000 réponses par jour : un forfait mensuel serait vide en quelques heures ;
+- des importateurs ont des groupes de 190 à 600 personnes et un arrivage tous les un ou deux mois : ils ne paieront pas un mois entier ;
+- des crédits comptés par campagne seraient réutilisés à vie en modifiant la même campagne ;
+- le mot « crédit » est flou pour un grossiste ; « réponse » ne l'est pas.
 
-- **Paiement annuel** : 10 mois payés pour 12.
-- **Au-delà du quota, on ne perd jamais une réponse** [choix] : elle est enregistrée mais **verrouillée** (« 87 réponses en attente, passe au Pro pour les voir »). Elle se déverrouille dès que le grossiste passe au forfait supérieur. Le répondant, lui, ne voit jamais de blocage.
-- Le quota se compte par **mois calendaire** (fuseau Africa/Dakar, donc UTC).
+| | **Gratuit** | **Pass Semaine** · ~3 000 FCFA | **Pass Mois (Pro)** · 9 900 FCFA | **Pass Grossiste (Business)** · 24 900 FCFA | **Grand compte** |
+|---|---|---|---|---|---|
+| Durée | toujours | 7 jours | 30 jours | 30 jours | 30 jours |
+| Réponses incluses | 150 visibles par mois calendaire | 1 000 | 3 000 | 15 000 | 100 000 et plus |
+| Campagnes actives | 3 | Illimitées | Illimitées | Illimitées | Illimitées |
+| Statistiques de base | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Quantité recommandée | premier verdict offert | ✅ | ✅ | ✅ | ✅ |
+| Liens par source | — | ✅ | ✅ | ✅ | ✅ |
+| Liste des intéressés avec boutons WhatsApp, export CSV | — | ✅ | ✅ | ✅ | ✅ |
+| Commandes, vue « à livrer par quartier », carnet de clients | ✅ (numéros masqués) | ✅ | ✅ | ✅ | ✅ |
+| Fiabilité des clients et coefficients appris | — | ✅ | ✅ | ✅ | ✅ |
+| Mention « Propulsé par Tamani » | Oui | Non | Non | Non | Non |
+| Membres d'équipe | 1 | 1 | 1 | 3 (v1.1) | à définir |
+
+Le prix du Grand compte se fixe après le pilote (voir plus bas).
+
+[choix] Les commandes et le carnet de clients sont **ouverts à tous**, y compris en Gratuit : ils rendent l'app indispensable et nourrissent l'apprentissage. En Gratuit, les numéros restent masqués et les boutons WhatsApp verrouillés (« Passe au Pro pour contacter Awa »), ce qui reste le principal argument pour prendre un pass.
+
+- **Recharges** : +1 000 réponses (~2 500 FCFA) ou +5 000 (~9 900 FCFA), payées quand le pass est épuisé avant sa fin. Elles valent jusqu'à la fin du pass en cours et ajoutent des réponses, pas des fonctions : il faut un pass actif.
+- **Période** : les réponses d'un pass se comptent sur sa durée (7 ou 30 jours à partir du paiement) ; celles du Gratuit sur le mois calendaire (fuseau Africa/Dakar, donc UTC).
+- **Pas de renouvellement automatique** : rappel 3 jours avant la fin, puis 3 jours de grâce, puis retour au Gratuit. Les campagnes continuent ; les numéros se masquent à nouveau.
+- **Pass 12 mois** (Pro et Business) : 10 mois payés pour 12.
+- **Au-delà des réponses incluses, on ne perd jamais une réponse** [choix] : elle est enregistrée mais **en attente** (« 87 réponses en attente »). Elle s'ouvre dès que le grossiste prend un pass ou une recharge. Le répondant, lui, ne voit jamais de blocage.
+- **Plafond du Gratuit** [décidé, 2026-10-27] : au-delà d'environ 1 000 réponses enregistrées dans le mois (les 150 visibles et celles en attente), la fiche du produit reste visible mais affiche « Réponses fermées pour ce mois ». Elle ne demande plus ni quantité ni numéro. Tamani compte seulement les visites, et le grossiste voit combien de personnes ont voulu répondre. C'est honnête envers le répondant, et un grand groupe gratuit ne nous coûte pas d'argent (règle des 70 % de marge). Un pass payé n'atteint jamais ce plafond : il a ses recharges.
+- **Grand compte** : son prix et son volume se fixent sur le coût réel par réponse, mesuré chez un ou deux grands grossistes pilotes (pass offert pendant le pilote contre leurs chiffres). Avant de les accueillir, réduire le nombre d'appels au serveur par réponse.
+- **Ce qui coûte à chaque envoi** (WhatsApp officiel, IA, plus tard) se paie de la même façon, en recharges, chacune avec sa marge de 70 %.
 - La mention « Propulsé par Tamani » renvoie vers la page d'accueil avec `?ref=<slug-boutique>` pour mesurer le bouche-à-oreille.
-- **Verdict offert** [décidé, 2026-10-27] : en Gratuit, la première campagne qui atteint 20 réponses comptées reçoit son verdict complet (quantité recommandée et argent évité), une fois pour toutes. Les campagnes suivantes montrent leurs réponses et la demande annoncée, et invitent au Pro. Le grossiste goûte ainsi à la valeur de Tamani sur ses propres chiffres.
-- **Paiement à la consommation** [décidé dans le principe, 2026-10-27] : en plus des forfaits, des crédits rechargeables paieront ce qui coûte à l'usage quand ces fonctions arriveront (WhatsApp officiel, IA). Leur forme (complément ou remplacement des forfaits) reste à préciser avec le porteur avant le lot 8 ; chaque crédit respecte la marge de 70 %.
+- **Verdict offert** [décidé, 2026-10-27] : en Gratuit, la première campagne qui atteint 20 réponses comptées reçoit son verdict complet (quantité recommandée et argent évité), une fois pour toutes. Les campagnes suivantes montrent leurs réponses et la demande annoncée, et invitent à prendre un pass. Le grossiste goûte ainsi à la valeur de Tamani sur ses propres chiffres.
 
 ### 5.7 Paiement : SasPay [décidé]
 - SasPay est une API REST unique pour le mobile money et la carte, en Afrique de l'Ouest et du Centre. Elle propose une page de paiement hébergée (*checkout session*) et des webhooks signés.
@@ -337,7 +355,7 @@ Toutes respectent les invariants du kit : `export const runtime = 'nodejs'` et `
 6. **Pop-up** : `/c/[code]`, routes publiques, mémoire de l'appareil, protections, budget de performance.
 7. **Tableau de bord** : statistiques, quantité recommandée, liste des répondants, relance WhatsApp, export CSV, vue d'ensemble.
 8. **Commandes et clients** : conversion d'une réponse en commande, commandes manuelles, statuts, vue « à livrer par quartier », carnet et fiche client, fiabilité, coefficients appris.
-9. **Abonnements et SasPay** : forfaits, quotas et verrouillage, checkout, webhook, vérification, rappels, grâce, page Tarifs.
+9. **Forfaits prépayés et SasPay** : passes, recharges, réponses en attente et plafond du Gratuit, checkout, webhook, vérification, rappels, grâce, page Tarifs.
 10. **Admin Tamani, page d'accueil, pages légales.**
 11. **Mise en production** : Vercel, domaine, tâches planifiées, Sentry, compte SasPay en mode live.
 

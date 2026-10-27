@@ -312,7 +312,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 | 6 | Tableau de bord | Verdict, quantité, argent évité et bénéfice, bulletin du jour, statistiques, relance WhatsApp et export CSV. | 3, 5 |
 | 7 | Commandes et clients | Conversion d'une réponse en commande, commandes manuelles, statuts, livraisons par quartier, carnet dynamique filtrable, fiabilité et coefficients appris. | 3, 5, 6 |
 | 7b | Pays et monnaies | Toute l'Afrique francophone : chaque pays a sa monnaie, ses prix et ses numéros (ajout du 2026-10-27). | 3, 4 |
-| 8 | Abonnements et SasPay | Passage au Pro en mode test SasPay : activation idempotente, quotas, rappels et grâce, crédits à la consommation. Bictorys retiré. | 3, 5, 6, 7, 7b |
+| 8 | Forfaits prépayés et SasPay | Passes (Semaine, Mois, Grossiste) et recharges payés en mode test SasPay : activation idempotente, réponses comptées par pass, rappels et grâce, plafond du Gratuit. Bictorys retiré. | 3, 5, 6, 7, 7b |
 | 9 | Admin, accueil, légal, production | Admin Tamani, page d'accueil, CGU et confidentialité, mise en ligne sur Vercel avec SasPay en mode live. | tous |
 
 Les lots 2 et 3 peuvent être menés en parallèle, puis les lots 4 et 5.
@@ -466,7 +466,7 @@ Décisions du porteur, prises sur les maquettes v1 à v3 :
 Décisions du porteur, le 2026-10-27 (livrées par le [plan du lot 6](2026-10-27-tamani-06-tableau-de-bord.md)) :
 - **Verdict offert** : en Gratuit, la première campagne qui atteint 20 réponses comptées reçoit son verdict (quantité et argent), une fois pour toutes. Migration `8b_free_verdict` (`Organization.freeVerdictCampaignId`).
 - **Marché** : toute l'Afrique francophone, pas seulement l'UEMOA. Nouveau lot « Pays et monnaies » (7b), placé avant le lot 8.
-- **Paiement à la consommation** : en plus des forfaits, des crédits pour ce qui coûte à l'usage. À construire au lot 8 (voir ce lot).
+- **Forfaits prépayés**, tranchés le même jour : on paie des réponses, jamais des campagnes ; passes de 7 ou 30 jours et recharges ; le lien n'est jamais bloqué ; au-delà du plafond du Gratuit, « Réponses fermées pour ce mois ». Spec §5.6, à construire au lot 8.
 - **Numéros complets** : la copie des numéros et l'export demandent `respondentContacts` et `csvExport`.
 
 ### Lot 7 : Commandes et clients
@@ -506,7 +506,7 @@ Le porteur veut couvrir toute l'Afrique francophone. Aujourd'hui tout est en FCF
 4. **Numéros** : la normalisation de `phone.ts` et les indicatifs couvrent chaque pays ajouté.
 5. **Paiement** : vérifier dans l'OpenAPI SasPay les pays et les moyens couverts avant d'ouvrir un pays au paiement ; la règle de marge de 70 % se vérifie par monnaie.
 
-### Lot 8 : Abonnements et SasPay
+### Lot 8 : Forfaits prépayés et SasPay
 1. **Client SasPay** dans `frontend/src/lib/server/payments/saspay.ts` (`PaymentProvider.charge` via une session de checkout, plus `verifyPayment(paymentId)`).
    - `toSaspayAmount(9900) === '9900.00'`.
    - `Idempotency-Key` = `Order.idempotencyKey`, avec le `CircuitBreaker` existant.
@@ -522,17 +522,21 @@ Le porteur veut couvrir toute l'Afrique francophone. Aujourd'hui tout est en FCF
    - On réécrit `provider-singleton.ts` pour SasPay.
    - On met à jour : `.env.example`, `env.ts`, `features.json`, la documentation, et on étend le test `pruned-surfaces`.
 4. **Routes de facturation.**
-   - `checkout` crée un `Order` en `PENDING` avec le montant `priceFor`, ouvre la session SasPay et renvoie `{ checkoutUrl }`.
+   - `checkout` crée un `Order` en `PENDING` pour un pass ou une recharge, au montant de l'offre, ouvre la session SasPay et renvoie `{ checkoutUrl }`.
    - Le webhook passe la commande en `AWAITING_VERIFICATION` et ajoute à l'outbox les événements des types existants.
-   - `billing-verify` (tâche planifiée) et `return` appellent `verifyPayment`, puis `activateFromPayment`, qui enchaîne `extendSubscription` et `unlockCurrentMonth`.
+   - `billing-verify` (tâche planifiée) et `return` appellent `verifyPayment`, puis `activateFromPayment`, qui prolonge le pass ou ajoute la recharge, puis ouvre les réponses en attente.
    - Tests : Review Focus 3 et 5.
-5. **`subscription-renewals`** : rappel à J-3 (`EmailJob` et `Notification`, avec un `dedupeKey` par période), début de grâce, puis retour au FREE. Mettre à jour `vercel.json` et le garde-fou `vercel-json-shape` (8 tâches planifiées).
-6. **Interface** : `/app/abonnement` (forfait, jauge d'usage, passage au forfait supérieur sur 1 ou 12 mois), `/tarifs`, bandeau « N réponses en attente », bandeau de grâce. Recette de bout en bout en mode test SasPay.
-7. **Paiement à la consommation** (décision du porteur, 2026-10-27) : des crédits rechargeables pour ce qui coûte à l'usage (WhatsApp officiel, IA), en plus des forfaits. **À préciser avec le porteur avant le plan** : les crédits complètent-ils les forfaits ou les remplacent-ils ? Chaque crédit garde la marge de 70 %.
+5. **`subscription-renewals`** (aucun renouvellement automatique : un pass se rachète) : rappel à J-3 (`EmailJob` et `Notification`, avec un `dedupeKey` par période), début de grâce, puis retour au FREE. Mettre à jour `vercel.json` et le garde-fou `vercel-json-shape` (8 tâches planifiées).
+6. **Interface** : `/app/abonnement` (pass en cours, jauge des réponses, achat d'un pass ou d'une recharge, pass 12 mois), `/tarifs`, bandeau « N réponses en attente », bandeau de grâce. Recette de bout en bout en mode test SasPay.
+7. **Passes et recharges** (décision du porteur, 2026-10-27 ; spec §5.6).
+   - `PLANS` gagne la durée de chaque offre et le Pass Semaine ; les recharges sont des offres à part, réservées à un pass actif.
+   - Le pass enregistre son début, sa fin et ses réponses incluses ; chaque recharge ajoute des réponses jusqu'à la fin du pass. Le modèle exact se décide dans le plan du lot 8.
+   - `quota.ts` compte les réponses sur la période du pass ; le Gratuit garde le mois calendaire.
+   - Le Grand compte attend le coût réel par réponse mesuré chez un grand grossiste pilote ; avant lui, réduire les appels au serveur par réponse (aujourd'hui un par étape du pop-up).
 8. **Garde-fous de marge** (règle « Marge » ci-dessus).
    - Lire les vrais tarifs par réseau avec `GET /pricing/my-rates/` avant de figer les prix.
    - Un test pur qui échoue si un forfait payant, à quota plein, passe sous 70 % de marge (frais SasPay au pire cas, coût par réponse, frais de retrait).
-   - Gratuit : plafond de réponses enregistrées par boutique et par mois (1 000 proposé) ; ce qui se passe au-delà est **à décider par le porteur** (pop-up « réponses closes pour ce mois », ou réponse non enregistrée).
+   - Gratuit : plafond de réponses enregistrées par boutique et par mois (1 000 proposé). Au-delà, **décidé par le porteur le 2026-10-27** : la fiche du produit reste visible et affiche « Réponses fermées pour ce mois », sans demander ni quantité ni numéro ; seules les visites sont comptées, et le grossiste voit combien de personnes ont voulu répondre.
    - Au-delà du quota, une notification groupée par jour (« N nouvelles réponses en attente ») au lieu d'une par réponse ; purge des notifications de plus de 90 jours.
    - Alertes et plafonds de dépense chez chaque fournisseur ; photo du pop-up allégée.
 
