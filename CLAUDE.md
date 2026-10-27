@@ -200,6 +200,24 @@ The porteur's eleven requests ([retours](docs/superpowers/specs/2026-10-25-taman
 - **Migration `8_shop_description`** — `Organization.description` (300 characters, blank → `null`), shown in the popup under « Oui / Non ». `shopCompleteness` ([shop-completeness.ts](frontend/src/lib/tamani/shop-completeness.ts)) feeds the Réglages notice. The lot 7 orders migration is `9_sale_orders`.
 - **Forms** — unit chips (`COMMON_UNITS` then the shop's own, `GET …/products/units`); an incoming campaign takes one arrival date, never before today (the API refuses a past one at creation, and at edit only when the date changes). Réglages: five sections with a left menu from `lg`, each save in its section header (`formId` / `hideSubmit` on `ShopForm` and `CoefficientsForm`). Sign-in pages: two columns from `lg`, Google first through `AuthForm`'s `before`.
 
+## Tamani dashboard (lot 6)
+
+What a campaign's answers mean ([plan](docs/superpowers/plans/2026-10-27-tamani-06-tableau-de-bord.md), spec §5.4 to §5.6).
+
+- **Counted answer** — complete, not `locked`, not `suspicious`. Only counted answers enter the estimate, the breakdowns, the interested list and the export; locked and suspicious ones are only counted apart (`lockedCount`, `suspiciousCount`).
+- **Rules** — pure, in `lib/server/tamani/`:
+  - `estimate.ts` (`estimateFromTotals` for totals summed in the database);
+  - `verdict.ts`: under `MIN_RESPONSES_FOR_VERDICT` (20, from `DEFAULT_MIN_RESPONSES` in `verdict-display.ts`) → `WAIT`; ratio realistic / reference ≥ 0.9 → `GO`, ≥ 0.4 → `CAUTION`, else `STOP`; no reference → `NEUTRAL`. The reference is `plannedQuantity`, else `stockQuantity`;
+  - `money.ts`: integer FCFA, only with a `costPrice`, and never while the verdict waits;
+  - `coefficients.ts`: the shop's settings (0.5 / 0.7 by default), range ± 0.1 bounded to [0, 1];
+  - `stats.ts` (`computeCampaignStats`): a yes without a buyer type or a quantity is skipped, never a crash.
+- **Plans** — `PLANS[plan].features`: `estimate` shows the verdict, the quantity and the money; `respondentContacts` the full numbers and WhatsApp buttons; `csvExport` the export and the copy of the numbers. The numbers and export routes need both `respondentContacts` and `csvExport`. On Free no full number leaves the server.
+- **Offered verdict** (porteur, 2026-10-27) — on a plan without `estimate`, the first campaign to reach 20 counted answers gets its verdict, once and for good: `claimFreeVerdict` ([free-verdict.ts](frontend/src/lib/server/tamani/free-verdict.ts)) writes `Organization.freeVerdictCampaignId` only while it is null, then reads it back, so two racing requests end on the same campaign. `verdictAccess` → `PLAN | OFFERED | LOCKED`. While nothing is offered yet, `offerOpen` (stats) and a `WAIT` line (home) say the verdict is coming.
+- **Routes** — `GET …/campaigns/[campaignId]/stats` (`{ stats, access, offerOpen }`, `stats.result` is null when `LOCKED`), `…/responses?filtre=oui|non&cursor=` ([campaign-responses.ts](frontend/src/lib/server/tamani/campaign-responses.ts); counts on the first page), `…/responses/numbers` (deduplicated, 5 000 at most), `…/export` (CSV, 20 000 rows at most). The home summary gains `campaigns[]`, `moneyProtectedThisMonth` and `todo[]` from `buildHomeBulletin` ([home-bulletin.ts](frontend/src/lib/server/tamani/home-bulletin.ts)), which reads the counted answers with two `groupBy`.
+- **Excel file** — [csv.ts](frontend/src/lib/server/tamani/csv.ts): UTF-8 BOM, `;`, CRLF, RFC 4180 quotes, and an apostrophe before any cell starting with `= + - @`, tab or CR (a first name like `=HYPERLINK(…)` must not run). The browser fetches it through `downloadFile` ([download.ts](frontend/src/lib/tamani/download.ts)), which refreshes the session once on 401 like `upload.ts`, because `lib/api.ts` reads JSON only.
+- **Screens** — the campaign page has four tabs (`campaignTab` in [results-view.ts](frontend/src/lib/tamani/results-view.ts)): Résultats by default, `?onglet=interesses|partager|modifier`; a draft and `?partager=1` open on Partager. `CampaignResults` and `InterestedList` each split a loader (`…Tab`) from a view drawn from props, which the tests render as static HTML. `DemandGauge` joined the kit. The WhatsApp message to an interested person is `interestedMessage` (`ARRIVED`, `IN_STOCK`, `INCOMING`).
+- **Migrations are sorted as text** — `10_…` would run before `1_…`. Insert with a letter (`8b_free_verdict`); lot 7 keeps `9_sale_orders`. `schema-tamani.test.ts` fails if the folders stop sorting in the order they were written.
+
 ## Tamani home page (lot 9a)
 
 - **Route** — `/` is [app/(public)/page.tsx](frontend/src/app/(public)/page.tsx), static. It renders the sections of [components/landing/](frontend/src/components/landing/) in the porteur's order:

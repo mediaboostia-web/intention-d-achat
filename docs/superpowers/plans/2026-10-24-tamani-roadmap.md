@@ -210,10 +210,20 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
   - `MIN_RESPONSES_FOR_VERDICT = 20` ;
   - la référence est `plannedQuantity`, sinon `stockQuantity`.
 - `money.ts` : `computeMoney({ reference, estimate: DemandEstimate, costPrice: number | null, unitPrice, wholesalePrice: number | null }): { avoidedDeadStock: number | null; expectedProfit: number | null }`. Tout vaut `null` si `costPrice` est absent. Les revendeurs sont valorisés au prix de gros quand il existe.
-- `stats.ts` : `computeCampaignStats(responses, campaign, coefs): CampaignStats`. Le résultat contient `estimate`, `verdict`, `money`, des répartitions (statut, zone, échéance, option, source, raison du non), `opens`, `completed`, `incomplete`, `interestRate`, `lockedCount` et `stockStatus`.
+- `stats.ts` : `computeCampaignStats(rows, campaign, zones, coefs): CampaignStats` (types dans `lib/tamani/results-view.ts`).
+  - Chiffres visibles par tous : `opens`, `completed`, `incomplete`, `lockedCount`, `suspiciousCount`, `interested`, `notInterested`, `interestRate`, `announced`, `reference`, `stock`, et les répartitions `byBuyerType`, `byZone`, `pickup`, `byTiming`, `byOption`, `bySource`, `noReasons`.
+  - `result { estimate; coefs; verdict; money; stockStatus }` : ce que seul `estimate` montre. `money` vaut `null` tant que le verdict attend (`WAIT`).
+- `estimate.ts` gagne `estimateFromTotals(sums, coefs)` : la même estimation à partir de totaux par statut, sommés en base (accueil).
+- `free-verdict.ts` : `claimFreeVerdict(db, organizationId, current, eligible): Promise<string | null>` (réserve `Organization.freeVerdictCampaignId` une seule fois) et `verdictAccess(plan, freeVerdictCampaignId, campaignId): 'PLAN' | 'OFFERED' | 'LOCKED'`.
+- `campaign-responses.ts` : `parseResponseFilter`, `listCampaignResponses(db, organizationId, campaignId, filter, cursor, { canSeeContacts; limit }): Promise<InterestedPage>`, `interestedNumbers(...)` (dédupliqués, 5 000 au plus) et `campaignExportRows(...)` (20 000 au plus).
+- `csv.ts` : `toExcelCsv(columns, rows)` ; `campaign-export.ts` : `responsesCsv(rows)` et `exportFilename(title, now)`.
+- `home-bulletin.ts` : `buildHomeBulletin(db, organizationId, now)`, appelé par `buildShopSummary`.
 - `summary.ts` (lot 5b, étendu au lot 6) : `buildShopSummary(db, organizationId, now): Promise<ShopSummary>`, type partagé dans `lib/tamani/home-view.ts`.
   - **Contrat 5b** : `week { completed; sinceYesterday; interested; opensRunning; newClients }` (7 jours glissants, `sinceYesterday` sur 24 h ; `opensRunning` = ouvertures cumulées des campagnes en cours, car les ouvertures ne sont pas datées), `activity[]` (8 au plus : réponses et nouveaux clients, les plus récents d'abord), `upcoming[]` (5 au plus : fins de campagne et arrivages dans les 30 jours), `hasCampaign`, `hasProduct`, `shareCampaign { id; title; shareMessage } | null`.
-  - **Le lot 6 ajoute** `campaigns[] { id; title; verdict; estimate }`, `moneyProtectedThisMonth` et `todo[]`. Au lot 6, `todo` ne contient que les campagnes arrivées avec des intéressés à prévenir ; le lot 7 ajoute les commandes à confirmer et les livraisons par quartier.
+  - **Le lot 6 ajoute** :
+    - `campaigns[] { id; title; unitLabel; completed; verdict: VerdictCode | null; realistic: number | null; reference: number | null; offered: boolean }` : les campagnes en cours, la plus récente d'abord, 10 au plus ; `verdict` vaut `null` quand le forfait le cache, `WAIT` tant que le verdict offert reste à donner ;
+    - `moneyProtectedThisMonth` : la somme de `avoidedDeadStock` des campagnes créées dans le mois UTC dont le verdict est visible et n'est pas `WAIT` ;
+    - `todo[] { kind: 'NOTIFY_INTERESTED'; campaignId; title; interested }` : les campagnes arrivées depuis 7 jours au plus qui ont des intéressés. Le lot 7 ajoute les commandes à confirmer et les livraisons par quartier.
 - `csv.ts` : `toExcelCsv(columns: ReadonlyArray<{ key; header }>, rows): string`, avec BOM UTF-8, séparateur `;`, fins de ligne CRLF et guillemets RFC 4180.
 
 **Lot 7**
@@ -260,9 +270,11 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
   - `GET …/campaigns` et `GET …/products` acceptent `q` et envoient `counts` sur la première page (sans tenir compte de la recherche ni du filtre) ; `GET …/products` accepte `inCampaign=1`.
 - **Lot 6, tableau de bord** :
   - `GET /api/shops/[orgId]/summary` étendu (voir `summary.ts`) ;
-  - `GET …/campaigns/[campaignId]/stats` ;
-  - `GET …/campaigns/[campaignId]/responses` (curseur ; numéros masqués si `respondentContacts` est faux) ;
-  - `GET …/campaigns/[campaignId]/export` (CSV ; `403 PLAN_FEATURE_LOCKED` en FREE).
+  - `GET …/campaigns/[campaignId]/stats` → `{ stats, access: 'PLAN' | 'OFFERED' | 'LOCKED', offerOpen }`, `stats.result` à `null` quand l'accès vaut `LOCKED` ;
+  - `GET …/campaigns/[campaignId]/responses?filtre=oui|non&cursor=` (`400` sur un autre filtre ; numéros masqués si `respondentContacts` est faux ; `counts { yes; no }` sur la première page) ;
+  - `GET …/campaigns/[campaignId]/responses/numbers` → `{ numbers }` ;
+  - `GET …/campaigns/[campaignId]/export` (CSV pour Excel).
+  - `numbers` et `export` répondent `403 PLAN_FEATURE_LOCKED` sans `respondentContacts` **et** `csvExport`, et `404 CAMPAIGN_NOT_FOUND` pour une campagne d'une autre boutique.
 - **Lot 7, commandes** :
   - `GET|POST /api/shops/[orgId]/orders`, avec les filtres `status`, `campaignId`, `productId` et `zoneId`, et le paramètre `view=to-deliver`, qui groupe les commandes par zone ;
   - `GET|PATCH …/orders/[orderId]` (transitions, paiement, prix avant confirmation) ;
@@ -299,7 +311,8 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 | 5 | Pop-up public | Un répondant répond depuis son téléphone. La réponse est dédupliquée, protégée et compte dans le quota, et la personne entre dans le carnet de clients. | 2, 3 |
 | 6 | Tableau de bord | Verdict, quantité, argent évité et bénéfice, bulletin du jour, statistiques, relance WhatsApp et export CSV. | 3, 5 |
 | 7 | Commandes et clients | Conversion d'une réponse en commande, commandes manuelles, statuts, livraisons par quartier, carnet dynamique filtrable, fiabilité et coefficients appris. | 3, 5, 6 |
-| 8 | Abonnements et SasPay | Passage au Pro en mode test SasPay : activation idempotente, quotas, rappels et grâce. Bictorys retiré. | 3, 5, 6, 7 |
+| 7b | Pays et monnaies | Toute l'Afrique francophone : chaque pays a sa monnaie, ses prix et ses numéros (ajout du 2026-10-27). | 3, 4 |
+| 8 | Abonnements et SasPay | Passage au Pro en mode test SasPay : activation idempotente, quotas, rappels et grâce, crédits à la consommation. Bictorys retiré. | 3, 5, 6, 7, 7b |
 | 9 | Admin, accueil, légal, production | Admin Tamani, page d'accueil, CGU et confidentialité, mise en ligne sur Vercel avec SasPay en mode live. | tous |
 
 Les lots 2 et 3 peuvent être menés en parallèle, puis les lots 4 et 5.
@@ -450,6 +463,12 @@ Décisions du porteur, prises sur les maquettes v1 à v3 :
    - Page campagne, onglet Résultats : `VerdictCard`, `MoneyCard`, revendeurs et usagers, demande face à la référence, « Où et quand », signal prix, « Comment c'est calculé ? ».
    - Liste des intéressés avec un bouton WhatsApp, « Copier les numéros », et l'action « Le produit est arrivé ».
 
+Décisions du porteur, le 2026-10-27 (livrées par le [plan du lot 6](2026-10-27-tamani-06-tableau-de-bord.md)) :
+- **Verdict offert** : en Gratuit, la première campagne qui atteint 20 réponses comptées reçoit son verdict (quantité et argent), une fois pour toutes. Migration `8b_free_verdict` (`Organization.freeVerdictCampaignId`).
+- **Marché** : toute l'Afrique francophone, pas seulement l'UEMOA. Nouveau lot « Pays et monnaies » (7b), placé avant le lot 8.
+- **Paiement à la consommation** : en plus des forfaits, des crédits pour ce qui coûte à l'usage. À construire au lot 8 (voir ce lot).
+- **Numéros complets** : la copie des numéros et l'export demandent `respondentContacts` et `csvExport`.
+
 ### Lot 7 : Commandes et clients
 1. **Migration `9_sale_orders`, puis `orders.ts`**, avec ses tests.
    - `orderUnitPrice` : un revendeur qui commande 12 pièces avec un minimum de 12 paie le prix de gros ; avec 11 pièces, le prix unitaire ; un usager paie toujours le prix unitaire.
@@ -477,6 +496,16 @@ Décisions du porteur, prises sur les maquettes v1 à v3 :
    - `/app/clients` (sans onglets) : les nouveaux filtres dans la `FilterBar` synchronisée avec l'URL.
    - `/app/clients/[id]` : historique, montant total, note, fiabilité.
 
+### Lot 7b : Pays et monnaies (ajout du 2026-10-27)
+Le porteur veut couvrir toute l'Afrique francophone. Aujourd'hui tout est en FCFA et la liste des pays est celle de l'Afrique de l'Ouest.
+1. **Pays et monnaie par boutique** : `Organization.currency` dérivée du pays ; FCFA UEMOA (XOF), FCFA CEMAC (XAF), franc guinéen (GNF), franc congolais (CDF), et les autres pays francophones retenus avec le porteur.
+2. **Incohérences à corriger** :
+   - la Guinée est déjà dans `SHOP_COUNTRIES` mais ses prix s'affichent en FCFA alors que sa monnaie est le franc guinéen ;
+   - le Cameroun paie en FCFA CEMAC (XAF), pas en XOF : même mot à l'écran, monnaie différente pour SasPay.
+3. **Prix et montants** : `formatPrice`, le message de partage, l'argent du verdict et l'export lisent la monnaie de la boutique ; les montants restent des entiers dans la plus petite unité.
+4. **Numéros** : la normalisation de `phone.ts` et les indicatifs couvrent chaque pays ajouté.
+5. **Paiement** : vérifier dans l'OpenAPI SasPay les pays et les moyens couverts avant d'ouvrir un pays au paiement ; la règle de marge de 70 % se vérifie par monnaie.
+
 ### Lot 8 : Abonnements et SasPay
 1. **Client SasPay** dans `frontend/src/lib/server/payments/saspay.ts` (`PaymentProvider.charge` via une session de checkout, plus `verifyPayment(paymentId)`).
    - `toSaspayAmount(9900) === '9900.00'`.
@@ -499,7 +528,8 @@ Décisions du porteur, prises sur les maquettes v1 à v3 :
    - Tests : Review Focus 3 et 5.
 5. **`subscription-renewals`** : rappel à J-3 (`EmailJob` et `Notification`, avec un `dedupeKey` par période), début de grâce, puis retour au FREE. Mettre à jour `vercel.json` et le garde-fou `vercel-json-shape` (8 tâches planifiées).
 6. **Interface** : `/app/abonnement` (forfait, jauge d'usage, passage au forfait supérieur sur 1 ou 12 mois), `/tarifs`, bandeau « N réponses en attente », bandeau de grâce. Recette de bout en bout en mode test SasPay.
-7. **Garde-fous de marge** (règle « Marge » ci-dessus).
+7. **Paiement à la consommation** (décision du porteur, 2026-10-27) : des crédits rechargeables pour ce qui coûte à l'usage (WhatsApp officiel, IA), en plus des forfaits. **À préciser avec le porteur avant le plan** : les crédits complètent-ils les forfaits ou les remplacent-ils ? Chaque crédit garde la marge de 70 %.
+8. **Garde-fous de marge** (règle « Marge » ci-dessus).
    - Lire les vrais tarifs par réseau avec `GET /pricing/my-rates/` avant de figer les prix.
    - Un test pur qui échoue si un forfait payant, à quota plein, passe sous 70 % de marge (frais SasPay au pire cas, coût par réponse, frais de retrait).
    - Gratuit : plafond de réponses enregistrées par boutique et par mois (1 000 proposé) ; ce qui se passe au-delà est **à décider par le porteur** (pop-up « réponses closes pour ce mois », ou réponse non enregistrée).

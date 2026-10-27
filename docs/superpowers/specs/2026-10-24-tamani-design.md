@@ -28,7 +28,7 @@ Les trois piliers de marque sont donc : **proximité** (être en contact), **cla
 | **Cible v1** [décidé] | Grossiste ou importateur (ustensiles de cuisine, cosmétiques, tissus, produits variés) qui vend au prix de gros et à l'unité, avec une communauté WhatsApp de plusieurs centaines à plusieurs milliers de membres. |
 | **Répondants** | Les membres de cette communauté : **revendeurs** (achètent en quantité), **usagers / acheteurs finaux** (1 à 3 pièces), **simples abonnés**. Sur mobile, souvent avec un réseau lent, et ils ouvrent les liens depuis WhatsApp. |
 | **Écartée pour l'instant** [décidé] | Les vendeurs de nourriture en ligne. Leur vrai besoin est la commande ferme du jour, pas l'intention. Ils pourront venir plus tard avec un modèle « menu du jour » sur le même moteur. |
-| **Marché de départ** [hypothèse] | Afrique de l'Ouest francophone, prix en FCFA (XOF), interface en français. |
+| **Marché de départ** [décidé, 2026-10-27] | Toute l'Afrique francophone, interface en français. Chaque boutique paie et affiche ses prix dans la monnaie de son pays : FCFA UEMOA (XOF), FCFA CEMAC (XAF), franc guinéen, franc congolais… Le lot « Pays et monnaies » (feuille de route, lot 7b) l'apporte ; jusque-là, tout est en FCFA (XOF). |
 
 ## 3. Objectifs, non-objectifs, anti-objectifs
 
@@ -206,6 +206,8 @@ Pas d'envoi WhatsApp automatique en v1, car l'API officielle de Meta est payante
 - **Au-delà du quota, on ne perd jamais une réponse** [choix] : elle est enregistrée mais **verrouillée** (« 87 réponses en attente, passe au Pro pour les voir »). Elle se déverrouille dès que le grossiste passe au forfait supérieur. Le répondant, lui, ne voit jamais de blocage.
 - Le quota se compte par **mois calendaire** (fuseau Africa/Dakar, donc UTC).
 - La mention « Propulsé par Tamani » renvoie vers la page d'accueil avec `?ref=<slug-boutique>` pour mesurer le bouche-à-oreille.
+- **Verdict offert** [décidé, 2026-10-27] : en Gratuit, la première campagne qui atteint 20 réponses comptées reçoit son verdict complet (quantité recommandée et argent évité), une fois pour toutes. Les campagnes suivantes montrent leurs réponses et la demande annoncée, et invitent au Pro. Le grossiste goûte ainsi à la valeur de Tamani sur ses propres chiffres.
+- **Paiement à la consommation** [décidé dans le principe, 2026-10-27] : en plus des forfaits, des crédits rechargeables paieront ce qui coûte à l'usage quand ces fonctions arriveront (WhatsApp officiel, IA). Leur forme (complément ou remplacement des forfaits) reste à préciser avec le porteur avant le lot 8 ; chaque crédit respecte la marge de 70 %.
 
 ### 5.7 Paiement : SasPay [décidé]
 - SasPay est une API REST unique pour le mobile money et la carte, en Afrique de l'Ouest et du Centre. Elle propose une page de paiement hébergée (*checkout session*) et des webhooks signés.
