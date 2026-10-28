@@ -15,6 +15,7 @@ vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigati
 const { CampaignResults } = await import('./CampaignResults');
 
 const stats: CampaignStatsBody['stats'] = {
+  availability: 'INCOMING',
   opens: 340,
   completed: 94,
   incomplete: 12,
@@ -33,9 +34,9 @@ const stats: CampaignStatsBody['stats'] = {
   byZone: [{ zoneId: 'z1', name: 'Médina', respondents: 24, quantity: 120 }],
   pickup: { respondents: 10, quantity: 40 },
   byTiming: [
-    { timing: 'ON_ARRIVAL', respondents: 38 },
-    { timing: 'WEEK_AFTER', respondents: 19 },
-    { timing: 'LATER', respondents: 7 },
+    { timing: 'ON_ARRIVAL', respondents: 38, quantity: 210 },
+    { timing: 'WEEK_AFTER', respondents: 19, quantity: 100 },
+    { timing: 'LATER', respondents: 7, quantity: 40 },
   ],
   byOption: [],
   bySource: [{ linkId: 'l1', label: 'Lien principal', opens: 340, completed: 94, interested: 64 }],
@@ -58,6 +59,7 @@ const stats: CampaignStatsBody['stats'] = {
     verdict: { code: 'CAUTION', ratio: 211 / 400, missingResponses: 0 },
     money: { avoidedDeadStock: 850500, expectedProfit: 444000 },
     stockStatus: null,
+    stockAdvice: null,
   },
 };
 

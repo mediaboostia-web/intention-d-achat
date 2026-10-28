@@ -26,6 +26,7 @@ export const GET = shopHandler<Params>('MEMBER', async (_req, { params }) => {
     select: {
       id: true,
       createdAt: true,
+      availability: true,
       plannedQuantity: true,
       stockQuantity: true,
       product: { select: { costPrice: true, unitPrice: true, wholesalePrice: true } },
@@ -68,7 +69,12 @@ export const GET = shopHandler<Params>('MEMBER', async (_req, { params }) => {
   ]);
   if (!org) return tamaniError('SHOP_NOT_FOUND', 404);
 
-  const stats = computeCampaignStats(rows, campaign, zones, coefficientsFor(org));
+  const stats = computeCampaignStats(
+    rows,
+    { ...campaign, availability: campaign.availability === 'IN_STOCK' ? 'IN_STOCK' : 'INCOMING' },
+    zones,
+    coefficientsFor(org),
+  );
   const plan = PLANS[effectivePlan(org.subscription, now).plan];
   const offered =
     !plan.features.estimate && stats.completed >= MIN_RESPONSES_FOR_VERDICT

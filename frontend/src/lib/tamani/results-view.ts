@@ -7,7 +7,7 @@ import {
   type BuyerType,
   type NotInterestedReason,
 } from './labels';
-import { TIMING_LABELS, type Timing } from './timing';
+import { TIMING_LABELS, type Availability, type Timing } from './timing';
 import { approxQuantity, pluralizeUnit, type VerdictCode } from './verdict-display';
 
 /** Realistic demand (spec §5.4.1), computed by lib/server/tamani/estimate.ts. */
@@ -37,6 +37,17 @@ export interface CampaignResult {
   money: { avoidedDeadStock: number | null; expectedProfit: number | null } | null;
   /** Realistic demand against the stock; null without a stock. */
   stockStatus: 'SHORTAGE' | 'ENOUGH' | null;
+  /** An in-stock campaign with a stock: enough, or the restock to plan. */
+  stockAdvice: StockAdvice | null;
+}
+
+/** An in-stock campaign's realistic demand against its stockQuantity (lot 6b). */
+export interface StockAdvice {
+  status: 'ENOUGH' | 'SHORTAGE';
+  leftover: number;
+  restock: number;
+  /** Under the verdict's 20 counted answers. */
+  provisional: boolean;
 }
 
 /**
@@ -44,6 +55,7 @@ export interface CampaignResult {
  * quota and not suspicious; the breakdowns read the counted yes answers.
  */
 export interface CampaignStats {
+  availability: Availability;
   opens: number;
   completed: number;
   incomplete: number;
@@ -58,7 +70,7 @@ export interface CampaignStats {
   byBuyerType: Record<BuyerType, { respondents: number; announced: number }>;
   byZone: Array<{ zoneId: string; name: string; respondents: number; quantity: number }>;
   pickup: { respondents: number; quantity: number };
-  byTiming: Array<{ timing: Timing; respondents: number }>;
+  byTiming: Array<{ timing: Timing; respondents: number; quantity: number }>;
   byOption: Array<{ option: string; respondents: number; quantity: number }>;
   bySource: Array<{
     linkId: string;

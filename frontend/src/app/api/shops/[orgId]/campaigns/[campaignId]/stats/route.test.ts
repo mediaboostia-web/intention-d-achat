@@ -21,6 +21,7 @@ const pro = {
 const campaign = {
   id: 'c1',
   createdAt: new Date('2026-10-01T00:00:00Z'),
+  availability: 'INCOMING',
   plannedQuantity: 400,
   stockQuantity: null,
   product: { costPrice: 6000, unitPrice: 7500, wholesalePrice: 6500 },
@@ -78,6 +79,18 @@ describe('GET /api/shops/[orgId]/campaigns/[campaignId]/stats', () => {
     expect(prismaMock.response.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { campaignId: 'c1', organizationId: 'org_1' } }),
     );
+  });
+
+  it('tells an in-stock campaign apart and reads its stock', async () => {
+    prismaMock.campaign.findFirst.mockResolvedValue({
+      ...campaign,
+      availability: 'IN_STOCK',
+      plannedQuantity: null,
+      stockQuantity: 500,
+    } as never);
+    const { body } = await read();
+    expect(body.stats.availability).toBe('IN_STOCK');
+    expect(body.stats.result?.stockAdvice).toMatchObject({ status: 'ENOUGH', provisional: false });
   });
 
   it('answers 404 to a non-member', async () => {

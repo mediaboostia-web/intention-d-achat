@@ -4,10 +4,11 @@
 import 'server-only';
 import { BUYER_TYPES, NOT_INTERESTED_REASONS, type BuyerType } from '@/lib/tamani/labels';
 import type { CampaignStats } from '@/lib/tamani/results-view';
-import { TIMING_LABELS, type Timing } from '@/lib/tamani/timing';
+import { TIMING_LABELS, type Availability, type Timing } from '@/lib/tamani/timing';
 import type { Coefficients } from './coefficients';
 import { estimateDemand } from './estimate';
 import { computeMoney } from './money';
+import { computeStockAdvice } from './stock-advice';
 import { computeVerdict, verdictReference } from './verdict';
 
 /** The columns of Response the figures read. */
@@ -27,6 +28,7 @@ export interface StatsRow {
 }
 
 export interface StatsCampaign {
+  availability: Availability;
   plannedQuantity: number | null;
   stockQuantity: number | null;
   product: { costPrice: number | null; unitPrice: number; wholesalePrice: number | null };
@@ -83,9 +85,20 @@ export function computeCampaignStats(
     completedResponses: counted.length,
     reference,
   });
-  const money =
-    verdict.code === 'WAIT' ? null : computeMoney({ reference, estimate, ...campaign.product });
   const stock = campaign.stockQuantity;
+  // In stock the goods are already bought: no dead stock to avoid, and the
+  // profit stops at what is on the shelf.
+  const inStock = campaign.availability === 'IN_STOCK';
+  const money =
+    verdict.code === 'WAIT'
+      ? null
+      : inStock
+        ? computeMoney({ reference: null, estimate, ...campaign.product, cap: stock })
+        : computeMoney({ reference, estimate, ...campaign.product });
+  const stockAdvice =
+    inStock && stock !== null
+      ? computeStockAdvice({ realistic: estimate.realistic, stock, completed: counted.length })
+      : null;
 
   const zoneName = new Map(zones.map((z) => [z.id, z.name]));
   const byZone = [
@@ -98,7 +111,7 @@ export function computeCampaignStats(
   const timings = tally(yes, (y) => (isTiming(y.timing) ? y.timing : null));
   const byTiming = TIMINGS.flatMap((timing) => {
     const t = timings.get(timing);
-    return t ? [{ timing, respondents: t.respondents }] : [];
+    return t ? [{ timing, respondents: t.respondents, quantity: t.quantity }] : [];
   });
 
   const byOption = [...tally(yes, (y) => (y.option ? y.option : null))]
@@ -123,6 +136,7 @@ export function computeCampaignStats(
 
   const completedAll = rows.filter((r) => r.completedAt !== null);
   return {
+    availability: campaign.availability,
     opens: campaign.links.reduce((acc, l) => acc + l.openCount, 0),
     completed: counted.length,
     incomplete: rows.length - completedAll.length,
@@ -156,6 +170,7 @@ export function computeCampaignStats(
       verdict,
       money,
       stockStatus: stock === null ? null : estimate.realistic > stock ? 'SHORTAGE' : 'ENOUGH',
+      stockAdvice,
     },
   };
 }

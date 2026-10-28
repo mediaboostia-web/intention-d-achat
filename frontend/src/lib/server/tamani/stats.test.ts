@@ -9,6 +9,7 @@ const zones = [
 ];
 
 const campaign = (over: Partial<StatsCampaign> = {}): StatsCampaign => ({
+  availability: 'INCOMING',
   plannedQuantity: 400,
   stockQuantity: null,
   product: { costPrice: 6000, unitPrice: 7500, wholesalePrice: 6500 },
@@ -116,8 +117,8 @@ describe('computeCampaignStats', () => {
     ]);
     expect(s.pickup).toEqual({ respondents: 1, quantity: 2 });
     expect(s.byTiming).toEqual([
-      { timing: 'ON_ARRIVAL', respondents: 2 },
-      { timing: 'LATER', respondents: 1 },
+      { timing: 'ON_ARRIVAL', respondents: 2, quantity: 36 },
+      { timing: 'LATER', respondents: 1, quantity: 2 },
     ]);
     expect(s.byOption).toEqual([
       { option: 'Bleu', respondents: 1, quantity: 24 },
@@ -181,5 +182,69 @@ describe('computeCampaignStats', () => {
 
   it('has no interest rate without a completed answer', () => {
     expect(computeCampaignStats([], campaign(), zones, coefs).interestRate).toBeNull();
+  });
+});
+
+describe('computeCampaignStats for an in-stock campaign', () => {
+  const inStock = (over: Partial<StatsCampaign> = {}) =>
+    campaign({ availability: 'IN_STOCK', plannedQuantity: null, stockQuantity: 30, ...over });
+
+  it('passes the availability through', () => {
+    expect(computeCampaignStats([], inStock(), zones, coefs).availability).toBe('IN_STOCK');
+    expect(computeCampaignStats([], campaign(), zones, coefs).availability).toBe('INCOMING');
+  });
+
+  it('uses the stock, never plannedQuantity, for an in-stock campaign', () => {
+    const s = computeCampaignStats(
+      [row({ quantity: 12 })],
+      inStock({ plannedQuantity: 100 }),
+      zones,
+      coefs,
+    );
+    expect(s.result.estimate.realistic).toBe(6);
+    expect(s.result.stockAdvice).toEqual({
+      status: 'ENOUGH',
+      leftover: 24,
+      restock: 0,
+      provisional: true,
+    });
+  });
+
+  it('gives an incoming campaign no stock advice', () => {
+    const s = computeCampaignStats([row()], campaign({ stockQuantity: 30 }), zones, coefs);
+    expect(s.result.stockAdvice).toBeNull();
+  });
+
+  it('gives an in-stock campaign without a stock no stock advice', () => {
+    const s = computeCampaignStats([row()], inStock({ stockQuantity: null }), zones, coefs);
+    expect(s.result.stockAdvice).toBeNull();
+  });
+
+  it('sums the quantity of each timing', () => {
+    const rows = Array.from({ length: 3 }, () => row({ timing: 'TODAY_TOMORROW', quantity: 2 }));
+    expect(computeCampaignStats(rows, inStock(), zones, coefs).byTiming).toEqual([
+      { timing: 'TODAY_TOMORROW', respondents: 3, quantity: 6 },
+    ]);
+  });
+
+  it('expects a profit capped at the stock and avoids no dead stock', () => {
+    const rows = Array.from({ length: 25 }, () => row({ quantity: 2 }));
+    const s = computeCampaignStats(
+      rows,
+      inStock({
+        stockQuantity: 20,
+        product: { costPrice: 5000, unitPrice: 7000, wholesalePrice: null },
+      }),
+      zones,
+      coefs,
+    );
+    expect(s.result.estimate.realistic).toBe(25);
+    expect(s.result.money).toEqual({ avoidedDeadStock: null, expectedProfit: 40_000 });
+    expect(s.result.stockAdvice).toMatchObject({ status: 'SHORTAGE', restock: 5 });
+  });
+
+  it('leaves the money null under 20 answers', () => {
+    const s = computeCampaignStats([row()], inStock(), zones, coefs);
+    expect(s.result.money).toBeNull();
   });
 });

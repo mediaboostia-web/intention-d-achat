@@ -15,6 +15,32 @@ const estimate = (consumer: number, reseller: number): DemandEstimate => ({
 
 const prices = { unitPrice: 7500, wholesalePrice: 6000 };
 
+describe('computeMoney with a cap', () => {
+  it('scales the profit down to the stock when the demand passes it', () => {
+    const m = computeMoney({
+      reference: null,
+      estimate: estimate(25, 0),
+      costPrice: 5000,
+      unitPrice: 7000,
+      wholesalePrice: null,
+      cap: 20,
+    });
+    expect(m).toEqual({ avoidedDeadStock: null, expectedProfit: 40_000 });
+  });
+
+  it('leaves the profit alone when the stock covers the demand', () => {
+    const m = computeMoney({
+      reference: null,
+      estimate: estimate(10, 0),
+      costPrice: 5000,
+      unitPrice: 7000,
+      wholesalePrice: null,
+      cap: 30,
+    });
+    expect(m.expectedProfit).toBe(20_000);
+  });
+});
+
 describe('computeMoney', () => {
   it('values the dead stock avoided at the purchase price', () => {
     const m = computeMoney({
