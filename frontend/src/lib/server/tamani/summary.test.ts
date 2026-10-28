@@ -14,10 +14,14 @@ const weekAgo = new Date('2026-10-18T12:00:00Z');
 const dayAgo = new Date('2026-10-24T12:00:00Z');
 const days = (n: number) => new Date(now.getTime() + n * 86_400_000);
 
+// The client book's visibility (lot 7): a counted answer, or an order (a manual one adds its client).
 const visible = {
   organizationId: 'org_1',
   anonymizedAt: null,
-  responses: { some: { completedAt: { not: null }, locked: false, suspicious: false } },
+  OR: [
+    { responses: { some: { completedAt: { not: null }, locked: false, suspicious: false } } },
+    { orders: { some: {} } },
+  ],
 };
 
 const product = {
@@ -152,7 +156,8 @@ describe('buildShopSummary', () => {
 
   it('a new client whose answer is locked does not show', async () => {
     await buildShopSummary(prismaMock, 'org_1', now);
-    // Visibility is the query's: a client with only locked or suspicious answers is never read.
+    // Visibility is the query's: a client with only locked or suspicious answers, and
+    // no order, is never read; an anonymized one never either.
     expect(prismaMock.respondent.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: visible }),
     );

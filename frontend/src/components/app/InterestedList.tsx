@@ -4,12 +4,14 @@
 // WhatsApp message ready for each, the numbers to paste into a broadcast
 // list and the Excel file (on the « Exporter » page, lot 6b). On Free the
 // numbers stay masked and the copy leads to the plans; the export page
-// shows its preview on every plan. InterestedTab loads; InterestedView draws.
-import { useCallback, useEffect, useState } from 'react';
+// shows its preview on every plan. Each yes turns into one order, on every
+// plan (lot 7, spec §5.5.1); a converted answer links to its order.
+// InterestedTab loads; InterestedView draws.
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Badge, Button, EmptyState, FilterBar, Icon, Notice } from '@/components/ui';
-import { api } from '@/lib/api';
+import { ApiError, api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import type { CampaignStatus } from '@/lib/tamani/campaign-actions';
 import type { Availability } from '@/lib/tamani/timing';
@@ -48,11 +50,66 @@ export async function copyInterestedNumbers(
   return (await copyText(numbers.join('\n'))) ? numbers.length : null;
 }
 
+/** « Transformer en commande »: one order per answer, the new order's id. */
+export async function convertToOrder(
+  shopId: string,
+  campaignId: string,
+  responseId: string,
+): Promise<string> {
+  const { order } = await api<{ order: { id: string } }>(
+    `/api/shops/${shopId}/campaigns/${encodeURIComponent(campaignId)}/responses/${encodeURIComponent(responseId)}/order`,
+    { method: 'POST' },
+  );
+  return order.id;
+}
+
 const COPY_FEEDBACK: Record<Exclude<CopyState, 'idle'>, string> = {
   copied: 'Numéros copiés. Colle-les dans une liste de diffusion WhatsApp.',
   empty: "Aucun numéro à copier pour l'instant.",
   failed: 'La copie a échoué. Réessaie.',
 };
+
+/** A yes becomes an order; once it is one, the row links to it. */
+function OrderAction({
+  row,
+  converting,
+  error,
+  onConvert,
+}: {
+  row: InterestedRow;
+  converting: boolean;
+  error: string | null;
+  onConvert: () => void;
+}) {
+  return (
+    <div className="mt-2 flex flex-col items-start gap-1">
+      {row.orderId ? (
+        <Link
+          href={`/app/commandes/${row.orderId}`}
+          className="inline-flex min-h-12 items-center gap-1.5 font-bold text-success hover:underline"
+        >
+          <Icon name="check" className="size-4" />
+          Commande créée
+        </Link>
+      ) : (
+        <Button
+          variant="secondary"
+          className="px-4"
+          disabled={converting}
+          aria-busy={converting || undefined}
+          onClick={onConvert}
+        >
+          Transformer en commande
+        </Button>
+      )}
+      {error && (
+        <p role="alert" className="text-sm font-bold text-danger">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
 
 function ProAction({ label }: { label: string }) {
   return (
@@ -77,9 +134,12 @@ export function InterestedView({
   copyState,
   error,
   now,
+  converting,
+  convertError,
   onMore,
   onCopy,
   onArrived,
+  onConvert,
 }: {
   campaign: InterestedCampaign;
   shopName: string;
@@ -96,9 +156,13 @@ export function InterestedView({
   copyState: CopyState;
   error: string | null;
   now: Date;
+  /** The answer whose order is being made. */
+  converting: string | null;
+  convertError: { rowId: string; message: string } | null;
   onMore: () => void;
   onCopy: () => void;
   onArrived: () => void;
+  onConvert: (responseId: string) => void;
 }) {
   const base = `/app/campagnes/${campaign.id}?onglet=interesses`;
   const toExport = exportHref({ ...DEFAULT_EXPORT, answer: filter, campaignId: campaign.id });
@@ -202,6 +266,14 @@ export function InterestedView({
                   <p className="text-xs text-ink-muted">
                     {relativeTime(new Date(row.completedAt), now)}
                   </p>
+                  {row.interested && row.respondentId && (
+                    <OrderAction
+                      row={row}
+                      converting={converting === row.id}
+                      error={convertError?.rowId === row.id ? convertError.message : null}
+                      onConvert={() => onConvert(row.id)}
+                    />
+                  )}
                 </div>
                 {contacts && row.phoneE164 ? (
                   <a
@@ -291,6 +363,10 @@ export function InterestedTab({
   const [list, setList] = useState<Listing>(EMPTY);
   const [copyState, setCopyState] = useState<CopyState>('idle');
   const [actionError, setActionError] = useState<string | null>(null);
+  const [converting, setConverting] = useState<string | null>(null);
+  const [convertError, setConvertError] = useState<{ rowId: string; message: string } | null>(null);
+  // A second tap before the button disables never sends a second request.
+  const inFlight = useRef(false);
   const path = `/api/shops/${shopId}/campaigns/${encodeURIComponent(campaign.id)}`;
 
   const load = useCallback(
@@ -335,6 +411,27 @@ export function InterestedTab({
     }
   }
 
+  async function convert(responseId: string) {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setConverting(responseId);
+    setConvertError(null);
+    try {
+      const orderId = await convertToOrder(shopId, campaign.id, responseId);
+      setList((l) => ({
+        ...l,
+        items: l.items.map((r) => (r.id === responseId ? { ...r, orderId } : r)),
+      }));
+    } catch (err) {
+      setConvertError({ rowId: responseId, message: errorMessage(err) });
+      // Made from another tab: the first page brings its link back.
+      if (err instanceof ApiError && err.code === 'ORDER_ALREADY_EXISTS') void load(null, []);
+    } finally {
+      inFlight.current = false;
+      setConverting(null);
+    }
+  }
+
   return (
     <InterestedView
       campaign={campaign}
@@ -350,9 +447,12 @@ export function InterestedTab({
       copyState={copyState}
       error={list.error ?? actionError}
       now={new Date()}
+      converting={converting}
+      convertError={convertError}
       onMore={() => void load(list.next, list.items)}
       onCopy={() => void copy()}
       onArrived={onArrived}
+      onConvert={(id) => void convert(id)}
     />
   );
 }

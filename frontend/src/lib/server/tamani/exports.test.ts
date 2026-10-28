@@ -159,6 +159,39 @@ describe('previewExport', () => {
     expect(where).toMatchObject({ organizationId: 'org_1', anonymizedAt: null });
     expect(where?.AND).toContainEqual({ responses: { some: { ...counted, interested: true } } });
   });
+
+  it('exports « pas encore commandé » and a client added by a manual order', async () => {
+    prismaMock.respondent.findMany.mockResolvedValue([
+      { id: 'r_manual', firstName: 'Moussa', phoneE164: '+221771234512', responses: [] },
+    ] as never);
+    prismaMock.respondent.count.mockResolvedValue(1);
+    const preview = await previewExport(
+      prismaMock,
+      'org_1',
+      { what: 'clients', filters: { ...NO_CLIENT_FILTERS, ordered: false } },
+      { canSeeContacts: false, now: NOW },
+    );
+    // No answer yet: the answer columns stay empty, the number stays masked.
+    expect(preview.rows[0]).toEqual([
+      'Moussa',
+      maskPhone('+221771234512'),
+      'Sénégal',
+      '',
+      '',
+      '0',
+      '0',
+      '',
+      '',
+    ]);
+    const where = prismaMock.respondent.findMany.mock.calls[0]?.[0]?.where;
+    expect(where).toMatchObject({
+      organizationId: 'org_1',
+      anonymizedAt: null,
+      OR: [{ responses: { some: counted } }, { orders: { some: {} } }],
+    });
+    expect(where?.AND).toEqual([{ orders: { none: { status: { not: 'CANCELLED' } } } }]);
+    expect(prismaMock.respondent.count).toHaveBeenCalledWith({ where });
+  });
 });
 
 describe('exportFile', () => {

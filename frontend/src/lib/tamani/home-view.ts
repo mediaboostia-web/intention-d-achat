@@ -4,6 +4,7 @@
 // summary itself is built by lib/server/tamani/summary.ts.
 import type { IconName } from '@/components/ui/icons';
 import type { VerdictTone } from '@/lib/design/tokens';
+import { NO_ORDER_FILTERS, orderSearch } from './orders-view';
 import type { Availability } from './timing';
 import {
   approxQuantity,
@@ -59,13 +60,16 @@ export interface CampaignBulletinItem {
   restock: number | null;
 }
 
-/** A campaign arrived within 7 days whose interested people are still to tell. */
-export interface TodoItem {
-  kind: 'NOTIFY_INTERESTED';
-  campaignId: string;
-  title: string;
-  interested: number;
-}
+/**
+ * What to do now: a campaign arrived within 7 days whose interested people
+ * are still to tell; the orders to confirm; the confirmed deliveries, with
+ * the number of zones they go to (orders without a zone name none). An
+ * order line is sent only when its count is above 0.
+ */
+export type TodoItem =
+  | { kind: 'NOTIFY_INTERESTED'; campaignId: string; title: string; interested: number }
+  | { kind: 'CONFIRM_ORDERS'; count: number }
+  | { kind: 'DELIVER'; count: number; zones: number };
 
 export type ActivityItem =
   | {
@@ -249,7 +253,38 @@ export function campaignVerdictLine(item: CampaignBulletinItem): CampaignVerdict
   };
 }
 
-export function todoLine(item: TodoItem): { title: string; detail: string; href: string } {
+export interface TodoLine {
+  title: string;
+  detail: string;
+  href: string;
+  icon: IconName;
+  /** The word on the right of the row. */
+  action: string;
+}
+
+const orders = (n: number) => `${n} ${n > 1 ? 'commandes' : 'commande'}`;
+
+export function todoLine(item: TodoItem): TodoLine {
+  if (item.kind === 'CONFIRM_ORDERS') {
+    return {
+      title: `${orders(item.count)} à confirmer`,
+      detail: item.count > 1 ? 'Confirme-les avec tes clients' : 'Confirme-la avec ton client',
+      href: `/app/commandes?${orderSearch({ ...NO_ORDER_FILTERS, status: 'TO_CONFIRM' })}`,
+      icon: 'receipt',
+      action: 'Voir',
+    };
+  }
+  if (item.kind === 'DELIVER') {
+    const zones =
+      item.zones > 0 ? ` dans ${item.zones} ${item.zones > 1 ? 'quartiers' : 'quartier'}` : '';
+    return {
+      title: `${orders(item.count)} à livrer${zones}`,
+      detail: 'Prépare ta tournée par quartier',
+      href: `/app/commandes?${orderSearch({ ...NO_ORDER_FILTERS, view: 'to-deliver' })}`,
+      icon: 'truck',
+      action: 'Voir',
+    };
+  }
   return {
     title:
       item.interested === 1
@@ -257,5 +292,7 @@ export function todoLine(item: TodoItem): { title: string; detail: string; href:
         : `Préviens tes ${item.interested} intéressés`,
     detail: `Arrivage de ${item.title}`,
     href: `/app/campagnes/${item.campaignId}?onglet=interesses`,
+    icon: 'whatsapp',
+    action: 'Écrire',
   };
 }

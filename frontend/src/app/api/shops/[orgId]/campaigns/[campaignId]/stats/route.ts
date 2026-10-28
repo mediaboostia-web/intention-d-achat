@@ -1,7 +1,9 @@
 // GET /api/shops/[orgId]/campaigns/[campaignId]/stats — the results tab
 // (lot 6): counts and breakdowns for every plan; the verdict, the estimate
 // and the money when the plan has the estimate, or when the free plan's
-// offered verdict falls on this campaign.
+// offered verdict falls on this campaign. From Pro (`reliability`), the
+// coefficients learned from the shop's orders replace its settings (lot 7);
+// on the free plan, no order is read.
 export const runtime = 'nodejs';
 
 import 'server-only';
@@ -10,6 +12,7 @@ import { coefficientsFor } from '@/lib/server/tamani/coefficients';
 import { tamaniError } from '@/lib/server/tamani/errors';
 import { claimFreeVerdict, verdictAccess } from '@/lib/server/tamani/free-verdict';
 import { jsonOk } from '@/lib/server/tamani/http';
+import { loadLearnedCoefficients } from '@/lib/server/tamani/reliability';
 import { shopHandler } from '@/lib/server/tamani/route';
 import { computeCampaignStats } from '@/lib/server/tamani/stats';
 import { effectivePlan } from '@/lib/server/tamani/subscription';
@@ -70,13 +73,21 @@ export const GET = shopHandler<Params>('MEMBER', async (_req, { params }) => {
   ]);
   if (!org) return tamaniError('SHOP_NOT_FOUND', 404);
 
+  const plan = PLANS[effectivePlan(org.subscription, now).plan];
+  const learned = plan.features.reliability
+    ? await loadLearnedCoefficients(
+        prisma,
+        params.orgId,
+        { consumer: org.coefConsumer, reseller: org.coefReseller },
+        now,
+      )
+    : null;
   const stats = computeCampaignStats(
     rows,
     { ...campaign, availability: campaign.availability === 'IN_STOCK' ? 'IN_STOCK' : 'INCOMING' },
     zones,
-    coefficientsFor(org),
+    coefficientsFor(org, learned),
   );
-  const plan = PLANS[effectivePlan(org.subscription, now).plan];
   const offered =
     !plan.features.estimate && stats.completed >= MIN_RESPONSES_FOR_VERDICT
       ? await claimFreeVerdict(prisma, params.orgId, org.freeVerdictCampaignId, [campaign])

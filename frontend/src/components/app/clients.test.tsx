@@ -1,7 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { html, text } from '@/components/ui/test-html';
 import type { ClientDetail, ClientRow } from '@/lib/tamani/client-view';
+import type { OrderRow } from '@/lib/tamani/orders-view';
 import { mockNextNavigation } from '@/test-utils/next-navigation';
+import type { OrgRole } from './shop-context';
+import type { NoteStatus } from './ClientDetail';
 
 vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigation')).navigation);
 
@@ -81,6 +84,10 @@ describe('ClientDetailView', () => {
   const client: ClientDetail = {
     ...yes,
     firstSeenAt: '2026-10-01T10:00:00.000Z',
+    notes: null,
+    orders: [],
+    totalSpent: 0,
+    reliability: null,
     interests: [
       {
         responseId: 'resp_2',
@@ -115,9 +122,159 @@ describe('ClientDetailView', () => {
     ],
   };
 
+  const card = (c: ClientDetail, role: OrgRole = 'OWNER') => (
+    <ClientDetailView
+      client={c}
+      shopName="Diallo Import"
+      now={now}
+      role={role}
+      onSaveNote={async () => {}}
+      onDelete={async () => {}}
+    />
+  );
+  const order = (id: string, patch: Partial<OrderRow> = {}): OrderRow => ({
+    id,
+    status: 'FULFILLED',
+    paid: true,
+    paidAt: '2026-10-20T15:00:00.000Z',
+    createdAt: '2026-10-20T09:00:00.000Z',
+    quantity: 2,
+    unitPrice: 18750,
+    totalAmount: 37500,
+    fulfillment: 'PICKUP',
+    zoneId: null,
+    zoneName: null,
+    productId: 'p1',
+    productName: 'Riz parfumé',
+    unitLabel: 'sac',
+    campaignId: 'c1',
+    campaignTitle: 'Riz parfumé',
+    responseId: 'resp_1',
+    buyerType: 'RESELLER',
+    notes: null,
+    client: { id: 'r1', firstName: 'Awa', phone: yes.phone, phoneE164: yes.phoneE164 },
+    ...patch,
+  });
+  const pro: ClientDetail = {
+    ...client,
+    orders: [order('o2', { status: 'TO_CONFIRM', paid: false, paidAt: null }), order('o1')],
+    totalSpent: 37500,
+    reliability: { yesCount: 5, fulfilledCount: 4, rate: 0.8 },
+  };
+
+  it('PRO card: the orders with the total bought, and the reliability sentence', () => {
+    const out = html(card(pro));
+    const t = text(card(pro));
+    const list = out.match(/<ul[^>]*aria-label="Ses commandes"[^>]*>.*?<\/ul>/s)?.[0] ?? '';
+    expect((list.match(/href="([^"]*)"/g) ?? []).map((h) => h.slice(6, -1))).toEqual([
+      '/app/commandes/o2',
+      '/app/commandes/o1',
+    ]);
+    expect(t).toContain('Total acheté 37 500 FCFA');
+    expect(out).toMatch(/font-sign[^>]*>37 500 FCFA</);
+    expect(t).toContain('Awa a dit oui 5 fois, a acheté 4 fois · 80 %');
+    expect(t).not.toContain('Avec Pro');
+  });
+
+  it('PRO card under 2 finished yes answers says when the rate comes', () => {
+    const t = text(card({ ...pro, reliability: { yesCount: 1, fulfilledCount: 0, rate: null } }));
+    expect(t).toContain('Awa a dit oui 1 fois, a acheté 0 fois.');
+    expect(t).toContain(
+      "Le taux s'affiche dès 2 « oui » sur des campagnes terminées dont les commandes sont livrées ou annulées.",
+    );
+  });
+
+  it('FREE card shows the reliability as a Pro card', () => {
+    const free = { ...pro, reliability: null };
+    const t = text(card(free));
+    expect(t).toContain('Fiabilité');
+    expect(t).toContain('Avec Pro, tu vois si Awa achète vraiment après avoir dit oui.');
+    expect(t).not.toContain('a dit oui 5 fois');
+    expect(html(card(free))).toMatch(/Fiabilité<\/h2>.*?Pro.*?href="\/app\/plus#forfait"/s);
+    // Orders and the total bought are on every plan.
+    expect(t).toContain('Total acheté 37 500 FCFA');
+  });
+
+  it('without an order, says how one comes and shows no total', () => {
+    const t = text(card(client));
+    expect(t).toContain("Aucune commande pour l'instant.");
+    expect(t).toContain(
+      "Quand Awa dit oui, transforme sa réponse en commande depuis l'onglet Intéressés de la campagne.",
+    );
+    expect(t).not.toContain('Total acheté');
+    expect(html(card(client))).not.toContain('aria-label="Ses commandes"');
+  });
+
+  it('a client added by a manual order has no answers yet', () => {
+    const manual: ClientDetail = { ...pro, kind: null, last: null, interests: [] };
+    const out = html(card(manual));
+    expect(out).not.toContain('aria-label="Ses réponses"');
+    expect(text(card(manual))).toContain(
+      "Ajouté au carnet par une commande, sans réponse à une campagne pour l'instant.",
+    );
+  });
+
+  it('the note is editable, 1 000 characters at most, saved with « Enregistrer »', () => {
+    const out = html(card({ ...pro, notes: 'Paie en fin de mois' }));
+    const area = out.match(/<textarea[^>]*>[^<]*<\/textarea>/)?.[0] ?? '';
+    expect(area).toContain('id="client-notes"');
+    expect(area).toContain('maxLength="1000"');
+    expect(area).toContain('>Paie en fin de mois</textarea>');
+    expect(out).toMatch(/<button[^>]*type="submit"[^>]*>Enregistrer<\/button>/);
+  });
+
+  it('the note says when it saves, when it is saved and when it fails', async () => {
+    const { ClientNoteView } = await import('./ClientDetail');
+    const note = (status: NoteStatus, error: string | null = null) => (
+      <ClientNoteView
+        value="Paie en fin de mois"
+        status={status}
+        error={error}
+        onChange={() => {}}
+        onCommit={() => {}}
+      />
+    );
+    expect(text(note('saving'))).toContain('Enregistrement…');
+    expect(html(note('saving'))).toMatch(/<button[^>]*disabled=""[^>]*>Enregistrer/);
+    expect(text(note('saved'))).toContain('Note enregistrée.');
+    expect(html(note('error', 'Pas de connexion.'))).toMatch(/text-danger[^>]*>Pas de connexion\./);
+    expect(text(note('idle'))).not.toMatch(/Enregistrement|enregistrée/);
+  });
+
+  it('only an ADMIN or the OWNER can delete the client data, never a MEMBER', () => {
+    const label = 'Supprimer les données de ce client';
+    expect(text(card(pro, 'OWNER'))).toContain(label);
+    expect(text(card(pro, 'ADMIN'))).toContain(label);
+    expect(text(card(pro, 'MEMBER'))).not.toContain(label);
+    expect(html(card(pro, 'MEMBER'))).not.toContain('Supprimer');
+  });
+
+  it('the deletion asks a second time and says it is final', async () => {
+    const { ClientDeletionView } = await import('./ClientDetail');
+    const view = (asking: boolean, error: string | null = null) => (
+      <ClientDeletionView
+        asking={asking}
+        busy={false}
+        error={error}
+        onAsk={() => {}}
+        onKeep={() => {}}
+        onConfirm={() => {}}
+      />
+    );
+    expect(text(view(false))).toContain('Supprimer les données de ce client');
+    const t = text(view(true));
+    expect(t).toContain('Supprimer les données de ce client ?');
+    expect(t).toContain("C'est définitif");
+    expect(t).toContain('Oui, supprimer ses données');
+    expect(t).toContain('Garder ce client');
+    expect(html(view(true, 'Seul le gérant de la boutique peut faire ça.'))).toMatch(
+      /role="alert"[^>]*>.*Seul le gérant de la boutique peut faire ça\./s,
+    );
+  });
+
   it('the detail lists every interest and links each to its campaign', () => {
-    const out = html(<ClientDetailView client={client} shopName="Diallo Import" now={now} />);
-    const t = text(<ClientDetailView client={client} shopName="Diallo Import" now={now} />);
+    const out = html(card(client));
+    const t = text(card(client));
     const list = out.match(/<ul[^>]*aria-label="Ses réponses"[^>]*>.*?<\/ul>/s)?.[0] ?? '';
     expect((list.match(/href="([^"]*)"/g) ?? []).map((h) => h.slice(6, -1))).toEqual([
       '/app/campagnes/c2',
@@ -133,11 +290,9 @@ describe('ClientDetailView', () => {
 
   it('FREE detail says how to contact the client', () => {
     const locked = { ...client, phone: '77 •• •• 33', phoneE164: null };
-    const out = html(<ClientDetailView client={locked} shopName="Diallo Import" now={now} />);
+    const out = html(card(locked));
     expect(out).not.toContain('wa.me');
-    expect(text(<ClientDetailView client={locked} shopName="Diallo Import" now={now} />)).toContain(
-      'Passe au Pro pour contacter Awa.',
-    );
+    expect(text(card(locked))).toContain('Passe au Pro pour contacter Awa.');
     expect(anchors(out).some((a) => a.includes('href="/app/plus#forfait"'))).toBe(true);
   });
 });
@@ -190,5 +345,39 @@ describe('client filters on screen', async () => {
     expect(out).toMatch(/<option value="2026-10" selected="">octobre 2026<\/option>/);
     expect(out).toContain('Riz parfumé');
     expect(out).toContain('Voir les clients');
+  });
+
+  const choices = { campaigns: [], zones: [], countries: [], months: [] };
+
+  it('the sheet has a « Commandes » choice, both ways and back to every client', () => {
+    const form = (search: string) =>
+      html(
+        <ClientFilterForm
+          state={parseClientSearch(new URLSearchParams(search))!}
+          choices={choices}
+          onApply={() => {}}
+          onCancel={() => {}}
+        />,
+      );
+    const out = form('commande=non');
+    const select = out.match(/<select[^>]*id="filter-ordered"[^>]*>.*?<\/select>/s)?.[0] ?? '';
+    expect(out).toMatch(/<label[^>]*for="filter-ordered"[^>]*>Commandes<\/label>/);
+    expect(select).toMatch(/<option value="">Tous les clients<\/option>/);
+    expect(select).toMatch(/<option value="yes">A commandé<\/option>/);
+    expect(select).toMatch(/<option value="no" selected="">Pas encore commandé<\/option>/);
+    expect(form('commande=oui')).toMatch(/<option value="yes" selected="">A commandé<\/option>/);
+    expect(form('')).toMatch(/<option value="" selected="">Tous les clients<\/option>/);
+  });
+
+  it('the has-ordered filter shows as a chip with its cross', () => {
+    const chips = filterChips(parseClientSearch(new URLSearchParams('commande=oui&pays=BJ'))!, {
+      campaigns: new Map(),
+      zones: new Map(),
+    });
+    const el = <ClientFilterChips chips={chips} clearHref="/app/clients" />;
+    expect(text(el)).toContain('A commandé');
+    expect(html(el)).toMatch(
+      /href="\/app\/clients\?pays=BJ"[^>]*aria-label="Retirer le filtre A commandé"|aria-label="Retirer le filtre A commandé"[^>]*href="\/app\/clients\?pays=BJ"/,
+    );
   });
 });

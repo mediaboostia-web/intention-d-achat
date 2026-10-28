@@ -151,7 +151,11 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 - `type BuyerType = 'CONSUMER' | 'RESELLER'`, avec `BUYER_TYPE_POPUP_LABELS` (« Moi », « Revendre ») et `BUYER_TYPE_LABELS` (« Usager », « Revendeur »).
 - `type NotInterestedReason = 'TOO_EXPENSIVE' | 'NO_NEED' | 'ALREADY_BOUGHT' | 'OTHER'` : « Trop cher », « Pas besoin », « Déjà acheté », « Autre ».
 - `QUANTITY_PRESETS = { CONSUMER: [1, 2, 3, 5], RESELLER: [6, 12, 24, 50] }`.
-- `ORDER_STATUS_LABELS` (lot 7) : « À confirmer », « Confirmée », « Livrée » ou « Récupérée » selon `fulfillment`, « Annulée ».
+
+**`orders-view.ts`** (lot 7 ; il remplace `ORDER_STATUS_LABELS`, prévu dans `labels.ts`)
+- `ORDER_STATUSES`, `OrderStatus`, `Fulfillment` ; `orderStatusLabel(status, fulfillment)` : « À confirmer », « Confirmée », « Livrée » ou « Récupérée » selon `fulfillment`, « Annulée ».
+- `orderUnitPrice`, `ORDER_TRANSITIONS` et `canTransition` vivent ici, purs, pour que le formulaire et les boutons suivent la règle du serveur ; `orders.ts` les réexporte. `orderActions(status, fulfillment)` donne les boutons (« Confirmer », « Marquer livrée » ou « Marquer récupérée », « Annuler »).
+- `OrderRow` (avec `zoneId`, `notes` et `client { id; firstName; phone; phoneE164 }`, numéros masqués sans `respondentContacts`), `ToDeliverGroup`, `OrderFilters`, `parseOrderSearch` et `orderSearch` (`statut=a-confirmer|confirmees|livrees|annulees`, `campagne`, `produit`, `quartier`, `vue=a-livrer`), `productQuantity`, `fulfillmentText` et `orderWhatsappMessage`.
 
 **`share-message.ts`**
 - `DEFAULT_SHARE_TEMPLATE = '🔔 Nouveau : *{produit}* à {prix}. {disponibilite}. Tu en veux ? Réponds en moins de 30 secondes 👉 {lien}'`
@@ -164,7 +168,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 - `waChatLink(phoneE164: string, text?: string): string` → `https://wa.me/221771234567?text=…`
 - `waShareLink(text: string): string` → `https://wa.me/?text=…`
 
-**`client-filters.ts`** (lot 6b ; le lot 7 ajoute `hasOrdered`)
+**`client-filters.ts`** (lot 6b ; le lot 7 ajoute `ordered: boolean | null`, `commande=oui|non`, pastille « A commandé » ou « Pas encore commandé »)
 - `ClientFilterState = { type: BuyerType | null; answer: 'yes' | 'no' | null; campaignId; zone /* id de quartier, ou 'OTHER' */; period; country /* ISO-2 */; q }`, chaque champ `null` quand il est absent ; `NO_CLIENT_FILTERS`.
 - Paramètres d'adresse : `type=revendeurs|usagers`, `reponse=oui|non`, `campagne=<id>`, `quartier=<zoneId>|autre`, `periode=ce-mois|mois-dernier|3-mois|AAAA-MM`, `pays=<ISO2>`, `q`.
 - `parseClientSearch(params): ClientFilterState | null` (`null` sur une valeur inconnue ; l'API répond alors 400, la page montre tout le carnet), `clientFilterSearch(state)` (ordre stable, sans curseur), `periodRange(period, now): { gte; lt }` (mois UTC ; `3-mois` va du début du mois M−2 à la fin du mois en cours), `recentMonths(now)` (les 12 derniers mois proposés), `periodLabel` et `filterChips(state, names)` (une pastille par filtre actif, avec l'adresse sans lui ; le type reste dans la `FilterBar`). Elle est partagée entre l'interface (URL) et l'API.
@@ -262,14 +266,22 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 
 **Lot 7**
 - `orders.ts` :
-  - `orderUnitPrice(product: { unitPrice; wholesalePrice: number | null; wholesaleMinQty: number | null }, buyerType, quantity): number` : prix de gros si `RESELLER` et `quantity ≥ wholesaleMinQty`, sinon prix unitaire ;
-  - `ORDER_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]>` : `TO_CONFIRM → CONFIRMED | CANCELLED` et `CONFIRMED → FULFILLED | CANCELLED` ;
-  - `canTransition(from, to): boolean` ;
-  - `convertResponseToOrder(tx, organizationId, responseId, now): Promise<SaleOrder>`. Elle refuse une réponse non « Oui » ou déjà convertie (`409 ORDER_ALREADY_EXISTS`).
+  - `orderUnitPrice(product: { unitPrice; wholesalePrice: number | null; wholesaleMinQty: number | null }, buyerType, quantity): number` : prix de gros si `RESELLER` et `quantity ≥ wholesaleMinQty`, sinon prix unitaire (défini dans `orders-view.ts`, réexporté) ;
+  - `ORDER_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]>` : `TO_CONFIRM → CONFIRMED | CANCELLED` et `CONFIRMED → FULFILLED | CANCELLED` (idem) ;
+  - `canTransition(from, to): boolean` (idem) ;
+  - `convertResponseToOrder(tx, organizationId, responseId, now, { campaignId? }): Promise<{ id }>`. Elle refuse une réponse déjà convertie (`409 ORDER_ALREADY_EXISTS`), une réponse « Non » (`409 RESPONSE_NOT_INTERESTED`) et une réponse absente ou d'une autre campagne (`404 RESPONSE_NOT_FOUND`). `OrderError` et `orderFailure(err)` portent ces codes jusqu'à la réponse HTTP.
+- `order-queries.ts` : `listOrders(db, org, filters, cursor, { canSeeContacts; limit; counts? })`, `ordersToDeliver(db, org, { canSeeContacts })` (confirmées en livraison, groupées par zone, totaux par produit, 1 000 au plus), `getOrder`, `createManualOrder(tx, org, input, country, now)` (client retrouvé ou créé par numéro), `updateOrder(tx, org, id, patch, now, { canSeeContacts })` (transitions gardées sur le statut lu ; prix seulement à `TO_CONFIRM`) et `campaignOrderSummary(db, org, campaignId)` → `{ confirmed; fulfilled; toConfirm; stockLeft: number | null }` (des quantités ; `stockLeft` peut passer sous zéro).
 - `reliability.ts` :
   - `clientReliability(rows: ReadonlyArray<{ interested: boolean; campaignFinished: boolean; fulfilled: boolean }>): { yesCount; fulfilledCount; rate: number | null }`. `rate` vaut `null` tant que les réponses « Oui » terminées sont moins de 2 ;
-  - `learnedCoefficients(rows: ReadonlyArray<{ buyerType; campaignId; announced: number; fulfilledQty: number }>, fallback: { consumer; reseller }): LearnedCoefficients`, de la forme `{ consumer; reseller; learned: { consumer: boolean; reseller: boolean } }`. Seuil : 20 réponses « Oui » sur au moins 2 campagnes, par statut ; résultat borné à [0.1, 1].
-- `clients.ts` : livré au lot 5b (plus bas), avec ses filtres au lot 6b (plus haut) ; le lot 7 ajoute le filtre `hasOrdered`, la note, l'anonymisation et la fiabilité. Le filtre produit n'est pas repris : la campagne en tient lieu. La vue Intérêts (`listInterests`) est abandonnée.
+  - `learnedCoefficients(rows: ReadonlyArray<{ buyerType; campaignId; announced: number; fulfilledQty: number }>, fallback: { consumer; reseller }): LearnedCoefficients`, de la forme `{ consumer; reseller; learned: { consumer: boolean; reseller: boolean } }`. Seuil : 20 réponses « Oui » sur au moins 2 campagnes, par statut ; résultat arrondi au centième puis borné à [0.1, 1] ;
+  - `learnableCampaignWhere(now)` : une campagne terminée (`finishedCampaignWhere(now)`, dans `campaign-status.ts`) avec au moins une commande faite depuis ses réponses et aucune à `TO_CONFIRM` ou `CONFIRMED` ; `learnableCampaignIds(db, org, ids, now)` pour la fiche ;
+  - `loadLearnedCoefficients(db, org, fallback, now)` lit les 20 000 réponses « Oui » les plus récentes de ces campagnes. La route des statistiques et `home-bulletin.ts` ne l'appellent qu'avec `features.reliability`.
+- `clients.ts` : livré au lot 5b (plus bas), avec ses filtres au lot 6b (plus haut). Le lot 7 ajoute :
+  - `visibleClientWhere` : non anonymisé, et une réponse comptée **ou** une commande (même annulée) ;
+  - le filtre `ordered` (une commande non annulée, ou aucune) ;
+  - `getClient(db, org, id, { canSeeContacts; reliability; now? })`, dont la fiche gagne `notes`, `orders` (les 100 plus récentes), `totalSpent` (commandes livrées) et `reliability` (`null` sans `features.reliability`) ;
+  - `updateClientNotes(db, org, id, notes)` et `anonymizeClient(tx, org, id, now): Promise<boolean>` : prénom, numéro et note effacés, notes des commandes effacées, lieu tapé remplacé par « Autre endroit », dans la transaction de l'appelant.
+  Le filtre produit n'est pas repris : la campagne en tient lieu. La vue Intérêts (`listInterests`) est abandonnée.
 
 **Lot 5b**
 - `clients.ts` :
@@ -318,21 +330,23 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
   - `GET …/campaigns/[campaignId]/stats` envoie `stats.availability`, `stats.elsewhere`, `byTiming[].quantity` et `result.stockAdvice` ;
   - `POST /api/public/responses` accepte `deliveryPlace` (2 à 80 caractères, `400` sur une campagne sans livraison) et `phoneCountry` (code de `PHONE_COUNTRIES`, sinon `400 VALIDATION_FAILED`) ;
   - `PATCH /api/account` `{ name }` (1 à 80 caractères après `trim`) → `{ user: { name } }`. Route hors des fichiers protégés : `withRequestContext`, `verifyCsrf` et `requireAuth` du kit, puis la mise à jour du seul utilisateur connecté. Le nom n'entre jamais dans les journaux. Le mot de passe passe par `PUT /api/auth/change-password` et `POST /api/auth/set-password` (kit).
-- **Lot 7, commandes** :
-  - `GET|POST /api/shops/[orgId]/orders`, avec les filtres `status`, `campaignId`, `productId` et `zoneId`, et le paramètre `view=to-deliver`, qui groupe les commandes par zone ;
-  - `GET|PATCH …/orders/[orderId]` (transitions, paiement, prix avant confirmation) ;
-  - `POST …/campaigns/[campaignId]/responses/[responseId]/order` (conversion).
+- **Lot 7, commandes** (rôle `MEMBER`) :
+  - `GET|POST /api/shops/[orgId]/orders`, avec les filtres `statut`, `campagne`, `produit` et `quartier`, et `vue=a-livrer`, qui groupe les commandes par zone et ignore les autres filtres ;
+  - `GET|PATCH …/orders/[orderId]` (transitions, paiement, quantité, note, prix avant confirmation) ;
+  - `GET …/campaigns/[campaignId]/orders` → `{ items; nextCursor; summary }` (l'onglet Commandes de la campagne) ;
+  - `POST …/campaigns/[campaignId]/responses/[responseId]/order` (conversion) → `201 { order: { id } }`.
+  - `DELETE …/products/[productId]` archive un produit qui a des commandes au lieu de le supprimer.
 - **Lot 7, clients** (les deux `GET` existent depuis le lot 5b, et les filtres depuis le lot 6b ; `/interests` est abandonné) :
-  - `GET /api/shops/[orgId]/clients` avec le filtre `hasOrdered` en plus ;
-  - `PATCH …/clients/[respondentId]` (note) ;
-  - `DELETE …/clients/[respondentId]` (anonymisation, rôle `ADMIN` minimum).
+  - `GET /api/shops/[orgId]/clients` avec le filtre `commande=oui|non` en plus ;
+  - `PATCH …/clients/[respondentId]` `{ notes }` (rôle `MEMBER`, 1 000 caractères, vide → `null`) → `{ client: { notes } }` ;
+  - `DELETE …/clients/[respondentId]` (anonymisation, rôle `ADMIN` minimum) → `200 { anonymized: true }` (du JSON, comme les autres suppressions, car `api()` lit chaque succès en JSON), journalisée avec les seuls identifiants.
 - **Lot 8, facturation** : `POST /api/billing/checkout`, `GET /api/billing/return`, `GET /api/billing/subscription` et `POST /api/webhooks/saspay`.
 - **Lot 8, tâches planifiées** : `GET /api/cron/billing-verify` (`*/1`) et `GET /api/cron/subscription-renewals` (`0 8 * * *`). `vercel.json` en compte alors **8**.
 - **Lot 9, admin** : `GET /api/admin/shops`, `GET /api/admin/shops/[orgId]` et `POST /api/admin/shops/[orgId]/plan` (avec audit).
 
 ### Pages
 - `(public)` : `/`, `/tarifs`, `/c/[code]`, `/login`, `/signup`, `/verify-email`, `/forgot-password`, `/reset-password`, `/auth/error`, `/confidentialite`, `/cgu`.
-- `(app)` : `/app`, `/app/bienvenue`, `/app/produits`, `/app/produits/nouveau`, `/app/produits/[id]`, `/app/campagnes`, `/app/campagnes/nouvelle`, `/app/campagnes/[id]`, `/app/commandes`, `/app/clients` (sans onglets), `/app/clients/[id]`, `/app/exporter` (lot 6b), `/app/abonnement`, `/app/reglages`, `/app/plus` et `/app/profil` (lot 6b).
+- `(app)` : `/app`, `/app/bienvenue`, `/app/produits`, `/app/produits/nouveau`, `/app/produits/[id]`, `/app/campagnes`, `/app/campagnes/nouvelle`, `/app/campagnes/[id]`, `/app/commandes`, `/app/commandes/nouvelle` et `/app/commandes/[id]` (lot 7), `/app/clients` (sans onglets), `/app/clients/[id]`, `/app/exporter` (lot 6b), `/app/abonnement`, `/app/reglages`, `/app/plus` et `/app/profil` (lot 6b).
 - `(admin)` : `/admin`, `/admin/boutiques` et `/admin/boutiques/[id]`.
 
 ### Variables d'environnement
@@ -569,6 +583,20 @@ Livré par le [plan 6b](2026-10-28-tamani-06b-retouches.md), sur la branche du l
    - « Transformer en commande » sur chaque intéressé.
    - `/app/clients` (sans onglets) : « a commandé » rejoint la feuille « Filtrer » et les pastilles du lot 6b, synchronisées avec l'URL ; la page Exporter le reprend.
    - `/app/clients/[id]` : historique, montant total, note, fiabilité.
+
+Livré par le [plan 7](2026-10-28-tamani-07-commandes.md), sur la branche `plan/07-commandes` (partie de `plan/06-tableau-de-bord`, dont elle contient les corrections). Décisions prises :
+- **Règles partagées** : le prix figé, les transitions et les mots des statuts vivent dans `lib/tamani/orders-view.ts`, pur, pour que le formulaire et les boutons suivent exactement la règle du serveur.
+- **Conversion** : deux codes en plus d'`ORDER_ALREADY_EXISTS`, `RESPONSE_NOT_FOUND` (404) et `RESPONSE_NOT_INTERESTED` (409). L'option de la réponse (« Couleur : Rouge ») et un lieu « Autre endroit » (« Lieu : X ») passent dans la note de la commande, que chaque ligne de commande affiche, tournées comprises. Le bouton ignore une seconde touche ; il est ouvert à tous les membres, sur tous les forfaits.
+- **Écritures concurrentes** : le statut et le prix ne s'écrivent que si le statut lu n'a pas changé ; l'onglet perdant reçoit `409 INVALID_ORDER_TRANSITION`. Renvoyer la même valeur n'est pas un changement. Une quantité corrigée garde le prix figé.
+- **Commande à la main** : le client est retrouvé par son numéro (indicatif de la boutique) ; un prénom manquant est complété, jamais remplacé. La campagne choisie doit être une campagne du produit.
+- **« À livrer par quartier »** : les plus anciennes d'abord, 1 000 au plus, « Sans quartier » à la fin ; les retraits n'y sont pas ; les autres filtres sont ignorés.
+- **Stock restant** : il peut passer sous zéro côté serveur ; l'écran affiche 0 et dit de combien les commandes dépassent le stock, avec le calcul sous le chiffre. L'onglet Commandes vient après Intéressés, sur toutes les campagnes, brouillon compris.
+- **Apprentissage** (corrigé après la revue finale) : une campagne terminée n'apprend qu'une fois suivie en commandes, avec au moins une commande faite depuis ses réponses et aucune encore à confirmer ou confirmée (`learnableCampaignWhere`) ; la fiabilité de la fiche lit les mêmes campagnes. Sinon, une boutique qui note ses commandes ailleurs tomberait au coefficient 0,1 et ses verdicts à STOP. Le seuil de 20 « oui » sur 2 de ces campagnes compte pour chaque statut séparément ; un « oui » sans quantité n'y entre pas ; arrondi au centième puis borné ; les 20 000 réponses les plus récentes au plus. Une campagne `ACTIVE` dont la fin est passée compte comme terminée. Sur Gratuit, les commandes ne sont jamais lues pour l'estimation.
+- **Accueil** : les commandes à confirmer, puis les livraisons (quartiers nommés comptés), avant les annonces d'arrivée ; un retrait confirmé n'est pas « à livrer ».
+- **Carnet** : un client entré par une commande à la main, même annulée, est dans le carnet ; il compte dans « Tous » seulement. « A commandé » veut dire une commande non annulée. Le type, ses compteurs et l'export restent lus sur les réponses.
+- **Fiche** : « Total acheté » (commandes livrées), les commandes (100 au plus), la fiabilité en Pro ou la carte Pro, la note (enregistrée en quittant le champ ou par « Enregistrer »), puis la suppression pour un administrateur, derrière une seconde touche qui dit que c'est définitif.
+- **Anonymisation** : prénom, numéro, note et notes des commandes effacés, lieu tapé remplacé par « Autre endroit » (la statistique « ailleurs » reste juste), dans une seule transaction. La route répond `200 { anonymized: true }` et non `204`, car `api()` (protégé) lit chaque succès en JSON. Elle est journalisée avec les seuls identifiants, sans `logAdminAction` (réservé au back-office). Une demande sur un client caché par le quota aboutit quand même.
+- **Hors périmètre** : les monnaies par pays (lot 7b) et le travail UX/UI d'ensemble (juste après).
 
 ### Après le lot 7 : travail UX/UI (décision du 2026-10-28)
 Le passage UX/UI sur toute l'app vient juste après le lot 7 ([retours](../specs/2026-10-28-tamani-retours-porteur-2.md) §0 et §12). Son plan s'écrit à ce moment-là, à partir des écrans alors en place.

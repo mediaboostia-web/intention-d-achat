@@ -1,7 +1,9 @@
 // The home page's bulletin (lot 6): a verdict line per running campaign,
 // the dead stock this month's verdicts avoided, and what to do now. Two
 // groupBy on the counted answers feed estimateFromTotals; without the
-// estimate feature, only the free plan's offered verdict shows.
+// estimate feature, only the free plan's offered verdict shows. Lot 7: the
+// coefficients learned from the orders (from Pro), and the orders to
+// confirm and to deliver at the top of what to do, on every plan.
 import 'server-only';
 import type { Prisma } from '@prisma/client';
 import type { CampaignBulletinItem, ShopSummary, TodoItem } from '@/lib/tamani/home-view';
@@ -10,6 +12,7 @@ import { PLANS } from '@/lib/tamani/plans';
 import { activeCampaignWhere, effectiveStatus } from './campaign-status';
 import { coefficientsFor } from './coefficients';
 import { estimateFromTotals } from './estimate';
+import { loadLearnedCoefficients } from './reliability';
 import { claimFreeVerdict, verdictAccess } from './free-verdict';
 import type { Db } from './locks';
 import { computeMoney } from './money';
@@ -29,6 +32,29 @@ const EMPTY: HomeBulletin = { campaigns: [], moneyProtectedThisMonth: 0, todo: [
 const isBuyerType = (v: string | null): v is BuyerType =>
   v !== null && (BUYER_TYPES as readonly string[]).includes(v);
 
+/** The orders to confirm, then the confirmed deliveries and the zones they go to. */
+async function ordersToDo(db: Db, organizationId: string): Promise<TodoItem[]> {
+  const groups = await db.saleOrder.groupBy({
+    by: ['status', 'fulfillment', 'zoneId'],
+    where: { organizationId, status: { in: ['TO_CONFIRM', 'CONFIRMED'] } },
+    _count: { _all: true },
+  });
+  let toConfirm = 0;
+  let toDeliver = 0;
+  const zones = new Set<string>();
+  for (const g of groups) {
+    if (g.status === 'TO_CONFIRM') toConfirm += g._count._all;
+    if (g.status === 'CONFIRMED' && g.fulfillment === 'DELIVERY') {
+      toDeliver += g._count._all;
+      if (g.zoneId !== null) zones.add(g.zoneId);
+    }
+  }
+  const todo: TodoItem[] = [];
+  if (toConfirm > 0) todo.push({ kind: 'CONFIRM_ORDERS', count: toConfirm });
+  if (toDeliver > 0) todo.push({ kind: 'DELIVER', count: toDeliver, zones: zones.size });
+  return todo;
+}
+
 export async function buildHomeBulletin(
   db: Db,
   organizationId: string,
@@ -38,7 +64,7 @@ export async function buildHomeBulletin(
   const arrivedSince = new Date(now.getTime() - TODO_DAYS * DAY_MS);
 
   // One read covers the three lists: running now, created this month, arrived this week.
-  const [org, campaigns] = await Promise.all([
+  const [org, campaigns, orderTodo] = await Promise.all([
     db.organization.findFirst({
       where: { id: organizationId },
       select: {
@@ -74,8 +100,10 @@ export async function buildHomeBulletin(
         },
       },
     }),
+    ordersToDo(db, organizationId),
   ]);
-  if (!org || campaigns.length === 0) return EMPTY;
+  if (!org) return EMPTY;
+  if (campaigns.length === 0) return { ...EMPTY, todo: orderTodo };
 
   const counted = {
     organizationId,
@@ -84,7 +112,8 @@ export async function buildHomeBulletin(
     locked: false,
     suspicious: false,
   } satisfies Prisma.ResponseWhereInput;
-  const [completedBy, yesBy] = await Promise.all([
+  const plan = PLANS[effectivePlan(org.subscription, now).plan];
+  const [completedBy, yesBy, learned] = await Promise.all([
     db.response.groupBy({ by: ['campaignId'], where: counted, _count: { _all: true } }),
     db.response.groupBy({
       by: ['campaignId', 'buyerType'],
@@ -92,6 +121,14 @@ export async function buildHomeBulletin(
       _count: { _all: true },
       _sum: { quantity: true },
     }),
+    plan.features.reliability
+      ? loadLearnedCoefficients(
+          db,
+          organizationId,
+          { consumer: org.coefConsumer, reseller: org.coefReseller },
+          now,
+        )
+      : null,
   ]);
 
   const completed = new Map(completedBy.map((g) => [g.campaignId, g._count._all]));
@@ -111,8 +148,7 @@ export async function buildHomeBulletin(
     return { sums, interested };
   };
 
-  const plan = PLANS[effectivePlan(org.subscription, now).plan];
-  const coefs = coefficientsFor(org);
+  const coefs = coefficientsFor(org, learned);
   const eligible = campaigns.filter((c) => (completed.get(c.id) ?? 0) >= MIN_RESPONSES_FOR_VERDICT);
   const freeId = plan.features.estimate
     ? org.freeVerdictCampaignId
@@ -193,7 +229,7 @@ export async function buildHomeBulletin(
       return total + (avoidedDeadStock ?? 0);
     }, 0);
 
-  const todo: TodoItem[] = read
+  const notify: TodoItem[] = read
     .filter(
       ({ c, interested }) =>
         c.status === 'ARRIVED' &&
@@ -209,5 +245,5 @@ export async function buildHomeBulletin(
       interested,
     }));
 
-  return { campaigns: items, moneyProtectedThisMonth, todo };
+  return { campaigns: items, moneyProtectedThisMonth, todo: [...orderTodo, ...notify] };
 }

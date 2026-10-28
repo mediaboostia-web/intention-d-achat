@@ -1,6 +1,6 @@
 // The client book's filters (lot 6b, retours §5), kept in the address:
-// type, answer, campaign, zone (or « Autre endroit »), period and the
-// number's country. Pure and shared: the page writes them, the API reads
+// type, answer, campaign, zone (or « Autre endroit »), period, the
+// number's country and, since lot 7, whether the client has ordered. Pure and shared: the page writes them, the API reads
 // them with the same parser, and the export (lot 6b, §6) reuses both.
 import type { BuyerType } from './labels';
 import { countryName, isPhoneCountry } from './phone-countries';
@@ -15,6 +15,8 @@ export interface ClientFilterState {
   period: string | null;
   /** Two letters: the country of the number. */
   country: string | null;
+  /** True: at least one order not cancelled (lot 7). A client filter, not an answer one. */
+  ordered: boolean | null;
   q: string | null;
 }
 
@@ -25,6 +27,7 @@ export const NO_CLIENT_FILTERS: ClientFilterState = {
   zone: null,
   period: null,
   country: null,
+  ordered: null,
   q: null,
 };
 
@@ -33,6 +36,7 @@ export const CLIENT_SEARCH_MAX = 60;
 
 const TYPES: Readonly<Record<string, BuyerType>> = { revendeurs: 'RESELLER', usagers: 'CONSUMER' };
 const ANSWERS: Readonly<Record<string, 'yes' | 'no'>> = { oui: 'yes', non: 'no' };
+const ORDERED: Readonly<Record<string, boolean>> = { oui: true, non: false };
 const NAMED_PERIODS = ['ce-mois', 'mois-dernier', '3-mois'] as const;
 const MONTH = /^(\d{4})-(0[1-9]|1[0-2])$/;
 const ID = /^[A-Za-z0-9_-]{1,40}$/;
@@ -49,9 +53,11 @@ export function parseClientSearch(params: URLSearchParams): ClientFilterState | 
   const zone = params.get('quartier');
   const period = params.get('periode');
   const country = params.get('pays');
+  const ordered = params.get('commande');
   const q = (params.get('q') ?? '').trim();
   if (type !== null && !Object.hasOwn(TYPES, type)) return null;
   if (answer !== null && !Object.hasOwn(ANSWERS, answer)) return null;
+  if (ordered !== null && !Object.hasOwn(ORDERED, ordered)) return null;
   if (campaignId !== null && !ID.test(campaignId)) return null;
   if (zone !== null && zone !== 'autre' && !ID.test(zone)) return null;
   if (period !== null && !isPeriod(period)) return null;
@@ -64,6 +70,7 @@ export function parseClientSearch(params: URLSearchParams): ClientFilterState | 
     zone: zone === 'autre' ? 'OTHER' : zone,
     period,
     country,
+    ordered: ordered === null ? null : (ORDERED[ordered] ?? null),
     q: q || null,
   };
 }
@@ -77,6 +84,7 @@ export function clientFilterSearch(state: ClientFilterState): string {
   if (state.zone) out.set('quartier', state.zone === 'OTHER' ? 'autre' : state.zone);
   if (state.period) out.set('periode', state.period);
   if (state.country) out.set('pays', state.country);
+  if (state.ordered !== null) out.set('commande', state.ordered ? 'oui' : 'non');
   if (state.q) out.set('q', state.q);
   return out.toString();
 }
@@ -180,6 +188,13 @@ export function filterChips(
   }
   if (state.country) {
     chips.push({ key: 'country', label: countryName(state.country), href: without('country') });
+  }
+  if (state.ordered !== null) {
+    chips.push({
+      key: 'ordered',
+      label: state.ordered ? 'A commandé' : 'Pas encore commandé',
+      href: without('ordered'),
+    });
   }
   return chips;
 }

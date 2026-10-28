@@ -54,13 +54,18 @@ function shop(over: object = {}) {
   };
 }
 
+/** The yes answers of the shop's finished campaigns, read to learn its coefficients. */
+let learning: unknown[] = [];
+
 beforeEach(async () => {
   __cookieStore.clear();
   await signIn();
   asMember('org_1', 'MEMBER');
+  learning = [];
   prismaMock.campaign.findFirst.mockResolvedValue(campaign as never);
   prismaMock.deliveryZone.findMany.mockResolvedValue([]);
-  prismaMock.response.findMany.mockResolvedValue(answers(20) as never);
+  prismaMock.response.findMany.mockImplementation(((args: { where: { campaignId?: string } }) =>
+    Promise.resolve(args.where.campaignId ? answers(20) : learning)) as never);
   prismaMock.organization.findFirst.mockResolvedValue(shop({ subscription: pro }) as never);
 });
 
@@ -91,6 +96,60 @@ describe('GET /api/shops/[orgId]/campaigns/[campaignId]/stats', () => {
     const { body } = await read();
     expect(body.stats.availability).toBe('IN_STOCK');
     expect(body.stats.result?.stockAdvice).toMatchObject({ status: 'ENOUGH', provisional: false });
+  });
+
+  it('a Pro shop estimates with the coefficients learned from its orders', async () => {
+    prismaMock.organization.findFirst.mockResolvedValue(
+      shop({ subscription: pro, coefConsumer: 0.6 }) as never,
+    );
+    // 20 reseller yes answers on 2 finished campaigns: 160 bought for 200 announced.
+    learning = Array.from({ length: 20 }, (_, i) => ({
+      buyerType: 'RESELLER',
+      campaignId: i % 2 ? 'c_old1' : 'c_old2',
+      quantity: 10,
+      order: i < 16 ? { status: 'FULFILLED', quantity: 10 } : null,
+    }));
+    const { body } = await read();
+    expect(body.stats.result?.coefs).toEqual({
+      consumer: 0.6,
+      reseller: 0.8,
+      source: { consumer: 'SHOP', reseller: 'LEARNED' },
+    });
+    // 300 announced by resellers × 0.8.
+    expect(body.stats.result?.estimate.realistic).toBe(240);
+    expect(prismaMock.response.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ organizationId: 'org_1', interested: true }),
+      }),
+    );
+  });
+
+  it('a Pro shop without enough orders keeps its settings', async () => {
+    const { body } = await read();
+    expect(body.stats.result?.coefs.source).toEqual({ consumer: 'DEFAULT', reseller: 'DEFAULT' });
+    expect(prismaMock.response.findMany).toHaveBeenCalledTimes(2);
+  });
+
+  it('the free plan never reads the orders, even with its offered verdict', async () => {
+    prismaMock.organization.findFirst.mockResolvedValue(
+      shop({ freeVerdictCampaignId: 'c1' }) as never,
+    );
+    const { body } = await read();
+    expect(body.access).toBe('OFFERED');
+    expect(body.stats.result?.coefs.source).toEqual({ consumer: 'DEFAULT', reseller: 'DEFAULT' });
+    expect(prismaMock.response.findMany).toHaveBeenCalledTimes(1);
+    expect(prismaMock.response.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { campaignId: 'c1', organizationId: 'org_1' } }),
+    );
+    for (const read of [
+      prismaMock.saleOrder.findMany,
+      prismaMock.saleOrder.findFirst,
+      prismaMock.saleOrder.count,
+      prismaMock.saleOrder.groupBy,
+      prismaMock.saleOrder.aggregate,
+    ]) {
+      expect(read).not.toHaveBeenCalled();
+    }
   });
 
   it('answers 404 to a non-member', async () => {

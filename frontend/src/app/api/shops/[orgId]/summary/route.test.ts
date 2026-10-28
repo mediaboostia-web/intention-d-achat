@@ -23,6 +23,8 @@ beforeEach(async () => {
   prismaMock.product.count.mockResolvedValue(1);
   prismaMock.campaign.findFirst.mockResolvedValue(null);
   prismaMock.campaignLink.aggregate.mockResolvedValue({ _sum: { openCount: 12 } } as never);
+  // The bulletin counts the orders to confirm and to deliver (lot 7).
+  (prismaMock.saleOrder.groupBy as unknown as Mock).mockResolvedValue([]);
 });
 
 describe('GET /api/shops/[orgId]/summary', () => {

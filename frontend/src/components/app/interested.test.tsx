@@ -4,10 +4,10 @@ import { html, text } from '@/components/ui/test-html';
 import { interestedDetail, interestedMessage, type InterestedRow } from '@/lib/tamani/results-view';
 
 const api = vi.fn();
-vi.mock('@/lib/api', () => ({ api: (path: string) => api(path) }));
+vi.mock('@/lib/api', () => ({ api: (...args: unknown[]) => api(...args) }));
 vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigation')).navigation);
 
-const { InterestedView, copyInterestedNumbers } = await import('./InterestedList');
+const { InterestedView, convertToOrder, copyInterestedNumbers } = await import('./InterestedList');
 
 const now = new Date('2026-10-27T12:00:00Z');
 
@@ -29,6 +29,7 @@ const awa: InterestedRow = {
   country: 'SN',
   sourceLabel: 'Lien principal',
   completedAt: '2026-10-26T10:00:00.000Z',
+  orderId: null,
 };
 
 const freeAwa: InterestedRow = { ...awa, phone: '+221 77 ••• •• 12', phoneE164: null };
@@ -58,6 +59,9 @@ const props = (over: Partial<Props> = {}): Props => ({
   onMore: () => {},
   onCopy: () => {},
   onArrived: () => {},
+  converting: null,
+  convertError: null,
+  onConvert: () => {},
   ...over,
 });
 
@@ -175,6 +179,59 @@ describe('InterestedView', () => {
     expect(text(<InterestedView {...props({ rows: [], counts: { yes: 0, no: 0 } })} />)).toContain(
       "Pas encore d'intéressé",
     );
+  });
+});
+
+describe('InterestedView orders', () => {
+  const button = /<button[^>]*>Transformer en commande<\/button>/;
+
+  it('offers « Transformer en commande » on a yes, on every plan', () => {
+    expect(html(<InterestedView {...props()} />)).toMatch(button);
+    const free = props({ rows: [freeAwa], contacts: false, exportable: false });
+    expect(html(<InterestedView {...free} />)).toMatch(button);
+    expect(text(<InterestedView {...props()} />)).not.toContain('Commande créée');
+  });
+
+  it('a converted answer shows « Commande créée » with the link to its order', () => {
+    const out = html(<InterestedView {...props({ rows: [{ ...awa, orderId: 'o1' }] })} />);
+    expect(out).toMatch(/<a [^>]*href="\/app\/commandes\/o1"[^>]*>[\s\S]*?Commande créée/);
+    expect(out).not.toContain('Transformer en commande');
+  });
+
+  it('never offers an order on a no', () => {
+    const no = { ...awa, interested: false, reason: 'TOO_EXPENSIVE' as const, quantity: null };
+    const out = html(<InterestedView {...props({ filter: 'no', rows: [no] })} />);
+    expect(out).not.toContain('Transformer en commande');
+  });
+
+  it('holds the button while its order is being made', () => {
+    const out = html(<InterestedView {...props({ converting: 'r1' })} />);
+    expect(out).toMatch(/<button[^>]*disabled=""[^>]*>Transformer en commande/);
+  });
+
+  it('says under the row why the order was not made', () => {
+    const el = (
+      <InterestedView
+        {...props({
+          rows: [awa, { ...awa, id: 'r2', firstName: 'Fatou' }],
+          convertError: { rowId: 'r2', message: 'Cette réponse a déjà sa commande.' },
+        })}
+      />
+    );
+    const t = text(el);
+    expect(t).toContain('Cette réponse a déjà sa commande.');
+    expect(t.indexOf('Fatou')).toBeLessThan(t.indexOf('Cette réponse a déjà sa commande.'));
+    expect(html(el)).toContain('role="alert"');
+  });
+});
+
+describe('convertToOrder', () => {
+  it("posts to the answer's order route and returns the new order", async () => {
+    api.mockResolvedValue({ order: { id: 'o9', status: 'TO_CONFIRM' } });
+    expect(await convertToOrder('org_1', 'c1', 'r1')).toBe('o9');
+    expect(api).toHaveBeenCalledWith('/api/shops/org_1/campaigns/c1/responses/r1/order', {
+      method: 'POST',
+    });
   });
 });
 
