@@ -369,6 +369,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 | 6 | Tableau de bord | Verdict, quantité, argent évité et bénéfice, bulletin du jour, statistiques, relance WhatsApp et export CSV. | 3, 5 |
 | 6b | Retouches après le test du lot 6 | Un produit en stock se lit « à servir » et « état du stock » ; livraison ailleurs et numéros étrangers ; galerie de photos ; onglets et actions de la campagne ; filtres des clients ; page Exporter avec aperçu ; notifications demandées sur téléphone ; Plus et Profil (ajout du 2026-10-28). | 6 |
 | 7 | Commandes et clients | Conversion d'une réponse en commande, commandes manuelles, statuts, livraisons par quartier, filtre « a commandé », note et anonymisation des clients, fiabilité et coefficients appris. | 3, 5, 6, 6b |
+| 7a | Passe UX/UI | Mode nuit ; sur ordinateur, barre latérale repliable, barre du haut (recherche, jour / nuit, cloche, profil) et accueil en pleine page avec les verdicts en cartes ; cartes ou liste sur Campagnes et Produits ; pop-up retouché (stock, fenêtre de fin, lien Tamani) ; menu du téléphone par le côté sur la page d'accueil (ajout du 2026-10-28). | 7 |
 | 7b | Pays et monnaies | Toute l'Afrique francophone : chaque pays a sa monnaie, ses prix et ses numéros (ajout du 2026-10-27). | 3, 4 |
 | 8 | Forfaits prépayés et SasPay | Passes (Semaine, Mois, Grossiste) et recharges payés en mode test SasPay : activation idempotente, réponses comptées par pass, rappels et grâce, plafond du Gratuit. Bictorys retiré. | 3, 5, 6, 7, 7b |
 | 9 | Admin, accueil, légal, production | Admin Tamani, page d'accueil, CGU et confidentialité, mise en ligne sur Vercel avec SasPay en mode live. | tous |
@@ -598,8 +599,16 @@ Livré par le [plan 7](2026-10-28-tamani-07-commandes.md), sur la branche `plan/
 - **Anonymisation** : prénom, numéro, note et notes des commandes effacés, lieu tapé remplacé par « Autre endroit » (la statistique « ailleurs » reste juste), dans une seule transaction. La route répond `200 { anonymized: true }` et non `204`, car `api()` (protégé) lit chaque succès en JSON. Elle est journalisée avec les seuls identifiants, sans `logAdminAction` (réservé au back-office). Une demande sur un client caché par le quota aboutit quand même.
 - **Hors périmètre** : les monnaies par pays (lot 7b) et le travail UX/UI d'ensemble (juste après).
 
-### Après le lot 7 : travail UX/UI (décision du 2026-10-28)
-Le passage UX/UI sur toute l'app vient juste après le lot 7 ([retours](../specs/2026-10-28-tamani-retours-porteur-2.md) §0 et §12). Son plan s'écrit à ce moment-là, à partir des écrans alors en place.
+### Lot 7a : Passe UX/UI (ajout du 2026-10-28)
+Le passage UX/UI demandé après le lot 7 ([retours](../specs/2026-10-28-tamani-retours-porteur-3.md), qui font foi ; [plan](2026-10-28-tamani-07a-design.md)). Le porteur l'a validé sur les maquettes du canvas « Tamani UX/UI v2 » (cinq commentaires traités).
+- **Mode nuit** : la charte passe à deux thèmes, le jour reste la référence. Le « carnet de nuit » ne touche que `/app` ; jetons `nightColors` testés comme le jour (4,5:1), jeton `deep` pour la couverture du cahier. Le choix est gardé sur l'appareil et posé avant l'affichage.
+- **Coque sur ordinateur** : barre latérale repliable (248 ↔ 84 px), barre du haut collante (repli, recherche avec Ctrl K, jour / nuit, cloche, profil). L'accueil et les quatre listes prennent toute la largeur (1360 px au plus), le reste garde sa colonne.
+- **Recherche** : campagnes, produits et clients, 5 par groupe, de 2 à 60 caractères. Les clients suivent les règles du carnet : sans `respondentContacts`, ni recherche par chiffres ni numéro. Les commandes de la maquette deviennent les clients (on retrouve une commande depuis la fiche).
+- **Accueil** : les trois actions sur la ligne du titre ; « Cette semaine » inchangée (commentaire du porteur) ; une carte de verdict par campagne dès 1024 px (tampon, jauge, calcul à la main, boutons alignés) ; dès 1280 px, une colonne à droite : « À faire maintenant », « Activité récente », « À venir ». Le téléphone garde son ordre, l'argent protégé sous la carte de la semaine.
+- **Cartes ou liste** sur Campagnes et Produits, gardé par onglet : cartes plus petites avec la photo en bandeau 16:7 (copie Cloudinary 640 × 280), liste avec une vignette de 44 px.
+- **Pop-up** : « 200 bouteilles en stock » au lieu de « Plus que 200 bouteilles », chacun avec un pictogramme dessiné pour Tamani ; une fenêtre de fin (« C'est noté, {Prénom} ! » et la boutique qui confirmera sur WhatsApp ; « Merci pour ton avis ! » avec « En fait, ça m'intéresse ») ; « Propulsé par Tamani » ouvre `APP_URL` dans un nouvel onglet.
+- **Page d'accueil sur téléphone** : sous 1000 px, plus que le logo et le bouton de menu jaune, sans bandeau ; le menu s'ouvre par la droite et finit par « Commencer gratuitement », puis « Se connecter ».
+- **Hors périmètre** : les monnaies par pays (lot 7b), le panneau des réponses du pass (lot 8).
 
 ### Lot 7b : Pays et monnaies (ajout du 2026-10-27)
 Le porteur veut couvrir toute l'Afrique francophone. Aujourd'hui tout est en FCFA et la liste des pays est celle de l'Afrique de l'Ouest.
