@@ -36,6 +36,8 @@ const ICONS = [
   'arrow-up-right',
   'arrow-down-left',
   'chevron-right',
+  'tag',
+  'logout',
 ] as const;
 
 const SHOP = { name: 'Diallo Import', logoUrl: null, planLabel: 'Gratuit' };

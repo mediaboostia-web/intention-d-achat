@@ -17,3 +17,6 @@ export function initials(name: string): string {
 export function firstName(fullName: string | null | undefined): string | null {
   return words(fullName)[0] ?? null;
 }
+
+/** A person's name on the Profil page: 1 to 80 characters once trimmed. */
+export const PROFILE_NAME_MAX = 80;

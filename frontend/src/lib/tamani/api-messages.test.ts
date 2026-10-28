@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { ApiError } from '@/lib/api';
-import { TAMANI_ERROR_CODES, errorMessage, uploadErrorMessage } from './api-messages';
+import {
+  TAMANI_ERROR_CODES,
+  errorMessage,
+  passwordErrorMessage,
+  uploadErrorMessage,
+} from './api-messages';
 
 const apiError = (status: number, error?: string) =>
   new ApiError(status, 'raw', error ? { error } : {});
@@ -35,6 +40,24 @@ describe('errorMessage', () => {
     expect(errorMessage(apiError(503))).toContain('Réessaie');
     expect(errorMessage(new TypeError('Failed to fetch'))).toContain('connexion');
     expect(errorMessage(apiError(0))).toContain('connexion');
+  });
+});
+
+describe('passwordErrorMessage', () => {
+  it('speaks of the current password, not of the email', () => {
+    expect(passwordErrorMessage(apiError(400, 'INVALID_CREDENTIALS'))).toBe(
+      'Ton mot de passe actuel ne correspond pas.',
+    );
+  });
+
+  it('says a password is already there, and falls back on errorMessage', () => {
+    expect(passwordErrorMessage(apiError(409, 'PASSWORD_ALREADY_SET'))).toContain(
+      'déjà un mot de passe',
+    );
+    expect(errorMessage(apiError(409, 'PASSWORD_ALREADY_SET'))).toContain('déjà un mot de passe');
+    expect(passwordErrorMessage(apiError(400, 'PASSWORD_BANNED'))).toBe(
+      errorMessage(apiError(400, 'PASSWORD_BANNED')),
+    );
   });
 });
 

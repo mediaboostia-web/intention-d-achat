@@ -15,12 +15,16 @@ vi.mock('@/contexts/AuthContext', () => ({
   }),
 }));
 
+// The phone sheet decides in the browser; here only its place is checked.
+vi.mock('./PushPrompt', () => ({ PushPrompt: () => <div data-push-prompt="" /> }));
+
 const { AppShell } = await import('./AppShell');
 const { ShopForm } = await import('./ShopForm');
 const { ZonesInput } = await import('./ZonesInput');
 const { PhotoPicker } = await import('./PhotoPicker');
 const { default: WelcomePage } = await import('@/app/(app)/app/bienvenue/page');
 const { default: PlusPage } = await import('@/app/(app)/app/plus/page');
+const { PlusMenu } = await import('./PlusMenu');
 const { default: HomePage } = await import('@/app/(app)/app/page');
 
 const tag = (out: string, name: string, id: string) =>
@@ -68,8 +72,11 @@ describe('AppShell', () => {
       </ShopTestProvider>,
     );
     const header = out.match(/<header[^>]*>.*?<\/header>/s)?.[0] ?? '';
-    const account = (header.match(/<a [^>]*>/g) ?? []).find((t) => t.includes('href="/app/plus"'));
-    expect(account).toContain('aria-label="Compte et forfait"');
+    const account = (header.match(/<a [^>]*>/g) ?? []).find((t) =>
+      t.includes('href="/app/profil"'),
+    );
+    expect(account).toContain('aria-label="Ton profil"');
+    expect(header).not.toContain('href="/app/plus"');
     expect(text(<div dangerouslySetInnerHTML={{ __html: header }} />)).toContain('FN');
   });
 
@@ -84,6 +91,18 @@ describe('AppShell', () => {
     );
     const header = out.match(/<header[^>]*>.*?<\/header>/s)?.[0] ?? '';
     expect(text(<div dangerouslySetInnerHTML={{ __html: header }} />)).toContain('DI');
+  });
+
+  it('mounts the notifications sheet once, for every page of the shop space', () => {
+    mockNextNavigation({ pathname: '/app/clients' });
+    const out = html(
+      <ShopTestProvider>
+        <AppShell>
+          <p>Page</p>
+        </AppShell>
+      </ShopTestProvider>,
+    );
+    expect(out.match(/data-push-prompt/g)).toHaveLength(1);
   });
 
   it('desktop tools sit on the title line', () => {
@@ -201,7 +220,8 @@ describe('shop pages', () => {
     );
     expect(free).toContain('Gratuit');
     expect(free).toContain('Se déconnecter');
-    expect(free).toContain('awa@example.com');
+    // « Ton compte » moved to Profil (feedback 2, §8).
+    expect(free).not.toContain('awa@example.com');
 
     const pro = text(
       <ShopTestProvider
@@ -214,6 +234,57 @@ describe('shop pages', () => {
       </ShopTestProvider>,
     );
     expect(pro).toContain("Pro jusqu'au 24 novembre");
+  });
+
+  it('plus is one list, an icon on each line, Aide hidden without a link', () => {
+    mockNextNavigation({ pathname: '/app/plus' });
+    const page = (
+      <ShopTestProvider>
+        <PlusPage />
+      </ShopTestProvider>
+    );
+    const out = html(page);
+    const items = out.match(/<li[ >].*?<\/li>/gs) ?? [];
+    const labels = items.map((li) => text(<div dangerouslySetInnerHTML={{ __html: li }} />));
+    const order = [
+      'Produits',
+      'Forfait',
+      'Réglages de la boutique',
+      'Notifications',
+      'Profil',
+      'Se déconnecter',
+    ];
+    expect(labels).toHaveLength(order.length);
+    for (const [i, label] of order.entries()) expect(labels[i], label).toContain(label);
+    for (const li of items) expect(li).toContain('<svg');
+    expect(out.match(/<ul/g)).toHaveLength(1);
+    for (const href of [
+      '/app/produits',
+      '/app/reglages',
+      '/app/reglages#notifications',
+      '/app/profil',
+    ]) {
+      expect(out, href).toContain(`href="${href}"`);
+    }
+    expect(items[1]).toContain('id="forfait"');
+    expect(text(page)).not.toContain('Aide');
+    expect(out).not.toContain('wa.me');
+  });
+
+  it('plus shows Aide once the WhatsApp contact is given', () => {
+    const help = 'https://wa.me/221770000000';
+    const out = html(
+      <PlusMenu plan={TEST_SHOP.plan} help={help} signingOut={false} onSignOut={() => {}} />,
+    );
+    const link = (out.match(/<a [^>]*>/g) ?? []).find((a) => a.includes(`href="${help}"`));
+    expect(link).toBeDefined();
+    expect(link).toContain('target="_blank"');
+    expect(link).toContain('rel="noopener noreferrer"');
+    const t = text(
+      <PlusMenu plan={TEST_SHOP.plan} help={help} signingOut={false} onSignOut={() => {}} />,
+    );
+    expect(t.indexOf('Aide')).toBeGreaterThan(t.indexOf('Profil'));
+    expect(t.indexOf('Aide')).toBeLessThan(t.indexOf('Se déconnecter'));
   });
 
   it('home greets the person while the summary loads', () => {
