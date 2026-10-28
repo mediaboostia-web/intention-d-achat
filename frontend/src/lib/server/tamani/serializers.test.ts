@@ -1,5 +1,12 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { shareUrl, toCampaign, toPublicProduct, toShop, toShopProduct } from './serializers';
+import {
+  shareUrl,
+  toCampaign,
+  toOrderRow,
+  toPublicProduct,
+  toShop,
+  toShopProduct,
+} from './serializers';
 
 const product = {
   id: 'prod_1',
@@ -127,5 +134,103 @@ describe('campaign serializers', () => {
   it('toCampaign reports the effective status', () => {
     const expired = { ...campaign, endsAt: new Date('2026-10-23T10:00:00Z') };
     expect(toCampaign(expired, now).status).toBe('CLOSED');
+  });
+});
+
+describe('toOrderRow', () => {
+  const row = (over: object = {}) => ({
+    id: 'order_1',
+    status: 'CONFIRMED',
+    paid: true,
+    paidAt: new Date('2026-10-27T09:00:00Z'),
+    createdAt: new Date('2026-10-26T10:00:00Z'),
+    quantity: 3,
+    unitPrice: 7500,
+    totalAmount: 22_500,
+    fulfillment: 'DELIVERY',
+    zoneId: 'zone_1',
+    productId: 'prod_1',
+    campaignId: 'camp_1',
+    responseId: 'resp_1',
+    buyerType: 'RESELLER',
+    notes: 'Après 18 h',
+    zone: { name: 'Médina' },
+    product: { name: 'Marmites inox 5 L', unitLabel: 'pièce' },
+    campaign: { title: 'Marmites' },
+    respondent: { id: 'r1', firstName: 'Awa', phoneE164: '+221771234512', anonymizedAt: null },
+    ...over,
+  });
+
+  it('sends the order with the full number on a plan with contacts', () => {
+    expect(toOrderRow(row(), true)).toEqual({
+      id: 'order_1',
+      status: 'CONFIRMED',
+      paid: true,
+      paidAt: '2026-10-27T09:00:00.000Z',
+      createdAt: '2026-10-26T10:00:00.000Z',
+      quantity: 3,
+      unitPrice: 7500,
+      totalAmount: 22_500,
+      fulfillment: 'DELIVERY',
+      zoneId: 'zone_1',
+      zoneName: 'Médina',
+      productId: 'prod_1',
+      productName: 'Marmites inox 5 L',
+      unitLabel: 'pièce',
+      campaignId: 'camp_1',
+      campaignTitle: 'Marmites',
+      responseId: 'resp_1',
+      buyerType: 'RESELLER',
+      notes: 'Après 18 h',
+      client: {
+        id: 'r1',
+        firstName: 'Awa',
+        phone: '+221 77 123 45 12',
+        phoneE164: '+221771234512',
+      },
+    });
+  });
+
+  it('masks the number and keeps the E.164 form on the server without contacts', () => {
+    expect(toOrderRow(row(), false).client).toEqual({
+      id: 'r1',
+      firstName: 'Awa',
+      phone: '77 •• •• 12',
+      phoneE164: null,
+    });
+  });
+
+  it('an anonymized client keeps the order, without a name or a number', () => {
+    const order = toOrderRow(
+      row({ respondent: { id: 'r1', firstName: null, phoneE164: null, anonymizedAt: new Date() } }),
+      true,
+    );
+    expect(order.client).toEqual({ id: 'r1', firstName: null, phone: null, phoneE164: null });
+    expect(order.totalAmount).toBe(22_500);
+  });
+
+  it('a manual pickup order has no zone, campaign or answer', () => {
+    const order = toOrderRow(
+      row({
+        fulfillment: 'PICKUP',
+        zoneId: null,
+        zone: null,
+        campaignId: null,
+        campaign: null,
+        responseId: null,
+        paid: false,
+        paidAt: null,
+      }),
+      true,
+    );
+    expect(order).toMatchObject({
+      fulfillment: 'PICKUP',
+      zoneId: null,
+      zoneName: null,
+      campaignId: null,
+      campaignTitle: null,
+      responseId: null,
+      paidAt: null,
+    });
   });
 });
