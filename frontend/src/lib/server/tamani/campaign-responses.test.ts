@@ -23,6 +23,7 @@ const answer = (id: string, over: object = {}) => ({
   zone: { name: 'Médina' },
   link: { label: 'Statut' },
   respondent: { firstName: 'Awa', phoneE164: '+221771234512', anonymizedAt: null },
+  order: null,
   ...over,
 });
 const counted = { completedAt: { not: null }, locked: false, suspicious: false };
@@ -70,7 +71,25 @@ describe('listCampaignResponses', () => {
       country: 'SN',
       sourceLabel: 'Statut',
       completedAt: '2026-10-26T10:00:00.000Z',
+      orderId: null,
     });
+  });
+
+  it('carries the order made from an answer, read through the answer', async () => {
+    prismaMock.response.findMany.mockResolvedValue([
+      answer('a1', { order: { id: 'o1' } }),
+    ] as never);
+    prismaMock.response.count.mockResolvedValue(1);
+    const page = await listCampaignResponses(prismaMock, 'org_1', 'c1', 'yes', null, {
+      canSeeContacts: true,
+      limit: 20,
+    });
+    expect(prismaMock.response.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({ order: { select: { id: true } } }),
+      }),
+    );
+    expect(page.items[0]?.orderId).toBe('o1');
   });
 
   it('masks the numbers without the contacts feature', async () => {

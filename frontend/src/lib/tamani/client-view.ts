@@ -82,6 +82,42 @@ export function lockedContactText(firstName: string | null): string {
   return `Passe au Pro pour contacter ${firstName ?? 'ce client'}.`;
 }
 
+/** The note's limit after trim, the server's ClientNotesPatch. */
+export const CLIENT_NOTE_MAX = 1000;
+
+/** The note as the server keeps it: trimmed, blank is no note. */
+export function normalizeClientNote(draft: string): string | null {
+  const note = draft.trim();
+  return note ? note : null;
+}
+
+const NBSP = ' ';
+
+/**
+ * « Awa a dit oui 5 fois, a acheté 4 fois · 80 % » (spec §5.5.3). Under 2
+ * yes answers on finished campaigns the rate waits; `pending` says when it
+ * comes.
+ */
+export function reliabilityText(
+  r: ClientReliabilityView,
+  firstName: string | null,
+): { line: string; pending: string | null } {
+  const who = firstName ?? 'Ce client';
+  const pending =
+    r.rate === null ? "Le taux s'affiche dès 2 « oui » sur des campagnes terminées." : null;
+  if (r.yesCount === 0) {
+    return { line: `${who} n'a pas encore dit oui sur une campagne terminée.`, pending };
+  }
+  const counts = `${who} a dit oui ${r.yesCount} fois, a acheté ${r.fulfilledCount} fois`;
+  const line = r.rate === null ? `${counts}.` : `${counts} · ${Math.round(r.rate * 100)}${NBSP}%`;
+  return { line, pending };
+}
+
+/** Free plan: what the reliability card would tell (spec §5.6). */
+export function lockedReliabilityText(firstName: string | null): string {
+  return `Avec Pro, tu vois si ${firstName ?? 'ce client'} achète vraiment après avoir dit oui.`;
+}
+
 /** "Riz parfumé, 3 sacs" for a yes, "Riz parfumé, non" for a no. */
 export function lastInterestText(last: ClientLast): string {
   if (!last.interested) return `${last.productName}, non`;

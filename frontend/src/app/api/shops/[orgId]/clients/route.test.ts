@@ -265,11 +265,11 @@ describe('DELETE /api/shops/[orgId]/clients/[respondentId]', () => {
     prismaMock.saleOrder.updateMany.mockResolvedValue({ count: 1 });
   });
 
-  it('an ADMIN anonymizes the client in one transaction: 204', async () => {
+  it('an ADMIN anonymizes the client in one transaction: 200 with JSON, as api() reads', async () => {
     asMember('org_1', 'ADMIN');
     const res = await remove();
-    expect(res.status).toBe(204);
-    expect(await res.text()).toBe('');
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ anonymized: true });
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
     expect(prismaMock.respondent.updateMany).toHaveBeenCalledWith({
       where: { id: 'r1', organizationId: 'org_1', anonymizedAt: null },
@@ -294,7 +294,7 @@ describe('DELETE /api/shops/[orgId]/clients/[respondentId]', () => {
 
   it('the OWNER may too', async () => {
     asMember('org_1', 'OWNER');
-    expect((await remove()).status).toBe(204);
+    expect((await remove()).status).toBe(200);
   });
 
   it('a MEMBER gets 403 and nothing is anonymized', async () => {

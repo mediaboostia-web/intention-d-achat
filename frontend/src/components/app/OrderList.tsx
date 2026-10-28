@@ -85,7 +85,7 @@ export function PaidMark() {
   );
 }
 
-function OrderLine({ order }: { order: OrderRow }) {
+export function OrderLine({ order }: { order: OrderRow }) {
   return (
     <li>
       <Link
@@ -115,7 +115,7 @@ function OrderLine({ order }: { order: OrderRow }) {
   );
 }
 
-function OrderLines({ rows, label }: { rows: readonly OrderRow[]; label: string }) {
+export function OrderLines({ rows, label }: { rows: readonly OrderRow[]; label: string }) {
   return (
     <ul aria-label={label} className="divide-y-2 divide-grid">
       {rows.map((o) => (

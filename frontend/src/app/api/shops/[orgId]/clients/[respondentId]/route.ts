@@ -10,12 +10,11 @@
 export const runtime = 'nodejs';
 
 import 'server-only';
-import { NextResponse } from 'next/server';
 import { log } from '@/lib/server/observability/log';
 import { prisma } from '@/lib/server/prisma';
 import { anonymizeClient, getClient, updateClientNotes } from '@/lib/server/tamani/clients';
 import { tamaniError } from '@/lib/server/tamani/errors';
-import { jsonOk, readJson, requestIdHeaders, validationFailed } from '@/lib/server/tamani/http';
+import { jsonOk, readJson, validationFailed } from '@/lib/server/tamani/http';
 import { ClientNotesPatch } from '@/lib/server/tamani/inputs';
 import { shopHandler } from '@/lib/server/tamani/route';
 import { shopPlan } from '@/lib/server/tamani/shop';
@@ -58,5 +57,6 @@ export const DELETE = shopHandler<Params>('ADMIN', async (_req, { params, member
     respondentId: params.respondentId,
     userId: member.orgMember.userId,
   });
-  return new NextResponse(null, { status: 204, headers: requestIdHeaders() });
+  // JSON like the shop's other deletions: api() reads every success as JSON.
+  return jsonOk({ anonymized: true });
 });

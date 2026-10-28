@@ -26,6 +26,7 @@ const row = (over: Partial<ExportResponseRow> = {}): ExportResponseRow => ({
   country: 'SN',
   sourceLabel: 'Statut',
   completedAt: '2026-10-26T09:05:00.000Z',
+  orderId: null,
   productName: 'Riz parfumé',
   ...over,
 });

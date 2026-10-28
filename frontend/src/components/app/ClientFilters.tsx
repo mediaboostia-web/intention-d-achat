@@ -1,9 +1,9 @@
 'use client';
 
 // The client book's filters on screen (lot 6b, retours §5): a « Filtrer »
-// sheet with one choice per filter, and the active ones as chips under the
-// search, each with its cross, then « Tout effacer ». The address holds them
-// (lib/tamani/client-filters.ts).
+// sheet with one choice per filter (since lot 7, « A commandé » too), and the
+// active ones as chips under the search, each with its cross, then « Tout
+// effacer ». The address holds them (lib/tamani/client-filters.ts).
 import Link from 'next/link';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button, Select } from '@/components/ui';
@@ -128,6 +128,17 @@ export function ClientFilterForm({
         options={[
           { value: '', label: 'Tous les pays' },
           ...choices.countries.map((c) => ({ value: c.code, label: c.label })),
+        ]}
+      />
+      <Select
+        id="filter-ordered"
+        label="Commandes"
+        value={draft.ordered === null ? '' : draft.ordered ? 'yes' : 'no'}
+        onChange={(e) => set({ ordered: e.target.value === '' ? null : e.target.value === 'yes' })}
+        options={[
+          { value: '', label: 'Tous les clients' },
+          { value: 'yes', label: 'A commandé' },
+          { value: 'no', label: 'Pas encore commandé' },
         ]}
       />
       <div className="flex flex-wrap gap-3">

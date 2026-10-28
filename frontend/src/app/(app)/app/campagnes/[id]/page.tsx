@@ -1,10 +1,11 @@
 'use client';
 
 // /app/campagnes/[id]: a campaign's results, its interested people, its
-// share links and its settings, one tab each (?onglet=…).
+// orders, its share links and its settings, one tab each (?onglet=…).
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { CampaignActions } from '@/components/app/CampaignActions';
+import { CampaignOrdersTab } from '@/components/app/CampaignOrders';
 import { CampaignResultsTab } from '@/components/app/CampaignResults';
 import { InterestedTab } from '@/components/app/InterestedList';
 import { CampaignEditForm, type CampaignPatchBody } from '@/components/app/CampaignEditForm';
@@ -172,6 +173,12 @@ function CampaignDetail() {
             exportable={features.respondentContacts && features.csvExport}
             busy={busy}
             onArrived={() => void move('ARRIVED')}
+          />
+        ) : tab === 'orders' ? (
+          <CampaignOrdersTab
+            shopId={shop.id}
+            campaignId={campaign.id}
+            unitLabel={campaign.product.unitLabel}
           />
         ) : tab === 'edit' ? (
           <CampaignEditForm key={campaign.id} campaign={campaign} error={saveError} onSave={save} />

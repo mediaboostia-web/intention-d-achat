@@ -7,6 +7,7 @@ import {
   type BuyerType,
   type NotInterestedReason,
 } from './labels';
+import type { OrderRow } from './orders-view';
 import { TIMING_LABELS, type Availability, type Timing } from './timing';
 import {
   DEFAULT_MIN_RESPONSES,
@@ -118,6 +119,8 @@ export interface InterestedRow {
   country: string | null;
   sourceLabel: string | null;
   completedAt: string;
+  /** The order made from this answer (lot 7), null until « Transformer en commande ». */
+  orderId: string | null;
 }
 
 export interface InterestedPage {
@@ -240,11 +243,13 @@ export function coefNote(coefs: Coefficients): string {
     : `${base} Ce sont tes réglages.`;
 }
 
-export type CampaignTab = 'results' | 'interested' | 'share' | 'edit';
+export type CampaignTab = 'results' | 'interested' | 'orders' | 'share' | 'edit';
 
+// The keys' order is the tab bar's: Commandes follows Intéressés, whom it turns into orders.
 const TAB_PARAM: Readonly<Record<CampaignTab, string>> = {
   results: 'resultats',
   interested: 'interesses',
+  orders: 'commandes',
   share: 'partager',
   edit: 'modifier',
 };
@@ -252,6 +257,7 @@ const TAB_PARAM: Readonly<Record<CampaignTab, string>> = {
 const TAB_LABEL: Readonly<Record<CampaignTab, string>> = {
   results: 'Résultats',
   interested: 'Intéressés',
+  orders: 'Commandes',
   share: 'Partager',
   edit: 'Modifier',
 };
@@ -279,6 +285,57 @@ export function campaignTabs(
     href: id === 'results' && status !== 'DRAFT' ? base : `${base}?onglet=${TAB_PARAM[id]}`,
     active: id === active,
   }));
+}
+
+/**
+ * A campaign's orders against its stock (GET …/campaigns/[campaignId]/orders,
+ * lot 7): quantities, not order counts. stockLeft is stockQuantity minus the
+ * confirmed and delivered quantities, null without a stock; it may go below
+ * zero, since it is a display and never blocks an order.
+ */
+export interface CampaignOrderSummary {
+  confirmed: number;
+  fulfilled: number;
+  toConfirm: number;
+  stockLeft: number | null;
+}
+
+export interface CampaignOrdersPage {
+  items: OrderRow[];
+  nextCursor: string | null;
+  summary: CampaignOrderSummary;
+}
+
+/** « Stock restant », never below 0 on screen, with the calculation it comes from. */
+export function stockLeftDisplay(
+  s: Pick<CampaignOrderSummary, 'confirmed' | 'fulfilled'> & { stockLeft: number },
+  unitLabel: string,
+): { figure: string; unit: string; calc: string; over: string | null } {
+  const ordered = s.confirmed + s.fulfilled;
+  const left = Math.max(0, s.stockLeft);
+  const past = -s.stockLeft;
+  return {
+    figure: String(left),
+    unit: pluralizeUnit(unitLabel, left),
+    calc: `${s.stockLeft + ordered} en stock − ${ordered} en commandes confirmées ou livrées`,
+    over:
+      past > 0
+        ? `Les commandes confirmées dépassent ton stock de ${past} ${pluralizeUnit(unitLabel, past)}.`
+        : null,
+  };
+}
+
+/** "Confirmées · 3 sacs", "Livrées", "À confirmer": the quantities of the campaign's orders. */
+export function orderQuantityRows(
+  s: CampaignOrderSummary,
+  unitLabel: string,
+): Array<{ id: 'confirmed' | 'fulfilled' | 'toConfirm'; label: string; value: string }> {
+  const amount = (n: number) => `${n} ${pluralizeUnit(unitLabel, n)}`;
+  return [
+    { id: 'confirmed', label: 'Confirmées', value: amount(s.confirmed) },
+    { id: 'fulfilled', label: 'Livrées', value: amount(s.fulfilled) },
+    { id: 'toConfirm', label: 'À confirmer', value: amount(s.toConfirm) },
+  ];
 }
 
 /** ARRIVED once the product is in; otherwise the campaign's availability. */

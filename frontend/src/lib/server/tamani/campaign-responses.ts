@@ -43,6 +43,8 @@ export const ROW_SELECT = {
   zone: { select: { name: true } },
   link: { select: { label: true } },
   respondent: { select: { firstName: true, phoneE164: true, anonymizedAt: true } },
+  // The order made from this answer (one at most, lot 7): its row says « Commande créée ».
+  order: { select: { id: true } },
 } satisfies Prisma.ResponseSelect;
 
 export type ResponseRow = Prisma.ResponseGetPayload<{ select: typeof ROW_SELECT }>;
@@ -69,6 +71,7 @@ export function toRow(r: ResponseRow, canSeeContacts: boolean): InterestedRow {
     country: phone === null ? null : phoneCountryOf(phone),
     sourceLabel: r.link?.label ?? null,
     completedAt: (r.completedAt ?? new Date(0)).toISOString(),
+    orderId: r.order?.id ?? null,
   };
 }
 

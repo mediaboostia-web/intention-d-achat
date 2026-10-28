@@ -4,10 +4,12 @@ import {
   campaignTab,
   campaignTabs,
   coefNote,
+  orderQuantityRows,
   percentRows,
   priceSignal,
   provisionalNote,
   stockAdviceDisplay,
+  stockLeftDisplay,
   stockLine,
   toServeLine,
   type CampaignResult,
@@ -418,12 +420,14 @@ describe('campaign tabs', () => {
     expect(campaignTab('interesses', null, 'ACTIVE')).toBe('interested');
     expect(campaignTab('partager', null, 'ACTIVE')).toBe('share');
     expect(campaignTab('modifier', null, 'ACTIVE')).toBe('edit');
+    expect(campaignTab('commandes', null, 'ACTIVE')).toBe('orders');
+    expect(campaignTab('commandes', '1', 'DRAFT')).toBe('orders');
     expect(campaignTab(null, '1', 'ACTIVE')).toBe('share');
     expect(campaignTab(null, null, 'DRAFT')).toBe('share');
     expect(campaignTab('resultats', null, 'DRAFT')).toBe('results');
   });
 
-  it('lists the four tabs with their links', () => {
+  it('lists the five tabs with their links, Commandes after Intéressés', () => {
     expect(campaignTabs('/app/campagnes/c1', 'interested', 'ACTIVE')).toEqual([
       { id: 'results', label: 'Résultats', href: '/app/campagnes/c1', active: false },
       {
@@ -432,11 +436,61 @@ describe('campaign tabs', () => {
         href: '/app/campagnes/c1?onglet=interesses',
         active: true,
       },
+      {
+        id: 'orders',
+        label: 'Commandes',
+        href: '/app/campagnes/c1?onglet=commandes',
+        active: false,
+      },
       { id: 'share', label: 'Partager', href: '/app/campagnes/c1?onglet=partager', active: false },
       { id: 'edit', label: 'Modifier', href: '/app/campagnes/c1?onglet=modifier', active: false },
     ]);
     expect(campaignTabs('/app/campagnes/c1', 'share', 'DRAFT')[0]?.href).toBe(
       '/app/campagnes/c1?onglet=resultats',
     );
+    // A draft keeps every tab: a manual order may already name it.
+    expect(campaignTabs('/app/campagnes/c1', 'share', 'DRAFT').map((t) => t.id)).toEqual([
+      'results',
+      'interested',
+      'orders',
+      'share',
+      'edit',
+    ]);
+  });
+});
+
+describe('campaign orders copy', () => {
+  const summary = { confirmed: 3, fulfilled: 1, toConfirm: 2, stockLeft: 26 };
+
+  it('reads the stock left with its calculation', () => {
+    expect(stockLeftDisplay(summary, 'sac')).toEqual({
+      figure: '26',
+      unit: 'sacs',
+      calc: '30 en stock − 4 en commandes confirmées ou livrées',
+      over: null,
+    });
+    expect(stockLeftDisplay({ ...summary, fulfilled: 26, stockLeft: 1 }, 'sac')).toMatchObject({
+      figure: '1',
+      unit: 'sac',
+    });
+  });
+
+  it('never shows a stock below zero, and says by how much the orders go past it', () => {
+    expect(
+      stockLeftDisplay({ ...summary, confirmed: 10, fulfilled: 4, stockLeft: -4 }, 'pièce'),
+    ).toEqual({
+      figure: '0',
+      unit: 'pièce',
+      calc: '10 en stock − 14 en commandes confirmées ou livrées',
+      over: 'Les commandes confirmées dépassent ton stock de 4 pièces.',
+    });
+  });
+
+  it('lists the quantities confirmed, delivered and to confirm', () => {
+    expect(orderQuantityRows(summary, 'sac')).toEqual([
+      { id: 'confirmed', label: 'Confirmées', value: '3 sacs' },
+      { id: 'fulfilled', label: 'Livrées', value: '1 sac' },
+      { id: 'toConfirm', label: 'À confirmer', value: '2 sacs' },
+    ]);
   });
 });
