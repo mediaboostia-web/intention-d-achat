@@ -185,15 +185,17 @@ Pas d'envoi WhatsApp automatique en v1, car l'API officielle de Meta est payante
 
 ### 5.5.1 Commandes [décidé, détails : choix]
 - **Création** :
-  - depuis une réponse « Oui », la commande est pré-remplie avec le produit, la quantité, le statut acheteur, la livraison et le quartier. **Une seule commande par réponse** ;
-  - ou **à la main** depuis `/app/commandes`, avec le produit, le client (prénom et numéro) et la quantité. Le client est ajouté au carnet s'il n'y est pas.
-- **Prix figé au moment de la commande** : prix de gros si le client est revendeur et que la quantité atteint `wholesaleMinQty`, sinon prix unitaire. Le grossiste peut corriger le prix unitaire avant de confirmer. Total = prix × quantité, en entier FCFA.
-- **Statuts** : `À confirmer` → `Confirmée` → `Livrée` (ou `Récupérée` si c'est un retrait), ou `Annulée` à tout moment avant la livraison. Le statut « payé » oui/non est indépendant, avec la date du paiement.
+  - depuis une réponse « Oui », la commande est pré-remplie avec le produit, la quantité, le statut acheteur, la livraison et le quartier. **Une seule commande par réponse** : une seconde tentative répond `409 ORDER_ALREADY_EXISTS`, et une réponse « Non » ne se convertit pas (`409 RESPONSE_NOT_INTERESTED`). Un lieu tapé après « Autre endroit » passe dans la note de la commande (« Lieu : X ») [choix, lot 7] ;
+  - ou **à la main** depuis `/app/commandes`, avec le produit, le client (prénom et numéro) et la quantité. Le client est retrouvé par son numéro, ou ajouté au carnet s'il n'y est pas ; un prénom manquant est complété, jamais remplacé. Le numéro se lit avec l'indicatif de la boutique, sauf s'il commence par « + » ou « 00 » [choix, lot 7].
+- **Prix figé au moment de la commande** : prix de gros si le client est revendeur et que la quantité atteint `wholesaleMinQty`, sinon prix unitaire. Le grossiste peut corriger le prix unitaire avant de confirmer ; ensuite le prix ne change plus. Une quantité corrigée garde le prix figé [choix, lot 7]. Total = prix × quantité, en entier FCFA.
+- **Statuts** : `À confirmer` → `Confirmée` → `Livrée` (ou `Récupérée` si c'est un retrait), ou `Annulée` à tout moment avant la livraison. Livrée et annulée sont définitives ; un autre passage répond `409 INVALID_ORDER_TRANSITION`, et deux onglets qui changent la même commande en même temps n'écrivent qu'une fois. « Annuler » demande une seconde touche. Le statut « payé » oui/non est indépendant, avec la date du paiement.
 - **Vues** :
   - liste filtrable par statut, campagne et produit ;
-  - **« À livrer par quartier »** : les commandes confirmées à livrer, groupées par zone, avec le total des pièces par produit, pour préparer les tournées ;
-  - sur la page campagne : commandes et quantités confirmées face au stock. Stock restant affiché = stock − commandes confirmées et livrées. C'est un affichage, pas une réservation bloquante.
-- Bouton WhatsApp sur chaque commande (« Ta commande de 3 marmites est confirmée… »), avec un message pré-rempli.
+  - **« À livrer par quartier »** : les commandes confirmées à livrer, groupées par zone (« Sans quartier » à la fin), avec le total des pièces par produit, pour préparer les tournées. Un retrait n'y figure pas. Cette vue ignore les autres filtres ;
+  - sur la page campagne, un onglet **Commandes** : commandes et quantités confirmées face au stock. Stock restant affiché = stock − quantités confirmées et livrées. C'est un affichage, pas une réservation bloquante : il peut passer sous zéro ;
+  - sur l'accueil, dans « À faire maintenant » : les commandes à confirmer, puis les livraisons par quartier, avant les annonces d'arrivée.
+- Bouton WhatsApp sur chaque commande. Pour une commande confirmée, le message est pré-rempli (« Ta commande de 3 marmites est confirmée… ») ; sinon la conversation s'ouvre vide [choix, lot 7].
+- Un produit qui a des commandes ne se supprime pas : il est archivé [choix, lot 7].
 
 ### 5.5.2 Clients [décidé, détails : choix]
 - **Le carnet est dynamique** [décidé] : dès qu'une personne termine sa réponse à une campagne, elle **s'ajoute automatiquement** aux clients (ou sa fiche est mise à jour). Chaque intérêt reste **relié à un produit précis, une campagne précise et une date**.
@@ -205,17 +207,18 @@ Pas d'envoi WhatsApp automatique en v1, car l'API officielle de Meta est payante
   - **quartier** : un quartier, ou « Autre endroit » ;
   - **période** : ce mois-ci, le mois dernier, les 3 derniers mois, ou l'un des 12 derniers mois ;
   - **pays** : le pays du numéro ;
-  - **a commandé** oui/non et, à partir du Pro, la fiabilité : avec les commandes (lot 7).
+  - **a commandé** oui/non (lot 7) : au moins une commande qui n'est pas annulée.
 - **Une même réponse** : un client correspond quand une même réponse comptée remplit ensemble tous les filtres de réponse (type, réponse, campagne, quartier, période). « Intéressé, campagne riz, octobre » veut dire une réponse qui est les trois à la fois, pas trois réponses. Le pays s'applique au numéro du client.
 - **À l'écran** : un bouton « Filtrer » ouvre une feuille avec les filtres. Les filtres actifs s'affichent en pastilles sous la recherche, chacune avec sa croix, puis « Tout effacer ». Un bouton « Exporter » ouvre la page Exporter avec ces filtres.
 - En Gratuit, les filtres marchent et les numéros restent masqués. Le pays se lit côté serveur sur l'indicatif, sans jamais envoyer le numéro ; il reste visible, puisqu'il n'en dit pas plus que l'indicatif [choix].
 - Exemple d'usage : « tous les revendeurs de Médina intéressés par la campagne des marmites en octobre, qui n'ont pas encore commandé ».
-- **Fiche client** : prénom, numéro (bouton WhatsApp), statut, quartier habituel, historique des réponses et des commandes, montant total acheté, **note libre** du grossiste, et **fiabilité** (« a dit oui 5 fois, a acheté 4 fois · 80 % »).
-- La suppression à la demande (§6.9) anonymise la fiche. Les commandes restent comptées, sans identité.
+- **Fiche client** : prénom, numéro (bouton WhatsApp), statut, quartier habituel, historique des réponses et des commandes, montant total acheté (commandes livrées ou récupérées), **note libre** du grossiste (1 000 caractères), et, à partir du Pro, la **fiabilité** (« a dit oui 5 fois, a acheté 4 fois · 80 % »).
+- Un client entré par une commande à la main, sans réponse, est dans le carnet. Il compte dans « Tous » et dans aucun type [choix, lot 7].
+- La suppression à la demande (§6.9), réservée aux administrateurs de la boutique, anonymise la fiche : le prénom, le numéro, la note du grossiste et les notes de ses commandes sont effacés, et un lieu tapé après « Autre endroit » devient « Autre endroit ». Les réponses et les commandes restent comptées, sans identité. La fiche disparaît des listes ; c'est définitif.
 
 ### 5.5.3 Apprentissage de la fiabilité [choix]
-- **Fiabilité d'un client** = nombre de réponses « Oui » suivies d'une commande livrée ou récupérée, divisé par le nombre de réponses « Oui » sur des campagnes terminées (`CLOSED` ou `ARRIVED`). Elle s'affiche à partir de 2 réponses « Oui » terminées.
-- **Coefficient appris par statut** (usagers et revendeurs) = Σ quantités livrées ou récupérées / Σ quantités annoncées, calculé sur les réponses « Oui » des campagnes terminées de la boutique. Il ne s'applique qu'à partir de **20 réponses « Oui » réparties sur au moins 2 campagnes terminées**. En dessous, on garde le coefficient par défaut ou celui saisi dans les réglages. Le résultat est borné à [0,1 ; 1].
+- **Fiabilité d'un client** = nombre de réponses « Oui » suivies d'une commande livrée ou récupérée, divisé par le nombre de réponses « Oui » sur des campagnes terminées (`CLOSED`, `ARRIVED`, ou `ACTIVE` dont la fin est passée). Les deux nombres ne comptent que les campagnes terminées. Elle s'affiche à partir de 2 réponses « Oui » terminées, à partir du Pro.
+- **Coefficient appris par statut** (usagers et revendeurs) = Σ quantités livrées ou récupérées / Σ quantités annoncées, calculé sur les réponses « Oui » des campagnes terminées de la boutique. Une réponse sans quantité n'y entre pas. Il ne s'applique qu'à partir de **20 réponses « Oui » réparties sur au moins 2 campagnes terminées, pour chaque statut séparément** [choix, lot 7]. En dessous, on garde le coefficient par défaut ou celui saisi dans les réglages. Le résultat est arrondi au centième, puis borné à [0,1 ; 1]. Il ne sert qu'à partir du Pro ; l'estimation dit alors « appris de tes commandes ».
 
 ### 5.5.4 Exporter [décidé, 2026-10-28 ; détails : choix]
 Les fichiers servent aux relances : le grossiste voit ce qu'il exporte et choisit quoi exporter.
@@ -383,7 +386,7 @@ Toutes respectent les invariants du kit : `export const runtime = 'nodejs'` et `
 
 ### 6.9 Données personnelles
 - Consentement affiché sous le champ du numéro (§5.3) et page `/confidentialite`. Le cadre de référence au Sénégal est la CDP (loi 2008-12).
-- Un répondant peut demander la suppression de ses données : en v1, par une action du grossiste ou de l'admin, journalisée.
+- Un répondant peut demander la suppression de ses données : en v1, par une action d'un administrateur de la boutique (« Supprimer les données de ce client », lot 7, ce que §5.5.2 décrit) ou de l'admin. L'action est journalisée avec les seuls identifiants.
 - Les numéros n'apparaissent jamais dans les journaux, grâce à la masquage des données personnelles déjà prévue dans le `logger` du kit.
 
 ---
