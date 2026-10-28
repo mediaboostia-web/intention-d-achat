@@ -23,6 +23,7 @@ import {
   upcomingLine,
   type ActivityLine,
   type ShopSummary,
+  type TodoItem,
 } from '@/lib/tamani/home-view';
 import { relativeTime } from '@/lib/tamani/relative-time';
 import { waShareLink } from '@/lib/tamani/wa';
@@ -253,6 +254,12 @@ function Row({
   );
 }
 
+const TODO_ROUND: Record<TodoItem['kind'], string> = {
+  NOTIFY_INTERESTED: 'bg-whatsapp text-whatsapp-ink',
+  CONFIRM_ORDERS: 'bg-accent text-accent-ink',
+  DELIVER: 'bg-accent text-accent-ink',
+};
+
 function TodoNow({ summary }: { summary: ShopSummary }) {
   if (summary.todo.length === 0) return null;
   return (
@@ -265,13 +272,15 @@ function TodoNow({ summary }: { summary: ShopSummary }) {
           const line = todoLine(item);
           return (
             <Row
-              key={item.campaignId}
+              key={
+                item.kind === 'NOTIFY_INTERESTED' ? `${item.kind}-${item.campaignId}` : item.kind
+              }
               href={line.href}
-              icon="whatsapp"
-              round="bg-whatsapp text-whatsapp-ink"
+              icon={line.icon}
+              round={TODO_ROUND[item.kind]}
               title={line.title}
               detail={line.detail}
-              side={<span className="text-sm font-bold text-primary">Écrire</span>}
+              side={<span className="text-sm font-bold text-primary">{line.action}</span>}
             />
           );
         })}

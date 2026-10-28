@@ -191,7 +191,38 @@ describe('todoLine', () => {
       title: 'Préviens tes 4 intéressés',
       detail: 'Arrivage de Riz parfumé',
       href: '/app/campagnes/c1?onglet=interesses',
+      icon: 'whatsapp',
+      action: 'Écrire',
     });
     expect(todoLine({ ...todo, interested: 1 }).title).toBe('Préviens ton intéressé');
+  });
+
+  it('counts the orders to confirm and opens them', () => {
+    expect(todoLine({ kind: 'CONFIRM_ORDERS', count: 3 })).toEqual({
+      title: '3 commandes à confirmer',
+      detail: 'Confirme-les avec tes clients',
+      href: '/app/commandes?statut=a-confirmer',
+      icon: 'receipt',
+      action: 'Voir',
+    });
+    expect(todoLine({ kind: 'CONFIRM_ORDERS', count: 1 })).toMatchObject({
+      title: '1 commande à confirmer',
+      detail: 'Confirme-la avec ton client',
+    });
+  });
+
+  it('counts the orders to deliver and their zones, and opens the rounds', () => {
+    expect(todoLine({ kind: 'DELIVER', count: 5, zones: 2 })).toEqual({
+      title: '5 commandes à livrer dans 2 quartiers',
+      detail: 'Prépare ta tournée par quartier',
+      href: '/app/commandes?vue=a-livrer',
+      icon: 'truck',
+      action: 'Voir',
+    });
+    expect(todoLine({ kind: 'DELIVER', count: 1, zones: 1 }).title).toBe(
+      '1 commande à livrer dans 1 quartier',
+    );
+    // Orders without a zone: no zone to name.
+    expect(todoLine({ kind: 'DELIVER', count: 2, zones: 0 }).title).toBe('2 commandes à livrer');
   });
 });

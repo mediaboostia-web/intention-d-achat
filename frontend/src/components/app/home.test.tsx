@@ -141,6 +141,28 @@ describe('HomeView', () => {
     expect(render(SUMMARY).t).not.toContain('À faire maintenant');
   });
 
+  it('« À faire maintenant » lists the orders to confirm and to deliver', () => {
+    const { out, t } = render({
+      ...SUMMARY,
+      todo: [
+        { kind: 'CONFIRM_ORDERS', count: 3 },
+        { kind: 'DELIVER', count: 1, zones: 1 },
+        { kind: 'NOTIFY_INTERESTED', campaignId: 'c2', title: 'Huile', interested: 4 },
+      ],
+    });
+    expect(t).toContain('3 commandes à confirmer');
+    expect(t).toContain('1 commande à livrer dans 1 quartier');
+    expect(t).toContain('Préviens tes 4 intéressés');
+    const list = out.match(/<section[^>]*aria-labelledby="todo-title"[^>]*>.*?<\/section>/s)?.[0];
+    expect(hrefs(list ?? '')).toEqual([
+      '/app/commandes?statut=a-confirmer',
+      '/app/commandes?vue=a-livrer',
+      '/app/campagnes/c2?onglet=interesses',
+    ]);
+    expect(list).toContain('Voir');
+    expect(list).toContain('Écrire');
+  });
+
   it('« Tes campagnes » gives one verdict line each, the word in the verdict tone', () => {
     const { out, t } = render({
       ...SUMMARY,

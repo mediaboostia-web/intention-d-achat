@@ -69,10 +69,25 @@ const runningAnswers = () =>
     ],
   );
 
+type OrderGroup = [status: string, fulfillment: string, zoneId: string | null, count: number];
+
+function orders(groups: OrderGroup[]) {
+  (prismaMock.saleOrder.groupBy as unknown as Mock).mockResolvedValue(
+    groups.map(([status, fulfillment, zoneId, n]) => ({
+      status,
+      fulfillment,
+      zoneId,
+      _count: { _all: n },
+    })),
+  );
+}
+
 beforeEach(() => {
   prismaMock.organization.findFirst.mockResolvedValue(shop() as never);
   prismaMock.campaign.findMany.mockResolvedValue([]);
+  prismaMock.response.findMany.mockResolvedValue([]);
   answers([], []);
+  orders([]);
 });
 
 describe('buildHomeBulletin', () => {
@@ -311,6 +326,92 @@ describe('buildHomeBulletin', () => {
       { kind: 'NOTIFY_INTERESTED', campaignId: 'c_arr', title: 'Campagne c_arr', interested: 4 },
     ]);
     expect(bulletin.campaigns).toEqual([]);
+  });
+
+  describe('the coefficients learned from the orders', () => {
+    // 20 reseller yes answers on 2 finished campaigns: 160 bought for 200 announced.
+    const learning = Array.from({ length: 20 }, (_, i) => ({
+      buyerType: 'RESELLER',
+      campaignId: i % 2 ? 'c_old1' : 'c_old2',
+      quantity: 10,
+      order: i < 16 ? { status: 'FULFILLED', quantity: 10 } : null,
+    }));
+
+    it('a Pro shop’s verdicts use them', async () => {
+      prismaMock.campaign.findMany.mockResolvedValue(running as never);
+      runningAnswers();
+      prismaMock.response.findMany.mockResolvedValue(learning as never);
+      const { campaigns } = await buildHomeBulletin(prismaMock, 'org_1', now);
+      // c1: 100 × 0.5 + 200 × 0.8.
+      expect(campaigns.find((c) => c.id === 'c1')).toMatchObject({ verdict: 'GO', realistic: 210 });
+      expect(prismaMock.response.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ organizationId: 'org_1', interested: true }),
+        }),
+      );
+    });
+
+    it('the free plan never reads them', async () => {
+      prismaMock.organization.findFirst.mockResolvedValue(
+        shop({ subscription: null, freeVerdictCampaignId: 'c1' }) as never,
+      );
+      prismaMock.campaign.findMany.mockResolvedValue(running as never);
+      runningAnswers();
+      prismaMock.response.findMany.mockResolvedValue(learning as never);
+      const { campaigns } = await buildHomeBulletin(prismaMock, 'org_1', now);
+      expect(campaigns.find((c) => c.id === 'c1')).toMatchObject({ verdict: 'GO', realistic: 190 });
+      expect(prismaMock.response.findMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('the orders to do', () => {
+    it('come first: the orders to confirm, then the deliveries and their zones', async () => {
+      prismaMock.campaign.findMany.mockResolvedValue([
+        campaign('c_arr', { status: 'ARRIVED', arrivedAt: new Date('2026-10-26T09:00:00Z') }),
+      ] as never);
+      answers([['c_arr', 2]], [['c_arr', 'RESELLER', 2, 40]]);
+      orders([
+        ['TO_CONFIRM', 'PICKUP', null, 2],
+        ['TO_CONFIRM', 'DELIVERY', 'z1', 1],
+        ['CONFIRMED', 'DELIVERY', 'z1', 3],
+        ['CONFIRMED', 'DELIVERY', 'z2', 1],
+        ['CONFIRMED', 'DELIVERY', null, 1],
+        ['CONFIRMED', 'PICKUP', null, 4],
+      ]);
+      const { todo } = await buildHomeBulletin(prismaMock, 'org_1', now);
+      expect(todo).toEqual([
+        { kind: 'CONFIRM_ORDERS', count: 3 },
+        { kind: 'DELIVER', count: 5, zones: 2 },
+        { kind: 'NOTIFY_INTERESTED', campaignId: 'c_arr', title: 'Campagne c_arr', interested: 2 },
+      ]);
+    });
+
+    it('are counted with one groupBy on the shop', async () => {
+      await buildHomeBulletin(prismaMock, 'org_1', now);
+      expect(prismaMock.saleOrder.groupBy).toHaveBeenCalledWith({
+        by: ['status', 'fulfillment', 'zoneId'],
+        where: { organizationId: 'org_1', status: { in: ['TO_CONFIRM', 'CONFIRMED'] } },
+        _count: { _all: true },
+      });
+    });
+
+    it('a line shows only when its count is above 0', async () => {
+      orders([['TO_CONFIRM', 'DELIVERY', 'z1', 1]]);
+      expect((await buildHomeBulletin(prismaMock, 'org_1', now)).todo).toEqual([
+        { kind: 'CONFIRM_ORDERS', count: 1 },
+      ]);
+      // Confirmed pickups are not delivered.
+      orders([['CONFIRMED', 'PICKUP', null, 4]]);
+      expect((await buildHomeBulletin(prismaMock, 'org_1', now)).todo).toEqual([]);
+    });
+
+    it('show in a shop without campaigns', async () => {
+      orders([['CONFIRMED', 'DELIVERY', null, 2]]);
+      expect((await buildHomeBulletin(prismaMock, 'org_1', now)).todo).toEqual([
+        { kind: 'DELIVER', count: 2, zones: 0 },
+      ]);
+      expect(prismaMock.response.groupBy).not.toHaveBeenCalled();
+    });
   });
 
   it('a shop without campaigns reads no answers', async () => {
