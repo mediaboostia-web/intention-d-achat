@@ -107,6 +107,8 @@ describe('mostFrequent', () => {
   it('keeps the zone a client named most, the most recent on a tie', () => {
     expect(mostFrequent(['Médina', null, 'Plateau', 'Médina'])).toBe('Médina');
     expect(mostFrequent(['Plateau', 'Médina'])).toBe('Plateau');
+    // Newest first: A and B are named twice each, A most recently.
+    expect(mostFrequent(['A', 'B', 'B', 'A'])).toBe('A');
     expect(mostFrequent([null, null])).toBeNull();
     expect(mostFrequent([])).toBeNull();
   });
