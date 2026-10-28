@@ -138,7 +138,8 @@ describe('HomeView', () => {
     expect(t).toContain('Préviens tes 4 intéressés');
     expect(t).toContain('Arrivage de Huile');
     expect(hrefs(out)).toContain('/app/campagnes/c2?onglet=interesses');
-    expect(render(SUMMARY).t).not.toContain('À faire maintenant');
+    // Nothing to do: the phone shows no block; the desktop column says so.
+    expect(render(SUMMARY).out).not.toContain('aria-labelledby="m-todo-title"');
   });
 
   it('« À faire maintenant » lists the orders to confirm and to deliver', () => {
@@ -153,7 +154,7 @@ describe('HomeView', () => {
     expect(t).toContain('3 commandes à confirmer');
     expect(t).toContain('1 commande à livrer dans 1 quartier');
     expect(t).toContain('Préviens tes 4 intéressés');
-    const list = out.match(/<section[^>]*aria-labelledby="todo-title"[^>]*>.*?<\/section>/s)?.[0];
+    const list = out.match(/<section[^>]*aria-labelledby="m-todo-title"[^>]*>.*?<\/section>/s)?.[0];
     expect(hrefs(list ?? '')).toEqual([
       '/app/commandes?statut=a-confirmer',
       '/app/commandes?vue=a-livrer',
@@ -233,5 +234,97 @@ describe('HomeView', () => {
     const { t } = render(SUMMARY);
     expect(t).not.toContain('Sois prévenu à chaque réponse');
     expect(t).not.toContain('Activer les notifications');
+  });
+});
+
+describe('HomeView on a desktop (lot 7a)', () => {
+  const tiles: ShopSummary['campaigns'] = [
+    {
+      id: 'c1',
+      title: 'Riz parfumé',
+      unitLabel: 'sac',
+      completed: 34,
+      verdict: 'GO',
+      realistic: 120,
+      reference: 130,
+      offered: false,
+      availability: 'INCOMING',
+      interested: 20,
+      stockStatus: null,
+      restock: null,
+    },
+    {
+      id: 'c2',
+      title: 'Savon',
+      unitLabel: 'carton',
+      completed: 11,
+      verdict: 'WAIT',
+      realistic: 4,
+      reference: 30,
+      offered: false,
+      availability: 'INCOMING',
+      interested: 5,
+      stockStatus: null,
+      restock: null,
+    },
+  ];
+
+  it('« Tes verdicts » gives each campaign its tile: stamp, gauge, calculation, detail', () => {
+    const { out, t } = render({ ...SUMMARY, campaigns: tiles });
+    const section =
+      out.match(/<section[^>]*aria-labelledby="verdicts-title"[^>]*>.*?<\/section>/s)?.[0] ?? '';
+    expect(section).not.toBe('');
+    expect(section.match(/<article/g)).toHaveLength(2);
+    expect(section.match(/class="stamp /g)).toHaveLength(2);
+    expect(section.match(/role="meter"/g)).toHaveLength(2);
+    expect(t).toContain('≈ 120 réalistes sur 130 prévus');
+    expect(t).toContain('11 réponses sur 20');
+    expect(hrefs(section)).toEqual(
+      expect.arrayContaining(['/app/campagnes/c1', '/app/campagnes/c2?onglet=interesses']),
+    );
+  });
+
+  it('keeps an action column on the right: to do, recent activity, coming up', () => {
+    const { out } = render({
+      ...SUMMARY,
+      campaigns: tiles,
+      todo: [{ kind: 'CONFIRM_ORDERS', count: 2 }],
+    });
+    const aside =
+      out.match(/<aside[^>]*aria-label="À faire et activité"[^>]*>.*?<\/aside>/s)?.[0] ?? '';
+    expect(aside).toContain('xl:sticky');
+    const t = text(<div dangerouslySetInnerHTML={{ __html: aside }} />);
+    expect(t.indexOf('À faire maintenant')).toBeGreaterThanOrEqual(0);
+    expect(t.indexOf('À faire maintenant')).toBeLessThan(t.indexOf('Activité récente'));
+    expect(t.indexOf('Activité récente')).toBeLessThan(t.indexOf('À venir'));
+  });
+
+  it('the column says when nothing is waiting', () => {
+    const { out } = render({ ...SUMMARY, todo: [] });
+    const aside = out.match(/<aside[^>]*>.*?<\/aside>/s)?.[0] ?? '';
+    expect(text(<div dangerouslySetInnerHTML={{ __html: aside }} />)).toContain(
+      'Rien à faire pour le moment.',
+    );
+  });
+
+  it('lines the three actions up on the title row, the campaign last', () => {
+    const { out } = render(SUMMARY);
+    const head = out.match(/<header[^>]*>.*?<\/header>/s)?.[0] ?? '';
+    const actions = hrefs(head);
+    expect(actions).toEqual([
+      expect.stringContaining('https://wa.me/'),
+      '/app/produits/nouveau',
+      '/app/campagnes/nouvelle',
+    ]);
+  });
+
+  it('never repeats a heading id between the phone and the desktop copies', () => {
+    const { out } = render({
+      ...SUMMARY,
+      campaigns: tiles,
+      todo: [{ kind: 'CONFIRM_ORDERS', count: 2 }],
+    });
+    const ids = [...out.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

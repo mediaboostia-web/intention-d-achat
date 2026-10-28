@@ -8,6 +8,7 @@ import { NO_ORDER_FILTERS, orderSearch } from './orders-view';
 import type { Availability } from './timing';
 import {
   approxQuantity,
+  DEFAULT_MIN_RESPONSES,
   pluralizeUnit,
   VERDICT_TONE,
   verdictDisplay,
@@ -295,4 +296,37 @@ export function todoLine(item: TodoItem): TodoLine {
     icon: 'whatsapp',
     action: 'Écrire',
   };
+}
+
+/**
+ * The calculation a verdict tile writes by hand (lot 7a): realistic demand
+ * against the planned quantity, the answers still to come while the verdict
+ * waits, or the people to serve against the stock. null behind the Pro lock.
+ */
+export function verdictCalc(item: CampaignBulletinItem): string | null {
+  if (item.availability === 'IN_STOCK') {
+    return item.reference !== null && item.stockStatus !== null
+      ? `${item.interested} à servir · stock ${item.reference}`
+      : `${item.interested} à servir`;
+  }
+  if (item.verdict === null) return null;
+  if (item.verdict === 'WAIT') {
+    const answers = item.completed > 1 ? 'réponses' : 'réponse';
+    return `${item.completed} ${answers} sur ${DEFAULT_MIN_RESPONSES}`;
+  }
+  const realistic = approxQuantity(item.realistic ?? 0);
+  return item.reference === null
+    ? `≈ ${realistic} réalistes, rien de prévu`
+    : `≈ ${realistic} réalistes sur ${item.reference} prévus`;
+}
+
+/** The tile's gauge: the answers towards 20 while waiting, else the demand against the reference. */
+export function verdictGauge(item: CampaignBulletinItem): { value: number; max: number } | null {
+  if (item.verdict === 'WAIT' && item.availability !== 'IN_STOCK') {
+    return { value: item.completed, max: DEFAULT_MIN_RESPONSES };
+  }
+  if (item.realistic === null || item.reference === null || item.reference <= 0) return null;
+  if (item.availability === 'IN_STOCK' && item.stockStatus === null) return null;
+  if (item.availability === 'INCOMING' && item.verdict === null) return null;
+  return { value: item.realistic, max: item.reference };
 }

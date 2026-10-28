@@ -1,15 +1,18 @@
 'use client';
 
 // /app (porteur's feedback §3 bis): one blue "Cette semaine" card like a
-// mobile-money balance, four round shortcuts like WhatsApp's, then the
-// bulletin (lot 6: what to do now, a verdict line per campaign, the money
-// protected this month), the activity as a transaction history and what
-// is coming up. A shop without a campaign sees its first steps instead.
+// mobile-money balance, the money protected this month, four round
+// shortcuts like WhatsApp's, then the bulletin (lot 6: what to do now, a
+// verdict line per campaign), the activity as a transaction history and
+// what is coming up. A shop without a campaign sees its first steps instead.
+// On a desktop (lot 7a) the three actions sit on the title row, the
+// verdicts become tiles, and from 1280px what to do, the activity and what
+// is coming up move to a column on the right.
 // Notifications are not asked here (feedback 2, §7): PushPrompt asks on a
 // phone, Réglages keeps the switch.
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Button, Icon, Notice, PageHeader, type IconName } from '@/components/ui';
+import { Button, Icon, Notice, PageHeader, VerdictTile, type IconName } from '@/components/ui';
 import type { VerdictTone } from '@/lib/design/tokens';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -21,6 +24,8 @@ import {
   onboardingSteps,
   todoLine,
   upcomingLine,
+  verdictCalc,
+  verdictGauge,
   type ActivityLine,
   type ShopSummary,
   type TodoItem,
@@ -56,6 +61,11 @@ export function HomeView({ summary: given }: { summary?: ShopSummary }) {
       <PageHeader
         title={greeting(me.firstName, shop.name, now)}
         note={`Aujourd'hui, ${formatDateFr(now)}`}
+        action={
+          summary?.hasCampaign ? (
+            <DesktopActions shareMessage={summary.shareCampaign?.shareMessage ?? null} />
+          ) : undefined
+        }
       />
       {error && (
         <Notice tone="danger" className="mt-6">
@@ -65,15 +75,30 @@ export function HomeView({ summary: given }: { summary?: ShopSummary }) {
       {!summary && !error && <HomeLoading />}
       {summary && !summary.hasCampaign && <FirstSteps summary={summary} />}
       {summary?.hasCampaign && (
-        <>
-          <WeekCard week={summary.week} />
-          <Shortcuts shareMessage={summary.shareCampaign?.shareMessage ?? null} />
-          <TodoNow summary={summary} />
-          <Campaigns summary={summary} />
-          <MoneyProtected amount={summary.moneyProtectedThisMonth} />
-          <Activity summary={summary} now={now} />
-          <Upcoming summary={summary} now={now} />
-        </>
+        <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start xl:gap-8">
+          <div className="min-w-0">
+            <WeekCard week={summary.week} />
+            <MoneyProtected amount={summary.moneyProtectedThisMonth} />
+            <Shortcuts shareMessage={summary.shareCampaign?.shareMessage ?? null} />
+            <div className="xl:hidden">
+              <TodoNow summary={summary} prefix="m-" />
+            </div>
+            <Campaigns summary={summary} />
+            <VerdictTiles summary={summary} />
+            <div className="xl:hidden">
+              <Activity summary={summary} now={now} prefix="m-" title="Activité" />
+              <Upcoming summary={summary} now={now} prefix="m-" />
+            </div>
+          </div>
+          <aside
+            aria-label="À faire et activité"
+            className="hidden xl:sticky xl:top-24 xl:flex xl:max-h-[calc(100dvh-7rem)] xl:flex-col xl:overflow-y-auto xl:pr-1 xl:pb-2"
+          >
+            <TodoNow summary={summary} prefix="d-" empty="Rien à faire pour le moment." />
+            <Activity summary={summary} now={now} prefix="d-" title="Activité récente" />
+            <Upcoming summary={summary} now={now} prefix="d-" />
+          </aside>
+        </div>
       )}
     </>
   );
@@ -160,8 +185,8 @@ function Shortcuts({ shareMessage }: { shareMessage: string | null }) {
     { label: 'Clients', href: '/app/clients', icon: 'people', tone: 'bg-surface text-ink' },
   ];
   return (
-    <nav aria-label="Raccourcis" className="mt-6">
-      <ul className="grid grid-cols-4 gap-2 lg:hidden">
+    <nav aria-label="Raccourcis" className="mt-6 lg:hidden">
+      <ul className="grid grid-cols-4 gap-2">
         {rounds.map((r) => {
           const body = (
             <>
@@ -192,26 +217,29 @@ function Shortcuts({ shareMessage }: { shareMessage: string | null }) {
           );
         })}
       </ul>
-      <div className="hidden flex-wrap gap-3 lg:flex">
-        <Button href="/app/campagnes/nouvelle">Créer une campagne</Button>
-        <Button href="/app/produits/nouveau" variant="secondary">
-          Ajouter un produit
-        </Button>
-        {shareMessage && (
-          <Button
-            href={waShareLink(shareMessage)}
-            variant="whatsapp"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Partager sur WhatsApp
-          </Button>
-        )}
-        <Button href="/app/clients" variant="secondary">
-          Voir mes clients
-        </Button>
-      </div>
     </nav>
+  );
+}
+
+/** The desktop's three actions on the title row, the campaign last, as on the mockup. */
+function DesktopActions({ shareMessage }: { shareMessage: string | null }) {
+  return (
+    <div className="hidden flex-wrap items-center justify-end gap-2 lg:flex">
+      {shareMessage && (
+        <Button
+          href={waShareLink(shareMessage)}
+          variant="whatsapp"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Partager sur WhatsApp
+        </Button>
+      )}
+      <Button href="/app/produits/nouveau" variant="secondary">
+        Ajouter un produit
+      </Button>
+      <Button href="/app/campagnes/nouvelle">Créer une campagne</Button>
+    </div>
   );
 }
 
@@ -260,31 +288,45 @@ const TODO_ROUND: Record<TodoItem['kind'], string> = {
   DELIVER: 'bg-accent text-accent-ink',
 };
 
-function TodoNow({ summary }: { summary: ShopSummary }) {
-  if (summary.todo.length === 0) return null;
+function TodoNow({
+  summary,
+  prefix,
+  empty,
+}: {
+  summary: ShopSummary;
+  /** The phone and the desktop copies each need their own heading id. */
+  prefix: string;
+  /** The desktop column keeps its heading and says when nothing waits. */
+  empty?: string;
+}) {
+  if (summary.todo.length === 0 && !empty) return null;
   return (
-    <section aria-labelledby="todo-title" className="mt-8">
-      <h2 id="todo-title" className="font-hand text-2xl font-bold text-primary">
+    <section aria-labelledby={`${prefix}todo-title`} className="mt-8 xl:first:mt-0">
+      <h2 id={`${prefix}todo-title`} className="font-hand text-2xl font-bold text-primary">
         À faire maintenant
       </h2>
-      <ul className="frame mt-3 divide-y-2 divide-grid overflow-hidden rounded-card bg-surface">
-        {summary.todo.map((item) => {
-          const line = todoLine(item);
-          return (
-            <Row
-              key={
-                item.kind === 'NOTIFY_INTERESTED' ? `${item.kind}-${item.campaignId}` : item.kind
-              }
-              href={line.href}
-              icon={line.icon}
-              round={TODO_ROUND[item.kind]}
-              title={line.title}
-              detail={line.detail}
-              side={<span className="text-sm font-bold text-primary">{line.action}</span>}
-            />
-          );
-        })}
-      </ul>
+      {summary.todo.length === 0 ? (
+        <p className="mt-2 text-ink-soft">{empty}</p>
+      ) : (
+        <ul className="frame mt-3 divide-y-2 divide-grid overflow-hidden rounded-card bg-surface">
+          {summary.todo.map((item) => {
+            const line = todoLine(item);
+            return (
+              <Row
+                key={
+                  item.kind === 'NOTIFY_INTERESTED' ? `${item.kind}-${item.campaignId}` : item.kind
+                }
+                href={line.href}
+                icon={line.icon}
+                round={TODO_ROUND[item.kind]}
+                title={line.title}
+                detail={line.detail}
+                side={<span className="text-sm font-bold text-primary">{line.action}</span>}
+              />
+            );
+          })}
+        </ul>
+      )}
     </section>
   );
 }
@@ -300,7 +342,7 @@ const VERDICT_TEXT: Record<VerdictTone, string> = {
 function Campaigns({ summary }: { summary: ShopSummary }) {
   if (summary.campaigns.length === 0) return null;
   return (
-    <section aria-labelledby="campaigns-title" className="mt-8">
+    <section aria-labelledby="campaigns-title" className="mt-8 lg:hidden">
       <h2 id="campaigns-title" className="font-hand text-2xl font-bold text-primary">
         Tes campagnes
       </h2>
@@ -332,10 +374,37 @@ function Campaigns({ summary }: { summary: ShopSummary }) {
   );
 }
 
+/** From 1024px: a tile per open campaign, the verdict as the screen's strong element. */
+function VerdictTiles({ summary }: { summary: ShopSummary }) {
+  if (summary.campaigns.length === 0) return null;
+  return (
+    <section aria-labelledby="verdicts-title" className="mt-8 hidden lg:block">
+      <h2 id="verdicts-title" className="font-hand text-2xl font-bold text-primary">
+        Tes verdicts
+      </h2>
+      <ul className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
+        {summary.campaigns.map((item) => {
+          const answers = `${item.completed} ${plural(item.completed, 'réponse', 'réponses')}`;
+          return (
+            <li key={item.id} className="min-w-0">
+              <VerdictTile
+                line={campaignVerdictLine(item)}
+                answers={item.offered ? `${answers}, verdict offert` : answers}
+                calc={verdictCalc(item)}
+                gauge={verdictGauge(item)}
+              />
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 function MoneyProtected({ amount }: { amount: number }) {
   if (amount <= 0) return null;
   return (
-    <section aria-labelledby="money-title" className="mt-8">
+    <section aria-labelledby="money-title" className="mt-6">
       <h2 id="money-title" className="font-hand text-2xl font-bold text-primary">
         Argent protégé ce mois-ci
       </h2>
@@ -347,11 +416,21 @@ function MoneyProtected({ amount }: { amount: number }) {
   );
 }
 
-function Activity({ summary, now }: { summary: ShopSummary; now: Date }) {
+function Activity({
+  summary,
+  now,
+  prefix,
+  title,
+}: {
+  summary: ShopSummary;
+  now: Date;
+  prefix: string;
+  title: string;
+}) {
   return (
-    <section aria-labelledby="activity-title" className="mt-8">
-      <h2 id="activity-title" className="font-hand text-2xl font-bold text-primary">
-        Activité
+    <section aria-labelledby={`${prefix}activity-title`} className="mt-8">
+      <h2 id={`${prefix}activity-title`} className="font-hand text-2xl font-bold text-primary">
+        {title}
       </h2>
       {summary.activity.length === 0 ? (
         <p className="mt-3 text-ink-soft">
@@ -398,11 +477,11 @@ function Activity({ summary, now }: { summary: ShopSummary; now: Date }) {
   );
 }
 
-function Upcoming({ summary, now }: { summary: ShopSummary; now: Date }) {
+function Upcoming({ summary, now, prefix }: { summary: ShopSummary; now: Date; prefix: string }) {
   if (summary.upcoming.length === 0) return null;
   return (
-    <section aria-labelledby="upcoming-title" className="mt-8">
-      <h2 id="upcoming-title" className="font-hand text-2xl font-bold text-primary">
+    <section aria-labelledby={`${prefix}upcoming-title`} className="mt-8">
+      <h2 id={`${prefix}upcoming-title`} className="font-hand text-2xl font-bold text-primary">
         À venir
       </h2>
       <ul className="frame mt-3 divide-y-2 divide-grid overflow-hidden rounded-card bg-surface">

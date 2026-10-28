@@ -6,6 +6,8 @@ import {
   onboardingSteps,
   todoLine,
   upcomingLine,
+  verdictCalc,
+  verdictGauge,
   type ActivityItem,
   type CampaignBulletinItem,
 } from './home-view';
@@ -224,5 +226,62 @@ describe('todoLine', () => {
     );
     // Orders without a zone: no zone to name.
     expect(todoLine({ kind: 'DELIVER', count: 2, zones: 0 }).title).toBe('2 commandes à livrer');
+  });
+});
+
+describe('verdict tiles (lot 7a)', () => {
+  const item = (over: Partial<CampaignBulletinItem>): CampaignBulletinItem => ({
+    id: 'c1',
+    title: 'Riz parfumé',
+    unitLabel: 'sac',
+    completed: 34,
+    verdict: 'GO',
+    realistic: 124,
+    reference: 130,
+    offered: false,
+    availability: 'INCOMING',
+    interested: 20,
+    stockStatus: null,
+    restock: null,
+    ...over,
+  });
+
+  it('writes the calculation by hand: realistic against planned', () => {
+    expect(verdictCalc(item({}))).toBe('≈ 120 réalistes sur 130 prévus');
+    expect(verdictCalc(item({ realistic: 12, reference: 40 }))).toBe(
+      '≈ 12 réalistes sur 40 prévus',
+    );
+  });
+
+  it('counts the answers while the verdict waits', () => {
+    expect(verdictCalc(item({ verdict: 'WAIT', completed: 11 }))).toBe('11 réponses sur 20');
+    expect(verdictCalc(item({ verdict: 'WAIT', completed: 1 }))).toBe('1 réponse sur 20');
+    expect(verdictGauge(item({ verdict: 'WAIT', completed: 11 }))).toEqual({ value: 11, max: 20 });
+  });
+
+  it('reads the stock for an in-stock campaign', () => {
+    const stock = item({
+      availability: 'IN_STOCK',
+      verdict: null,
+      stockStatus: 'ENOUGH',
+      realistic: 40,
+      reference: 200,
+      interested: 57,
+    });
+    expect(verdictCalc(stock)).toBe('57 à servir · stock 200');
+    expect(verdictGauge(stock)).toEqual({ value: 40, max: 200 });
+    expect(verdictCalc({ ...stock, stockStatus: null, reference: null })).toBe('57 à servir');
+  });
+
+  it('shows no calculation and no gauge behind the Pro lock', () => {
+    const locked = item({ verdict: null, realistic: null, reference: null });
+    expect(verdictCalc(locked)).toBeNull();
+    expect(verdictGauge(locked)).toBeNull();
+  });
+
+  it('says there is nothing planned when the campaign has no reference', () => {
+    const neutral = item({ verdict: 'NEUTRAL', reference: null });
+    expect(verdictCalc(neutral)).toBe('≈ 120 réalistes, rien de prévu');
+    expect(verdictGauge(neutral)).toBeNull();
   });
 });

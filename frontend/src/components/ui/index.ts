@@ -33,3 +33,4 @@ export { Switch } from './Switch';
 export { Tabs } from './Tabs';
 export { Textarea, type TextareaProps } from './Textarea';
 export { VerdictCard } from './VerdictCard';
+export { VerdictTile } from './VerdictTile';
