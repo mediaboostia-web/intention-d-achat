@@ -13,6 +13,7 @@ import { estimateFromTotals } from './estimate';
 import { claimFreeVerdict, verdictAccess } from './free-verdict';
 import type { Db } from './locks';
 import { computeMoney } from './money';
+import { computeStockAdvice } from './stock-advice';
 import { effectivePlan } from './subscription';
 import { computeVerdict, MIN_RESPONSES_FOR_VERDICT, verdictReference } from './verdict';
 
@@ -65,6 +66,7 @@ export async function buildHomeBulletin(
         endsAt: true,
         createdAt: true,
         arrivedAt: true,
+        availability: true,
         plannedQuantity: true,
         stockQuantity: true,
         product: {
@@ -133,11 +135,32 @@ export async function buildHomeBulletin(
   const items: CampaignBulletinItem[] = read
     .filter(({ c }) => effectiveStatus(c, now) === 'ACTIVE')
     .slice(0, RUNNING_SIZE)
-    .map(({ c, n, estimate, reference, verdict, access }) => {
-      const base = { id: c.id, title: c.title, unitLabel: c.product.unitLabel, completed: n };
+    .map(({ c, n, interested, estimate, reference, verdict, access }) => {
+      const inStock = c.availability === 'IN_STOCK';
+      const base = {
+        id: c.id,
+        title: c.title,
+        unitLabel: c.product.unitLabel,
+        completed: n,
+        availability: inStock ? ('IN_STOCK' as const) : ('INCOMING' as const),
+        interested,
+      };
+      const advice =
+        inStock && c.stockQuantity !== null && access !== 'LOCKED'
+          ? computeStockAdvice({
+              realistic: estimate.realistic,
+              stock: c.stockQuantity,
+              completed: n,
+            })
+          : null;
+      const stock = {
+        stockStatus: advice?.status ?? null,
+        restock: advice ? advice.restock : null,
+      };
       if (access !== 'LOCKED') {
         return {
           ...base,
+          ...stock,
           verdict: verdict.code,
           realistic: estimate.realistic,
           reference,
@@ -148,6 +171,7 @@ export async function buildHomeBulletin(
       const waiting = freeId === null && verdict.code === 'WAIT';
       return {
         ...base,
+        ...stock,
         verdict: waiting ? 'WAIT' : null,
         realistic: null,
         reference: null,
@@ -157,8 +181,12 @@ export async function buildHomeBulletin(
 
   const moneyProtectedThisMonth = read
     .filter(
+      // Stock already bought is no dead stock avoided: only orders to come count.
       ({ c, verdict, access }) =>
-        c.createdAt >= monthStart && access !== 'LOCKED' && verdict.code !== 'WAIT',
+        c.availability !== 'IN_STOCK' &&
+        c.createdAt >= monthStart &&
+        access !== 'LOCKED' &&
+        verdict.code !== 'WAIT',
     )
     .reduce((total, { c, estimate, reference }) => {
       const { avoidedDeadStock } = computeMoney({ reference, estimate, ...c.product });

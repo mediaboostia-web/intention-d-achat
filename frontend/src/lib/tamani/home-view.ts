@@ -4,7 +4,14 @@
 // summary itself is built by lib/server/tamani/summary.ts.
 import type { IconName } from '@/components/ui/icons';
 import type { VerdictTone } from '@/lib/design/tokens';
-import { pluralizeUnit, VERDICT_TONE, verdictDisplay, type VerdictCode } from './verdict-display';
+import type { Availability } from './timing';
+import {
+  approxQuantity,
+  pluralizeUnit,
+  VERDICT_TONE,
+  verdictDisplay,
+  type VerdictCode,
+} from './verdict-display';
 
 /** What GET /api/shops/[orgId]/summary sends (lot 5b; lot 6 adds the verdicts). */
 export interface ShopSummary {
@@ -44,6 +51,12 @@ export interface CampaignBulletinItem {
   reference: number | null;
   /** The free plan's offered verdict. */
   offered: boolean;
+  availability: Availability;
+  /** Counted yes answers: for an in-stock campaign, the people to serve. */
+  interested: number;
+  /** In stock only; null without a stock or when the plan hides it. */
+  stockStatus: 'ENOUGH' | 'SHORTAGE' | null;
+  restock: number | null;
 }
 
 /** A campaign arrived within 7 days whose interested people are still to tell. */
@@ -183,6 +196,32 @@ export interface CampaignVerdictLine {
 
 export function campaignVerdictLine(item: CampaignBulletinItem): CampaignVerdictLine {
   const href = `/app/campagnes/${item.id}`;
+  if (item.availability === 'IN_STOCK') {
+    // In stock there is nothing to order: who is waiting, and whether the stock lasts.
+    const figure = `${item.interested} à servir`;
+    if (item.stockStatus === 'ENOUGH') {
+      return {
+        title: item.title,
+        word: 'Stock suffisant',
+        figure,
+        tone: 'success',
+        locked: false,
+        href,
+      };
+    }
+    if (item.stockStatus === 'SHORTAGE') {
+      const q = approxQuantity(item.restock ?? 0);
+      return {
+        title: item.title,
+        word: `Réassort ~${q}`,
+        figure,
+        tone: 'warning',
+        locked: false,
+        href,
+      };
+    }
+    return { title: item.title, word: 'À servir', figure, tone: 'primary', locked: false, href };
+  }
   if (item.verdict === null) {
     return {
       title: item.title,

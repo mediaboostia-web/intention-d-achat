@@ -150,6 +150,24 @@ describe('HomeView', () => {
           realistic: 120,
           reference: 130,
           offered: false,
+          availability: 'INCOMING',
+          interested: 20,
+          stockStatus: null,
+          restock: null,
+        },
+        {
+          id: 'c5',
+          title: 'Livre de commerce',
+          unitLabel: 'pièce',
+          completed: 8,
+          verdict: 'WAIT',
+          realistic: 6,
+          reference: 30,
+          offered: false,
+          availability: 'IN_STOCK',
+          interested: 6,
+          stockStatus: 'ENOUGH',
+          restock: null,
         },
         {
           id: 'c3',
@@ -160,12 +178,18 @@ describe('HomeView', () => {
           realistic: null,
           reference: null,
           offered: false,
+          availability: 'INCOMING',
+          interested: 9,
+          stockStatus: null,
+          restock: null,
         },
       ],
     });
     expect(t).toContain('Tes campagnes');
     expect(t).toContain('~120 sacs');
     expect(t).toContain('Verdict avec Pro');
+    expect(t).toContain('6 à servir');
+    expect(t).toContain('Stock suffisant');
     expect(out).toMatch(/text-success[^>]*>Commande/);
     expect(hrefs(out)).toContain('/app/campagnes/c3');
     expect(render(SUMMARY).t).not.toContain('Tes campagnes');

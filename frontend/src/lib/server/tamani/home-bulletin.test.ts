@@ -24,6 +24,7 @@ const campaign = (id: string, over: object = {}) => ({
   endsAt: null,
   createdAt: new Date('2026-10-20T08:00:00Z'),
   arrivedAt: null,
+  availability: 'INCOMING',
   plannedQuantity: 200,
   stockQuantity: null,
   product: { unitLabel: 'sac', costPrice: 15000, unitPrice: 18000, wholesalePrice: 17000 },
@@ -89,6 +90,10 @@ describe('buildHomeBulletin', () => {
         realistic: 10,
         reference: 300,
         offered: false,
+        availability: 'INCOMING',
+        interested: 5,
+        stockStatus: null,
+        restock: null,
       },
       {
         id: 'c1',
@@ -99,6 +104,10 @@ describe('buildHomeBulletin', () => {
         realistic: 190,
         reference: 200,
         offered: false,
+        availability: 'INCOMING',
+        interested: 20,
+        stockStatus: null,
+        restock: null,
       },
       {
         id: 'c2',
@@ -109,6 +118,10 @@ describe('buildHomeBulletin', () => {
         realistic: 50,
         reference: 400,
         offered: false,
+        availability: 'INCOMING',
+        interested: 10,
+        stockStatus: null,
+        restock: null,
       },
     ]);
   });
@@ -208,6 +221,58 @@ describe('buildHomeBulletin', () => {
     expect((await buildHomeBulletin(prismaMock, 'org_1', now)).moneyProtectedThisMonth).toBe(
       150_000,
     );
+  });
+
+  describe('an in-stock campaign', () => {
+    const inStock = (stockQuantity: number) =>
+      campaign('c4', { availability: 'IN_STOCK', plannedQuantity: null, stockQuantity });
+    const withC4 = () =>
+      answers(
+        [
+          ['c1', 30],
+          ['c2', 25],
+          ['c3', 5],
+          ['c4', 25],
+        ],
+        [
+          ['c1', 'CONSUMER', 10, 100],
+          ['c1', 'RESELLER', 10, 200],
+          ['c2', 'CONSUMER', 10, 100],
+          ['c3', 'CONSUMER', 5, 20],
+          ['c4', 'CONSUMER', 25, 100],
+        ],
+      );
+
+    it('carries the people to serve and the state of its stock', async () => {
+      prismaMock.campaign.findMany.mockResolvedValue([inStock(30)] as never);
+      withC4();
+      const { campaigns } = await buildHomeBulletin(prismaMock, 'org_1', now);
+      // 100 announced × 0.5 = 50 realistic for 30 in stock.
+      expect(campaigns[0]).toMatchObject({
+        availability: 'IN_STOCK',
+        interested: 25,
+        stockStatus: 'SHORTAGE',
+        restock: 20,
+      });
+    });
+
+    it('stays out of the money protected', async () => {
+      prismaMock.campaign.findMany.mockResolvedValue([...running, inStock(300)] as never);
+      withC4();
+      expect((await buildHomeBulletin(prismaMock, 'org_1', now)).moneyProtectedThisMonth).toBe(
+        150_000,
+      );
+    });
+
+    it('hides its stock state when the free plan locks it', async () => {
+      prismaMock.organization.findFirst.mockResolvedValue(
+        shop({ subscription: null, freeVerdictCampaignId: 'c2' }) as never,
+      );
+      prismaMock.campaign.findMany.mockResolvedValue([inStock(30)] as never);
+      withC4();
+      const { campaigns } = await buildHomeBulletin(prismaMock, 'org_1', now);
+      expect(campaigns[0]).toMatchObject({ interested: 25, stockStatus: null, restock: null });
+    });
   });
 
   it('money protected leaves out the verdicts the free plan hides', async () => {

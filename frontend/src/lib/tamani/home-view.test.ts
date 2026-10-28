@@ -120,6 +120,10 @@ describe('campaignVerdictLine', () => {
     realistic: 120,
     reference: 130,
     offered: false,
+    availability: 'INCOMING',
+    interested: 20,
+    stockStatus: null,
+    restock: null,
     ...over,
   });
 
@@ -143,6 +147,29 @@ describe('campaignVerdictLine', () => {
     expect(
       campaignVerdictLine(item({ verdict: 'WAIT', completed: 12, realistic: 30 })),
     ).toMatchObject({ word: 'On attend', figure: '12/20', tone: 'neutral', locked: false });
+  });
+
+  it('an in-stock campaign counts the people to serve and reads its stock', () => {
+    const stock = (over: Partial<CampaignBulletinItem>) =>
+      campaignVerdictLine(item({ availability: 'IN_STOCK', interested: 6, ...over }));
+    expect(stock({ stockStatus: 'ENOUGH' })).toEqual({
+      title: 'Riz parfumé',
+      word: 'Stock suffisant',
+      figure: '6 à servir',
+      tone: 'success',
+      locked: false,
+      href: '/app/campagnes/c1',
+    });
+    expect(stock({ stockStatus: 'SHORTAGE', restock: 41 })).toMatchObject({
+      word: 'Réassort ~40',
+      tone: 'warning',
+    });
+    expect(stock({ verdict: null, stockStatus: null, interested: 1 })).toMatchObject({
+      word: 'À servir',
+      figure: '1 à servir',
+      tone: 'primary',
+      locked: false,
+    });
   });
 
   it('a hidden verdict points to Pro', () => {
