@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { html, text } from '@/components/ui/test-html';
 import { WORDMARK_PATH, WORDMARK_VIEWBOX } from '@/lib/design/logo-paths';
 import { LANDING_FAQ, LANDING_LINKS } from '@/lib/tamani/landing';
@@ -98,7 +100,45 @@ describe('LandingNav', () => {
     const out = html(<LandingNav />);
     expect(out).toContain('data-hidden="false"');
     expect(out).toMatch(/<button[^>]*aria-expanded="false"[^>]*aria-controls="lp-menu"/);
-    expect(out).toMatch(/<nav[^>]*id="lp-menu"[^>]*hidden=""/);
+    const drawer = out.match(/<div [^>]*id="lp-menu"[^>]*>/)?.[0] ?? '';
+    expect(drawer).toContain('role="dialog"');
+    expect(drawer).toContain('aria-modal="true"');
+    expect(drawer).toContain('inert=""');
+    expect(out).toContain('data-open="false"');
+  });
+
+  it('on a phone the bar keeps the logo and the menu; the side drawer ends on sign-up, then sign-in', () => {
+    const out = html(<LandingNav />);
+    // The bar's sign-in and sign-up are desktop only (landing.css).
+    expect(out).toMatch(
+      /<a [^>]*class="lp-nav__login"[^>]*href="\/login"|<a [^>]*href="\/login"[^>]*class="lp-nav__login"/,
+    );
+    expect(out).toMatch(
+      /<a [^>]*class="[^"]*lp-nav__cta[^"]*"[^>]*href="\/signup"|<a [^>]*href="\/signup"[^>]*class="[^"]*lp-nav__cta/,
+    );
+    const drawer = out.slice(out.indexOf('id="lp-menu"'));
+    const hrefs = [...drawer.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
+    expect(hrefs).toEqual([
+      '#comment-ca-marche',
+      '#avant-apres',
+      '#tarifs',
+      '#questions',
+      '/signup',
+      '/login',
+    ]);
+    expect(text(<LandingNav />)).toContain('Commencer gratuitement');
+    expect(text(<LandingNav />)).toContain('Déjà un compte ? Se connecter');
+    // The links come in one after the other.
+    expect(drawer.match(/style="--i:\d"/g)).toHaveLength(5);
+  });
+
+  it('hides the bar buttons below 1000px and stops the drawer under reduced motion', () => {
+    const css = readFileSync(path.resolve(__dirname, 'landing.css'), 'utf8');
+    expect(css).toMatch(/\.lp-nav__login,\s*\.lp-nav__cta\s*\{\s*display:\s*none/);
+    expect(css).toMatch(
+      /@media \(min-width: 1000px\)[\s\S]*?\.lp-nav__login,\s*\.lp-nav__cta\s*\{\s*display:\s*inline-flex/,
+    );
+    expect(css).toMatch(/\.lp-drawer__panel\s*\{[^}]*translate:\s*100% 0/);
   });
 });
 
