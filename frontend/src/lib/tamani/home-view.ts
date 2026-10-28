@@ -305,9 +305,9 @@ export function todoLine(item: TodoItem): TodoLine {
  */
 export function verdictCalc(item: CampaignBulletinItem): string | null {
   if (item.availability === 'IN_STOCK') {
-    return item.reference !== null && item.stockStatus !== null
-      ? `${item.interested} à servir · stock ${item.reference}`
-      : `${item.interested} à servir`;
+    // The figure already says « N à servir »: set the demand against the stock.
+    if (item.reference === null || item.stockStatus === null) return null;
+    return `≈ ${approxQuantity(item.realistic ?? 0)} réalistes sur ${item.reference} en stock`;
   }
   if (item.verdict === null) return null;
   if (item.verdict === 'WAIT') {
@@ -320,13 +320,31 @@ export function verdictCalc(item: CampaignBulletinItem): string | null {
     : `≈ ${realistic} réalistes sur ${item.reference} prévus`;
 }
 
+export interface VerdictGauge {
+  value: number;
+  max: number;
+  /** What the meter measures, for screen readers. */
+  label: string;
+}
+
 /** The tile's gauge: the answers towards 20 while waiting, else the demand against the reference. */
-export function verdictGauge(item: CampaignBulletinItem): { value: number; max: number } | null {
+export function verdictGauge(item: CampaignBulletinItem): VerdictGauge | null {
   if (item.verdict === 'WAIT' && item.availability !== 'IN_STOCK') {
-    return { value: item.completed, max: DEFAULT_MIN_RESPONSES };
+    return {
+      value: item.completed,
+      max: DEFAULT_MIN_RESPONSES,
+      label: `Réponses comptées sur ${DEFAULT_MIN_RESPONSES}`,
+    };
   }
   if (item.realistic === null || item.reference === null || item.reference <= 0) return null;
-  if (item.availability === 'IN_STOCK' && item.stockStatus === null) return null;
-  if (item.availability === 'INCOMING' && item.verdict === null) return null;
-  return { value: item.realistic, max: item.reference };
+  if (item.availability === 'IN_STOCK') {
+    if (item.stockStatus === null) return null;
+    return { value: item.realistic, max: item.reference, label: 'Demande réaliste sur le stock' };
+  }
+  if (item.verdict === null) return null;
+  return {
+    value: item.realistic,
+    max: item.reference,
+    label: 'Demande réaliste sur la quantité prévue',
+  };
 }

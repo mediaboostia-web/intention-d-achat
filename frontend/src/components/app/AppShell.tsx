@@ -8,7 +8,6 @@ import { PLANS } from '@/lib/tamani/plans';
 import { cn } from '@/lib/utils';
 import { GlobalSearch } from './GlobalSearch';
 import { PushPrompt } from './PushPrompt';
-import { useShellPrefs } from './shell-prefs';
 import { useShop } from './shop-context';
 import { TopBar } from './TopBar';
 
@@ -22,7 +21,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { shop, usage } = useShop();
   const wide = shellWidth(pathname) === 'wide';
-  useShellPrefs();
   return (
     <div className="min-h-dvh bg-paper lg:flex">
       <a

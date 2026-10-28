@@ -241,8 +241,9 @@ describe('stepBody', () => {
     ).toEqual({ wantsDelivery: true, zoneId: null, deliveryPlace: 'Lomé' });
     expect(stepBody({ type: 'back' })).toEqual({});
     expect(stepBody({ type: 'itsMe' })).toEqual({});
-    // « En fait, ça m'intéresse » tells the server the answer turned to yes.
-    expect(stepBody({ type: 'changeMind' })).toEqual({ interested: true });
+    // « En fait, ça m'intéresse » sends nothing yet: the contact step resends
+    // every answer, so a tap then a closed page leaves the « non » as it was.
+    expect(stepBody({ type: 'changeMind' })).toEqual({});
   });
 });
 

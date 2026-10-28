@@ -14,6 +14,7 @@ import {
   Fab,
   FilterBar,
   LayoutSwitch,
+  listClass,
   Notice,
   PageHeader,
   ProductCard,
@@ -137,14 +138,7 @@ function ProductList() {
       </div>
 
       {list.items.length > 0 && (
-        <ul
-          className={cn(
-            'mt-6',
-            layout === 'card'
-              ? 'grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] sm:gap-4'
-              : 'frame divide-y-2 divide-grid overflow-hidden rounded-card bg-surface',
-          )}
-        >
+        <ul className={cn('mt-6', listClass(layout))}>
           {list.items.map((p) => (
             <li key={p.id} className="min-w-0">
               <ProductCard product={p} layout={layout} href={`/app/produits/${p.id}`} />

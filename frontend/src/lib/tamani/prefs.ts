@@ -37,7 +37,22 @@ export function browserStorage(): Storage | null {
 }
 
 /**
- * Inline in the shop space's layout, run before the first paint so a night
- * or folded choice does not flash the default first. Plain ES5, no imports.
+ * Inline in the root layout's <head>, run before the first paint so a night
+ * or folded choice does not flash the default first; only under /app, so
+ * the landing, sign-in and the popup stay in day mode. Plain ES5, no imports.
  */
-export const SHELL_PREFS_SCRIPT = `try{var d=document.documentElement.dataset;if(localStorage.getItem('${PREF_KEYS.theme}')==='dark')d.theme='dark';if(localStorage.getItem('${PREF_KEYS.sidebar}')==='collapsed')d.sidebar='collapsed'}catch(e){}`;
+export const SHELL_PREFS_SCRIPT = `try{if(/^\\/app(\\/|$)/.test(location.pathname)){var d=document.documentElement.dataset;if(localStorage.getItem('${PREF_KEYS.theme}')==='dark')d.theme='dark';if(localStorage.getItem('${PREF_KEYS.sidebar}')==='collapsed')d.sidebar='collapsed'}}catch(e){}`;
+
+/**
+ * Sets the stored choices on <html> (a client navigation into /app never
+ * ran the script) and returns what takes them off when the shop space is
+ * left, whoever set them.
+ */
+export function applyShellPrefs(root: { dataset: DOMStringMap }, storage: Storage | null) {
+  if (readPref(storage, PREF_KEYS.theme) === 'dark') root.dataset.theme = 'dark';
+  if (readPref(storage, PREF_KEYS.sidebar) === 'collapsed') root.dataset.sidebar = 'collapsed';
+  return () => {
+    delete root.dataset.theme;
+    delete root.dataset.sidebar;
+  };
+}

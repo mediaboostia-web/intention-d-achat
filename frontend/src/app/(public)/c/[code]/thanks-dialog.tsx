@@ -60,7 +60,7 @@ export function ThanksDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-deep/55 p-4 motion-safe:animate-fade-in">
+    <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-deep/55 p-4 motion-safe:animate-fade-in [@media(max-height:640px)]:p-3">
       <div
         ref={box}
         role="dialog"
@@ -68,38 +68,44 @@ export function ThanksDialog({
         aria-labelledby="popup-thanks-title"
         aria-describedby="popup-thanks-body"
         onKeyDown={onKeyDown}
-        className="frame my-auto w-full max-w-sm rounded-sheet bg-surface px-5 pt-6 pb-5 text-center text-ink shadow-press motion-safe:animate-dialog-in"
+        className="frame my-auto w-full max-w-sm rounded-sheet bg-surface px-5 pt-6 pb-5 text-center text-ink shadow-press motion-safe:animate-dialog-in [@media(max-height:640px)]:pt-4 [@media(max-height:640px)]:pb-4"
       >
         <span
           aria-hidden="true"
           className={cn(
-            'frame mx-auto grid size-16 place-items-center rounded-full',
+            'frame mx-auto grid size-16 place-items-center rounded-full [@media(max-height:640px)]:size-12',
             interested ? 'bg-success text-primary-ink' : 'bg-accent text-accent-ink',
           )}
         >
-          <Icon name={interested ? 'check' : 'heart'} className="size-8" />
+          <Icon
+            name={interested ? 'check' : 'heart'}
+            className="size-8 [@media(max-height:640px)]:size-6"
+          />
         </span>
         <h2
           ref={title}
           id="popup-thanks-title"
           tabIndex={-1}
-          className="mt-4 font-hand text-3xl leading-tight font-bold text-primary focus:outline-none"
+          className="mt-4 font-hand text-3xl leading-tight font-bold break-words text-primary focus:outline-none [@media(max-height:640px)]:mt-2 [@media(max-height:640px)]:text-2xl"
         >
           {copy.title}
         </h2>
-        <div id="popup-thanks-body" className="mt-2 grid gap-1.5 text-lg">
+        <div
+          id="popup-thanks-body"
+          className="mt-2 grid gap-1.5 text-lg break-words [@media(max-height:640px)]:gap-1 [@media(max-height:640px)]:text-base"
+        >
           {copy.lines.map((line) => (
             <p key={line}>{line}</p>
           ))}
         </div>
         {interested && recap.length > 0 && (
-          <ul className="bg-paper mt-4 grid gap-1 rounded-card border-2 border-grid px-4 py-3 text-left text-ink-soft">
+          <ul className="bg-paper mt-4 grid gap-1 rounded-card border-2 border-grid px-4 py-3 text-left break-words text-ink-soft [@media(max-height:640px)]:mt-3 [@media(max-height:640px)]:py-2">
             {recap.map((line) => (
               <li key={line}>{line}</li>
             ))}
           </ul>
         )}
-        <div className="mt-5 grid gap-2">
+        <div className="mt-5 grid gap-2 [@media(max-height:640px)]:mt-4">
           {left ? (
             <p role="status" className="font-bold">
               C&apos;est noté. Tu peux fermer cette page.

@@ -293,6 +293,8 @@ describe('HomeView on a desktop (lot 7a)', () => {
     const aside =
       out.match(/<aside[^>]*aria-label="À faire et activité"[^>]*>.*?<\/aside>/s)?.[0] ?? '';
     expect(aside).toContain('xl:sticky');
+    // Some air under the title row's buttons.
+    expect(aside.match(/^<aside[^>]*>/)?.[0]).toContain('xl:mt-6');
     const t = text(<div dangerouslySetInnerHTML={{ __html: aside }} />);
     expect(t.indexOf('À faire maintenant')).toBeGreaterThanOrEqual(0);
     expect(t.indexOf('À faire maintenant')).toBeLessThan(t.indexOf('Activité récente'));
@@ -326,5 +328,51 @@ describe('HomeView on a desktop (lot 7a)', () => {
     });
     const ids = [...out.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('HomeView fixes after the review (lot 7a)', () => {
+  const one: ShopSummary['campaigns'] = [
+    {
+      id: 'c1',
+      title: 'Riz parfumé',
+      unitLabel: 'sac',
+      completed: 34,
+      verdict: 'GO',
+      realistic: 120,
+      reference: 130,
+      offered: false,
+      availability: 'INCOMING',
+      interested: 20,
+      stockStatus: null,
+      restock: null,
+    },
+  ];
+
+  it('below 1280px the actions go under the title instead of squeezing it', () => {
+    const { out } = render(SUMMARY);
+    const head = out.match(/<header[^>]*>.*?<\/header>/s)?.[0] ?? '';
+    expect(head).toMatch(/<h1 class="[^"]*break-words/);
+    expect(head).toMatch(/<div class="hidden [^"]*xl:flex/);
+    const below = out.slice(out.indexOf('</header>'));
+    const row = below.match(/<div class="[^"]*lg:flex xl:hidden[^"]*">.*?<\/div>/s)?.[0] ?? '';
+    expect(hrefs(row)).toEqual([
+      expect.stringContaining('https://wa.me/'),
+      '/app/produits/nouveau',
+      '/app/campagnes/nouvelle',
+    ]);
+  });
+
+  it('on a phone the money protected stays after the campaigns, as before', () => {
+    const { out } = render({ ...SUMMARY, moneyProtectedThisMonth: 150_000, campaigns: one });
+    const rows = out.indexOf('aria-labelledby="campaigns-title"');
+    const phone = out.indexOf('aria-labelledby="m-money-title"');
+    const desk = out.indexOf('aria-labelledby="d-money-title"');
+    expect(rows).toBeGreaterThan(-1);
+    expect(phone).toBeGreaterThan(rows);
+    expect(desk).toBeGreaterThan(-1);
+    expect(desk).toBeLessThan(rows);
+    expect(out).toMatch(/<section aria-labelledby="m-money-title" class="[^"]*lg:hidden/);
+    expect(out).toMatch(/<section aria-labelledby="d-money-title" class="[^"]*hidden lg:block/);
   });
 });

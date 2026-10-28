@@ -1,6 +1,6 @@
 // Cards or list on Campagnes and Produits (lot 7a).
 import { describe, expect, it } from 'vitest';
-import { CampaignCard, LayoutSwitch, ProductCard } from '.';
+import { CampaignCard, LayoutSwitch, listClass, ProductCard } from '.';
 import { html, text } from './test-html';
 
 const UPLOADED = 'https://res.cloudinary.com/demo/image/upload/v1/tamani/m1.jpg';
@@ -84,5 +84,14 @@ describe('LayoutSwitch', () => {
     const t = text(<LayoutSwitch value="card" onChange={() => {}} />);
     expect(t).toContain('Cartes');
     expect(t).toContain('Liste');
+  });
+});
+
+describe('listClass', () => {
+  it('keeps one card per row on a phone, a grid from 640px', () => {
+    expect(listClass('card')).toContain('grid-cols-1');
+    expect(listClass('card')).toContain('sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))]');
+    expect(listClass('card')).not.toMatch(/min-\[\d+px\]:grid-cols-2/);
+    expect(listClass('list')).toContain('divide-y-2');
   });
 });

@@ -129,6 +129,19 @@ describe('AppShell', () => {
     expect(out.match(/aria-label="Notifications"/g)).toHaveLength(1);
   });
 
+  it('shows the first name next to the avatar from 1024px', () => {
+    mockNextNavigation({ pathname: '/app' });
+    const out = html(
+      <ShopTestProvider>
+        <AppShell>
+          <p>Page</p>
+        </AppShell>
+      </ShopTestProvider>,
+    );
+    const header = out.match(/<header[^>]*>.*?<\/header>/s)?.[0] ?? '';
+    expect(header).toMatch(/<span class="hidden [^"]*lg:block[^"]*"><span[^>]*>Fatou</);
+  });
+
   it('the home and the lists take the whole width, the forms keep their column', () => {
     const mainOf = (pathname: string) => {
       mockNextNavigation({ pathname });

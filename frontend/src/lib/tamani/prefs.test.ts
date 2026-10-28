@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PREF_KEYS, readPref, SHELL_PREFS_SCRIPT, writePref } from './prefs';
+import { applyShellPrefs, PREF_KEYS, readPref, SHELL_PREFS_SCRIPT, writePref } from './prefs';
 
 function memoryStorage() {
   const data = new Map<string, string>();
@@ -47,14 +47,24 @@ describe('readPref / writePref', () => {
 });
 
 describe('SHELL_PREFS_SCRIPT', () => {
-  const run = (storage: Storage) => {
+  const run = (storage: Storage, pathname = '/app') => {
     const dataset: Record<string, string> = {};
-    new Function('document', 'localStorage', SHELL_PREFS_SCRIPT)(
+    new Function('document', 'localStorage', 'location', SHELL_PREFS_SCRIPT)(
       { documentElement: { dataset } },
       storage,
+      { pathname },
     );
     return dataset;
   };
+
+  it('touches only the shop space: the landing, sign-in and the popup stay in day mode', () => {
+    const storage = memoryStorage();
+    storage.data.set('tamani-theme', 'dark');
+    expect(run(storage, '/app/campagnes')).toEqual({ theme: 'dark' });
+    for (const p of ['/', '/login', '/c/Ab3dE7x', '/application']) {
+      expect(run(storage, p), p).toEqual({});
+    }
+  });
 
   it('sets the night theme and the folded sidebar before the first paint', () => {
     const storage = memoryStorage();
@@ -66,5 +76,24 @@ describe('SHELL_PREFS_SCRIPT', () => {
   it('leaves day mode and an open sidebar by default, or when storage refuses', () => {
     expect(run(memoryStorage())).toEqual({});
     expect(run(throwing)).toEqual({});
+  });
+});
+
+describe('applyShellPrefs', () => {
+  it('sets the stored choices and takes them off again', () => {
+    const storage = memoryStorage();
+    storage.data.set('tamani-theme', 'dark');
+    storage.data.set('tamani-sidebar', 'collapsed');
+    const root = { dataset: {} as Record<string, string> };
+    const undo = applyShellPrefs(root, storage);
+    expect(root.dataset).toEqual({ theme: 'dark', sidebar: 'collapsed' });
+    undo();
+    expect(root.dataset).toEqual({});
+  });
+
+  it('also takes off what the first-paint script set, with nothing stored', () => {
+    const root = { dataset: { theme: 'dark', sidebar: 'collapsed' } as Record<string, string> };
+    applyShellPrefs(root, null)();
+    expect(root.dataset).toEqual({});
   });
 });

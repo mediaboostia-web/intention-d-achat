@@ -1,27 +1,17 @@
 'use client';
 
-import { useEffect } from 'react';
-import { browserStorage, PREF_KEYS, readPref, SHELL_PREFS_SCRIPT } from '@/lib/tamani/prefs';
-
-/** In the shop space's layout: applies the night and folded choices before the first paint. */
-export function ShellPrefsScript() {
-  return <script dangerouslySetInnerHTML={{ __html: SHELL_PREFS_SCRIPT }} />;
-}
+import { useLayoutEffect } from 'react';
+import { applyShellPrefs, browserStorage } from '@/lib/tamani/prefs';
 
 /**
- * The shell applies the stored choices on a client navigation into the shop
- * (the inline script ran only on the first load) and takes them off when it
- * leaves, so the public pages stay in day mode with no sidebar state.
+ * In the shop space's layout, so it lives as long as /app does: applies the
+ * stored night and folded choices after a client navigation into the shop
+ * (the root layout's script ran on the first load only) and takes them off
+ * on the way out, even when the gate sends the visitor to the sign-in page
+ * before the shell ever mounts. A layout effect, so the page left to never
+ * shows one night frame.
  */
-export function useShellPrefs() {
-  useEffect(() => {
-    const root = document.documentElement;
-    const storage = browserStorage();
-    if (readPref(storage, PREF_KEYS.theme) === 'dark') root.dataset.theme = 'dark';
-    if (readPref(storage, PREF_KEYS.sidebar) === 'collapsed') root.dataset.sidebar = 'collapsed';
-    return () => {
-      delete root.dataset.theme;
-      delete root.dataset.sidebar;
-    };
-  }, []);
+export function ShellPrefs() {
+  useLayoutEffect(() => applyShellPrefs(document.documentElement, browserStorage()), []);
+  return null;
 }

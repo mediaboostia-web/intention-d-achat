@@ -300,6 +300,16 @@ describe('PopupView', () => {
     expect(t).not.toContain('Modifier ma réponse');
   });
 
+  it('keeps the end dialog compact on a short screen and breaks a long first name', () => {
+    const long = { ...awa, firstName: 'A'.repeat(40) };
+    const out = html(<PopupView campaign={campaign} state={{ ...saidYes, remembered: long }} />);
+    const title = out.match(/<h2 [^>]*id="popup-thanks-title"[^>]*>/)?.[0] ?? '';
+    expect(title).toContain('break-words');
+    expect(title).toContain('[@media(max-height:640px)]:text-2xl');
+    expect(out).toMatch(/class="[^"]*\[@media\(max-height:640px\)\]:size-12/);
+    expect(out).toMatch(/id="popup-thanks-body" class="[^"]*break-words/);
+  });
+
   it('offers to close the page once the answer is sent', () => {
     // When the browser keeps the page open, say so instead of a dead button.
     const out = html(<PopupView campaign={campaign} state={saidYes} left />);

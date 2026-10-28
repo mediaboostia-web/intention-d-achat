@@ -173,6 +173,7 @@
 
 /* Yellow highlighter — reserved for money. */
 @utility highlight {
+  color: var(--color-accent-ink);
   background: linear-gradient(
     100deg,
     transparent 0.6%,

@@ -63,10 +63,20 @@ export function HomeView({ summary: given }: { summary?: ShopSummary }) {
         note={`Aujourd'hui, ${formatDateFr(now)}`}
         action={
           summary?.hasCampaign ? (
-            <DesktopActions shareMessage={summary.shareCampaign?.shareMessage ?? null} />
+            <DesktopActions
+              shareMessage={summary.shareCampaign?.shareMessage ?? null}
+              className="justify-end xl:flex"
+            />
           ) : undefined
         }
       />
+      {/* From 1024 to 1279px the title row is too narrow for three buttons: they go under it. */}
+      {summary?.hasCampaign && (
+        <DesktopActions
+          shareMessage={summary.shareCampaign?.shareMessage ?? null}
+          className="mt-4 lg:flex xl:hidden"
+        />
+      )}
       {error && (
         <Notice tone="danger" className="mt-6">
           {error}
@@ -78,12 +88,22 @@ export function HomeView({ summary: given }: { summary?: ShopSummary }) {
         <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start xl:gap-8">
           <div className="min-w-0">
             <WeekCard week={summary.week} />
-            <MoneyProtected amount={summary.moneyProtectedThisMonth} />
+            <MoneyProtected
+              amount={summary.moneyProtectedThisMonth}
+              prefix="d-"
+              className="mt-6 hidden lg:block"
+            />
             <Shortcuts shareMessage={summary.shareCampaign?.shareMessage ?? null} />
             <div className="xl:hidden">
               <TodoNow summary={summary} prefix="m-" />
             </div>
             <Campaigns summary={summary} />
+            {/* On a phone the money keeps its place after the campaigns (spec §3). */}
+            <MoneyProtected
+              amount={summary.moneyProtectedThisMonth}
+              prefix="m-"
+              className="mt-8 lg:hidden"
+            />
             <VerdictTiles summary={summary} />
             <div className="xl:hidden">
               <Activity summary={summary} now={now} prefix="m-" title="Activité" />
@@ -92,7 +112,7 @@ export function HomeView({ summary: given }: { summary?: ShopSummary }) {
           </div>
           <aside
             aria-label="À faire et activité"
-            className="hidden xl:sticky xl:top-24 xl:flex xl:max-h-[calc(100dvh-7rem)] xl:flex-col xl:overflow-y-auto xl:pr-1 xl:pb-2"
+            className="hidden xl:sticky xl:top-24 xl:mt-6 xl:flex xl:max-h-[calc(100dvh-7rem)] xl:flex-col xl:overflow-y-auto xl:pr-1 xl:pb-2"
           >
             <TodoNow summary={summary} prefix="d-" empty="Rien à faire pour le moment." />
             <Activity summary={summary} now={now} prefix="d-" title="Activité récente" />
@@ -222,9 +242,15 @@ function Shortcuts({ shareMessage }: { shareMessage: string | null }) {
 }
 
 /** The desktop's three actions on the title row, the campaign last, as on the mockup. */
-function DesktopActions({ shareMessage }: { shareMessage: string | null }) {
+function DesktopActions({
+  shareMessage,
+  className,
+}: {
+  shareMessage: string | null;
+  className: string;
+}) {
   return (
-    <div className="hidden flex-wrap items-center justify-end gap-2 lg:flex">
+    <div className={cn('hidden flex-wrap items-center gap-2', className)}>
       {shareMessage && (
         <Button
           href={waShareLink(shareMessage)}
@@ -401,11 +427,20 @@ function VerdictTiles({ summary }: { summary: ShopSummary }) {
   );
 }
 
-function MoneyProtected({ amount }: { amount: number }) {
+function MoneyProtected({
+  amount,
+  prefix,
+  className,
+}: {
+  amount: number;
+  /** The phone and the desktop copies each need their own heading id. */
+  prefix: string;
+  className: string;
+}) {
   if (amount <= 0) return null;
   return (
-    <section aria-labelledby="money-title" className="mt-6">
-      <h2 id="money-title" className="font-hand text-2xl font-bold text-primary">
+    <section aria-labelledby={`${prefix}money-title`} className={className}>
+      <h2 id={`${prefix}money-title`} className="font-hand text-2xl font-bold text-primary">
         Argent protégé ce mois-ci
       </h2>
       <p className="mt-2 text-lg text-ink">

@@ -31,10 +31,10 @@ export function TopBar({ search }: { search?: ReactNode }) {
         <Link
           href="/app/profil"
           aria-label="Ton profil"
-          className="ml-1 flex items-center gap-2 rounded-full hover:bg-grid/70 xl:py-1 xl:pr-3 xl:pl-1"
+          className="ml-1 flex items-center gap-2 rounded-full hover:bg-grid/70 lg:py-1 lg:pr-3 lg:pl-1"
         >
           <Avatar name={me.name ?? shop.name} src={shop.logoUrl} size="sm" />
-          <span className="hidden text-left leading-tight xl:block">
+          <span className="hidden text-left leading-tight lg:block">
             <span className="block max-w-36 truncate text-sm font-bold text-ink">{who}</span>
             <span className="block max-w-36 truncate text-xs text-ink-muted">{shop.name}</span>
           </span>

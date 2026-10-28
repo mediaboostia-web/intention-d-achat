@@ -1,5 +1,5 @@
 import type { VerdictTone } from '@/lib/design/tokens';
-import type { CampaignVerdictLine } from '@/lib/tamani/home-view';
+import type { CampaignVerdictLine, VerdictGauge } from '@/lib/tamani/home-view';
 import { cn } from '@/lib/utils';
 import { Button } from './Button';
 import { Icon } from './icons';
@@ -35,7 +35,7 @@ export function VerdictTile({
   /** "34 réponses", ", verdict offert" when the free plan's verdict was given. */
   answers: string;
   calc: string | null;
-  gauge: { value: number; max: number } | null;
+  gauge: VerdictGauge | null;
 }) {
   const filled = gauge ? Math.min(100, Math.round((gauge.value / gauge.max) * 100)) : 0;
   return (
@@ -68,7 +68,7 @@ export function VerdictTile({
       {gauge && (
         <div
           role="meter"
-          aria-label="Demande réaliste sur la quantité de référence"
+          aria-label={gauge.label}
           aria-valuemin={0}
           aria-valuemax={gauge.max}
           aria-valuenow={gauge.value}

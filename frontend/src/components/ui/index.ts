@@ -24,7 +24,7 @@ export { Notice } from './Notice';
 export { PageHeader } from './PageHeader';
 export { PhoneInput, type PhoneInputProps } from './PhoneInput';
 export { ProductCard, type ProductCardData } from './ProductCard';
-export { LayoutSwitch, type ListLayout } from './LayoutSwitch';
+export { LayoutSwitch, listClass, type ListLayout } from './LayoutSwitch';
 export { Select, type SelectProps } from './Select';
 export { Stamp } from './Stamp';
 export { StockCard } from './StockCard';

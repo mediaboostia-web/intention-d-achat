@@ -48,3 +48,10 @@ describe("globals.css [data-theme='dark'] mirrors nightColors", () => {
     for (const name of Object.keys(declaredAtNight)) expect(known, name).toContain(name);
   });
 });
+
+describe('the highlighter', () => {
+  it('writes in accent ink, so the money stays readable by night', () => {
+    const block = css.match(/@utility highlight \{([\s\S]*?)\n\}/)?.[1] ?? '';
+    expect(block).toMatch(/color:\s*var\(--color-accent-ink\)/);
+  });
+});

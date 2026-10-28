@@ -256,7 +256,11 @@ describe('verdict tiles (lot 7a)', () => {
   it('counts the answers while the verdict waits', () => {
     expect(verdictCalc(item({ verdict: 'WAIT', completed: 11 }))).toBe('11 réponses sur 20');
     expect(verdictCalc(item({ verdict: 'WAIT', completed: 1 }))).toBe('1 réponse sur 20');
-    expect(verdictGauge(item({ verdict: 'WAIT', completed: 11 }))).toEqual({ value: 11, max: 20 });
+    expect(verdictGauge(item({ verdict: 'WAIT', completed: 11 }))).toEqual({
+      value: 11,
+      max: 20,
+      label: 'Réponses comptées sur 20',
+    });
   });
 
   it('reads the stock for an in-stock campaign', () => {
@@ -268,9 +272,14 @@ describe('verdict tiles (lot 7a)', () => {
       reference: 200,
       interested: 57,
     });
-    expect(verdictCalc(stock)).toBe('57 à servir · stock 200');
-    expect(verdictGauge(stock)).toEqual({ value: 40, max: 200 });
-    expect(verdictCalc({ ...stock, stockStatus: null, reference: null })).toBe('57 à servir');
+    // The figure already says « 57 à servir »: the calculation sets the demand against the stock.
+    expect(verdictCalc(stock)).toBe('≈ 40 réalistes sur 200 en stock');
+    expect(verdictGauge(stock)).toEqual({
+      value: 40,
+      max: 200,
+      label: 'Demande réaliste sur le stock',
+    });
+    expect(verdictCalc({ ...stock, stockStatus: null, reference: null })).toBeNull();
   });
 
   it('shows no calculation and no gauge behind the Pro lock', () => {
@@ -283,5 +292,26 @@ describe('verdict tiles (lot 7a)', () => {
     const neutral = item({ verdict: 'NEUTRAL', reference: null });
     expect(verdictCalc(neutral)).toBe('≈ 120 réalistes, rien de prévu');
     expect(verdictGauge(neutral)).toBeNull();
+  });
+});
+
+describe('verdictGauge labels (lot 7a)', () => {
+  it('names what an incoming campaign gauge measures', () => {
+    expect(
+      verdictGauge({
+        id: 'c1',
+        title: 'Riz',
+        unitLabel: 'sac',
+        completed: 34,
+        verdict: 'GO',
+        realistic: 120,
+        reference: 130,
+        offered: false,
+        availability: 'INCOMING',
+        interested: 20,
+        stockStatus: null,
+        restock: null,
+      })?.label,
+    ).toBe('Demande réaliste sur la quantité prévue');
   });
 });

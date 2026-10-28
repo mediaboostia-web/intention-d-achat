@@ -180,8 +180,6 @@ export function stepBody(action: PopupAction): ResponseStepBody {
   switch (action.type) {
     case 'interest':
       return { interested: action.interested };
-    case 'changeMind':
-      return { interested: true };
     case 'reason':
       return { notInterestedReason: action.reason };
     case 'buyer':

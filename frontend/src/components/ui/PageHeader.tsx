@@ -22,7 +22,7 @@ export function PageHeader({
       )}
     >
       <div className="min-w-0">
-        <h1 className="font-hand text-3xl leading-tight font-bold text-primary sm:text-4xl">
+        <h1 className="font-hand text-3xl leading-tight font-bold break-words text-primary sm:text-4xl">
           {frenchSpacing(title)}
         </h1>
         {note && <p className="mt-1 text-sm text-ink-muted">{note}</p>}
