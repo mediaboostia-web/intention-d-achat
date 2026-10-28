@@ -115,13 +115,10 @@ export function clientsCsv(rows: readonly ExportClientRow[]): string {
 /** The name given most often, newest first so a tie keeps the most recent; null without any. */
 export function mostFrequent(names: ReadonlyArray<string | null>): string | null {
   const counts = new Map<string, number>();
+  for (const name of names) if (name !== null) counts.set(name, (counts.get(name) ?? 0) + 1);
+  // A Map keeps the order names were first met: newest first, so a tie keeps the most recent.
   let best: string | null = null;
-  for (const name of names) {
-    if (name === null) continue;
-    const n = (counts.get(name) ?? 0) + 1;
-    counts.set(name, n);
-    if (best === null || n > (counts.get(best) ?? 0)) best = name;
-  }
+  for (const [name, n] of counts) if (best === null || n > (counts.get(best) ?? 0)) best = name;
   return best;
 }
 

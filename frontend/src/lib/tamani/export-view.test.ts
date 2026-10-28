@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { NO_CLIENT_FILTERS } from './client-filters';
-import { DEFAULT_EXPORT, exportHref, exportSearch, parseExportSearch } from './export-view';
+import {
+  DEFAULT_EXPORT,
+  clientsExportHref,
+  exportHref,
+  exportSearch,
+  parseExportSearch,
+} from './export-view';
 
 const parse = (qs: string) => parseExportSearch(new URLSearchParams(qs));
 
@@ -57,6 +63,14 @@ describe('exportSearch', () => {
     const c = { what: 'clients' as const, filters: { ...NO_CLIENT_FILTERS, period: 'ce-mois' } };
     expect(exportSearch(c)).toBe('quoi=clients&periode=ce-mois');
     expect(parse(exportSearch(c))).toEqual(c);
+  });
+});
+
+describe('clientsExportHref', () => {
+  it('carries the client filters but not the search, which the export page cannot show', () => {
+    expect(clientsExportHref({ ...NO_CLIENT_FILTERS, q: 'Awa', country: 'SN' })).toBe(
+      '/app/exporter?quoi=clients&pays=SN',
+    );
   });
 });
 

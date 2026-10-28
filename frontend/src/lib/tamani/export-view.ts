@@ -114,3 +114,8 @@ export function exportSearch(q: ExportQuery): string {
 export function exportHref(q: ExportQuery): string {
   return `/app/exporter?${exportSearch(q)}`;
 }
+
+/** The client book's « Exporter »: its filters, not its search, which the export page cannot show. */
+export function clientsExportHref(filters: ClientFilterState): string {
+  return exportHref({ what: 'clients', filters: { ...filters, q: null } });
+}
