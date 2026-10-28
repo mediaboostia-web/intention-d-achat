@@ -51,7 +51,10 @@ export interface ClientFilters extends Partial<Omit<ClientFilterState, 'type' | 
 /** ?type, ?reponse, ?campagne, ?quartier, ?periode, ?pays and ?q; null when one is unknown (400). */
 export function parseClientFilters(params: URLSearchParams): ClientFilters | null {
   const state = parseClientSearch(params);
-  if (!state) return null;
+  return state ? clientFiltersOf(state) : null;
+}
+
+export function clientFiltersOf(state: ClientFilterState): ClientFilters {
   const { type, ...rest } = state;
   return { ...rest, kind: type ?? 'ALL' };
 }
@@ -77,6 +80,22 @@ function answerWhere(f: ClientFilters, now: Date): Prisma.RespondentWhereInput |
   };
   const filtered = f.kind !== 'ALL' || Boolean(f.answer || f.campaignId || f.zone || f.period);
   return filtered ? { responses: { some } } : null;
+}
+
+/** The filters as AND clauses on the visible clients (the list and the export). */
+export function clientFilterWhere(
+  filters: ClientFilters,
+  canSeeContacts: boolean,
+  now: Date,
+): Prisma.RespondentWhereInput[] {
+  const and: Prisma.RespondentWhereInput[] = [];
+  const answers = answerWhere(filters, now);
+  if (answers) and.push(answers);
+  // The country is the number's dial code, read here: the number itself never leaves.
+  const prefix = filters.country ? dialPrefixFor(filters.country) : null;
+  if (prefix) and.push({ phoneE164: { startsWith: prefix } });
+  if (filters.q) and.push(searchWhere(filters.q, canSeeContacts));
+  return and;
 }
 
 /** Digits search the numbers only on a plan that shows them: no guessing a masked one. */
@@ -148,13 +167,7 @@ export async function listClients(
   cursor: Cursor | null,
   opts: { canSeeContacts: boolean; limit: number; now?: Date },
 ): Promise<{ items: ClientRow[]; nextCursor: string | null; counts: ClientCounts | null }> {
-  const and: Prisma.RespondentWhereInput[] = [];
-  const answers = answerWhere(filters, opts.now ?? new Date());
-  if (answers) and.push(answers);
-  // The country is the number's dial code, read here: the number itself never leaves.
-  const prefix = filters.country ? dialPrefixFor(filters.country) : null;
-  if (prefix) and.push({ phoneE164: { startsWith: prefix } });
-  if (filters.q) and.push(searchWhere(filters.q, opts.canSeeContacts));
+  const and = clientFilterWhere(filters, opts.canSeeContacts, opts.now ?? new Date());
   if (cursor) {
     and.push({
       OR: [

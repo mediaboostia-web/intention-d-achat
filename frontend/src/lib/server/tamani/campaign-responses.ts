@@ -20,7 +20,7 @@ export function parseResponseFilter(raw: string | null): ResponseFilter | null {
 }
 
 /** An answer that counts: completed, within the quota, not suspicious. */
-const COUNTED = {
+export const COUNTED = {
   completedAt: { not: null },
   locked: false,
   suspicious: false,
@@ -28,7 +28,7 @@ const COUNTED = {
 
 const MAX_NUMBERS = 5000;
 
-const ROW_SELECT = {
+export const ROW_SELECT = {
   id: true,
   respondentId: true,
   interested: true,
@@ -45,9 +45,9 @@ const ROW_SELECT = {
   respondent: { select: { firstName: true, phoneE164: true, anonymizedAt: true } },
 } satisfies Prisma.ResponseSelect;
 
-type Row = Prisma.ResponseGetPayload<{ select: typeof ROW_SELECT }>;
+export type ResponseRow = Prisma.ResponseGetPayload<{ select: typeof ROW_SELECT }>;
 
-function toRow(r: Row, canSeeContacts: boolean): InterestedRow {
+export function toRow(r: ResponseRow, canSeeContacts: boolean): InterestedRow {
   const who = r.respondent && !r.respondent.anonymizedAt ? r.respondent : null;
   const phone = who?.phoneE164 ?? null;
   return {
@@ -114,23 +114,6 @@ export async function listCampaignResponses(
     nextCursor: page.nextCursor,
     counts,
   };
-}
-
-const MAX_EXPORT_ROWS = 20_000;
-
-/** Every counted answer, oldest first, numbers included: the export route checks the plan. */
-export async function campaignExportRows(
-  db: Db,
-  organizationId: string,
-  campaignId: string,
-): Promise<InterestedRow[]> {
-  const rows = await db.response.findMany({
-    where: { campaignId, organizationId, ...COUNTED },
-    orderBy: [{ completedAt: 'asc' }, { id: 'asc' }],
-    take: MAX_EXPORT_ROWS,
-    select: ROW_SELECT,
-  });
-  return rows.map((r) => toRow(r, true));
 }
 
 /** The interested numbers, each once, as "+221 77 123 45 12". Pro only: the route checks. */

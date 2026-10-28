@@ -1,8 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import type { InterestedRow } from '@/lib/tamani/results-view';
-import { exportFilename, responsesCsv } from './campaign-export';
+import {
+  clientsCsv,
+  exportFilename,
+  mostFrequent,
+  responsesCsv,
+  type ExportClientRow,
+  type ExportResponseRow,
+} from './campaign-export';
 
-const row = (over: Partial<InterestedRow> = {}): InterestedRow => ({
+const row = (over: Partial<ExportResponseRow> = {}): ExportResponseRow => ({
   id: 'a1',
   respondentId: 'r1',
   firstName: 'Awa',
@@ -20,11 +26,12 @@ const row = (over: Partial<InterestedRow> = {}): InterestedRow => ({
   country: 'SN',
   sourceLabel: 'Statut',
   completedAt: '2026-10-26T09:05:00.000Z',
+  productName: 'Riz parfumé',
   ...over,
 });
 
 describe('responsesCsv', () => {
-  it('writes one French row per answer', () => {
+  it('writes one French row per answer, the product second', () => {
     const lines = responsesCsv([
       row(),
       row({
@@ -43,12 +50,12 @@ describe('responsesCsv', () => {
       }),
     ]).split('\r\n');
     expect(lines[0]).toBe(
-      '﻿Date;Prénom;Numéro WhatsApp;Pays;Intéressé;Achète pour;Quantité;Option;Quand;Livraison;Quartier;Lieu;Raison du non;Source',
+      '﻿Date;Produit;Prénom;Numéro WhatsApp;Pays;Intéressé;Raison du non;Achète pour;Quantité;Option;Quand;Livraison;Quartier;Lieu;Source',
     );
     expect(lines[1]).toBe(
-      "26/10/2026 09:05;Awa;'+221 77 123 45 12;Sénégal;Oui;Revendeur;12;Rouge;Dès l'arrivée;Livraison;Médina;;;Statut",
+      "26/10/2026 09:05;Riz parfumé;Awa;'+221 77 123 45 12;Sénégal;Oui;;Revendeur;12;Rouge;Dès l'arrivée;Livraison;Médina;;Statut",
     );
-    expect(lines[2]).toBe('26/10/2026 09:05;;;;Non;;;;;Retrait;;;Trop cher;');
+    expect(lines[2]).toBe('26/10/2026 09:05;Riz parfumé;;;;Non;Trop cher;;;;;Retrait;;;');
   });
 
   it('writes the place of a delivery elsewhere, a formula made harmless', () => {
@@ -60,13 +67,61 @@ describe('responsesCsv', () => {
   });
 });
 
+describe('clientsCsv', () => {
+  it('writes one French row per client', () => {
+    const client: ExportClientRow = {
+      firstName: 'Kofi',
+      phone: '+229 01 97 12 34 56',
+      country: 'BJ',
+      kind: 'CONSUMER',
+      topZone: 'Cadjehoun',
+      responses: 3,
+      yes: 2,
+      lastAt: '2026-10-20T08:00:00.000Z',
+      lastProduct: 'Marmite',
+    };
+    const lines = clientsCsv([
+      client,
+      {
+        ...client,
+        firstName: null,
+        phone: null,
+        country: null,
+        kind: null,
+        topZone: null,
+        lastAt: null,
+        lastProduct: null,
+      },
+    ]).split('\r\n');
+    expect(lines[0]).toBe(
+      '﻿Prénom;Numéro WhatsApp;Pays;Achète pour;Quartier le plus fréquent;Réponses;Oui;Dernière réponse;Dernier produit',
+    );
+    expect(lines[1]).toBe(
+      "Kofi;'+229 01 97 12 34 56;Bénin;Usager;Cadjehoun;3;2;20/10/2026 08:00;Marmite",
+    );
+    expect(lines[2]).toBe(';;;;;3;2;;');
+  });
+});
+
+describe('mostFrequent', () => {
+  it('keeps the zone a client named most, the most recent on a tie', () => {
+    expect(mostFrequent(['Médina', null, 'Plateau', 'Médina'])).toBe('Médina');
+    expect(mostFrequent(['Plateau', 'Médina'])).toBe('Plateau');
+    expect(mostFrequent([null, null])).toBeNull();
+    expect(mostFrequent([])).toBeNull();
+  });
+});
+
 describe('exportFilename', () => {
-  it('names the file after the campaign and the day', () => {
-    expect(exportFilename('Marmites inox 5 L, été !', new Date('2026-10-27T18:00:00Z'))).toBe(
-      'tamani-marmites-inox-5-l-ete-2026-10-27.csv',
+  const day = new Date('2026-10-28T18:00:00Z');
+  it('says what is exported, for which campaign, and the day', () => {
+    expect(exportFilename('interesses', 'Riz parfumé', day)).toBe(
+      'tamani-interesses-riz-parfume-2026-10-28.csv',
     );
-    expect(exportFilename('***', new Date('2026-10-27T18:00:00Z'))).toBe(
-      'tamani-campagne-2026-10-27.csv',
+    expect(exportFilename('pas-interesses', 'Marmites inox 5 L, été !', day)).toBe(
+      'tamani-pas-interesses-marmites-inox-5-l-ete-2026-10-28.csv',
     );
+    expect(exportFilename('reponses', null, day)).toBe('tamani-reponses-2026-10-28.csv');
+    expect(exportFilename('clients', '***', day)).toBe('tamani-clients-2026-10-28.csv');
   });
 });
