@@ -81,6 +81,11 @@ describe('ClientDetailView', () => {
   const client: ClientDetail = {
     ...yes,
     firstSeenAt: '2026-10-01T10:00:00.000Z',
+    // Lot 7 fields; the card shows them in Task 8.
+    notes: null,
+    orders: [],
+    totalSpent: 0,
+    reliability: null,
     interests: [
       {
         responseId: 'resp_2',

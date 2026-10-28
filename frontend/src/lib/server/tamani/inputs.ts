@@ -177,6 +177,17 @@ export const OrderPatch = z
   })
   .refine(nonEmpty, 'Nothing to update');
 
+// ── Clients (lot 7) ─────────────────────────────────────────────────────
+/** The wholesaler's free note on a client: 1 000 characters after the trim, blank clears it. */
+export const ClientNotesPatch = z.object({
+  notes: z
+    .string()
+    .trim()
+    .max(1000)
+    .nullable()
+    .transform((s) => (s ? s : null)),
+});
+
 // ── Public popup (lot 5) ────────────────────────────────────────────────
 // One step of a respondent's answer: every field is optional, the server
 // merges what each tap sends. `website` is a honeypot the popup never fills.

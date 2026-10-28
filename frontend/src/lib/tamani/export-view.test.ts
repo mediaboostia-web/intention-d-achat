@@ -39,6 +39,11 @@ describe('parseExportSearch', () => {
       what: 'clients',
       filters: { ...NO_CLIENT_FILTERS, answer: 'yes', country: 'SN' },
     });
+    expect(parse('quoi=clients&type=revendeurs&commande=non')).toEqual({
+      what: 'clients',
+      filters: { ...NO_CLIENT_FILTERS, type: 'RESELLER', ordered: false },
+    });
+    expect(parse('quoi=clients&commande=peut-etre')).toBeNull();
   });
 
   it('refuses what it does not know', () => {
@@ -63,6 +68,9 @@ describe('exportSearch', () => {
     const c = { what: 'clients' as const, filters: { ...NO_CLIENT_FILTERS, period: 'ce-mois' } };
     expect(exportSearch(c)).toBe('quoi=clients&periode=ce-mois');
     expect(parse(exportSearch(c))).toEqual(c);
+    const ordered = { what: 'clients' as const, filters: { ...NO_CLIENT_FILTERS, ordered: true } };
+    expect(exportSearch(ordered)).toBe('quoi=clients&commande=oui');
+    expect(parse(exportSearch(ordered))).toEqual(ordered);
   });
 });
 
@@ -70,6 +78,9 @@ describe('clientsExportHref', () => {
   it('carries the client filters but not the search, which the export page cannot show', () => {
     expect(clientsExportHref({ ...NO_CLIENT_FILTERS, q: 'Awa', country: 'SN' })).toBe(
       '/app/exporter?quoi=clients&pays=SN',
+    );
+    expect(clientsExportHref({ ...NO_CLIENT_FILTERS, q: 'Awa', ordered: false })).toBe(
+      '/app/exporter?quoi=clients&commande=non',
     );
   });
 });

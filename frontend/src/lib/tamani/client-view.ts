@@ -3,6 +3,7 @@
 // Free plan's lock. Pure and shared with the browser; the server builds the
 // rows in lib/server/tamani/clients.ts.
 import type { BuyerType } from './labels';
+import type { OrderRow } from './orders-view';
 import { pluralizeUnit } from './verdict-display';
 
 /** The client's latest counted answer. */
@@ -36,9 +37,27 @@ export interface ClientInterest extends ClientLast {
   zoneName: string | null;
 }
 
+/** « a dit oui 5 fois, a acheté 4 fois · 80 % » (spec §5.5.3): finished campaigns only. */
+export interface ClientReliabilityView {
+  /** Yes answers on finished campaigns. */
+  yesCount: number;
+  /** Those followed by a fulfilled order (delivered or picked up). */
+  fulfilledCount: number;
+  /** fulfilledCount / yesCount; null under 2 finished yes answers. */
+  rate: number | null;
+}
+
 export interface ClientDetail extends ClientRow {
   firstSeenAt: string;
   interests: ClientInterest[];
+  /** The wholesaler's free note (lot 7), 1 000 characters at most. */
+  notes: string | null;
+  /** Newest first; numbers masked like the client's on a plan without contacts. */
+  orders: OrderRow[];
+  /** Σ totalAmount of the fulfilled orders, in FCFA. */
+  totalSpent: number;
+  /** Null on a plan without `reliability` (Free). */
+  reliability: ClientReliabilityView | null;
 }
 
 export interface ClientCounts {
