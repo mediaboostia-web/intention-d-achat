@@ -5,6 +5,8 @@
 // bulletin (lot 6: what to do now, a verdict line per campaign, the money
 // protected this month), the activity as a transaction history and what
 // is coming up. A shop without a campaign sees its first steps instead.
+// Notifications are not asked here (feedback 2, §7): PushPrompt asks on a
+// phone, Réglages keeps the switch.
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button, Icon, Notice, PageHeader, type IconName } from '@/components/ui';
@@ -25,7 +27,6 @@ import {
 import { relativeTime } from '@/lib/tamani/relative-time';
 import { waShareLink } from '@/lib/tamani/wa';
 import { cn, formatPrice } from '@/lib/utils';
-import { PushCard } from './PushCard';
 import { useShop } from './shop-context';
 
 /** `summary` is given by tests; the page loads it. */
@@ -69,11 +70,6 @@ export function HomeView({ summary: given }: { summary?: ShopSummary }) {
           <TodoNow summary={summary} />
           <Campaigns summary={summary} />
           <MoneyProtected amount={summary.moneyProtectedThisMonth} />
-        </>
-      )}
-      <PushCard className="mt-8" />
-      {summary?.hasCampaign && (
-        <>
           <Activity summary={summary} now={now} />
           <Upcoming summary={summary} now={now} />
         </>

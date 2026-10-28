@@ -1,8 +1,8 @@
 'use client';
 
-// "Sois prévenu à chaque réponse" (porteur's feedback §2): a card on the home
-// page until this browser receives notifications, and the body of the
-// Notifications section in Réglages, which also says when they are on.
+// "Sois prévenu à chaque réponse" (porteur's feedback §2): the body of the
+// Notifications section in Réglages, which also says when they are on. The
+// home page no longer shows it: on a phone, PushPrompt asks instead (§7).
 import { Button, Card, Icon } from '@/components/ui';
 import type { PushCardState } from '@/lib/tamani/push-state';
 import { cn } from '@/lib/utils';
@@ -10,9 +10,12 @@ import { usePush } from './use-push';
 
 type Place = 'home' | 'settings';
 
+/** iPhones get Web Push only from the home screen icon. Shared with PushPrompt. */
+export const INSTALL_FIRST_COPY =
+  "Sur iPhone, ajoute d'abord Tamani à l'écran d'accueil : bouton Partager, puis « Sur l'écran d'accueil ». Ouvre Tamani depuis l'icône, puis reviens ici.";
+
 const COPY: Record<Exclude<PushCardState, 'hidden' | 'ask'>, string> = {
-  'install-first':
-    "Sur iPhone, ajoute d'abord Tamani à l'écran d'accueil : bouton Partager, puis « Sur l'écran d'accueil ». Ouvre Tamani depuis l'icône, puis reviens ici.",
+  'install-first': INSTALL_FIRST_COPY,
   denied:
     'Les notifications sont bloquées pour Tamani. Autorise-les dans les réglages du navigateur (le cadenas à côté de l’adresse), puis recharge la page.',
   unsupported: 'Ce navigateur ne reçoit pas les notifications. Ouvre Tamani dans Chrome ou Safari.',

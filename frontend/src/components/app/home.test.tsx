@@ -5,6 +5,10 @@ import { mockNextNavigation } from '@/test-utils/next-navigation';
 import { ShopTestProvider } from '@/test-utils/shop-context';
 
 vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigation')).navigation);
+// A phone that could receive notifications: the home page still asks nothing (§7).
+vi.mock('./use-push', () => ({
+  usePush: () => ({ state: 'ask', ready: true, busy: false, error: null, enable: async () => {} }),
+}));
 
 const { HomeView } = await import('./HomeView');
 
@@ -201,5 +205,11 @@ describe('HomeView', () => {
     expect(t).toContain('150 000 FCFA');
     expect(out).toMatch(/highlight[^>]*>150 000 FCFA/);
     expect(render(SUMMARY).t).not.toContain('Argent protégé');
+  });
+
+  it('home no longer asks for notifications: the phone sheet and Réglages do', () => {
+    const { t } = render(SUMMARY);
+    expect(t).not.toContain('Sois prévenu à chaque réponse');
+    expect(t).not.toContain('Activer les notifications');
   });
 });
