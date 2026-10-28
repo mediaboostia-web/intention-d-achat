@@ -6,6 +6,7 @@ import { BottomNav, SideNav } from '@/components/ui';
 import { shellWidth } from '@/lib/tamani/nav';
 import { PLANS } from '@/lib/tamani/plans';
 import { cn } from '@/lib/utils';
+import { GlobalSearch } from './GlobalSearch';
 import { PushPrompt } from './PushPrompt';
 import { useShellPrefs } from './shell-prefs';
 import { useShop } from './shop-context';
@@ -37,7 +38,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         upgrade={shop.plan.id === 'FREE'}
       />
       <div className="relative min-w-0 flex-1">
-        <TopBar />
+        <TopBar search={<GlobalSearch />} />
         <main
           id="contenu"
           className={cn(

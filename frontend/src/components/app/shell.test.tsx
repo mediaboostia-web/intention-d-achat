@@ -123,6 +123,7 @@ describe('AppShell', () => {
     expect(header).toContain('aria-label="Mode nuit"');
     expect(header).toContain('aria-label="Notifications"');
     expect(header).toContain('href="/app/profil"');
+    expect(header).toContain('role="combobox"');
     expect(header.match(/^<header[^>]*>/)?.[0]).toContain('lg:sticky');
     // One bell for every width: the count is polled once.
     expect(out.match(/aria-label="Notifications"/g)).toHaveLength(1);

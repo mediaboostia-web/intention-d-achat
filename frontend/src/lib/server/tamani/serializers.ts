@@ -23,7 +23,7 @@ import { displayPhone, maskPhone } from './phone';
 import { effectivePlan } from './subscription';
 
 /** Product.photos is Json: keep the strings, drop anything else. */
-function photoUrls(photos: Prisma.JsonValue): string[] {
+export function photoUrls(photos: Prisma.JsonValue): string[] {
   return Array.isArray(photos) ? photos.filter((p): p is string => typeof p === 'string') : [];
 }
 

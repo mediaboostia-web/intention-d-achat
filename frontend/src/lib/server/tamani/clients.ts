@@ -113,12 +113,12 @@ export function clientFilterWhere(
   // Like the country, « a commandé » is about the client, not one answer.
   if (filters.ordered === true) and.push({ orders: { some: LIVE_ORDER } });
   if (filters.ordered === false) and.push({ orders: { none: LIVE_ORDER } });
-  if (filters.q) and.push(searchWhere(filters.q, canSeeContacts));
+  if (filters.q) and.push(clientSearchWhere(filters.q, canSeeContacts));
   return and;
 }
 
 /** Digits search the numbers only on a plan that shows them: no guessing a masked one. */
-function searchWhere(q: string, canSeeContacts: boolean): Prisma.RespondentWhereInput {
+export function clientSearchWhere(q: string, canSeeContacts: boolean): Prisma.RespondentWhereInput {
   const digits = q.replace(/\D/g, '');
   if (canSeeContacts && digits.length >= 3) return { phoneE164: { contains: digits } };
   return { firstName: { contains: q, mode: 'insensitive' } };
