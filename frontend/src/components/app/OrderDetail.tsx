@@ -209,7 +209,7 @@ export function OrderDetailView({
         <Icon name="chevron-left" className="size-5" />
         Commandes
       </Link>
-      <header className="mt-2 lg:pr-[var(--shell-tools,0px)]">
+      <header className="mt-2">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <h1 className="font-hand text-3xl leading-tight font-bold break-words text-primary">
             {client.phone ? (

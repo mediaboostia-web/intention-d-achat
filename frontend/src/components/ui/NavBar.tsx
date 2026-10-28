@@ -49,7 +49,9 @@ export function BottomNav({ pathname }: { pathname: string }) {
 /**
  * The desktop sidebar, drawn as the notebook's cover: the shop's card at
  * the top, every section below, this month's responses against the quota
- * at the foot.
+ * at the foot. It folds to its icons (84px) when <html> carries
+ * data-sidebar="collapsed" (SidebarToggle); each link keeps its name as a
+ * tooltip and for screen readers.
  */
 export function SideNav({
   pathname,
@@ -67,15 +69,27 @@ export function SideNav({
   const filled = usage.limit > 0 ? Math.min(100, Math.round((usage.used / usage.limit) * 100)) : 0;
   return (
     <nav
+      id="menu-lateral"
       aria-label="Menu principal"
-      className="bg-cover sticky top-0 hidden h-dvh w-64 shrink-0 flex-col overflow-y-auto border-r-[2.5px] border-ink px-4 py-6 text-deep-ink lg:flex"
+      className="bg-cover sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col overflow-x-hidden overflow-y-auto border-r-[2.5px] border-ink py-5 pr-5 pl-4 text-deep-ink transition-[width,padding] duration-200 ease-out motion-reduce:transition-none lg:flex collapsed:w-[84px] collapsed:px-3"
     >
-      <Link href="/app" className="self-start rounded-control px-2 focus-visible:outline-accent">
-        <Logo tone="inverse" size={30} />
+      <span
+        aria-hidden="true"
+        className="spiral pointer-events-none absolute inset-y-3 right-1 w-3.5 collapsed:hidden"
+      />
+      <Link
+        href="/app"
+        className="self-start rounded-control px-2 focus-visible:outline-accent collapsed:self-center collapsed:px-0"
+      >
+        <Logo tone="inverse" size={30} className="collapsed:hidden" />
+        <Logo variant="mark" size={34} className="hidden collapsed:block" />
       </Link>
-      <div className="mt-6 flex items-center gap-3 rounded-card bg-deep-ink/10 p-3">
+      <div
+        title={shop.name}
+        className="mt-6 flex items-center gap-3 rounded-card bg-deep-ink/10 p-3 collapsed:justify-center collapsed:bg-transparent collapsed:p-0"
+      >
         <Avatar name={shop.name} src={shop.logoUrl} />
-        <div className="min-w-0">
+        <div className="min-w-0 collapsed:hidden">
           <p className="font-hand text-lg leading-snug font-bold break-words">{shop.name}</p>
           <p className="text-sm">Forfait {shop.planLabel}</p>
         </div>
@@ -88,7 +102,7 @@ export function SideNav({
         ))}
       </ul>
       <div className="mt-auto flex flex-col gap-3 pt-6">
-        <div className="rounded-card bg-deep-ink/10 p-3">
+        <div className="rounded-card bg-deep-ink/10 p-3 collapsed:hidden">
           <p className="text-sm">
             <span className="font-bold">
               {usage.used} / {usage.limit}
@@ -133,17 +147,18 @@ function SideLink({ item, pathname }: { item: NavItem; pathname: string }) {
   return (
     <Link
       href={item.href}
+      title={item.label}
       aria-current={active ? 'page' : undefined}
       className={cn(
         'flex min-h-12 items-center gap-3 rounded-control border-2 px-3 font-bold focus-visible:outline-accent',
-        'transition-colors motion-reduce:transition-none',
+        'transition-colors motion-reduce:transition-none collapsed:justify-center collapsed:px-0',
         active
           ? 'border-ink bg-accent text-accent-ink'
           : 'border-transparent text-deep-ink hover:bg-deep-ink/10',
       )}
     >
       <Icon name={item.icon} />
-      {item.label}
+      <span className="min-w-0 truncate collapsed:sr-only">{item.label}</span>
     </Link>
   );
 }

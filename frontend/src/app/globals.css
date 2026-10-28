@@ -140,6 +140,17 @@
   background-size: 18px 18px;
 }
 
+/* The cover's spiral binding: rings down the sidebar's right edge (decoration). */
+@utility spiral {
+  background: radial-gradient(
+      circle at 50% 50%,
+      transparent 3px,
+      color-mix(in srgb, var(--color-deep-ink) 45%, transparent) 3.5px 5px,
+      transparent 5.5px
+    )
+    0 0 / 14px 26px repeat-y;
+}
+
 /* The ink outline of cards, buttons and fields. */
 @utility frame {
   border: 2.5px solid var(--color-ink);

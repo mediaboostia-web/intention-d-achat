@@ -339,7 +339,7 @@ export function ClientDetailView({
 }) {
   return (
     <>
-      <header className="flex items-center gap-4 lg:pr-[var(--shell-tools,0px)]">
+      <header className="flex items-center gap-4">
         <Avatar name={client.firstName ?? ''} size="lg" />
         <div className="min-w-0">
           <h1 className="font-hand text-3xl leading-tight font-bold break-words text-primary">

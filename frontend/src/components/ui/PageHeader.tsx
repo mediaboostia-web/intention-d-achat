@@ -18,8 +18,6 @@ export function PageHeader({
     <header
       className={cn(
         'flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-6',
-        // Leaves room for the shell's bell and avatar on the title line.
-        'lg:pr-[var(--shell-tools,0px)]',
         className,
       )}
     >
