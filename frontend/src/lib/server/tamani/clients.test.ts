@@ -6,6 +6,14 @@ import { getClient, listClients, parseClientFilters, visibleClientWhere } from '
 const COUNTED = { completedAt: { not: null }, locked: false, suspicious: false };
 const visible = { organizationId: 'org_1', anonymizedAt: null, responses: { some: COUNTED } };
 const ALL = { q: null, kind: 'ALL' } as const;
+const NONE = {
+  answer: null,
+  campaignId: null,
+  zone: null,
+  period: null,
+  country: null,
+} as const;
+const NOW = new Date('2026-10-28T12:00:00Z');
 const PRO = { canSeeContacts: true, limit: 20 };
 const FREE = { canSeeContacts: false, limit: 20 };
 
@@ -40,18 +48,24 @@ beforeEach(() => {
 describe('parseClientFilters', () => {
   it('reads the type and the search', () => {
     expect(parseClientFilters(new URLSearchParams('type=revendeurs&q=%20Awa%20'))).toEqual({
+      ...NONE,
       q: 'Awa',
       kind: 'RESELLER',
     });
     expect(parseClientFilters(new URLSearchParams('type=usagers'))).toEqual({
+      ...NONE,
       q: null,
       kind: 'CONSUMER',
     });
-    expect(parseClientFilters(new URLSearchParams(''))).toEqual(ALL);
+    expect(parseClientFilters(new URLSearchParams(''))).toEqual({ ...NONE, ...ALL });
+    expect(
+      parseClientFilters(new URLSearchParams('reponse=oui&periode=2026-10&quartier=autre&pays=BJ')),
+    ).toMatchObject({ answer: 'yes', period: '2026-10', zone: 'OTHER', country: 'BJ' });
   });
 
   it('refuses an unknown type or a long search', () => {
     expect(parseClientFilters(new URLSearchParams('type=toString'))).toBeNull();
+    expect(parseClientFilters(new URLSearchParams('periode=2026-13'))).toBeNull();
     expect(parseClientFilters(new URLSearchParams(`q=${'a'.repeat(61)}`))).toBeNull();
   });
 });
@@ -134,6 +148,47 @@ describe('listClients', () => {
     expect(whereOf().AND).toContainEqual({
       responses: { some: { ...COUNTED, buyerType: 'RESELLER' } },
     });
+  });
+
+  it('listClients applies response filters to one answer', async () => {
+    await listClients(
+      prismaMock,
+      'org_1',
+      { ...ALL, answer: 'yes', period: '2026-10', campaignId: 'c1' },
+      null,
+      { ...PRO, now: NOW },
+    );
+    const and = whereOf().AND;
+    const some = and.filter((w) => JSON.stringify(w).includes('"some"'));
+    expect(some).toEqual([
+      {
+        responses: {
+          some: {
+            ...COUNTED,
+            interested: true,
+            campaignId: 'c1',
+            completedAt: {
+              not: null,
+              gte: new Date('2026-10-01T00:00:00Z'),
+              lt: new Date('2026-11-01T00:00:00Z'),
+            },
+          },
+        },
+      },
+    ]);
+    expect(whereOf().organizationId).toBe('org_1');
+  });
+
+  it('filters by a zone, by « Autre endroit » and by the country of the number', async () => {
+    await listClients(prismaMock, 'org_1', { ...ALL, zone: 'OTHER', country: 'BJ' }, null, FREE);
+    const and = whereOf().AND;
+    expect(and).toContainEqual({
+      responses: { some: { ...COUNTED, zoneId: null, deliveryPlace: { not: null } } },
+    });
+    expect(and).toContainEqual({ phoneE164: { startsWith: '+229' } });
+    prismaMock.respondent.findMany.mockClear();
+    await listClients(prismaMock, 'org_1', { ...ALL, zone: 'z1' }, null, PRO);
+    expect(whereOf().AND).toContainEqual({ responses: { some: { ...COUNTED, zoneId: 'z1' } } });
   });
 
   it('counts every client, resellers and consumers on the first page', async () => {

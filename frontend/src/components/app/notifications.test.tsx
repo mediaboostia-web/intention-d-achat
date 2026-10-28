@@ -2,6 +2,37 @@ import { describe, expect, it } from 'vitest';
 import { html, text } from '@/components/ui/test-html';
 import { NotificationBell, NotificationPanel, bellLabel } from './NotificationBell';
 import { PushCardView } from './PushCard';
+import { PushPromptView } from './PushPrompt';
+
+describe('PushPromptView', () => {
+  const noop = () => {};
+
+  it('asks on the phone with yes and later', () => {
+    const t = text(<PushPromptView state="ask" busy={false} onYes={noop} onLater={noop} />);
+    expect(t).toContain('Être prévenu à chaque réponse ?');
+    expect(t).toContain('Oui, préviens-moi');
+    expect(t).toContain('Plus tard');
+    expect(t).not.toContain("J'ai compris");
+  });
+
+  it('explains the home screen first on an iPhone', () => {
+    const t = text(
+      <PushPromptView state="install-first" busy={false} onYes={noop} onLater={noop} />,
+    );
+    expect(t).toContain("Sur iPhone, ajoute d'abord Tamani à l'écran d'accueil");
+    expect(t).toContain("J'ai compris");
+    expect(t).toContain('Plus tard');
+    expect(t).not.toContain('Oui, préviens-moi');
+  });
+
+  it('holds the yes button while the phone asks', () => {
+    const out = html(<PushPromptView state="ask" busy onYes={noop} onLater={noop} />);
+    const yes = (out.match(/<button[^>]*>[^<]*<\/button>/g) ?? []).find((b) =>
+      b.includes('préviens-moi'),
+    );
+    expect(yes).toContain('disabled');
+  });
+});
 
 describe('PushCardView', () => {
   it('asks to enable notifications', () => {

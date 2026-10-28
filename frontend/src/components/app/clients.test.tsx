@@ -141,3 +141,54 @@ describe('ClientDetailView', () => {
     expect(anchors(out).some((a) => a.includes('href="/app/plus#forfait"'))).toBe(true);
   });
 });
+
+describe('client filters on screen', async () => {
+  const { ClientFilterChips, ClientFilterForm } = await import('./ClientFilters');
+  const { filterChips, parseClientSearch } = await import('@/lib/tamani/client-filters');
+
+  it('shows a chip per active filter with its cross, then « Tout effacer »', () => {
+    const state = parseClientSearch(new URLSearchParams('quartier=autre&pays=BJ&q=Awa'))!;
+    const chips = filterChips(state, { campaigns: new Map(), zones: new Map() });
+    const el = <ClientFilterChips chips={chips} clearHref="/app/clients?q=Awa" />;
+    const out = html(el);
+    expect(text(el)).toContain('Autre endroit');
+    expect(text(el)).toContain('Bénin');
+    expect(out).toContain('aria-label="Retirer le filtre Autre endroit"');
+    expect(out).toContain('href="/app/clients?pays=BJ&amp;q=Awa"');
+    expect(out).toMatch(/href="\/app\/clients\?q=Awa"[^>]*>Tout effacer/);
+    expect(html(<ClientFilterChips chips={[]} clearHref="/app/clients" />)).toBe('');
+  });
+
+  it('opens the form on the address values, every filter in a select', () => {
+    const state = parseClientSearch(
+      new URLSearchParams('reponse=oui&quartier=autre&periode=2026-10'),
+    )!;
+    const out = html(
+      <ClientFilterForm
+        state={state}
+        choices={{
+          campaigns: [{ id: 'c1', title: 'Riz parfumé' }],
+          zones: [{ id: 'z1', name: 'Dantokpa' }],
+          countries: [{ code: 'BJ', label: 'Bénin', dialCode: '+229' }],
+          months: ['2026-10', '2026-09'],
+        }}
+        onApply={() => {}}
+        onCancel={() => {}}
+      />,
+    );
+    for (const label of [
+      'Réponse',
+      'Campagne',
+      'Quartier',
+      'Période de la réponse',
+      'Pays du numéro',
+    ]) {
+      expect(out).toContain(label);
+    }
+    expect(out).toMatch(/<option value="yes" selected="">Intéressés<\/option>/);
+    expect(out).toMatch(/<option value="OTHER" selected="">Autre endroit<\/option>/);
+    expect(out).toMatch(/<option value="2026-10" selected="">octobre 2026<\/option>/);
+    expect(out).toContain('Riz parfumé');
+    expect(out).toContain('Voir les clients');
+  });
+});

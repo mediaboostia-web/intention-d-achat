@@ -36,6 +36,8 @@ const ICONS = [
   'arrow-up-right',
   'arrow-down-left',
   'chevron-right',
+  'tag',
+  'logout',
 ] as const;
 
 const SHOP = { name: 'Diallo Import', logoUrl: null, planLabel: 'Gratuit' };
@@ -161,6 +163,27 @@ describe('Tabs', () => {
     expect(out).toMatch(/^<nav[^>]*aria-label="Campagne"/);
     expect(out.match(/aria-current="page"/g)).toHaveLength(1);
     expect(anchor(out, '/app/campagnes/c1')).toContain('aria-current="page"');
+  });
+
+  it('Tabs is a tab bar, not a row of buttons', () => {
+    const out = html(
+      <Tabs
+        label="Campagne"
+        items={[
+          { id: 'results', label: 'Résultats', href: '/app/campagnes/c1', active: true },
+          { id: 'edit', label: 'Modifier', href: '/app/campagnes/c1?onglet=modifier' },
+        ]}
+      />,
+    );
+    const active = anchor(out, '/app/campagnes/c1');
+    const other = anchor(out, '/app/campagnes/c1?onglet=modifier');
+    expect(active).toContain('border-accent');
+    expect(other).toContain('border-transparent');
+    for (const tag of [active, other]) {
+      expect(tag).not.toMatch(/\bframe\b/);
+      expect(tag).not.toContain('bg-accent');
+    }
+    expect(out.match(/<li class="[^"]*flex-1/g)).toHaveLength(2);
   });
 });
 

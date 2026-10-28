@@ -33,6 +33,7 @@ describe('toShop', () => {
       description: 'Riz et huile en gros.',
       coefConsumer: 0.5,
       coefReseller: 0.7,
+      freeVerdictCampaignId: null,
       createdAt: new Date('2026-10-24T10:00:00Z'),
       updatedAt: new Date('2026-10-24T10:00:00Z'),
     };

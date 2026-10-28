@@ -128,6 +128,7 @@ describe('getPublicCampaign', () => {
         logoUrl: null,
         description: null,
         dialCode: '+221',
+        country: 'SN',
       },
       interestedCount: 64,
       stockQuantity: 200,

@@ -2,26 +2,31 @@
 
 // /app (porteur's feedback §3 bis): one blue "Cette semaine" card like a
 // mobile-money balance, four round shortcuts like WhatsApp's, then the
-// activity as a transaction history and what is coming up. A shop without
-// a campaign sees its first steps instead.
+// bulletin (lot 6: what to do now, a verdict line per campaign, the money
+// protected this month), the activity as a transaction history and what
+// is coming up. A shop without a campaign sees its first steps instead.
+// Notifications are not asked here (feedback 2, §7): PushPrompt asks on a
+// phone, Réglages keeps the switch.
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button, Icon, Notice, PageHeader, type IconName } from '@/components/ui';
+import type { VerdictTone } from '@/lib/design/tokens';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import { formatDateFr } from '@/lib/tamani/dates';
 import {
   activityLine,
+  campaignVerdictLine,
   greeting,
   onboardingSteps,
+  todoLine,
   upcomingLine,
   type ActivityLine,
   type ShopSummary,
 } from '@/lib/tamani/home-view';
 import { relativeTime } from '@/lib/tamani/relative-time';
 import { waShareLink } from '@/lib/tamani/wa';
-import { cn } from '@/lib/utils';
-import { PushCard } from './PushCard';
+import { cn, formatPrice } from '@/lib/utils';
 import { useShop } from './shop-context';
 
 /** `summary` is given by tests; the page loads it. */
@@ -62,11 +67,9 @@ export function HomeView({ summary: given }: { summary?: ShopSummary }) {
         <>
           <WeekCard week={summary.week} />
           <Shortcuts shareMessage={summary.shareCampaign?.shareMessage ?? null} />
-        </>
-      )}
-      <PushCard className="mt-8" />
-      {summary?.hasCampaign && (
-        <>
+          <TodoNow summary={summary} />
+          <Campaigns summary={summary} />
+          <MoneyProtected amount={summary.moneyProtectedThisMonth} />
           <Activity summary={summary} now={now} />
           <Upcoming summary={summary} now={now} />
         </>
@@ -247,6 +250,91 @@ function Row({
         <span className="shrink-0 text-right">{side}</span>
       </Link>
     </li>
+  );
+}
+
+function TodoNow({ summary }: { summary: ShopSummary }) {
+  if (summary.todo.length === 0) return null;
+  return (
+    <section aria-labelledby="todo-title" className="mt-8">
+      <h2 id="todo-title" className="font-hand text-2xl font-bold text-primary">
+        À faire maintenant
+      </h2>
+      <ul className="frame mt-3 divide-y-2 divide-grid overflow-hidden rounded-card bg-surface">
+        {summary.todo.map((item) => {
+          const line = todoLine(item);
+          return (
+            <Row
+              key={item.campaignId}
+              href={line.href}
+              icon="whatsapp"
+              round="bg-whatsapp text-whatsapp-ink"
+              title={line.title}
+              detail={line.detail}
+              side={<span className="text-sm font-bold text-primary">Écrire</span>}
+            />
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+const VERDICT_TEXT: Record<VerdictTone, string> = {
+  success: 'text-success',
+  warning: 'text-warning',
+  danger: 'text-danger',
+  neutral: 'text-neutral-verdict',
+  primary: 'text-primary',
+};
+
+function Campaigns({ summary }: { summary: ShopSummary }) {
+  if (summary.campaigns.length === 0) return null;
+  return (
+    <section aria-labelledby="campaigns-title" className="mt-8">
+      <h2 id="campaigns-title" className="font-hand text-2xl font-bold text-primary">
+        Tes campagnes
+      </h2>
+      <ul className="frame mt-3 divide-y-2 divide-grid overflow-hidden rounded-card bg-surface">
+        {summary.campaigns.map((item) => {
+          const line = campaignVerdictLine(item);
+          const answers = `${item.completed} ${plural(item.completed, 'réponse', 'réponses')}`;
+          return (
+            <Row
+              key={item.id}
+              href={line.href}
+              icon={line.locked ? 'lock' : 'megaphone'}
+              round={line.locked ? 'bg-bg text-ink-muted' : 'bg-accent text-accent-ink'}
+              title={line.title}
+              detail={item.offered ? `${answers}, verdict offert` : answers}
+              side={
+                <>
+                  <span className={cn('block font-bold', VERDICT_TEXT[line.tone])}>
+                    {line.word}
+                  </span>
+                  {line.figure && <span className="block text-sm text-ink">{line.figure}</span>}
+                </>
+              }
+            />
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function MoneyProtected({ amount }: { amount: number }) {
+  if (amount <= 0) return null;
+  return (
+    <section aria-labelledby="money-title" className="mt-8">
+      <h2 id="money-title" className="font-hand text-2xl font-bold text-primary">
+        Argent protégé ce mois-ci
+      </h2>
+      <p className="mt-2 text-lg text-ink">
+        <span className="highlight font-sign text-3xl">{formatPrice(amount, 'FCFA')}</span> de stock
+        qui ne dormira pas au dépôt, grâce à tes verdicts.
+      </p>
+    </section>
   );
 }
 

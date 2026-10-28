@@ -10,6 +10,7 @@ import {
   Card,
   ChoiceButton,
   DataList,
+  DemandGauge,
   EmptyState,
   FilterBar,
   Icon,
@@ -27,8 +28,10 @@ import {
   Switch,
   Tabs,
   Textarea,
+  StockCard,
   VerdictCard,
 } from '@/components/ui';
+import { provisionalNote, stockAdviceDisplay } from '@/lib/tamani/results-view';
 import { DEFAULT_SHARE_TEMPLATE } from '@/lib/tamani/share-message';
 import { colors } from '@/lib/design/tokens';
 
@@ -88,58 +91,6 @@ function PotIcon({ className }: { className?: string }) {
   );
 }
 
-// Demand against the planned quantity, coloured in like notebook squares.
-// Lot 6 promotes it to components/ui once the stats API feeds it.
-function CasesGauge({
-  realistic,
-  announced,
-  reference,
-}: {
-  realistic: number;
-  announced: number;
-  reference: number;
-}) {
-  const per = reference / 10;
-  const fill = (n: number, i: number) => Math.min(Math.max((n - i * per) / per, 0), 1) * 100;
-  return (
-    <div>
-      <div className="pen grid grid-cols-10 gap-[3px]" aria-hidden="true">
-        {Array.from({ length: 10 }, (_, i) => {
-          const r = fill(realistic, i);
-          const a = fill(announced, i);
-          return (
-            <span
-              key={i}
-              className="h-[26px] rounded-case border-2 border-ink"
-              style={{
-                background: [
-                  `linear-gradient(90deg, var(--color-primary) ${r}%, transparent ${r}%)`,
-                  `linear-gradient(90deg, transparent ${a}%, var(--color-surface) ${a}%)`,
-                  'repeating-linear-gradient(-55deg, var(--color-primary) 0 1.5px, var(--color-surface) 1.5px 6px)',
-                ].join(', '),
-              }}
-            />
-          );
-        })}
-      </div>
-      <p className="mt-1.5 flex flex-wrap justify-between gap-x-3 font-hand text-base text-ink-muted">
-        <span>
-          réaliste <b className="text-primary">{realistic}</b>
-        </span>
-        <span>
-          annoncé <b className="text-primary">{announced}</b>
-        </span>
-        <span>
-          prévu <b className="text-primary">{reference}</b>
-        </span>
-      </p>
-      <p className="sr-only">
-        Demande réaliste {realistic}, annoncée {announced}, pour {reference} prévues.
-      </p>
-    </div>
-  );
-}
-
 function CampaignScreen() {
   return (
     <div className="frame relative mx-auto w-full max-w-[390px] overflow-hidden rounded-[40px] bg-paper">
@@ -182,7 +133,7 @@ function CampaignScreen() {
         />
 
         <div className="mt-6">
-          <CasesGauge realistic={211} announced={350} reference={400} />
+          <DemandGauge realistic={211} announced={350} reference={400} />
         </div>
 
         <h4 className="mt-7 font-hand text-2xl font-bold text-primary">Le calcul</h4>
@@ -395,6 +346,26 @@ export default function StyleguidePage() {
               completedResponses={300}
               reference={2000}
               unitLabel="sac de 25 kg"
+            />
+          </div>
+        </Section>
+
+        <Section title="L'état du stock (produit en stock)">
+          <div className="grid gap-8 sm:grid-cols-2">
+            <StockCard
+              {...stockAdviceDisplay(
+                { status: 'ENOUGH', leftover: 24, restock: 0, provisional: true },
+                30,
+                'pièce',
+              )}
+              note={provisionalNote(6)}
+            />
+            <StockCard
+              {...stockAdviceDisplay(
+                { status: 'SHORTAGE', leftover: 0, restock: 40, provisional: false },
+                30,
+                'bouteille',
+              )}
             />
           </div>
         </Section>

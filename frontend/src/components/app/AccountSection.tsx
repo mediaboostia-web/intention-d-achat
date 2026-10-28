@@ -8,20 +8,10 @@ import { Button, Icon, Notice } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { PasswordInput } from './PasswordInput';
-import { api, ApiError } from '@/lib/api';
-import { errorMessage } from '@/lib/tamani/api-messages';
+import { api } from '@/lib/api';
+import { passwordErrorMessage } from '@/lib/tamani/api-messages';
 
 const PASSWORD_MIN = 10;
-
-function passwordError(err: unknown): string {
-  if (err instanceof ApiError && err.code === 'INVALID_CREDENTIALS') {
-    return 'Ton mot de passe actuel ne correspond pas.';
-  }
-  if (err instanceof ApiError && err.code === 'PASSWORD_ALREADY_SET') {
-    return 'Tu as déjà un mot de passe : change-le avec ton mot de passe actuel.';
-  }
-  return errorMessage(err);
-}
 
 export function AccountSection({ google }: { google: boolean }) {
   const router = useRouter();
@@ -61,7 +51,7 @@ export function AccountSection({ google }: { google: boolean }) {
       setConfirm('');
       await refresh();
     } catch (err) {
-      setError(passwordError(err));
+      setError(passwordErrorMessage(err));
     } finally {
       setSaving(false);
     }

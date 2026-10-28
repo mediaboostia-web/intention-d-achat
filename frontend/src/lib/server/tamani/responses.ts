@@ -9,6 +9,7 @@ import { isAcceptingResponses } from './campaign-status';
 import type { TamaniErrorCode } from './errors';
 import { compact, type ResponseStepInput } from './inputs';
 import type { Db } from './locks';
+import type { CountryCode } from 'libphonenumber-js/min';
 import { maskPhone, normalizePhone, shopCountry } from './phone';
 import { interestedWhere } from './public-campaign';
 import { recordDeviceNumber } from './public-limits';
@@ -47,6 +48,7 @@ type AnswerFields = Pick<
   | 'timing'
   | 'wantsDelivery'
   | 'zoneId'
+  | 'deliveryPlace'
 >;
 
 const invalid = (message: string) => new ResponseWriteError('VALIDATION_FAILED', 400, message);
@@ -62,7 +64,12 @@ function answerData(input: ResponseStepInput): Partial<AnswerFields> {
     timing: input.timing,
     wantsDelivery: input.wantsDelivery,
     zoneId: input.zoneId,
+    deliveryPlace: input.deliveryPlace,
   });
+  // A place is a delivery outside the zones: a zone drops it, and it drops a zone
+  // chosen before. Sent together, the zone wins.
+  if (input.zoneId != null) data.deliveryPlace = null;
+  else if (typeof input.deliveryPlace === 'string') data.zoneId = null;
   if (input.interested === true) data.notInterestedReason = null;
   if (input.interested === false) {
     Object.assign(data, {
@@ -72,9 +79,10 @@ function answerData(input: ResponseStepInput): Partial<AnswerFields> {
       timing: null,
       wantsDelivery: null,
       zoneId: null,
+      deliveryPlace: null,
     });
   }
-  if (input.wantsDelivery === false) data.zoneId = null;
+  if (input.wantsDelivery === false) Object.assign(data, { zoneId: null, deliveryPlace: null });
   return data;
 }
 
@@ -88,6 +96,7 @@ function answersOf(r: Response): AnswerFields {
     timing: r.timing,
     wantsDelivery: r.wantsDelivery,
     zoneId: r.zoneId,
+    deliveryPlace: r.deliveryPlace,
   };
 }
 
@@ -135,9 +144,16 @@ export async function upsertResponse(
       : null;
     if (!zone) throw invalid('Unknown delivery zone');
   }
+  if (input.deliveryPlace != null && !campaign.deliveryEnabled) {
+    throw invalid('This campaign does not deliver');
+  }
   let phoneE164: string | null = null;
   if (input.phone !== undefined) {
-    phoneE164 = normalizePhone(input.phone, shopCountry(org.country));
+    // A respondent abroad says their country; an older popup does not, and gets the shop's.
+    const country = input.phoneCountry
+      ? (input.phoneCountry as CountryCode)
+      : shopCountry(org.country);
+    phoneE164 = normalizePhone(input.phone, country);
     if (!phoneE164) throw new ResponseWriteError('INVALID_PHONE', 422);
   }
 

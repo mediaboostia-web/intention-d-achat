@@ -11,6 +11,7 @@ describe('unitChoices', () => {
       'flacon',
       'paquet',
       'douzaine',
+      'demi-douzaine',
       'kg',
       'litre',
     ]);

@@ -15,6 +15,11 @@ export function normalizePhone(raw: string, defaultCountry: CountryCode): string
   return phone?.isValid() ? phone.number : null;
 }
 
+/** "+221771234512" → "SN"; null when the number names no country. */
+export function phoneCountryOf(e164: string): string | null {
+  return parsePhoneNumberFromString(e164)?.country ?? null;
+}
+
 /** "+221771234512" → "77 •• •• 12". */
 export function maskPhone(e164: string): string {
   const national = parsePhoneNumberFromString(e164)?.nationalNumber;

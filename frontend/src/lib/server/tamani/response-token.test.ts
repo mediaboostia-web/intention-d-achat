@@ -15,8 +15,12 @@ describe('response token', () => {
 
   it('rejects a tampered token', async () => {
     const token = await signResponseToken(p);
-    const last = token.at(-1) === 'A' ? 'B' : 'A';
-    expect(await verifyResponseToken(token.slice(0, -1) + last)).toBeNull();
+    // The signature's first character: its last one carries 2 bits base64url decoding drops.
+    const cut = token.lastIndexOf('.') + 1;
+    const first = token[cut] === 'A' ? 'B' : 'A';
+    expect(
+      await verifyResponseToken(token.slice(0, cut) + first + token.slice(cut + 1)),
+    ).toBeNull();
     expect(await verifyResponseToken('abc')).toBeNull();
   });
 

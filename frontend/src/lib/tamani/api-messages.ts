@@ -64,6 +64,7 @@ const MESSAGES: Record<string, string> = {
   PASSWORD_PWNED:
     'Ce mot de passe a fuité sur internet. Choisis-en un autre, que tu n’utilises nulle part ailleurs.',
   PASSWORD_BANNED: 'Ce mot de passe est trop courant. Choisis-en un plus personnel.',
+  PASSWORD_ALREADY_SET: 'Tu as déjà un mot de passe : change-le avec ton mot de passe actuel.',
   VERIFICATION_CODE_INVALID: 'Ce code ne correspond pas. Vérifie les 8 caractères reçus par email.',
   VERIFICATION_CODE_EXPIRED: 'Ce code a expiré. Demande un nouveau code.',
   INVALID_REFRESH: 'Ta session a expiré. Connecte-toi à nouveau.',
@@ -101,6 +102,14 @@ export function errorMessage(err: unknown): string {
   if (err instanceof ApiError) return MESSAGES[err.code] ?? byStatus(err.status);
   if (err instanceof TypeError) return NETWORK;
   return GENERIC;
+}
+
+/** A password form (Profil, Réglages): a wrong password there is the current one, not the login. */
+export function passwordErrorMessage(err: unknown): string {
+  if (err instanceof ApiError && err.code === 'INVALID_CREDENTIALS') {
+    return 'Ton mot de passe actuel ne correspond pas.';
+  }
+  return errorMessage(err);
 }
 
 /** /api/upload answers { code, message } (not { error }); status 0 = network failure. */

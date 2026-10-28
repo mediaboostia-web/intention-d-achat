@@ -5,6 +5,7 @@ import 'server-only';
 import type { ActivityItem, ShopSummary, UpcomingItem } from '@/lib/tamani/home-view';
 import { activeCampaignWhere } from './campaign-status';
 import { visibleClientWhere } from './clients';
+import { buildHomeBulletin } from './home-bulletin';
 import type { Db } from './locks';
 import { toCampaign } from './serializers';
 
@@ -37,6 +38,7 @@ export async function buildShopSummary(
     campaignCount,
     productCount,
     share,
+    bulletin,
   ] = await Promise.all([
     db.response.count({ where: { ...counted, completedAt: { gte: weekAgo } } }),
     db.response.count({ where: { ...counted, completedAt: { gte: dayAgo } } }),
@@ -97,6 +99,7 @@ export async function buildShopSummary(
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       include: { product: true, links: { where: { isDefault: true } } },
     }),
+    buildHomeBulletin(db, organizationId, now),
   ]);
 
   const activity: ActivityItem[] = [
@@ -168,5 +171,6 @@ export async function buildShopSummary(
     shareCampaign: shared
       ? { id: shared.id, title: shared.title, shareMessage: shared.shareMessage }
       : null,
+    ...bulletin,
   };
 }

@@ -39,3 +39,25 @@ describe('popup ships no animation library (Tamani lot 2)', () => {
     expect(readFileSync(file, 'utf8')).not.toMatch(MOTION_IMPORT);
   });
 });
+
+// The popup ships no phone metadata (lot 6b): its country list is written out.
+const PHONE_LIB_IMPORT =
+  /(?:from\s*|import\s*\(\s*|require\s*\(\s*)['"]libphonenumber-js(?:\/[^'"]*)?['"]/;
+const phoneFiles = [
+  ...popupFiles,
+  path.join(SRC, 'components/ui/PhoneInput.tsx'),
+  path.join(SRC, 'lib/tamani/phone-countries.ts'),
+];
+
+describe('popup ships no phone library (Tamani lot 6b)', () => {
+  it('detects the import it forbids', () => {
+    expect(PHONE_LIB_IMPORT.test("import { getCountries } from 'libphonenumber-js/min';")).toBe(
+      true,
+    );
+    expect(PHONE_LIB_IMPORT.test("import { SHOP_COUNTRIES } from './countries';")).toBe(false);
+  });
+
+  it.each(phoneFiles.map((f) => [path.relative(SRC, f), f]))('%s', (_rel, file) => {
+    expect(readFileSync(file, 'utf8')).not.toMatch(PHONE_LIB_IMPORT);
+  });
+});

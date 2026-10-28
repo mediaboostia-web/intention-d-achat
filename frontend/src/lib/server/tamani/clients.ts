@@ -5,7 +5,13 @@
 // Without the plan's respondentContacts (Free), no full number leaves here.
 import 'server-only';
 import type { Prisma } from '@prisma/client';
+import {
+  parseClientSearch,
+  periodRange,
+  type ClientFilterState,
+} from '@/lib/tamani/client-filters';
 import type { BuyerType } from '@/lib/tamani/labels';
+import { dialPrefixFor } from '@/lib/tamani/phone-countries';
 import type {
   ClientCounts,
   ClientDetail,
@@ -15,7 +21,6 @@ import type {
 } from '@/lib/tamani/client-view';
 import type { Cursor } from '@/lib/server/notifications/cursor';
 import { buildPage } from '@/lib/server/pagination/paginate';
-import { SEARCH_MAX } from './inputs';
 import type { Db } from './locks';
 import { displayPhone, maskPhone } from './phone';
 
@@ -37,24 +42,60 @@ export function visibleClientWhere(organizationId: string) {
 
 export type ClientKind = 'ALL' | BuyerType;
 
-export interface ClientFilters {
+/** The filters of lib/tamani/client-filters.ts, the type read as a kind. */
+export interface ClientFilters extends Partial<Omit<ClientFilterState, 'type' | 'q'>> {
   q: string | null;
   kind: ClientKind;
 }
 
-const TYPES: Readonly<Record<string, BuyerType>> = { revendeurs: 'RESELLER', usagers: 'CONSUMER' };
-
-/** ?type=revendeurs|usagers&q=…; null when either is invalid (400). */
+/** ?type, ?reponse, ?campagne, ?quartier, ?periode, ?pays and ?q; null when one is unknown (400). */
 export function parseClientFilters(params: URLSearchParams): ClientFilters | null {
-  const type = params.get('type');
-  if (type !== null && !Object.hasOwn(TYPES, type)) return null;
-  const q = (params.get('q') ?? '').trim();
-  if (q.length > SEARCH_MAX) return null;
-  return { q: q || null, kind: type === null ? 'ALL' : (TYPES[type] ?? 'ALL') };
+  const state = parseClientSearch(params);
+  return state ? clientFiltersOf(state) : null;
+}
+
+export function clientFiltersOf(state: ClientFilterState): ClientFilters {
+  const { type, ...rest } = state;
+  return { ...rest, kind: type ?? 'ALL' };
 }
 
 function kindWhere(kind: BuyerType): Prisma.RespondentWhereInput {
   return { responses: { some: { ...COUNTED, buyerType: kind } } };
+}
+
+/**
+ * The answer filters, all on one counted answer: « intéressé, riz, octobre »
+ * is one answer that is all three, not three answers. Null without any.
+ */
+function answerWhere(f: ClientFilters, now: Date): Prisma.RespondentWhereInput | null {
+  const some: Prisma.ResponseWhereInput = {
+    ...COUNTED,
+    ...(f.kind !== 'ALL' && { buyerType: f.kind }),
+    ...(f.answer && { interested: f.answer === 'yes' }),
+    ...(f.campaignId && { campaignId: f.campaignId }),
+    ...(f.zone === 'OTHER'
+      ? { zoneId: null, deliveryPlace: { not: null } }
+      : f.zone && { zoneId: f.zone }),
+    ...(f.period && { completedAt: { not: null, ...periodRange(f.period, now) } }),
+  };
+  const filtered = f.kind !== 'ALL' || Boolean(f.answer || f.campaignId || f.zone || f.period);
+  return filtered ? { responses: { some } } : null;
+}
+
+/** The filters as AND clauses on the visible clients (the list and the export). */
+export function clientFilterWhere(
+  filters: ClientFilters,
+  canSeeContacts: boolean,
+  now: Date,
+): Prisma.RespondentWhereInput[] {
+  const and: Prisma.RespondentWhereInput[] = [];
+  const answers = answerWhere(filters, now);
+  if (answers) and.push(answers);
+  // The country is the number's dial code, read here: the number itself never leaves.
+  const prefix = filters.country ? dialPrefixFor(filters.country) : null;
+  if (prefix) and.push({ phoneE164: { startsWith: prefix } });
+  if (filters.q) and.push(searchWhere(filters.q, canSeeContacts));
+  return and;
 }
 
 /** Digits search the numbers only on a plan that shows them: no guessing a masked one. */
@@ -124,11 +165,9 @@ export async function listClients(
   organizationId: string,
   filters: ClientFilters,
   cursor: Cursor | null,
-  opts: { canSeeContacts: boolean; limit: number },
+  opts: { canSeeContacts: boolean; limit: number; now?: Date },
 ): Promise<{ items: ClientRow[]; nextCursor: string | null; counts: ClientCounts | null }> {
-  const and: Prisma.RespondentWhereInput[] = [];
-  if (filters.kind !== 'ALL') and.push(kindWhere(filters.kind));
-  if (filters.q) and.push(searchWhere(filters.q, opts.canSeeContacts));
+  const and = clientFilterWhere(filters, opts.canSeeContacts, opts.now ?? new Date());
   if (cursor) {
     and.push({
       OR: [

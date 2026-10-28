@@ -3,12 +3,14 @@ import {
   BottomSheet,
   CalcTable,
   DataList,
+  DemandGauge,
   EmptyState,
   FilterBar,
   Icon,
   MoneyCard,
   Stamp,
   StatTile,
+  StockCard,
   VerdictCard,
 } from '.';
 import { html, text } from './test-html';
@@ -130,6 +132,75 @@ describe('MoneyCard', () => {
     );
     expect(text(el)).toContain("Ajoute ton prix d'achat pour voir l'argent que tu évites.");
     expect(html(el)).toContain('href="/app/produits/p1"');
+  });
+});
+
+describe('StockCard', () => {
+  it('stamps the word and the figure, then the sentence and the note', () => {
+    const el = (
+      <StockCard
+        word="Réassort"
+        figure="~40"
+        unit="pièces"
+        sentence="Rupture probable : prévois un réassort d'environ 40 pièces."
+        tone="warning"
+        note="Estimation provisoire : 12 réponses sur 20."
+      />
+    );
+    const t = text(el);
+    expect(t).toContain('Réassort');
+    expect(t).toContain('~40');
+    expect(t).toContain("Rupture probable : prévois un réassort d'environ 40 pièces.");
+    expect(t).toContain('Estimation provisoire : 12 réponses sur 20.');
+    expect(html(el)).toContain('text-warning');
+    expect(html(el)).toContain('aria-label="État du stock : Réassort"');
+  });
+
+  it('leaves the note out when there is none', () => {
+    const el = (
+      <StockCard
+        word="Stock suffisant"
+        figure="30"
+        unit="pièces en stock"
+        sentence="Il t'en restera environ 24 pièces."
+        tone="success"
+      />
+    );
+    expect(text(el)).not.toContain('provisoire');
+    expect(html(el)).toContain('text-success');
+  });
+});
+
+describe('DemandGauge', () => {
+  it('shows the three figures, ten squares and a sentence for screen readers', () => {
+    const el = <DemandGauge realistic={211} announced={350} reference={400} />;
+    const markup = html(el);
+    expect(text(el)).toContain('réaliste 211');
+    expect(text(el)).toContain('annoncé 350');
+    expect(text(el)).toContain('prévu 400');
+    expect(markup.match(/rounded-case/g)).toHaveLength(10);
+    expect(markup).toContain('aria-hidden="true"');
+    expect(markup).toMatch(
+      /class="sr-only">Demande réaliste 211, annoncée 350, pour 400 prévues\.</,
+    );
+  });
+
+  it('names the reference "en stock" for an in-stock campaign', () => {
+    const el = (
+      <DemandGauge realistic={6} announced={12} reference={30} referenceLabel="en stock" />
+    );
+    expect(text(el)).toContain('en stock 30');
+    expect(text(el)).not.toContain('prévu');
+    expect(html(el)).toMatch(
+      /class="sr-only">Demande réaliste 6, annoncée 12, pour 30 en stock\.</,
+    );
+  });
+
+  it('stops the squares at the reference', () => {
+    const markup = html(<DemandGauge realistic={900} announced={1200} reference={400} />);
+    // Every square is full: nothing goes past the tenth.
+    expect(markup.match(/var\(--color-primary\) 100%/g)).toHaveLength(10);
+    expect(markup.match(/rounded-case/g)).toHaveLength(10);
   });
 });
 

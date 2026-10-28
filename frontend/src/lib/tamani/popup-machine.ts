@@ -25,6 +25,8 @@ export interface PopupAnswers {
   timing: Timing | null;
   wantsDelivery: boolean | null;
   zoneId: string | null;
+  /** « Autre endroit »: a delivery outside the shop's zones. */
+  deliveryPlace: string | null;
 }
 
 export const EMPTY_ANSWERS: PopupAnswers = {
@@ -36,12 +38,15 @@ export const EMPTY_ANSWERS: PopupAnswers = {
   timing: null,
   wantsDelivery: null,
   zoneId: null,
+  deliveryPlace: null,
 };
 
 export interface PopupState {
   step: PopupStep;
   answers: PopupAnswers;
   remembered: RememberedRespondent | null;
+  /** The person « pas toi ? » set aside, until « C'est bien moi » or a new number. */
+  forgotten: RememberedRespondent | null;
   deliveryEnabled: boolean;
 }
 
@@ -51,10 +56,11 @@ export type PopupAction =
   | { type: 'buyer'; buyerType: BuyerType }
   | { type: 'quantity'; quantity: number; option: string | null }
   | { type: 'timing'; timing: Timing }
-  | { type: 'delivery'; wantsDelivery: boolean; zoneId: string | null }
+  | { type: 'delivery'; wantsDelivery: boolean; zoneId: string | null; place?: string | null }
   | { type: 'completed'; respondent: RememberedRespondent }
   | { type: 'edit' }
   | { type: 'notMe' }
+  | { type: 'itsMe' }
   | { type: 'back' }
   /** The phone's memory, read after the server-rendered first paint. */
   | { type: 'restore'; memory: DeviceMemory; campaignId: string };
@@ -69,8 +75,10 @@ export interface ResponseStepBody {
   timing?: Timing;
   wantsDelivery?: boolean;
   zoneId?: string | null;
+  deliveryPlace?: string | null;
   firstName?: string;
   phone?: string;
+  phoneCountry?: string;
 }
 
 export function initialPopupState(ctx: {
@@ -83,6 +91,7 @@ export function initialPopupState(ctx: {
     step: saved ? 'thanks' : 'interest',
     answers: saved?.answers ?? EMPTY_ANSWERS,
     remembered: ctx.memory?.respondent ?? null,
+    forgotten: null,
     deliveryEnabled: ctx.deliveryEnabled,
   };
 }
@@ -128,13 +137,17 @@ export function popupReducer(state: PopupState, action: PopupAction): PopupState
         ...a,
         wantsDelivery: action.wantsDelivery,
         zoneId: action.wantsDelivery ? action.zoneId : null,
+        deliveryPlace:
+          action.wantsDelivery && action.zoneId === null ? (action.place ?? null) : null,
       });
     case 'completed':
-      return { ...state, step: 'thanks', remembered: action.respondent };
+      return { ...state, step: 'thanks', remembered: action.respondent, forgotten: null };
     case 'edit':
       return { ...state, step: 'interest' };
     case 'notMe':
-      return { ...state, remembered: null };
+      return { ...state, remembered: null, forgotten: state.remembered ?? state.forgotten };
+    case 'itsMe':
+      return state.forgotten ? { ...state, remembered: state.forgotten, forgotten: null } : state;
     case 'restore': {
       const restored = initialPopupState({
         ...state,
@@ -146,6 +159,10 @@ export function popupReducer(state: PopupState, action: PopupAction): PopupState
         : { ...state, remembered: restored.remembered };
     }
     case 'back': {
+      // « Retour » after « pas toi ? » first comes back to the person.
+      if (state.step === 'contact' && state.forgotten && !state.remembered) {
+        return { ...state, remembered: state.forgotten, forgotten: null };
+      }
       const steps = path(state);
       const i = steps.indexOf(state.step);
       return i > 0 ? { ...state, step: steps[i - 1]! } : state;
@@ -166,7 +183,11 @@ export function stepBody(action: PopupAction): ResponseStepBody {
     case 'timing':
       return { timing: action.timing };
     case 'delivery':
-      return { wantsDelivery: action.wantsDelivery, zoneId: action.zoneId };
+      return {
+        wantsDelivery: action.wantsDelivery,
+        zoneId: action.zoneId,
+        ...(action.place === undefined ? {} : { deliveryPlace: action.place }),
+      };
     default:
       return {};
   }
@@ -185,6 +206,9 @@ export function answersBody(a: PopupAnswers): ResponseStepBody {
   if (a.wantsDelivery !== null) {
     body.wantsDelivery = a.wantsDelivery;
     body.zoneId = a.zoneId;
+    if (a.wantsDelivery && a.zoneId === null && a.deliveryPlace) {
+      body.deliveryPlace = a.deliveryPlace;
+    }
   }
   return body;
 }

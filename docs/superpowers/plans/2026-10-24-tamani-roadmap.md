@@ -53,7 +53,8 @@
   - ratio réaliste / référence ≥ 0.9 → `GO` ;
   - ratio ≥ 0.4 → `CAUTION` ;
   - sinon → `STOP` ;
-  - sans référence → `NEUTRAL`.
+  - sans référence → `NEUTRAL` ;
+  - il ne s'affiche que pour une campagne `INCOMING`. Une campagne `IN_STOCK` reçoit l'**état du stock** (lot 6b) : `ENOUGH` si réaliste ≤ `stockQuantity`, sinon `SHORTAGE`, jamais calculé sur `plannedQuantity`, provisoire sous 20 réponses comptées, et jamais `WAIT` à l'écran.
 - **Design** : niveau de qualité exceptionnel, sans rien de générique. La structure validée sur maquette se trouve dans la spec §5.4.0. Le style est défini au lot 2.
 - **Barrière** avant chaque commit : `pnpm format && pnpm lint && pnpm typecheck && pnpm test`, plus `pnpm build` en fin de lot.
 - **Windows** :
@@ -104,7 +105,13 @@ Convention du kit : `id String @id @default(cuid())`, statuts en `String` (pas d
 **Lot 5b, migration `8_shop_description`**
 - `Organization.description String?` : 300 caractères au plus (validé par `inputs.ts`), vide → `null`. Le pop-up la montre sous « Oui / Non ».
 
-**Lot 7, migration `9_sale_orders`** (renumérotée deux fois le 2026-10-25 : le lot 5 a pris le n° 7, le lot 5b le n° 8)
+**Lot 6, migration `8b_free_verdict`**
+- `Organization.freeVerdictCampaignId String?` : la campagne qui a reçu le verdict offert, écrite une seule fois.
+
+**Lot 6b, migration `8c_delivery_place`** (une lettre, car les dossiers sont triés comme du texte)
+- `Response.deliveryPlace String?` : le lieu tapé après « Autre endroit », de 2 à 80 caractères, sans espaces aux bouts ni caractère de contrôle. Gardé seulement si `wantsDelivery === true` et `zoneId === null`, sinon `null`.
+
+**Lot 7, migration `9_sale_orders`** (renumérotée deux fois le 2026-10-25 : le lot 5 a pris le n° 7, le lot 5b le n° 8 ; les lots 6 et 6b ont pris `8b` et `8c`)
 - `SaleOrder { organizationId, respondentId, productId, campaignId String?, responseId String? @unique, buyerType, quantity Int, unitPrice Int, totalAmount Int, fulfillment String /* DELIVERY|PICKUP */, zoneId String?, status String @default("TO_CONFIRM") /* TO_CONFIRM|CONFIRMED|FULFILLED|CANCELLED */, paid Boolean @default(false), paidAt DateTime?, notes String?, confirmedAt DateTime?, fulfilledAt DateTime?, cancelledAt DateTime? }`, avec `@@index([organizationId, status])` et `@@index([respondentId])`.
 - **Lot 8** : on réutilise `Order` (existant) pour les paiements d'abonnement : `provider = 'saspay'`, `metadata = { organizationId, plan, months }`, statuts `PENDING | AWAITING_VERIFICATION | PAID | FAILED | EXPIRED`.
 
@@ -157,9 +164,25 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 - `waChatLink(phoneE164: string, text?: string): string` → `https://wa.me/221771234567?text=…`
 - `waShareLink(text: string): string` → `https://wa.me/?text=…`
 
-**`client-filters.ts`** (lot 7)
-- `ClientFilters = { q?: string; productId?: string; campaignId?: string; from?: string /* ISO date */; to?: string; buyerType?: BuyerType; zoneId?: string; interested?: boolean; hasOrdered?: boolean; reliabilityMin?: number }`
-- `parseClientFilters(searchParams: URLSearchParams): ClientFilters`. Elle est partagée entre l'interface (URL) et l'API.
+**`client-filters.ts`** (lot 6b ; le lot 7 ajoute `hasOrdered`)
+- `ClientFilterState = { type: BuyerType | null; answer: 'yes' | 'no' | null; campaignId; zone /* id de quartier, ou 'OTHER' */; period; country /* ISO-2 */; q }`, chaque champ `null` quand il est absent ; `NO_CLIENT_FILTERS`.
+- Paramètres d'adresse : `type=revendeurs|usagers`, `reponse=oui|non`, `campagne=<id>`, `quartier=<zoneId>|autre`, `periode=ce-mois|mois-dernier|3-mois|AAAA-MM`, `pays=<ISO2>`, `q`.
+- `parseClientSearch(params): ClientFilterState | null` (`null` sur une valeur inconnue ; l'API répond alors 400, la page montre tout le carnet), `clientFilterSearch(state)` (ordre stable, sans curseur), `periodRange(period, now): { gte; lt }` (mois UTC ; `3-mois` va du début du mois M−2 à la fin du mois en cours), `recentMonths(now)` (les 12 derniers mois proposés), `periodLabel` et `filterChips(state, names)` (une pastille par filtre actif, avec l'adresse sans lui ; le type reste dans la `FilterBar`). Elle est partagée entre l'interface (URL) et l'API.
+
+**`phone-countries.ts`** (lot 6b)
+- `PHONE_COUNTRIES: ReadonlyArray<readonly [code, dial]>` : tous les pays de libphonenumber, écrits en dur ; un test la compare à `libphonenumber-js/min`, que le pop-up n'importe jamais.
+- `isPhoneCountry(code)`, `dialPrefixFor(code): string | null` (`'+229'`), `countryName(code)` (`Intl.DisplayNames` en français) et `phoneCountryChoices(shopCountry): Array<{ code; label; dialCode }>` : le pays de la boutique, puis les autres `SHOP_COUNTRIES`, puis le reste par nom français.
+
+**`export-view.ts`** (lot 6b)
+- `ExportQuery = { what: 'responses'; answer: 'yes' | 'no' | 'all'; campaignId; period; zone; timing: Timing | null; buyerType: BuyerType | null; country } | { what: 'clients'; filters: ClientFilterState }` ; `DEFAULT_EXPORT` (les intéressés) ; `ExportPreview = { total; headers; rows }`.
+- `parseExportSearch(params): ExportQuery | null` (`quoi=reponses|clients`, `reponse=oui|non|toutes`, `echeance=<Timing>`, et pour le reste les noms de `client-filters.ts`), `exportSearch(q)` et `exportHref(q)` → `/app/exporter?…`.
+
+**Autres ajouts du lot 6b**
+- `results-view.ts` : `StockAdvice = { status: 'ENOUGH' | 'SHORTAGE'; leftover; restock; provisional }`, `stockAdviceDisplay(advice, stock, unitLabel)` (mot, chiffre, unité, phrase, ton ; « Stock suffisant » tamponne le stock), `provisionalNote(completed)` et `toServeLine(interested, announced, unitLabel)`.
+- `campaign-actions.ts` : `campaignActions(status, availability): ReadonlyArray<{ to; label; emphasis: 'primary' | 'quiet' }>`. Une campagne `IN_STOCK` n'a jamais `ARRIVED`.
+- `popup-machine.ts` : `PopupAnswers.deliveryPlace`, l'action `delivery` prend `place?`, `PopupState.forgotten` et l'action `itsMe` ; le contact envoie `phoneCountry`.
+- `push-state.ts` : `pushPromptDue({ state, isPhone, memory, now })`, `readPushPrompt` et `writePushPrompt` (jamais d'erreur), `PUSH_PROMPT_KEY = 'tamani-push-prompt'`, sept jours entre les deux demandes.
+- `units.ts` : `COMMON_UNITS` gagne « demi-douzaine », juste après « douzaine » (pluriel « demi-douzaines »).
 
 ### Modules serveur : `frontend/src/lib/server/tamani/`
 
@@ -210,11 +233,32 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
   - `MIN_RESPONSES_FOR_VERDICT = 20` ;
   - la référence est `plannedQuantity`, sinon `stockQuantity`.
 - `money.ts` : `computeMoney({ reference, estimate: DemandEstimate, costPrice: number | null, unitPrice, wholesalePrice: number | null }): { avoidedDeadStock: number | null; expectedProfit: number | null }`. Tout vaut `null` si `costPrice` est absent. Les revendeurs sont valorisés au prix de gros quand il existe.
-- `stats.ts` : `computeCampaignStats(responses, campaign, coefs): CampaignStats`. Le résultat contient `estimate`, `verdict`, `money`, des répartitions (statut, zone, échéance, option, source, raison du non), `opens`, `completed`, `incomplete`, `interestRate`, `lockedCount` et `stockStatus`.
+- `stats.ts` : `computeCampaignStats(rows, campaign, zones, coefs): CampaignStats` (types dans `lib/tamani/results-view.ts`).
+  - Chiffres visibles par tous : `opens`, `completed`, `incomplete`, `lockedCount`, `suspiciousCount`, `interested`, `notInterested`, `interestRate`, `announced`, `reference`, `stock`, et les répartitions `byBuyerType`, `byZone`, `pickup`, `byTiming`, `byOption`, `bySource`, `noReasons`.
+  - `result { estimate; coefs; verdict; money; stockStatus }` : ce que seul `estimate` montre. `money` vaut `null` tant que le verdict attend (`WAIT`).
+- `estimate.ts` gagne `estimateFromTotals(sums, coefs)` : la même estimation à partir de totaux par statut, sommés en base (accueil).
+- `free-verdict.ts` : `claimFreeVerdict(db, organizationId, current, eligible): Promise<string | null>` (réserve `Organization.freeVerdictCampaignId` une seule fois) et `verdictAccess(plan, freeVerdictCampaignId, campaignId): 'PLAN' | 'OFFERED' | 'LOCKED'`.
+- `campaign-responses.ts` : `parseResponseFilter`, `listCampaignResponses(db, organizationId, campaignId, filter, cursor, { canSeeContacts; limit }): Promise<InterestedPage>` et `interestedNumbers(...)` (dédupliqués, 5 000 au plus). `campaignExportRows` a disparu au lot 6b, remplacée par `exports.ts`, qui réutilise `COUNTED`, `ROW_SELECT` et `toRow`.
+- `csv.ts` : `toExcelCsv(columns, rows)` ; `campaign-export.ts` : `responsesCsv(rows)`, puis au lot 6b `clientsCsv(rows)`, `RESPONSE_COLUMNS`, `CLIENT_COLUMNS` et `exportFilename(kind, title, now)` (voir le lot 6b).
+- `home-bulletin.ts` : `buildHomeBulletin(db, organizationId, now)`, appelé par `buildShopSummary`.
 - `summary.ts` (lot 5b, étendu au lot 6) : `buildShopSummary(db, organizationId, now): Promise<ShopSummary>`, type partagé dans `lib/tamani/home-view.ts`.
   - **Contrat 5b** : `week { completed; sinceYesterday; interested; opensRunning; newClients }` (7 jours glissants, `sinceYesterday` sur 24 h ; `opensRunning` = ouvertures cumulées des campagnes en cours, car les ouvertures ne sont pas datées), `activity[]` (8 au plus : réponses et nouveaux clients, les plus récents d'abord), `upcoming[]` (5 au plus : fins de campagne et arrivages dans les 30 jours), `hasCampaign`, `hasProduct`, `shareCampaign { id; title; shareMessage } | null`.
-  - **Le lot 6 ajoute** `campaigns[] { id; title; verdict; estimate }`, `moneyProtectedThisMonth` et `todo[]`. Au lot 6, `todo` ne contient que les campagnes arrivées avec des intéressés à prévenir ; le lot 7 ajoute les commandes à confirmer et les livraisons par quartier.
+  - **Le lot 6 ajoute** :
+    - `campaigns[] { id; title; unitLabel; completed; verdict: VerdictCode | null; realistic: number | null; reference: number | null; offered: boolean }` : les campagnes en cours, la plus récente d'abord, 10 au plus ; `verdict` vaut `null` quand le forfait le cache, `WAIT` tant que le verdict offert reste à donner ;
+    - `moneyProtectedThisMonth` : la somme de `avoidedDeadStock` des campagnes créées dans le mois UTC dont le verdict est visible et n'est pas `WAIT` ;
+    - `todo[] { kind: 'NOTIFY_INTERESTED'; campaignId; title; interested }` : les campagnes arrivées depuis 7 jours au plus qui ont des intéressés. Le lot 7 ajoute les commandes à confirmer et les livraisons par quartier.
 - `csv.ts` : `toExcelCsv(columns: ReadonlyArray<{ key; header }>, rows): string`, avec BOM UTF-8, séparateur `;`, fins de ligne CRLF et guillemets RFC 4180.
+
+**Lot 6b**
+- `stock-advice.ts` : `computeStockAdvice({ realistic, stock, completed }): StockAdvice` ; `leftover = max(stock − réaliste, 0)`, `restock = max(réaliste − stock, 0)`, `provisional` sous `DEFAULT_MIN_RESPONSES` (20).
+- `stats.ts` : `CampaignStats` gagne `availability`, `elsewhere { respondents; quantity }` (oui livrés hors des quartiers, avec un lieu) et la quantité dans `byTiming[]` ; `CampaignResult` gagne `stockAdvice`, non nul seulement pour `IN_STOCK` avec un `stockQuantity`.
+- `money.ts` : `computeMoney` prend `cap?: number | null`. En stock, la route passe `reference: null` et `cap: stock` : `avoidedDeadStock` vaut `null` et le bénéfice est plafonné au stock ; tout reste `null` sous 20 réponses comptées.
+- `home-bulletin.ts` : `CampaignBulletinItem` gagne `availability`, `interested`, `stockStatus` et `restock` (`null` sans stock ou sans accès) ; `moneyProtectedThisMonth` ne somme que les campagnes `INCOMING`.
+- `responses.ts` : `deliveryPlace` (gardé pour une livraison sans quartier) et `normalizePhone(phone, phoneCountry ?? shopCountry(org.country))`. `public-campaign.ts` : `PublicCampaign.shop.country`.
+- `campaign-responses.ts` : `InterestedRow` gagne `deliveryPlace` et `country` (lu sur l'indicatif, sur tous les forfaits).
+- `clients.ts` : `clientFilterWhere(filters, canSeeContacts, now)`. Tous les filtres de réponse portent sur **un seul** `responses.some` compté ; `quartier=autre` donne `zoneId: null` avec un `deliveryPlace` ; le pays donne `phoneE164: { startsWith: dialPrefixFor(pays) }`. Les `counts` restent ceux de toute la boutique.
+- `exports.ts` : `previewExport(db, orgId, q, { canSeeContacts })` (10 lignes en texte français, numéros masqués sans contacts), `exportFile(db, orgId, q, now): { csv; filename }` (20 000 lignes au plus), `exportNumbers(db, orgId, q, now)` (5 000 au plus, chacun une fois, au format `displayPhone`) et `exportScopeError(db, orgId, q)` (`CAMPAIGN_NOT_FOUND` ou `ZONE_NOT_FOUND`).
+- `campaign-export.ts` : `exportFilename(kind, title, now)` → `tamani-{interesses|pas-interesses|reponses|clients}[-{campagne}]-{AAAA-MM-JJ}.csv` ; `clientsCsv(rows)` et `mostFrequent(names)` (le quartier le plus fréquent).
 
 **Lot 7**
 - `orders.ts` :
@@ -225,7 +269,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 - `reliability.ts` :
   - `clientReliability(rows: ReadonlyArray<{ interested: boolean; campaignFinished: boolean; fulfilled: boolean }>): { yesCount; fulfilledCount; rate: number | null }`. `rate` vaut `null` tant que les réponses « Oui » terminées sont moins de 2 ;
   - `learnedCoefficients(rows: ReadonlyArray<{ buyerType; campaignId; announced: number; fulfilledQty: number }>, fallback: { consumer; reseller }): LearnedCoefficients`, de la forme `{ consumer; reseller; learned: { consumer: boolean; reseller: boolean } }`. Seuil : 20 réponses « Oui » sur au moins 2 campagnes, par statut ; résultat borné à [0.1, 1].
-- `clients.ts` : livré au lot 5b (voir plus bas) ; le lot 7 étend `ClientFilters` (zone, produit, mois, `hasOrdered`) et ajoute la note, l'anonymisation et la fiabilité. La vue Intérêts (`listInterests`) est abandonnée.
+- `clients.ts` : livré au lot 5b (plus bas), avec ses filtres au lot 6b (plus haut) ; le lot 7 ajoute le filtre `hasOrdered`, la note, l'anonymisation et la fiabilité. Le filtre produit n'est pas repris : la campagne en tient lieu. La vue Intérêts (`listInterests`) est abandonnée.
 
 **Lot 5b**
 - `clients.ts` :
@@ -260,15 +304,26 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
   - `GET …/campaigns` et `GET …/products` acceptent `q` et envoient `counts` sur la première page (sans tenir compte de la recherche ni du filtre) ; `GET …/products` accepte `inCampaign=1`.
 - **Lot 6, tableau de bord** :
   - `GET /api/shops/[orgId]/summary` étendu (voir `summary.ts`) ;
-  - `GET …/campaigns/[campaignId]/stats` ;
-  - `GET …/campaigns/[campaignId]/responses` (curseur ; numéros masqués si `respondentContacts` est faux) ;
-  - `GET …/campaigns/[campaignId]/export` (CSV ; `403 PLAN_FEATURE_LOCKED` en FREE).
+  - `GET …/campaigns/[campaignId]/stats` → `{ stats, access: 'PLAN' | 'OFFERED' | 'LOCKED', offerOpen }`, `stats.result` à `null` quand l'accès vaut `LOCKED` ;
+  - `GET …/campaigns/[campaignId]/responses?filtre=oui|non&cursor=` (`400` sur un autre filtre ; numéros masqués si `respondentContacts` est faux ; `counts { yes; no }` sur la première page) ;
+  - `GET …/campaigns/[campaignId]/responses/numbers` → `{ numbers }` ;
+  - `GET …/campaigns/[campaignId]/export` (CSV pour Excel) : **retirée au lot 6b**, remplacée par `GET /api/shops/[orgId]/exports/file`.
+  - `numbers` répond `403 PLAN_FEATURE_LOCKED` sans `respondentContacts` **et** `csvExport`, et `404 CAMPAIGN_NOT_FOUND` pour une campagne d'une autre boutique.
+- **Lot 6b** :
+  - `GET /api/shops/[orgId]/exports/preview` → `{ total, headers, rows }` (10 lignes, sur tous les forfaits, numéros masqués sans `respondentContacts`) ;
+  - `GET …/exports/file` → le CSV (20 000 lignes au plus, nom donné par `exportFilename`) ;
+  - `GET …/exports/numbers` → `{ numbers }` (5 000 au plus, dédupliqués) ;
+  - les trois en `MEMBER`, avec la requête de `parseExportSearch` : `400 VALIDATION_FAILED` si elle est mal formée, `404 CAMPAIGN_NOT_FOUND` ou `ZONE_NOT_FOUND` pour une campagne ou un quartier d'une autre boutique ; `file` et `numbers` répondent `403 PLAN_FEATURE_LOCKED` sans `respondentContacts` **et** `csvExport` ;
+  - `GET /api/shops/[orgId]/clients` accepte les filtres de `client-filters.ts` (`400` sur une valeur inconnue) ;
+  - `GET …/campaigns/[campaignId]/stats` envoie `stats.availability`, `stats.elsewhere`, `byTiming[].quantity` et `result.stockAdvice` ;
+  - `POST /api/public/responses` accepte `deliveryPlace` (2 à 80 caractères, `400` sur une campagne sans livraison) et `phoneCountry` (code de `PHONE_COUNTRIES`, sinon `400 VALIDATION_FAILED`) ;
+  - `PATCH /api/account` `{ name }` (1 à 80 caractères après `trim`) → `{ user: { name } }`. Route hors des fichiers protégés : `withRequestContext`, `verifyCsrf` et `requireAuth` du kit, puis la mise à jour du seul utilisateur connecté. Le nom n'entre jamais dans les journaux. Le mot de passe passe par `PUT /api/auth/change-password` et `POST /api/auth/set-password` (kit).
 - **Lot 7, commandes** :
   - `GET|POST /api/shops/[orgId]/orders`, avec les filtres `status`, `campaignId`, `productId` et `zoneId`, et le paramètre `view=to-deliver`, qui groupe les commandes par zone ;
   - `GET|PATCH …/orders/[orderId]` (transitions, paiement, prix avant confirmation) ;
   - `POST …/campaigns/[campaignId]/responses/[responseId]/order` (conversion).
-- **Lot 7, clients** (les deux `GET` existent depuis le lot 5b ; `/interests` est abandonné) :
-  - `GET /api/shops/[orgId]/clients` avec les filtres ajoutés à `ClientFilters` ;
+- **Lot 7, clients** (les deux `GET` existent depuis le lot 5b, et les filtres depuis le lot 6b ; `/interests` est abandonné) :
+  - `GET /api/shops/[orgId]/clients` avec le filtre `hasOrdered` en plus ;
   - `PATCH …/clients/[respondentId]` (note) ;
   - `DELETE …/clients/[respondentId]` (anonymisation, rôle `ADMIN` minimum).
 - **Lot 8, facturation** : `POST /api/billing/checkout`, `GET /api/billing/return`, `GET /api/billing/subscription` et `POST /api/webhooks/saspay`.
@@ -277,7 +332,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 
 ### Pages
 - `(public)` : `/`, `/tarifs`, `/c/[code]`, `/login`, `/signup`, `/verify-email`, `/forgot-password`, `/reset-password`, `/auth/error`, `/confidentialite`, `/cgu`.
-- `(app)` : `/app`, `/app/bienvenue`, `/app/produits`, `/app/produits/nouveau`, `/app/produits/[id]`, `/app/campagnes`, `/app/campagnes/nouvelle`, `/app/campagnes/[id]`, `/app/commandes`, `/app/clients` (sans onglets), `/app/clients/[id]`, `/app/abonnement`, `/app/reglages`.
+- `(app)` : `/app`, `/app/bienvenue`, `/app/produits`, `/app/produits/nouveau`, `/app/produits/[id]`, `/app/campagnes`, `/app/campagnes/nouvelle`, `/app/campagnes/[id]`, `/app/commandes`, `/app/clients` (sans onglets), `/app/clients/[id]`, `/app/exporter` (lot 6b), `/app/abonnement`, `/app/reglages`, `/app/plus` et `/app/profil` (lot 6b).
 - `(admin)` : `/admin`, `/admin/boutiques` et `/admin/boutiques/[id]`.
 
 ### Variables d'environnement
@@ -298,11 +353,15 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 | 4 | Espace grossiste | Un grossiste s'inscrit, crée sa boutique, un produit et une campagne, puis la partage sur WhatsApp. | 2, 3 |
 | 5 | Pop-up public | Un répondant répond depuis son téléphone. La réponse est dédupliquée, protégée et compte dans le quota, et la personne entre dans le carnet de clients. | 2, 3 |
 | 6 | Tableau de bord | Verdict, quantité, argent évité et bénéfice, bulletin du jour, statistiques, relance WhatsApp et export CSV. | 3, 5 |
-| 7 | Commandes et clients | Conversion d'une réponse en commande, commandes manuelles, statuts, livraisons par quartier, carnet dynamique filtrable, fiabilité et coefficients appris. | 3, 5, 6 |
-| 8 | Abonnements et SasPay | Passage au Pro en mode test SasPay : activation idempotente, quotas, rappels et grâce. Bictorys retiré. | 3, 5, 6, 7 |
+| 6b | Retouches après le test du lot 6 | Un produit en stock se lit « à servir » et « état du stock » ; livraison ailleurs et numéros étrangers ; galerie de photos ; onglets et actions de la campagne ; filtres des clients ; page Exporter avec aperçu ; notifications demandées sur téléphone ; Plus et Profil (ajout du 2026-10-28). | 6 |
+| 7 | Commandes et clients | Conversion d'une réponse en commande, commandes manuelles, statuts, livraisons par quartier, filtre « a commandé », note et anonymisation des clients, fiabilité et coefficients appris. | 3, 5, 6, 6b |
+| 7b | Pays et monnaies | Toute l'Afrique francophone : chaque pays a sa monnaie, ses prix et ses numéros (ajout du 2026-10-27). | 3, 4 |
+| 8 | Forfaits prépayés et SasPay | Passes (Semaine, Mois, Grossiste) et recharges payés en mode test SasPay : activation idempotente, réponses comptées par pass, rappels et grâce, plafond du Gratuit. Bictorys retiré. | 3, 5, 6, 7, 7b |
 | 9 | Admin, accueil, légal, production | Admin Tamani, page d'accueil, CGU et confidentialité, mise en ligne sur Vercel avec SasPay en mode live. | tous |
 
 Les lots 2 et 3 peuvent être menés en parallèle, puis les lots 4 et 5.
+
+Ordre décidé par le porteur le 2026-10-28 : le lot 6b, puis le lot 7, puis le **travail UX/UI** de toute l'app (voir après le lot 7).
 
 ### Lot 1 : Fondations
 Détaillé dans [2026-10-24-tamani-01-fondations.md](2026-10-24-tamani-01-fondations.md).
@@ -408,7 +467,7 @@ Livré par le [plan 5b](2026-10-25-tamani-05b-retouches.md). Décisions prises :
 - **Compteurs des listes** : envoyés sur la première page seulement, sans tenir compte de la recherche ni du filtre (ils décrivent la boutique entière) ; une pastille à 0 est cachée, sauf si elle est active.
 - **Pas de « Voir tout »** sous « Activité » : il n'y a pas de page d'activité.
 - **Migration `8_shop_description`** ; celle des commandes du lot 7 devient `9_sale_orders`.
-- **Clients avancés du lot 7** : `GET …/clients` et `GET …/clients/[respondentId]` sont livrés ici ; la note, l'anonymisation, les filtres zone, produit, mois et « Ont commandé », et la fiabilité restent au lot 7. `GET …/interests` et l'onglet Intérêts sont abandonnés.
+- **Clients avancés du lot 7** : `GET …/clients` et `GET …/clients/[respondentId]` sont livrés ici ; la note, l'anonymisation, les filtres zone, produit, mois et « Ont commandé », et la fiabilité restent au lot 7 (le lot 6b a depuis livré les filtres, sauf « Ont commandé », et remplacé le produit par la campagne). `GET …/interests` et l'onglet Intérêts sont abandonnés.
 
 ### Page d'accueil publique (avancée du lot 9, le 2026-10-25) : lot 9a
 Elle vient juste après le lot 5b, avec son propre passage de conception et des maquettes ([retours](../specs/2026-10-25-tamani-retours-porteur.md) §4). Elle est livrée par le lot 9a ([plan](2026-10-26-tamani-09a-accueil.md)), d'après la [maquette v3](../../brand/mockups/2026-10-25-page-accueil-v3.html).
@@ -450,6 +509,40 @@ Décisions du porteur, prises sur les maquettes v1 à v3 :
    - Page campagne, onglet Résultats : `VerdictCard`, `MoneyCard`, revendeurs et usagers, demande face à la référence, « Où et quand », signal prix, « Comment c'est calculé ? ».
    - Liste des intéressés avec un bouton WhatsApp, « Copier les numéros », et l'action « Le produit est arrivé ».
 
+Décisions du porteur, le 2026-10-27 (livrées par le [plan du lot 6](2026-10-27-tamani-06-tableau-de-bord.md)) :
+- **Verdict offert** : en Gratuit, la première campagne qui atteint 20 réponses comptées reçoit son verdict (quantité et argent), une fois pour toutes. Migration `8b_free_verdict` (`Organization.freeVerdictCampaignId`).
+- **Marché** : toute l'Afrique francophone, pas seulement l'UEMOA. Nouveau lot « Pays et monnaies » (7b), placé avant le lot 8.
+- **Forfaits prépayés**, tranchés le même jour : on paie des réponses, jamais des campagnes ; passes de 7 ou 30 jours et recharges ; le lien n'est jamais bloqué ; au-delà du plafond du Gratuit, « Réponses fermées pour ce mois ». Spec §5.6, à construire au lot 8.
+- **Numéros complets** : la copie des numéros et l'export demandent `respondentContacts` et `csvExport`.
+
+### Lot 6b : Retouches après le test du lot 6 (ajout du 2026-10-28)
+Ce que le porteur a demandé après avoir testé le lot 6 sur une vraie campagne ([retours](../specs/2026-10-28-tamani-retours-porteur-2.md), qui font foi) :
+- un produit déjà en stock ;
+- la livraison ailleurs et les clients d'autres pays ;
+- les photos du pop-up et « C'est bien moi » ;
+- les onglets et les actions de la page campagne ;
+- les filtres des clients, avancés du lot 7 (sauf « a commandé ») ;
+- l'export avec aperçu et filtres ;
+- les notifications demandées d'office sur téléphone ;
+- Plus et Profil ;
+- la demi-douzaine.
+
+Livré par le [plan 6b](2026-10-28-tamani-06b-retouches.md), sur la branche du lot 6 (`plan/06-tableau-de-bord`) : une seule PR pour les lots 6 et 6b. Décisions prises :
+- **Produit en stock** (`IN_STOCK`) : pas de verdict. « À servir maintenant » (intéressés et quantités par échéance, sur tous les forfaits) puis l'état du stock, `ENOUGH` ou `SHORTAGE`, calculé sur `stockQuantity` et jamais sur `plannedQuantity`. Sous 20 réponses comptées, il s'affiche avec « Estimation provisoire : N réponses sur 20 », jamais « On attend ». L'accès suit celui du verdict (forfait ou verdict offert) ; sans accès, la carte « Ton stock va-t-il suffire ? » porte le badge Pro. Les campagnes `INCOMING` gardent le verdict du lot 6 sans changement.
+- **Tampon** : « Stock suffisant » tamponne le stock (« 30 pièces en stock ») ; « Réassort » tamponne `~X`. La ligne du lot 6 « Prévois de recommander » disparaît en stock, car la carte le dit déjà.
+- **Argent en stock** : pas d'invendus évités ; le bénéfice est plafonné au stock. L'« Argent protégé » de l'accueil ne compte que les campagnes `INCOMING`.
+- **Accueil** : la ligne d'une campagne en stock montre « N à servir » et « Stock suffisant », « Réassort ~X », ou « À servir » sans stock ni accès.
+- **Page campagne** : les onglets deviennent une barre d'onglets en texte (trait jaune sous l'actif, quatre à largeurs égales sur 360 px) ; les actions sont des boutons nommés par leur verbe. Une campagne en stock n'a ni « Le produit est arrivé » ni l'encadré d'arrivée de l'onglet Intéressés ; le serveur garde ses transitions.
+- **Lieu de livraison** : « Autre endroit » toujours proposé après les quartiers ; une boutique sans quartier demande « Où ? » directement. Le lieu est refusé (`400`) sur une campagne sans livraison, comme un quartier. Migration `8c_delivery_place` ; le lot 7 garde `9_sale_orders`.
+- **Pays du numéro** : choix dans le champ, le pays de la boutique d'abord ; « + » ou « 00 » l'emporte. Sans `phoneCountry` (pop-up ouvert avant la mise à jour), le pays de la boutique s'applique. Le pop-up n'importe jamais `libphonenumber-js` (garde-fou `no-motion-in-popup`). Le pays d'un client se lit sur son numéro, et reste visible en Gratuit : il n'en dit pas plus que l'indicatif.
+- **« pas toi ? »** : « C'est bien moi, {Prénom} » et « Retour » ramènent la personne mémorisée ; la mémoire ne change qu'à l'envoi d'un nouveau numéro.
+- **Filtres des clients** : tous les filtres de réponse s'appliquent à une même réponse comptée. Le mois précis se choisit parmi les 12 derniers (sans requête de plus ; un mois vide montre l'état vide). La pastille du type n'est pas répétée : la `FilterBar` le montre déjà. Une adresse mal formée montre tout le carnet, alors que l'API répond 400.
+- **Export** : une page `/app/exporter`, ouverte depuis l'onglet Intéressés et la page Clients ; la route `…/campaigns/[campaignId]/export` disparaît. L'aperçu est ouvert à tous, numéros masqués en Gratuit ; télécharger et copier demandent `respondentContacts` et `csvExport`. La colonne « Produit » arrive avec l'export de plusieurs campagnes.
+- **Notifications** : sur téléphone seulement (`pointer: coarse` et largeur < 1024 px), une feuille demande « Être prévenu à chaque réponse ? » tant que les notifications ne sont ni activées ni refusées. « Plus tard » redemande une seule fois, 7 jours après ; la mémoire est dans `localStorage` (`tamani-push-prompt`). Un iPhone hors de l'écran d'accueil reçoit d'abord l'explication de l'installation. La carte quitte l'accueil et reste dans Réglages (`#notifications`). Pas de feuille sur ordinateur.
+- **Plus et Profil** : l'avatar ouvre `/app/profil` (et non plus `/app/plus`) : logo ou initiales, nom modifiable (`PATCH /api/account`, nouvelle route hors des fichiers protégés), e-mail en lecture seule, mot de passe (« Créer un mot de passe » pour un compte Google sans mot de passe), déconnexion. Plus devient une liste avec une icône par ligne : Produits, Forfait, Réglages de la boutique, Notifications, Profil, Aide (cachée tant que `LANDING_LINKS.whatsappContact` vaut `null`) et Se déconnecter. « Ton compte » passe dans Profil.
+- **Unités** : « demi-douzaine », juste après « douzaine ».
+- **Hors périmètre** : les commandes et « a commandé » (lot 7), les monnaies par pays et les anciens numéros béninois à 8 chiffres (lot 7b), le panneau des réponses du pass (lot 8), le travail UX/UI d'ensemble (après le lot 7).
+
 ### Lot 7 : Commandes et clients
 1. **Migration `9_sale_orders`, puis `orders.ts`**, avec ses tests.
    - `orderUnitPrice` : un revendeur qui commande 12 pièces avec un minimum de 12 paie le prix de gros ; avec 11 pièces, le prix unitaire ; un usager paie toujours le prix unitaire.
@@ -465,8 +558,8 @@ Décisions du porteur, prises sur les maquettes v1 à v3 :
 3. **`reliability.ts` et branchement des coefficients appris** dans `coefficientsFor`, réservés au PRO et au-dessus.
    - Tests aux seuils : 19 réponses « Oui » donnent le coefficient de repli, 20 réponses sur 2 campagnes donnent le coefficient appris, et le résultat est borné à [0.1, 1].
    - `clientReliability` : `rate` vaut `null` sous 2 réponses, et 4 commandes livrées sur 5 réponses « Oui » donnent `0.8`.
-4. **Filtres clients ajoutés à `clients.ts` (zone, produit, mois, `hasOrdered`), note et anonymisation.** La liste et la fiche existent depuis le lot 5b.
-   - Tests de filtres combinés : par exemple, revendeurs + Médina + produit + octobre + `hasOrdered=false`.
+4. **Filtre `hasOrdered`, note et anonymisation.** La liste et la fiche existent depuis le lot 5b ; les filtres type, réponse, campagne, quartier, période et pays depuis le lot 6b.
+   - Tests de filtres combinés : par exemple, revendeurs + Médina + campagne + octobre + `hasOrdered=false`.
    - Tests de pagination et de restriction par forfait (numéros masqués en FREE).
    - Le client anonymisé est toujours compté dans les statistiques, mais n'apparaît plus dans les listes.
 5. **`summary`** : on ajoute les commandes à confirmer et les livraisons par quartier dans « À faire ».
@@ -474,10 +567,23 @@ Décisions du porteur, prises sur les maquettes v1 à v3 :
    - `/app/commandes` : liste avec filtres, « À livrer par quartier », bouton WhatsApp « Ta commande est confirmée… ».
    - Page campagne, onglet Commandes : stock restant affiché.
    - « Transformer en commande » sur chaque intéressé.
-   - `/app/clients` (sans onglets) : les nouveaux filtres dans la `FilterBar` synchronisée avec l'URL.
+   - `/app/clients` (sans onglets) : « a commandé » rejoint la feuille « Filtrer » et les pastilles du lot 6b, synchronisées avec l'URL ; la page Exporter le reprend.
    - `/app/clients/[id]` : historique, montant total, note, fiabilité.
 
-### Lot 8 : Abonnements et SasPay
+### Après le lot 7 : travail UX/UI (décision du 2026-10-28)
+Le passage UX/UI sur toute l'app vient juste après le lot 7 ([retours](../specs/2026-10-28-tamani-retours-porteur-2.md) §0 et §12). Son plan s'écrit à ce moment-là, à partir des écrans alors en place.
+
+### Lot 7b : Pays et monnaies (ajout du 2026-10-27)
+Le porteur veut couvrir toute l'Afrique francophone. Aujourd'hui tout est en FCFA et la liste des pays est celle de l'Afrique de l'Ouest.
+1. **Pays et monnaie par boutique** : `Organization.currency` dérivée du pays ; FCFA UEMOA (XOF), FCFA CEMAC (XAF), franc guinéen (GNF), franc congolais (CDF), et les autres pays francophones retenus avec le porteur.
+2. **Incohérences à corriger** :
+   - la Guinée est déjà dans `SHOP_COUNTRIES` mais ses prix s'affichent en FCFA alors que sa monnaie est le franc guinéen ;
+   - le Cameroun paie en FCFA CEMAC (XAF), pas en XOF : même mot à l'écran, monnaie différente pour SasPay.
+3. **Prix et montants** : `formatPrice`, le message de partage, l'argent du verdict et l'export lisent la monnaie de la boutique ; les montants restent des entiers dans la plus petite unité.
+4. **Numéros** : la normalisation de `phone.ts` et les indicatifs couvrent chaque pays ajouté.
+5. **Paiement** : vérifier dans l'OpenAPI SasPay les pays et les moyens couverts avant d'ouvrir un pays au paiement ; la règle de marge de 70 % se vérifie par monnaie.
+
+### Lot 8 : Forfaits prépayés et SasPay
 1. **Client SasPay** dans `frontend/src/lib/server/payments/saspay.ts` (`PaymentProvider.charge` via une session de checkout, plus `verifyPayment(paymentId)`).
    - `toSaspayAmount(9900) === '9900.00'`.
    - `Idempotency-Key` = `Order.idempotencyKey`, avec le `CircuitBreaker` existant.
@@ -493,16 +599,21 @@ Décisions du porteur, prises sur les maquettes v1 à v3 :
    - On réécrit `provider-singleton.ts` pour SasPay.
    - On met à jour : `.env.example`, `env.ts`, `features.json`, la documentation, et on étend le test `pruned-surfaces`.
 4. **Routes de facturation.**
-   - `checkout` crée un `Order` en `PENDING` avec le montant `priceFor`, ouvre la session SasPay et renvoie `{ checkoutUrl }`.
+   - `checkout` crée un `Order` en `PENDING` pour un pass ou une recharge, au montant de l'offre, ouvre la session SasPay et renvoie `{ checkoutUrl }`.
    - Le webhook passe la commande en `AWAITING_VERIFICATION` et ajoute à l'outbox les événements des types existants.
-   - `billing-verify` (tâche planifiée) et `return` appellent `verifyPayment`, puis `activateFromPayment`, qui enchaîne `extendSubscription` et `unlockCurrentMonth`.
+   - `billing-verify` (tâche planifiée) et `return` appellent `verifyPayment`, puis `activateFromPayment`, qui prolonge le pass ou ajoute la recharge, puis ouvre les réponses en attente.
    - Tests : Review Focus 3 et 5.
-5. **`subscription-renewals`** : rappel à J-3 (`EmailJob` et `Notification`, avec un `dedupeKey` par période), début de grâce, puis retour au FREE. Mettre à jour `vercel.json` et le garde-fou `vercel-json-shape` (8 tâches planifiées).
-6. **Interface** : `/app/abonnement` (forfait, jauge d'usage, passage au forfait supérieur sur 1 ou 12 mois), `/tarifs`, bandeau « N réponses en attente », bandeau de grâce. Recette de bout en bout en mode test SasPay.
-7. **Garde-fous de marge** (règle « Marge » ci-dessus).
+5. **`subscription-renewals`** (aucun renouvellement automatique : un pass se rachète) : rappel à J-3 (`EmailJob` et `Notification`, avec un `dedupeKey` par période), début de grâce, puis retour au FREE. Mettre à jour `vercel.json` et le garde-fou `vercel-json-shape` (8 tâches planifiées).
+6. **Interface** : le **compteur de réponses** (demande du porteur, 2026-10-27) sur l'accueil et dans le menu, téléphone compris (aujourd'hui il n'est que dans la barre latérale, à partir de `lg`) : « 1 240 / 3 000 réponses, pass jusqu'au 12 novembre », le détail par campagne, une alerte à 80 % et à 100 %, et le bouton de recharge ; `/app/abonnement` (pass en cours, achat d'un pass ou d'une recharge, pass 12 mois), `/tarifs`, bandeau « N réponses en attente », bandeau de grâce. Recette de bout en bout en mode test SasPay.
+7. **Passes et recharges** (décision du porteur, 2026-10-27 ; spec §5.6).
+   - `PLANS` gagne la durée de chaque offre et le Pass Semaine ; les recharges sont des offres à part, réservées à un pass actif.
+   - Le pass enregistre son début, sa fin et ses réponses incluses ; chaque recharge ajoute des réponses jusqu'à la fin du pass. Le modèle exact se décide dans le plan du lot 8.
+   - `quota.ts` compte les réponses sur la période du pass ; le Gratuit garde le mois calendaire.
+   - Le Grand compte attend le coût réel par réponse mesuré chez un grand grossiste pilote ; avant lui, réduire les appels au serveur par réponse (aujourd'hui un par étape du pop-up).
+8. **Garde-fous de marge** (règle « Marge » ci-dessus).
    - Lire les vrais tarifs par réseau avec `GET /pricing/my-rates/` avant de figer les prix.
    - Un test pur qui échoue si un forfait payant, à quota plein, passe sous 70 % de marge (frais SasPay au pire cas, coût par réponse, frais de retrait).
-   - Gratuit : plafond de réponses enregistrées par boutique et par mois (1 000 proposé) ; ce qui se passe au-delà est **à décider par le porteur** (pop-up « réponses closes pour ce mois », ou réponse non enregistrée).
+   - Gratuit : plafond de réponses enregistrées par boutique et par mois (1 000 proposé). Au-delà, **décidé par le porteur le 2026-10-27** : la fiche du produit reste visible et affiche « Réponses fermées pour ce mois », sans demander ni quantité ni numéro ; seules les visites sont comptées, et le grossiste voit combien de personnes ont voulu répondre.
    - Au-delà du quota, une notification groupée par jour (« N nouvelles réponses en attente ») au lieu d'une par réponse ; purge des notifications de plus de 90 jours.
    - Alertes et plafonds de dépense chez chaque fournisseur ; photo du pop-up allégée.
 

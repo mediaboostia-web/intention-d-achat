@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { isSupportedCountry } from 'libphonenumber-js/min';
 import { checkProductRules } from '@/lib/tamani/product-rules';
 import { BUYER_TYPES, NOT_INTERESTED_REASONS } from '@/lib/tamani/labels';
+import { isPhoneCountry } from '@/lib/tamani/phone-countries';
 import { DEFAULT_SHARE_TEMPLATE } from '@/lib/tamani/share-message';
 import { TIMING_OPTIONS, type Timing } from '@/lib/tamani/timing';
 import { SHORT_CODE_REGEX } from './short-code';
@@ -163,8 +164,21 @@ export const responseStepSchema = z
     timing: z.enum(TIMINGS).optional(),
     wantsDelivery: z.boolean().optional(),
     zoneId: z.string().min(1).max(40).nullable().optional(),
+    // « Autre endroit »: a place outside the shop's zones, never a control character.
+    deliveryPlace: z
+      .string()
+      .trim()
+      .min(2)
+      .max(80)
+      .refine((v) => [...v].every((ch) => ch.charCodeAt(0) > 31 && ch.charCodeAt(0) !== 127), {
+        message: 'No control characters',
+      })
+      .nullable()
+      .optional(),
     firstName: z.string().trim().min(1).max(40).optional(),
     phone: z.string().trim().min(6).max(30).optional(),
+    /** The respondent's own country, when it is not the shop's. */
+    phoneCountry: z.string().refine(isPhoneCountry, { message: 'Unknown country' }).optional(),
   })
   .refine((s) => (s.firstName === undefined) === (s.phone === undefined), {
     message: 'firstName and phone go together',

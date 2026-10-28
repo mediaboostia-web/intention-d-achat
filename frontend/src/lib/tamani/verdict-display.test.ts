@@ -25,6 +25,7 @@ describe('pluralizeUnit pluralizes the first word only', () => {
     ['carton', 1, 'carton'],
     ['sac de 25 kg', 12, 'sacs de 25 kg'],
     ['colis', 3, 'colis'],
+    ['demi-douzaine', 2, 'demi-douzaines'],
   ])('%s × %i → %s', (label, n, out) => {
     expect(pluralizeUnit(label, n)).toBe(out);
   });

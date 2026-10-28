@@ -1,7 +1,13 @@
 import { prismaMock } from '@/test-utils/prisma-mock';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { activeCampaignWhere } from './campaign-status';
+import { buildHomeBulletin } from './home-bulletin';
 import { buildShopSummary } from './summary';
+
+// The bulletin has its own tests (home-bulletin.test.ts) and reads campaigns too.
+vi.mock('./home-bulletin', () => ({
+  buildHomeBulletin: vi.fn(async () => ({ campaigns: [], moneyProtectedThisMonth: 0, todo: [] })),
+}));
 
 const now = new Date('2026-10-25T12:00:00Z');
 const weekAgo = new Date('2026-10-18T12:00:00Z');
@@ -275,6 +281,34 @@ describe('buildShopSummary', () => {
     expect(prismaMock.respondent.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ select: { id: true, firstName: true, firstSeenAt: true } }),
     );
+  });
+
+  it('carries the bulletin: verdicts, money protected and the to-do list', async () => {
+    const bulletin = {
+      campaigns: [
+        {
+          id: 'c1',
+          title: 'Riz parfumé',
+          unitLabel: 'sac',
+          completed: 30,
+          verdict: 'GO' as const,
+          realistic: 190,
+          reference: 200,
+          offered: false,
+          availability: 'INCOMING' as const,
+          interested: 20,
+          stockStatus: null,
+          restock: null,
+        },
+      ],
+      moneyProtectedThisMonth: 150_000,
+      todo: [
+        { kind: 'NOTIFY_INTERESTED' as const, campaignId: 'c2', title: 'Huile', interested: 4 },
+      ],
+    };
+    vi.mocked(buildHomeBulletin).mockResolvedValueOnce(bulletin);
+    expect(await buildShopSummary(prismaMock, 'org_1', now)).toMatchObject(bulletin);
+    expect(buildHomeBulletin).toHaveBeenCalledWith(prismaMock, 'org_1', now);
   });
 
   it('every query is scoped to the shop', async () => {

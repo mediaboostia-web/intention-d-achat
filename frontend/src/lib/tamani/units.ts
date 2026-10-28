@@ -10,6 +10,7 @@ export const COMMON_UNITS: readonly string[] = [
   'flacon',
   'paquet',
   'douzaine',
+  'demi-douzaine',
   'kg',
   'litre',
 ];

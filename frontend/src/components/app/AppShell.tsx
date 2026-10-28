@@ -6,12 +6,14 @@ import { usePathname } from 'next/navigation';
 import { Avatar, BottomNav, Logo, SideNav } from '@/components/ui';
 import { PLANS } from '@/lib/tamani/plans';
 import { NotificationBell } from './NotificationBell';
+import { PushPrompt } from './PushPrompt';
 import { useShop } from './shop-context';
 
 /**
  * The shop space: sidebar from 1024px, bottom bar below, the page in
  * between. On a phone the top row carries the shop, the bell and the
  * avatar; on a desktop the bell and the avatar sit on the page's title line.
+ * The avatar opens the profile. PushPrompt asks a phone for notifications.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -38,7 +40,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
           <div className="ml-auto flex items-center gap-2 lg:absolute lg:top-6 lg:right-6 lg:z-10">
             <NotificationBell />
-            <Link href="/app/plus" aria-label="Compte et forfait" className="rounded-full">
+            <Link href="/app/profil" aria-label="Ton profil" className="rounded-full">
               <Avatar name={me.name ?? shop.name} src={shop.logoUrl} size="sm" />
             </Link>
           </div>
@@ -51,6 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </main>
       </div>
       <BottomNav pathname={pathname} />
+      <PushPrompt />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 // roadmap (docs/superpowers/plans/2026-10-24-tamani-roadmap.md §Contrats)
 // and ships as the versioned migration 6_tamani_core.
 import { describe, expect, it } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -143,6 +143,30 @@ describe('Tamani core schema (lot 3)', () => {
     );
     expect(sql).toMatch(/ALTER TABLE "Organization" ADD COLUMN\s+"description" TEXT/);
     expect(sql).not.toMatch(/\bDROP\b/);
+  });
+
+  it('Organization remembers the free plan offered verdict', () => {
+    expect(field(modelBlock('Organization'), 'freeVerdictCampaignId String?')).toBe(true);
+    const sql = readFileSync(resolve(PRISMA, 'migrations/8b_free_verdict/migration.sql'), 'utf8');
+    expect(sql).toMatch(/ALTER TABLE "Organization" ADD COLUMN\s+"freeVerdictCampaignId" TEXT/);
+    expect(sql).not.toMatch(/\bDROP\b/);
+  });
+
+  it('Response keeps the place of a delivery elsewhere', () => {
+    expect(field(modelBlock('Response'), 'deliveryPlace String?')).toBe(true);
+    const sql = readFileSync(resolve(PRISMA, 'migrations/8c_delivery_place/migration.sql'), 'utf8');
+    expect(sql).toMatch(/ALTER TABLE "Response" ADD COLUMN\s+"deliveryPlace" TEXT/);
+    expect(sql).not.toMatch(/\bDROP\b/);
+  });
+
+  it('migration folders sort as text in the order they were written', () => {
+    // Prisma applies them in text order: a "10_…" would run before "2_…".
+    const names = readdirSync(resolve(PRISMA, 'migrations'), { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name)
+      .sort();
+    const numbers = names.map((n) => Number.parseInt(n, 10));
+    expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
   });
 
   it.each(Object.entries(CONSTRAINTS))(

@@ -39,12 +39,15 @@ import {
 import { leavePage } from '@/lib/tamani/leave-page';
 import { formatXof } from '@/lib/tamani/share-message';
 import { TIMING_LABELS } from '@/lib/tamani/timing';
+import { phoneCountryChoices } from '@/lib/tamani/phone-countries';
 import { pluralizeUnit } from '@/lib/tamani/verdict-display';
+import { cn } from '@/lib/utils';
+import { PhotoGallery } from './photo-gallery';
 import { popupErrorMessage, postStep, postView } from './popup-client';
 
 const MIN_COUNTER = 3;
 
-type Contact = { firstName: string; phone: string };
+type Contact = { firstName: string; phone: string; phoneCountry?: string };
 
 export interface PopupViewProps {
   campaign: PublicCampaign;
@@ -208,9 +211,42 @@ function QuantityStep({ c, answers, onAction }: StepProps) {
   );
 }
 
+function PlaceField({ answers, onAction }: Pick<StepProps, 'answers' | 'onAction'>) {
+  const [place, setPlace] = useState(answers.deliveryPlace ?? '');
+  const ok = place.trim().length >= 2;
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (ok) onAction({ type: 'delivery', wantsDelivery: true, zoneId: null, place: place.trim() });
+  };
+  return (
+    <form onSubmit={submit}>
+      <Question>Où te livrer ?</Question>
+      <Input
+        id="popup-place"
+        label="Où ? (quartier, ville ou pays)"
+        maxLength={80}
+        required
+        value={place}
+        onChange={(e) => setPlace(e.target.value)}
+      />
+      <Button type="submit" size="lg" className="mt-4 w-full" disabled={!ok}>
+        Continuer
+      </Button>
+    </form>
+  );
+}
+
 function DeliveryStep({ c, answers, onAction }: StepProps) {
-  const [pickZone, setPickZone] = useState(false);
-  if (pickZone) {
+  // Coming back to this step shows the choice made before.
+  const [mode, setMode] = useState<'ask' | 'zones' | 'place'>(() =>
+    answers.wantsDelivery !== true
+      ? 'ask'
+      : c.zones.length === 0 || (answers.zoneId === null && answers.deliveryPlace)
+        ? 'place'
+        : 'zones',
+  );
+  if (mode === 'place') return <PlaceField answers={answers} onAction={onAction} />;
+  if (mode === 'zones') {
     return (
       <>
         <Question>Dans quel quartier ?</Question>
@@ -224,6 +260,12 @@ function DeliveryStep({ c, answers, onAction }: StepProps) {
               {z.name}
             </ChoiceButton>
           ))}
+          <ChoiceButton
+            selected={answers.wantsDelivery === true && answers.deliveryPlace !== null}
+            onClick={() => setMode('place')}
+          >
+            Autre endroit
+          </ChoiceButton>
         </div>
       </>
     );
@@ -234,11 +276,7 @@ function DeliveryStep({ c, answers, onAction }: StepProps) {
       <div className="grid gap-3">
         <ChoiceButton
           selected={answers.wantsDelivery === true}
-          onClick={() =>
-            c.zones.length > 0
-              ? setPickZone(true)
-              : onAction({ type: 'delivery', wantsDelivery: true, zoneId: null })
-          }
+          onClick={() => setMode(c.zones.length > 0 ? 'zones' : 'place')}
         >
           Oui, livre-moi
         </ChoiceButton>
@@ -266,6 +304,8 @@ function ContactStep({
 }: StepProps & { state: PopupState; busy: boolean; onContact: (contact: Contact) => void }) {
   const [firstName, setFirstName] = useState('');
   const [phone, setPhone] = useState('');
+  const [country, setCountry] = useState(c.shop.country);
+  const [countries] = useState(() => phoneCountryChoices(c.shop.country));
   const title =
     state.answers.interested === false
       ? 'Pour être prévenu des prochains arrivages'
@@ -302,7 +342,9 @@ function ContactStep({
   }
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (firstName.trim() && phone.trim()) onContact({ firstName: firstName.trim(), phone });
+    if (firstName.trim() && phone.trim()) {
+      onContact({ firstName: firstName.trim(), phone, phoneCountry: country });
+    }
   };
   return (
     <form onSubmit={submit}>
@@ -321,6 +363,9 @@ function ContactStep({
           id="popup-phone"
           label="Ton numéro WhatsApp"
           dialCode={c.shop.dialCode}
+          countries={countries}
+          country={country}
+          onCountryChange={setCountry}
           hint={consent(c.shop.name)}
           maxLength={30}
           required
@@ -331,6 +376,15 @@ function ContactStep({
       <Button type="submit" size="lg" className="mt-4 w-full" disabled={busy}>
         Envoyer ma réponse
       </Button>
+      {state.forgotten && (
+        <button
+          type="button"
+          onClick={() => onAction({ type: 'itsMe' })}
+          className="mt-3 min-h-12 font-bold text-primary underline decoration-2 underline-offset-4"
+        >
+          C&apos;est bien moi, {state.forgotten.firstName}
+        </button>
+      )}
     </form>
   );
 }
@@ -530,6 +584,7 @@ export function PopupView({
   left = false,
 }: PopupViewProps) {
   const photo = c.product.photos[0] ? cloudinaryVariant(c.product.photos[0], POPUP_PHOTO) : null;
+  const hasPhotos = c.product.photos.length > 0;
   const canGoBack = c.accepting && state.step !== 'interest' && state.step !== 'thanks';
   return (
     <main className="relative flex h-dvh flex-col overflow-hidden bg-ink text-ink">
@@ -543,19 +598,25 @@ export function PopupView({
       )}
       <div className="relative mx-auto flex h-full w-full max-w-md flex-col">
         <ShopChip shop={c.shop} />
-        {/* The photo gives way to the sheet on a small screen. */}
-        <div className="flex min-h-0 flex-1 items-center justify-center px-6 py-3">
-          {photo && (
-            <img
-              src={photo}
-              alt={c.product.name}
-              fetchPriority="high"
-              className="frame max-h-full w-auto max-w-full rounded-card bg-surface object-contain"
+        {/* The photos keep their height; the sheet scrolls in the rest of the screen. */}
+        <div className="flex flex-1 items-center py-3">
+          {hasPhotos && (
+            <PhotoGallery
+              photos={c.product.photos}
+              name={c.product.name}
+              className="h-[38dvh] min-h-40 w-full lg:h-[44dvh]"
             />
           )}
         </div>
         <BottomSheet label="Ta réponse" className="shrink-0">
-          <div className="max-h-[calc(100dvh-6.5rem)] overflow-y-auto overscroll-contain">
+          <div
+            className={cn(
+              'overflow-y-auto overscroll-contain',
+              hasPhotos
+                ? 'max-h-[calc(62dvh-6.5rem)] lg:max-h-[calc(56dvh-6.5rem)]'
+                : 'max-h-[calc(100dvh-6.5rem)]',
+            )}
+          >
             <ProductHeader c={c} count={interestedCount} />
             {!c.accepting ? (
               <>

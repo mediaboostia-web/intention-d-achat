@@ -28,7 +28,7 @@ Les trois piliers de marque sont donc : **proximité** (être en contact), **cla
 | **Cible v1** [décidé] | Grossiste ou importateur (ustensiles de cuisine, cosmétiques, tissus, produits variés) qui vend au prix de gros et à l'unité, avec une communauté WhatsApp de plusieurs centaines à plusieurs milliers de membres. |
 | **Répondants** | Les membres de cette communauté : **revendeurs** (achètent en quantité), **usagers / acheteurs finaux** (1 à 3 pièces), **simples abonnés**. Sur mobile, souvent avec un réseau lent, et ils ouvrent les liens depuis WhatsApp. |
 | **Écartée pour l'instant** [décidé] | Les vendeurs de nourriture en ligne. Leur vrai besoin est la commande ferme du jour, pas l'intention. Ils pourront venir plus tard avec un modèle « menu du jour » sur le même moteur. |
-| **Marché de départ** [hypothèse] | Afrique de l'Ouest francophone, prix en FCFA (XOF), interface en français. |
+| **Marché de départ** [décidé, 2026-10-27] | Toute l'Afrique francophone, interface en français. Chaque boutique paie et affiche ses prix dans la monnaie de son pays : FCFA UEMOA (XOF), FCFA CEMAC (XAF), franc guinéen, franc congolais… Le lot « Pays et monnaies » (feuille de route, lot 7b) l'apporte ; jusque-là, tout est en FCFA (XOF). |
 
 ## 3. Objectifs, non-objectifs, anti-objectifs
 
@@ -95,7 +95,13 @@ Les trois piliers de marque sont donc : **proximité** (être en contact), **cla
 ### 5.3 Le pop-up du répondant [décidé dans l'esprit, détails : choix]
 Un lien partagé sur WhatsApp s'ouvre dans le navigateur du téléphone. Le « pop-up » est donc une **page web très légère** qui affiche le produit en fond (photo floutée) avec une **feuille qui monte du bas**. Aucun compte à créer.
 
-En haut de la feuille, toujours visibles : la photo, le nom, le **prix** (le prix de gros s'affiche quand la personne choisit « Revendre »), la disponibilité, et un compteur facultatif du type « 128 personnes intéressées » (activé par défaut, désactivable par le grossiste). La **quantité en stock** n'est pas montrée aux répondants par défaut. Le grossiste peut l'afficher (« Plus que 200 pièces ») avec une option de campagne [choix].
+**Les photos** [décidé, 2026-10-28 ; détails : choix] : au-dessus de la feuille, toutes les photos du produit (6 au plus) défilent du doigt, une par vue.
+- Chaque photo est entière, jamais rognée, sur le papier quadrillé. Le fond flou garde la première.
+- Des points sous la photo montrent où l'on est, et une touche sur un point y mène. Sur ordinateur, des flèches passent d'une photo à l'autre.
+- Sur téléphone, la galerie prend environ 40 % de la hauteur de l'écran, et la feuille défile dans le reste. Sur ordinateur, la photo est grande.
+- Le défilement est en CSS (`scroll-snap`), sans librairie d'animation. La première photo est servie en `w_600`, les suivantes se chargent à la demande.
+
+En haut de la feuille, toujours visibles : le nom, le **prix** (le prix de gros s'affiche quand la personne choisit « Revendre »), la disponibilité, et un compteur facultatif du type « 128 personnes intéressées » (activé par défaut, désactivable par le grossiste). La **quantité en stock** n'est pas montrée aux répondants par défaut. Le grossiste peut l'afficher (« Plus que 200 pièces ») avec une option de campagne [choix].
 
 Étapes, **une touche par étape**, et chaque réponse est **enregistrée immédiatement** :
 1. **Ça t'intéresse ?** [Oui] [Non]
@@ -106,10 +112,17 @@ En haut de la feuille, toujours visibles : la photo, le nom, le **prix** (le pri
    - produit disponible : [Aujourd'hui / demain] [Cette semaine] [Ce mois-ci] ;
    - produit à venir : [Dès l'arrivée] [La semaine suivante] [Plus tard].
 
-   Puis **Livraison ?** [Oui → choix du quartier parmi les zones de la boutique] [Je passe récupérer]. Cette question n'apparaît que si la campagne propose la livraison.
+   Puis **Livraison ?** [Oui, livre-moi] [Je passe récupérer]. Cette question n'apparaît que si la campagne propose la livraison.
+   - « Oui » montre les quartiers de la boutique, puis toujours **« Autre endroit »** [décidé, 2026-10-28], pour les personnes d'un autre quartier, d'une autre ville ou d'un autre pays.
+   - « Autre endroit » ouvre un seul champ, « Où ? (quartier, ville ou pays) », de 2 à 80 caractères, puis « Continuer ». Le grossiste voit ensuite avec le client s'il livre.
+   - Une boutique sans quartier demande directement « Où ? » après « Oui, livre-moi » [choix].
+   - Le lieu tapé s'efface dès qu'un quartier est choisi ou que la personne passe récupérer.
 5. **Prénom et numéro WhatsApp** (« Pour être prévenu à l'arrivée »). **Obligatoire** [décidé] pour qu'une réponse soit complète, oui comme non.
    - Le téléphone **mémorise** le prénom et le numéro (stockage local du navigateur). Aux campagnes suivantes, ils sont pré-remplis : « Tu réponds en tant que Awa · 77 •• •• 12 (pas toi ?) ». On ne les retape qu'en changeant de téléphone ou en effaçant les données du navigateur.
-   - Le numéro est vérifié sur son **format** (indicatif du pays de la boutique par défaut), sans SMS.
+   - Après « pas toi ? », le formulaire propose **« C'est bien moi, Awa »** [décidé, 2026-10-28], et « Retour » ramène aussi Awa : une fausse touche ne fait rien perdre. La mémoire du téléphone n'est remplacée que lorsqu'un nouveau numéro est envoyé [choix].
+   - Le numéro est vérifié sur son **format**, sans SMS.
+   - Le champ porte un **choix du pays** [décidé, 2026-10-28], pour les clients à l'étranger. Par défaut, c'est le pays de la boutique ; la liste donne ensuite les autres pays de Tamani, puis tous les autres pays, nommés en français [choix]. Un numéro tapé avec « + » ou « 00 » l'emporte sur ce choix.
+   - Le serveur vérifie le code pays reçu, puis lit le numéro dans ce pays. Un pop-up qui n'envoie pas de pays (ouvert avant cette version) prend celui de la boutique.
    - Une phrase de consentement s'affiche sous le champ : « Ton numéro est partagé uniquement avec *{Boutique}* pour te recontacter au sujet de ce produit. »
 6. Écran de remerciement : « Merci Awa ! *{Boutique}* te préviendra. » Il affiche le récapitulatif, un bouton « Modifier ma réponse » et, sur le forfait Gratuit, la mention « Propulsé par Tamani ».
 
@@ -120,29 +133,40 @@ Une **réponse partielle** (la personne a quitté avant l'étape 5) est conserv�
 #### 5.4.0 Au premier coup d'œil [structure validée sur maquette le 2026-10-24 ; style à refaire au lot 2]
 Le grossiste ne lit pas de graphiques. Il voit **un verdict, un chiffre et ce qu'il doit faire maintenant**.
 
-- **Verdict par campagne** [choix pour les seuils] :
-  - Quantité de référence : la quantité que le grossiste **prévoit de commander** (`plannedQuantity`, campagne à venir), sinon le stock disponible (campagne déjà en stock).
+- **Verdict par campagne à venir** (`INCOMING`, produit pas encore acheté) [choix pour les seuils] : il répond à « combien commander ? ».
+  - Quantité de référence : la quantité que le grossiste **prévoit de commander** (`plannedQuantity`), sinon le stock annoncé (`stockQuantity`).
   - Ratio = estimation réaliste / référence.
   - Si moins de **20 réponses complètes** : ⚪ « On attend (n/20) ».
   - Ratio ≥ 0,9 : 🟢 « Commande ~X ».
   - 0,4 ≤ ratio < 0,9 : 🟠 « Prudence ~X ».
   - Ratio < 0,4 : 🔴 « N'achète pas (ou très peu) ».
   - Sans quantité de référence : verdict neutre « Demande ~X ».
-- **L'argent**, visible seulement si le produit a un **prix d'achat** (`costPrice`, facultatif) :
-  - stock dormant évité = max(référence − réaliste, 0) × prix d'achat ;
-  - bénéfice attendu = Σ réaliste par statut × (prix de vente du statut − prix d'achat) ;
-  - sur l'accueil, « Argent protégé ce mois-ci » = somme du stock dormant évité des campagnes créées dans le mois.
+- **Campagne déjà en stock** (`IN_STOCK`) [décidé, 2026-10-28 ; détails : choix] : il n'y a rien à commander, et les intéressés veulent acheter maintenant. La question devient « mon stock va-t-il suffire ? ». Pas de verdict, et **jamais « On attend »** :
+  - **« À servir maintenant »**, en haut de l'onglet Résultats dès la première réponse intéressée comptée : « 6 intéressés · 12 bouteilles », réparti par échéance (aujourd'hui ou demain, cette semaine, ce mois-ci), puis le bouton « Voir les intéressés ». Ce ne sont que des comptes : visible sur tous les forfaits, numéros masqués en Gratuit ;
+  - **l'état du stock** compare l'estimation réaliste R (§5.4.1) au stock S (`stockQuantity`, jamais `plannedQuantity`). Si R ≤ S, le tampon vert « Stock suffisant » porte le stock (« 30 pièces en stock ») et dit « Il t'en restera environ S − R ». Si R > S, le tampon orange « Réassort ~X » dit « Rupture probable : prévois un réassort d'environ X », avec X = R − S, arrondi comme les quantités du verdict ;
+  - sous 20 réponses comptées, l'état s'affiche quand même, avec « Estimation provisoire : N réponses sur 20 » ;
+  - sans stock indiqué, pas d'état : une phrase invite à indiquer le stock dans la campagne pour savoir s'il suffira ;
+  - l'état repose sur l'estimation, donc il suit les règles d'accès du verdict : fonction `estimate` du forfait, ou verdict offert (§5.6), qu'une campagne en stock peut recevoir comme une autre. Sans accès, une carte verrouillée « Ton stock va-t-il suffire ? » porte le badge Pro ;
+  - la jauge de la demande dit « en stock S » au lieu de « prévu S ».
+- **L'argent**, visible seulement si le produit a un **prix d'achat** (`costPrice`, facultatif), et comme le verdict, seulement à partir de 20 réponses comptées :
+  - stock dormant évité = max(référence − réaliste, 0) × prix d'achat, pour une campagne à venir seulement : une marchandise en stock est déjà achetée ;
+  - bénéfice attendu = Σ réaliste par statut × (prix de vente du statut − prix d'achat). En stock, la demande réaliste est plafonnée au stock [choix] ;
+  - sur l'accueil, « Argent protégé ce mois-ci » = somme du stock dormant évité des campagnes à venir créées dans le mois.
 - **Accueil de la boutique (« bulletin du jour »)** :
-  - une ligne-verdict par campagne active ;
+  - une ligne-verdict par campagne active. Celle d'une campagne en stock montre « N à servir » et l'état du stock (« Stock suffisant », « Réassort ~X », ou « À servir » sans stock ni accès) au lieu du mot du verdict [choix] ;
   - **Depuis hier** : réponses complètes des dernières 24 h, nouveaux revendeurs, meilleur groupe (le lien de source avec le plus de réponses sur 7 jours) ;
   - **À faire maintenant** : commandes à confirmer, livraisons confirmées groupées par quartier, campagnes arrivées avec des intéressés à prévenir.
-- **En tête de la page campagne** : le verdict en grand, la fourchette et la base (« d'après 94 réponses · 68 % intéressés »), l'argent évité et le bénéfice, revendeurs face à usagers, la demande face à la référence, puis « Où et quand » et le signal prix.
+- **Page campagne** [décidé, 2026-10-28 ; détails : choix] :
+  - à côté du titre, l'état de la campagne (badge « En cours »…) ;
+  - sous le titre, les **actions**, de vrais boutons dont le verbe dit ce qui se passe : « Le produit est arrivé » (bouton principal, pour une campagne à venir en cours ou terminée), « Terminer la campagne » (plus discret, avec une confirmation), « Lancer la campagne » (brouillon) et « Rouvrir la campagne » (terminée). Une campagne en stock n'a jamais « Le produit est arrivé » ;
+  - puis une **barre d'onglets** en texte, avec un trait jaune sous l'onglet ouvert : Résultats, Intéressés, Partager, Modifier. Les quatre tiennent à largeurs égales sur un téléphone de 360 pixels.
+- **En tête de l'onglet Résultats** : pour une campagne à venir, le verdict en grand, la fourchette et la base (« d'après 94 réponses · 68 % intéressés »), l'argent évité et le bénéfice, revendeurs face à usagers, la demande face à la référence, puis « Où et quand » et le signal prix. Pour une campagne en stock, « À servir maintenant » et l'état du stock prennent la place du verdict.
 
 **Par campagne (détail) :**
 - Ouvertures du lien, réponses complètes, réponses incomplètes, taux d'intérêt.
 - **Demande annoncée** (somme des quantités) et **estimation réaliste** (§5.4.1), affichées face au **stock disponible** (par exemple « demande 340 / stock 200 → rupture probable »).
-- Répartition par **statut** (revendeurs et usagers), **quartier**, **échéance**, **option**, **source** (lien), et **raisons du non** (le signal prix « trop cher »).
-- Liste des répondants : prénom, numéro (bouton WhatsApp), statut, quantité, option, quartier, échéance, date. Filtres et **export CSV** lisible directement dans Excel (UTF-8 avec BOM, séparateur `;`) [choix].
+- Répartition par **statut** (revendeurs et usagers), **quartier** (puis « Retrait sur place » et « Autre endroit : N »), **échéance** (personnes et quantités), **option**, **source** (lien), et **raisons du non** (le signal prix « trop cher »).
+- Liste des intéressés : prénom, numéro (bouton WhatsApp), statut, quantité, option, quartier ou lieu (« Livraison · Lomé »), échéance, date. Filtre oui ou non. « Télécharger pour Excel » ouvre la page Exporter (§5.5.4) sur cette campagne et ce filtre.
 
 **Vue d'ensemble de la boutique :** campagnes en cours, comparaison des produits testés, meilleures sources, nombre total de répondants (la communauté identifiée).
 
@@ -156,7 +180,7 @@ Le grossiste ne lit pas de graphiques. Il voit **un verdict, un chiffre et ce qu
 Pas d'envoi WhatsApp automatique en v1, car l'API officielle de Meta est payante et soumise à validation.
 - Un bouton **« Écrire sur WhatsApp »** par répondant, qui ouvre `wa.me/<numéro>?text=<message pré-rempli>`.
 - Un bouton **« Copier les numéros des intéressés »** pour créer une liste de diffusion WhatsApp.
-- Une action **« Le produit est arrivé »** sur la campagne : elle prépare le message d'annonce et marque la campagne « arrivée ».
+- Une action **« Le produit est arrivé »** sur une campagne à venir : elle prépare le message d'annonce et marque la campagne « arrivée ». Une campagne en stock ne l'a pas.
 - Sur chaque réponse « Oui », un bouton **« Transformer en commande »** (§5.5.1).
 
 ### 5.5.1 Commandes [décidé, détails : choix]
@@ -173,11 +197,19 @@ Pas d'envoi WhatsApp automatique en v1, car l'API officielle de Meta est payante
 
 ### 5.5.2 Clients [décidé, détails : choix]
 - **Le carnet est dynamique** [décidé] : dès qu'une personne termine sa réponse à une campagne, elle **s'ajoute automatiquement** aux clients (ou sa fiche est mise à jour). Chaque intérêt reste **relié à un produit précis, une campagne précise et une date**.
-- **Deux vues** dans `/app/clients`, avec les **mêmes filtres** :
-  - **Personnes** : une ligne par client ;
-  - **Intérêts** : une ligne par réponse, c'est-à-dire client × produit × campagne × date, avec intéressé oui/non, quantité et échéance.
-- **Filtres** [décidé] : produit, campagne, période (date de réponse), statut (revendeur ou usager), quartier, intéressé oui/non, a commandé oui/non. S'y ajoutent une recherche par prénom ou numéro et, à partir du Pro, la fiabilité.
-- Exemple d'usage : « tous les revendeurs de Médina intéressés par les marmites en octobre, qui n'ont pas encore commandé ».
+- **Une seule vue** dans `/app/clients`, une ligne par client. La vue « Intérêts » (une ligne par réponse) est abandonnée depuis le lot 5b : chaque réponse se lit sur la fiche du client et dans l'export des réponses (§5.5.4).
+- **Filtres** [décidé, 2026-10-28 ; détails : choix], combinables entre eux et avec la recherche (prénom, ou numéro à partir du Pro), gardés dans l'adresse de la page :
+  - **type** : revendeurs ou usagers ;
+  - **réponse** : intéressé ou pas intéressé ;
+  - **campagne** : une campagne de la boutique ;
+  - **quartier** : un quartier, ou « Autre endroit » ;
+  - **période** : ce mois-ci, le mois dernier, les 3 derniers mois, ou l'un des 12 derniers mois ;
+  - **pays** : le pays du numéro ;
+  - **a commandé** oui/non et, à partir du Pro, la fiabilité : avec les commandes (lot 7).
+- **Une même réponse** : un client correspond quand une même réponse comptée remplit ensemble tous les filtres de réponse (type, réponse, campagne, quartier, période). « Intéressé, campagne riz, octobre » veut dire une réponse qui est les trois à la fois, pas trois réponses. Le pays s'applique au numéro du client.
+- **À l'écran** : un bouton « Filtrer » ouvre une feuille avec les filtres. Les filtres actifs s'affichent en pastilles sous la recherche, chacune avec sa croix, puis « Tout effacer ». Un bouton « Exporter » ouvre la page Exporter avec ces filtres.
+- En Gratuit, les filtres marchent et les numéros restent masqués. Le pays se lit côté serveur sur l'indicatif, sans jamais envoyer le numéro ; il reste visible, puisqu'il n'en dit pas plus que l'indicatif [choix].
+- Exemple d'usage : « tous les revendeurs de Médina intéressés par la campagne des marmites en octobre, qui n'ont pas encore commandé ».
 - **Fiche client** : prénom, numéro (bouton WhatsApp), statut, quartier habituel, historique des réponses et des commandes, montant total acheté, **note libre** du grossiste, et **fiabilité** (« a dit oui 5 fois, a acheté 4 fois · 80 % »).
 - La suppression à la demande (§6.9) anonymise la fiche. Les commandes restent comptées, sans identité.
 
@@ -185,27 +217,61 @@ Pas d'envoi WhatsApp automatique en v1, car l'API officielle de Meta est payante
 - **Fiabilité d'un client** = nombre de réponses « Oui » suivies d'une commande livrée ou récupérée, divisé par le nombre de réponses « Oui » sur des campagnes terminées (`CLOSED` ou `ARRIVED`). Elle s'affiche à partir de 2 réponses « Oui » terminées.
 - **Coefficient appris par statut** (usagers et revendeurs) = Σ quantités livrées ou récupérées / Σ quantités annoncées, calculé sur les réponses « Oui » des campagnes terminées de la boutique. Il ne s'applique qu'à partir de **20 réponses « Oui » réparties sur au moins 2 campagnes terminées**. En dessous, on garde le coefficient par défaut ou celui saisi dans les réglages. Le résultat est borné à [0,1 ; 1].
 
-### 5.6 Freemium [proposé, prix à ajuster]
+### 5.5.4 Exporter [décidé, 2026-10-28 ; détails : choix]
+Les fichiers servent aux relances : le grossiste voit ce qu'il exporte et choisit quoi exporter.
+- **La page « Exporter »** (`/app/exporter`) s'ouvre depuis « Télécharger pour Excel » (onglet Intéressés, avec la campagne et le filtre déjà choisis) et depuis la page Clients (avec ses filtres). Ses choix restent dans l'adresse.
+- **Quoi** : les **réponses** (intéressés, pas intéressés, ou toutes), une ligne par réponse ; ou les **clients**, une ligne par client.
+- **Filtres** : pour les réponses, campagne (une ou toutes), période, quartier ou « Autre endroit », échéance, type et pays ; pour les clients, les filtres du carnet (§5.5.2).
+- **Aperçu** : le nombre de lignes (« 142 lignes »), puis les 10 premières avec les colonnes du fichier, dans un tableau qui défile dans son cadre. Il se met à jour quand un filtre change. Sans aucune ligne : « Rien à exporter avec ces filtres. »
+- **« Télécharger (142 lignes) »** donne un CSV lisible directement dans Excel : UTF-8 avec BOM, séparateur `;`, fins de ligne CRLF, et une apostrophe devant toute cellule qui commencerait une formule (`=`, `+`, `-`, `@`, tabulation, retour chariot), lieu tapé compris. 20 000 lignes au plus. Le nom du fichier dit quoi et quand : `tamani-interesses-riz-2026-10-28.csv`.
+- **« Copier les numéros »** prend les mêmes filtres, pour les relances : chaque numéro une fois, 5 000 au plus.
+- **Colonnes** :
+  - réponses : date, produit, prénom, numéro WhatsApp, pays, intéressé, raison du non, achète pour, quantité, option, quand, livraison, quartier, lieu, source ;
+  - clients : prénom, numéro WhatsApp, pays, achète pour, quartier le plus fréquent, nombre de réponses, nombre de « oui », date et produit de la dernière réponse.
+- **Accès** : télécharger et copier demandent `respondentContacts` et `csvExport`. L'aperçu est ouvert à tous ; en Gratuit, ses numéros sont masqués et les deux boutons cèdent la place à « Passe au Pro pour télécharger ».
 
-| | **Gratuit** | **Pro** · 9 900 FCFA/mois | **Business** · 24 900 FCFA/mois |
-|---|---|---|---|
-| Campagnes actives | 3 | Illimitées | Illimitées |
-| Réponses complètes par mois | 150 | 3 000 | 15 000 |
-| Statistiques de base | ✅ | ✅ | ✅ |
-| Quantité recommandée | — | ✅ | ✅ |
-| Liens par source | — | ✅ | ✅ |
-| Liste des intéressés avec boutons WhatsApp, export CSV | — | ✅ | ✅ |
-| Commandes, vue « à livrer par quartier », carnet de clients | ✅ (numéros masqués) | ✅ | ✅ |
-| Fiabilité des clients et coefficients appris | — | ✅ | ✅ |
-| Mention « Propulsé par Tamani » | Oui | Non | Non |
-| Membres d'équipe | 1 | 1 | 3 (v1.1) |
+### 5.6 Forfaits prépayés [décidé dans le principe, 2026-10-27 ; prix à ajuster après le pilote]
 
-[choix] Les commandes et le carnet de clients sont **ouverts à tous**, y compris en Gratuit : ils rendent l'app indispensable et nourrissent l'apprentissage. En Gratuit, les numéros restent masqués et les boutons WhatsApp verrouillés (« Passe au Pro pour contacter Awa »), ce qui reste le principal argument de passage au Pro.
+**Principe du porteur (2026-10-27), comme le crédit téléphone :**
+- on paie des **réponses**, jamais des campagnes ;
+- tout est **prépayé** : avec Mobile Money, rien n'est prélevé tout seul ;
+- le lien d'une campagne **ne s'arrête jamais** à cause d'un paiement.
 
-- **Paiement annuel** : 10 mois payés pour 12.
-- **Au-delà du quota, on ne perd jamais une réponse** [choix] : elle est enregistrée mais **verrouillée** (« 87 réponses en attente, passe au Pro pour les voir »). Elle se déverrouille dès que le grossiste passe au forfait supérieur. Le répondant, lui, ne voit jamais de blocage.
-- Le quota se compte par **mois calendaire** (fuseau Africa/Dakar, donc UTC).
+Pourquoi (observations du porteur dans les communautés du Bénin, du Togo et du Gabon) :
+- des grossistes ont 10 000 à 111 000 membres et publient 5 à 25 produits par jour. Avec 1 % de réponses, 111 000 membres et 20 produits font environ 22 000 réponses par jour : un forfait mensuel serait vide en quelques heures ;
+- des importateurs ont des groupes de 190 à 600 personnes et un arrivage tous les un ou deux mois : ils ne paieront pas un mois entier ;
+- des crédits comptés par campagne seraient réutilisés à vie en modifiant la même campagne ;
+- le mot « crédit » est flou pour un grossiste ; « réponse » ne l'est pas.
+
+| | **Gratuit** | **Pass Semaine** · ~3 000 FCFA | **Pass Mois (Pro)** · 9 900 FCFA | **Pass Grossiste (Business)** · 24 900 FCFA | **Grand compte** |
+|---|---|---|---|---|---|
+| Durée | toujours | 7 jours | 30 jours | 30 jours | 30 jours |
+| Réponses incluses | 150 visibles par mois calendaire | 1 000 | 3 000 | 15 000 | 100 000 et plus |
+| Campagnes actives | 3 | Illimitées | Illimitées | Illimitées | Illimitées |
+| Statistiques de base | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Quantité recommandée | premier verdict offert | ✅ | ✅ | ✅ | ✅ |
+| Liens par source | — | ✅ | ✅ | ✅ | ✅ |
+| Liste des intéressés avec boutons WhatsApp, export CSV | — | ✅ | ✅ | ✅ | ✅ |
+| Commandes, vue « à livrer par quartier », carnet de clients | ✅ (numéros masqués) | ✅ | ✅ | ✅ | ✅ |
+| Fiabilité des clients et coefficients appris | — | ✅ | ✅ | ✅ | ✅ |
+| Mention « Propulsé par Tamani » | Oui | Non | Non | Non | Non |
+| Membres d'équipe | 1 | 1 | 1 | 3 (v1.1) | à définir |
+
+Le prix du Grand compte se fixe après le pilote (voir plus bas).
+
+[choix] Les commandes et le carnet de clients sont **ouverts à tous**, y compris en Gratuit : ils rendent l'app indispensable et nourrissent l'apprentissage. En Gratuit, les numéros restent masqués et les boutons WhatsApp verrouillés (« Passe au Pro pour contacter Awa »), ce qui reste le principal argument pour prendre un pass.
+
+- **Recharges** : +1 000 réponses (~2 500 FCFA) ou +5 000 (~9 900 FCFA), payées quand le pass est épuisé avant sa fin. Elles valent jusqu'à la fin du pass en cours et ajoutent des réponses, pas des fonctions : il faut un pass actif.
+- **Toutes les campagnes partagent les réponses du pass** : les campagnes sont illimitées, mais chaque réponse, quelle que soit sa campagne, compte dans le même total. Un **compteur** le montre partout, téléphone compris (demande du porteur, 2026-10-27) : réponses utilisées sur le total, date de fin du pass, détail par campagne, alerte à 80 % et à 100 %, bouton de recharge.
+- **Période** : les réponses d'un pass se comptent sur sa durée (7 ou 30 jours à partir du paiement) ; celles du Gratuit sur le mois calendaire (fuseau Africa/Dakar, donc UTC).
+- **Pas de renouvellement automatique** : rappel 3 jours avant la fin, puis 3 jours de grâce, puis retour au Gratuit. Les campagnes continuent ; les numéros se masquent à nouveau.
+- **Pass 12 mois** (Pro et Business) : 10 mois payés pour 12.
+- **Au-delà des réponses incluses, on ne perd jamais une réponse** [choix] : elle est enregistrée mais **en attente** (« 87 réponses en attente »). Elle s'ouvre dès que le grossiste prend un pass ou une recharge. Le répondant, lui, ne voit jamais de blocage.
+- **Plafond du Gratuit** [décidé, 2026-10-27] : au-delà d'environ 1 000 réponses enregistrées dans le mois (les 150 visibles et celles en attente), la fiche du produit reste visible mais affiche « Réponses fermées pour ce mois ». Elle ne demande plus ni quantité ni numéro. Tamani compte seulement les visites, et le grossiste voit combien de personnes ont voulu répondre. C'est honnête envers le répondant, et un grand groupe gratuit ne nous coûte pas d'argent (règle des 70 % de marge). Un pass payé n'atteint jamais ce plafond : il a ses recharges.
+- **Grand compte** : son prix et son volume se fixent sur le coût réel par réponse, mesuré chez un ou deux grands grossistes pilotes (pass offert pendant le pilote contre leurs chiffres). Avant de les accueillir, réduire le nombre d'appels au serveur par réponse.
+- **Ce qui coûte à chaque envoi** (WhatsApp officiel, IA, plus tard) se paie de la même façon, en recharges, chacune avec sa marge de 70 %.
 - La mention « Propulsé par Tamani » renvoie vers la page d'accueil avec `?ref=<slug-boutique>` pour mesurer le bouche-à-oreille.
+- **Verdict offert** [décidé, 2026-10-27] : en Gratuit, la première campagne qui atteint 20 réponses comptées reçoit son verdict complet (quantité recommandée et argent évité), une fois pour toutes. Les campagnes suivantes montrent leurs réponses et la demande annoncée, et invitent à prendre un pass. Le grossiste goûte ainsi à la valeur de Tamani sur ses propres chiffres.
 
 ### 5.7 Paiement : SasPay [décidé]
 - SasPay est une API REST unique pour le mobile money et la carte, en Afrique de l'Ouest et du Centre. Elle propose une page de paiement hébergée (*checkout session*) et des webhooks signés.
@@ -252,9 +318,10 @@ Tous les montants sont des **entiers en FCFA** (règle du kit). Les nouveaux mod
 - `Product` : `organizationId`, `name`, `description?`, `unitLabel`, `unitPrice`, `wholesalePrice?`, `wholesaleMinQty?`, `costPrice?` (prix d'achat, jamais montré aux répondants), `photos` (JSON, URLs Cloudinary), `optionLabel?` (par exemple « Couleur »), `options` (liste de chaînes), `archivedAt?`.
 - `Campaign` : `organizationId`, `productId`, `title`, `availability` (`IN_STOCK` | `INCOMING`), `availableAt?`, `stockQuantity?`, `plannedQuantity?` (quantité que le grossiste prévoit de commander), `showStock` (défaut `false`), `endsAt?`, `deliveryEnabled`, `showLiveCounter`, `shareTemplate`, `status` (`DRAFT` | `ACTIVE` | `CLOSED` | `ARRIVED`), `closedAt?`. Le statut effectif se calcule à la lecture à partir de `endsAt`, sans tâche planifiée.
 - `CampaignLink` : `campaignId`, `code` (court, unique, base62, 7 caractères), `label`, `isDefault`, `openCount`.
-- `Respondent` (le « client » dans l'interface) : `organizationId`, `phoneE164?`, `firstName?`, `notes?`, `firstSeenAt`, `lastSeenAt`, `anonymizedAt?`. Unique sur (`organizationId`, `phoneE164`).
+- `Respondent` (le « client » dans l'interface) : `organizationId`, `phoneE164?`, `firstName?`, `notes?`, `firstSeenAt`, `lastSeenAt`, `anonymizedAt?`. Unique sur (`organizationId`, `phoneE164`). Le pays d'un client n'a pas de champ : il se lit sur l'indicatif de `phoneE164`.
 - `SaleOrder` (commande client, distincte du modèle `Order` du kit qui sert aux paiements d'abonnement) : `organizationId`, `respondentId`, `productId`, `campaignId?`, `responseId?` (unique : une commande par réponse), `buyerType`, `quantity`, `unitPrice` (prix figé), `totalAmount`, `fulfillment` (`DELIVERY` | `PICKUP`), `zoneId?`, `status` (`TO_CONFIRM` | `CONFIRMED` | `FULFILLED` | `CANCELLED`), `paid`, `paidAt?`, `notes?`, `confirmedAt?`, `fulfilledAt?`, `cancelledAt?`.
-- `Response` : `campaignId`, `linkId?`, `respondentId?`, `deviceId`, `interested?`, `notInterestedReason?`, `buyerType?` (`CONSUMER` | `RESELLER`), `quantity?`, `option?`, `timing?`, `wantsDelivery?`, `zoneId?`, `completedAt?`, `locked` (quota dépassé), `suspicious`. Unique sur (`campaignId`, `deviceId`) et sur (`campaignId`, `respondentId`).
+- `Response` : `campaignId`, `linkId?`, `respondentId?`, `deviceId`, `interested?`, `notInterestedReason?`, `buyerType?` (`CONSUMER` | `RESELLER`), `quantity?`, `option?`, `timing?`, `wantsDelivery?`, `zoneId?`, `deliveryPlace?`, `completedAt?`, `locked` (quota dépassé), `suspicious`. Unique sur (`campaignId`, `deviceId`) et sur (`campaignId`, `respondentId`).
+  - `deliveryPlace` (lot 6b, migration `8c_delivery_place`) : le lieu tapé après « Autre endroit » (§5.3), de 2 à 80 caractères, sans espaces aux bouts ni caractère de contrôle. Il n'est gardé que pour une livraison sans quartier : il passe à `null` dès qu'un quartier est choisi ou que la personne passe récupérer, et il est refusé sur une campagne sans livraison.
 - `Subscription` : `organizationId` (unique), `plan` (`FREE` | `PRO` | `BUSINESS`), `currentPeriodEnd?`, `graceUntil?`.
 - `Order` (existant) : paiement d'abonnement, avec `metadata = { organizationId, plan, months }`, `provider = 'saspay'` et `providerChargeId` = identifiant SasPay.
 - Les achats réels, qui servent à la fiabilité, sont les `SaleOrder` au statut `FULFILLED`. Aucun modèle supplémentaire.
@@ -266,19 +333,21 @@ Toutes respectent les invariants du kit : `export const runtime = 'nodejs'` et `
 
 - **Boutique** : `POST /api/shops`, `GET|PATCH /api/shops/[orgId]`, zones (`/api/shops/[orgId]/zones`).
 - **Produits** : CRUD sous `/api/shops/[orgId]/products`.
-- **Campagnes** : CRUD sous `/api/shops/[orgId]/campaigns`, liens (`…/campaigns/[id]/links`), statistiques (`…/campaigns/[id]/stats`), répondants (`…/campaigns/[id]/responses`), export (`…/campaigns/[id]/export.csv`).
+- **Campagnes** : CRUD sous `/api/shops/[orgId]/campaigns`, liens (`…/campaigns/[id]/links`), statistiques (`…/campaigns/[id]/stats`), répondants (`…/campaigns/[id]/responses`) et leurs numéros (`…/campaigns/[id]/responses/numbers`).
+- **Export** (§5.5.4) : `GET /api/shops/[orgId]/exports/preview` (aperçu de 10 lignes, tous forfaits, numéros masqués sans `respondentContacts`), `…/exports/file` (le CSV) et `…/exports/numbers` (les numéros). La requête porte les choix de la page Exporter (`quoi=reponses|clients`, puis les filtres).
 - **Commandes** : CRUD sous `/api/shops/[orgId]/orders` (filtres par statut, campagne, produit et zone ; vue « à livrer » groupée par zone), plus la conversion `POST …/campaigns/[id]/responses/[responseId]/order`.
-- **Clients** : `GET /api/shops/[orgId]/clients` (vue Personnes), `GET /api/shops/[orgId]/interests` (vue Intérêts), avec les mêmes filtres (produit, campagne, période, statut, quartier, intéressé, a commandé, recherche). Plus `GET|PATCH /api/shops/[orgId]/clients/[respondentId]` (fiche et note) et `DELETE` (anonymisation).
+- **Clients** : `GET /api/shops/[orgId]/clients`, avec les filtres du §5.5.2 dans l'adresse (type, réponse, campagne, quartier, période, pays, recherche ; « a commandé » au lot 7). Plus `GET|PATCH /api/shops/[orgId]/clients/[respondentId]` (fiche et note) et `DELETE` (anonymisation).
+- **Compte** : `PATCH /api/account` (le nom affiché dans le Profil). Le mot de passe passe par les routes du kit.
 - **Accueil** : `GET /api/shops/[orgId]/summary` (verdicts des campagnes actives, argent protégé du mois, « Depuis hier », « À faire maintenant »).
 - **Facturation** : `POST /api/billing/checkout` (crée l'`Order` et la session SasPay), `GET /api/billing/return` (vérification au retour de paiement), `GET /api/billing/subscription`.
 - **Webhook** : `POST /api/webhooks/saspay`.
-- **Public (pop-up)** : `POST /api/public/views` (ouverture), `POST /api/public/responses` (création ou mise à jour, étape par étape).
+- **Public (pop-up)** : `POST /api/public/views` (ouverture), `POST /api/public/responses` (création ou mise à jour, étape par étape, avec le lieu de livraison et le pays du numéro).
 - **Tâche planifiée** : `GET /api/cron/subscription-renewals` (quotidienne : rappels J-3, début de grâce, retour au Gratuit).
 
 ### 6.4 Pages
 - **Public** : `/` (accueil), `/tarifs`, `/c/[code]` (le pop-up), `/confidentialite`, `/cgu`.
 - **Auth** : `/login`, `/signup`, `/verify-email`, `/forgot-password`, `/reset-password`, adaptées des exemples dans `examples/frontend-pages/`.
-- **Grossiste** (`/app/*`, protégé par le `src/proxy.ts` du kit, ex-`middleware.ts`, via `AUTH_PROTECTED_PREFIXES=/app,/admin`) : `/app` (vue d'ensemble), `/app/produits`, `/app/campagnes`, `/app/campagnes/nouvelle`, `/app/campagnes/[id]` (statistiques, répondants, commandes, liens, partage), `/app/commandes` (liste et « à livrer par quartier »), `/app/clients`, `/app/clients/[id]` (fiche), `/app/abonnement`, `/app/reglages`.
+- **Grossiste** (`/app/*`, protégé par le `src/proxy.ts` du kit, ex-`middleware.ts`, via `AUTH_PROTECTED_PREFIXES=/app,/admin`) : `/app` (vue d'ensemble), `/app/produits`, `/app/campagnes`, `/app/campagnes/nouvelle`, `/app/campagnes/[id]` (statistiques, répondants, commandes, liens, partage), `/app/commandes` (liste et « à livrer par quartier »), `/app/clients`, `/app/clients/[id]` (fiche), `/app/exporter` (§5.5.4), `/app/abonnement`, `/app/reglages`, `/app/plus` (tout ce que la barre du bas n'a pas la place de montrer) et `/app/profil` (nom, e-mail, mot de passe, déconnexion, ouvert par l'avatar).
 - **Admin Tamani** : `/admin/*` (boutiques, abonnements, paiements, utilisateurs, journal).
 - **Mise en page** : utiliser des groupes de routes Next (`(public)`, `(app)`, `(admin)`). Les providers `AuthProvider` et `ToastProvider`, aujourd'hui dans la mise en page racine, descendent dans `(app)` et `(admin)`. Ainsi, le pop-up ne charge ni le JavaScript de session ni l'appel `/api/auth/me`.
 
@@ -335,7 +404,7 @@ Toutes respectent les invariants du kit : `export const runtime = 'nodejs'` et `
 6. **Pop-up** : `/c/[code]`, routes publiques, mémoire de l'appareil, protections, budget de performance.
 7. **Tableau de bord** : statistiques, quantité recommandée, liste des répondants, relance WhatsApp, export CSV, vue d'ensemble.
 8. **Commandes et clients** : conversion d'une réponse en commande, commandes manuelles, statuts, vue « à livrer par quartier », carnet et fiche client, fiabilité, coefficients appris.
-9. **Abonnements et SasPay** : forfaits, quotas et verrouillage, checkout, webhook, vérification, rappels, grâce, page Tarifs.
+9. **Forfaits prépayés et SasPay** : passes, recharges, réponses en attente et plafond du Gratuit, checkout, webhook, vérification, rappels, grâce, page Tarifs.
 10. **Admin Tamani, page d'accueil, pages légales.**
 11. **Mise en production** : Vercel, domaine, tâches planifiées, Sentry, compte SasPay en mode live.
 

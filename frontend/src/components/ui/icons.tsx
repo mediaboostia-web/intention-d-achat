@@ -27,7 +27,9 @@ export type IconName =
   | 'arrow-down-left'
   | 'chevron-left'
   | 'chevron-right'
-  | 'menu';
+  | 'menu'
+  | 'tag'
+  | 'logout';
 
 // Drawn with the pen: one 2px round stroke in currentColor, no fill, so an
 // icon takes the colour of the text next to it.
@@ -188,6 +190,15 @@ const SHAPES: Record<IconName, ReactNode> = {
   'chevron-left': <path d="m14.5 5.5-6.5 6.5 6.5 6.5" />,
   'chevron-right': <path d="m9.5 5.5 6.5 6.5-6.5 6.5" />,
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  tag: (
+    <>
+      <path d="M3.5 12.6V4.5a1 1 0 0 1 1-1h8.1l7.9 7.9a1.4 1.4 0 0 1 0 2l-6.1 6.1a1.4 1.4 0 0 1-2 0z" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+    </>
+  ),
+  logout: (
+    <path d="M14 4.5H6.5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1H14M10.5 12h10M17 8.5l3.5 3.5-3.5 3.5" />
+  ),
 };
 
 export function Icon({ name, className }: { name: IconName; className?: string | undefined }) {

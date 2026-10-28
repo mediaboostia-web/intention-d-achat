@@ -5,6 +5,10 @@ import { mockNextNavigation } from '@/test-utils/next-navigation';
 import { ShopTestProvider } from '@/test-utils/shop-context';
 
 vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigation')).navigation);
+// A phone that could receive notifications: the home page still asks nothing (§7).
+vi.mock('./use-push', () => ({
+  usePush: () => ({ state: 'ask', ready: true, busy: false, error: null, enable: async () => {} }),
+}));
 
 const { HomeView } = await import('./HomeView');
 
@@ -51,6 +55,9 @@ const SUMMARY: ShopSummary = {
     title: 'Riz parfumé',
     shareMessage: '*Riz parfumé* https://x/c/Ab3dE7x',
   },
+  campaigns: [],
+  moneyProtectedThisMonth: 0,
+  todo: [],
 };
 
 const render = (summary: ShopSummary) => {
@@ -121,5 +128,88 @@ describe('HomeView', () => {
     expect(render(SUMMARY).t).toContain('À venir');
     expect(render(SUMMARY).t).toContain('Arrivage de Riz parfumé');
     expect(render({ ...SUMMARY, upcoming: [] }).t).not.toContain('À venir');
+  });
+  it('« À faire maintenant » asks to tell the interested people of an arrival', () => {
+    const { out, t } = render({
+      ...SUMMARY,
+      todo: [{ kind: 'NOTIFY_INTERESTED', campaignId: 'c2', title: 'Huile', interested: 4 }],
+    });
+    expect(t).toContain('À faire maintenant');
+    expect(t).toContain('Préviens tes 4 intéressés');
+    expect(t).toContain('Arrivage de Huile');
+    expect(hrefs(out)).toContain('/app/campagnes/c2?onglet=interesses');
+    expect(render(SUMMARY).t).not.toContain('À faire maintenant');
+  });
+
+  it('« Tes campagnes » gives one verdict line each, the word in the verdict tone', () => {
+    const { out, t } = render({
+      ...SUMMARY,
+      campaigns: [
+        {
+          id: 'c1',
+          title: 'Riz parfumé',
+          unitLabel: 'sac',
+          completed: 34,
+          verdict: 'GO',
+          realistic: 120,
+          reference: 130,
+          offered: false,
+          availability: 'INCOMING',
+          interested: 20,
+          stockStatus: null,
+          restock: null,
+        },
+        {
+          id: 'c5',
+          title: 'Livre de commerce',
+          unitLabel: 'pièce',
+          completed: 8,
+          verdict: 'WAIT',
+          realistic: 6,
+          reference: 30,
+          offered: false,
+          availability: 'IN_STOCK',
+          interested: 6,
+          stockStatus: 'ENOUGH',
+          restock: null,
+        },
+        {
+          id: 'c3',
+          title: 'Sucre',
+          unitLabel: 'sac',
+          completed: 25,
+          verdict: null,
+          realistic: null,
+          reference: null,
+          offered: false,
+          availability: 'INCOMING',
+          interested: 9,
+          stockStatus: null,
+          restock: null,
+        },
+      ],
+    });
+    expect(t).toContain('Tes campagnes');
+    expect(t).toContain('~120 sacs');
+    expect(t).toContain('Verdict avec Pro');
+    expect(t).toContain('6 à servir');
+    expect(t).toContain('Stock suffisant');
+    expect(out).toMatch(/text-success[^>]*>Commande/);
+    expect(hrefs(out)).toContain('/app/campagnes/c3');
+    expect(render(SUMMARY).t).not.toContain('Tes campagnes');
+  });
+
+  it('« Argent protégé ce mois-ci » shows only above 0, in highlighter', () => {
+    const { out, t } = render({ ...SUMMARY, moneyProtectedThisMonth: 150_000 });
+    expect(t).toContain('Argent protégé ce mois-ci');
+    expect(t).toContain('150 000 FCFA');
+    expect(out).toMatch(/highlight[^>]*>150 000 FCFA/);
+    expect(render(SUMMARY).t).not.toContain('Argent protégé');
+  });
+
+  it('home no longer asks for notifications: the phone sheet and Réglages do', () => {
+    const { t } = render(SUMMARY);
+    expect(t).not.toContain('Sois prévenu à chaque réponse');
+    expect(t).not.toContain('Activer les notifications');
   });
 });
