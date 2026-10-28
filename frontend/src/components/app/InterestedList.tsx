@@ -2,8 +2,9 @@
 
 // The Intéressés tab of a campaign (spec §5.5): who said yes or no, with a
 // WhatsApp message ready for each, the numbers to paste into a broadcast
-// list and the Excel file. On Free the numbers stay masked and the
-// actions lead to the plans. InterestedTab loads; InterestedView draws.
+// list and the Excel file (on the « Exporter » page, lot 6b). On Free the
+// numbers stay masked and the copy leads to the plans; the export page
+// shows its preview on every plan. InterestedTab loads; InterestedView draws.
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -13,7 +14,7 @@ import { errorMessage } from '@/lib/tamani/api-messages';
 import type { CampaignStatus } from '@/lib/tamani/campaign-actions';
 import type { Availability } from '@/lib/tamani/timing';
 import { clientWhatsappMessage, lockedContactText } from '@/lib/tamani/client-view';
-import { DownloadError, downloadFile } from '@/lib/tamani/download';
+import { DEFAULT_EXPORT, exportHref } from '@/lib/tamani/export-view';
 import { relativeTime } from '@/lib/tamani/relative-time';
 import {
   interestedDetail,
@@ -47,14 +48,6 @@ export async function copyInterestedNumbers(
   return (await copyText(numbers.join('\n'))) ? numbers.length : null;
 }
 
-function downloadMessage(err: unknown): string {
-  if (!(err instanceof DownloadError)) return 'Le téléchargement a échoué. Réessaie.';
-  if (err.status === 0) return 'Pas de connexion. Réessaie quand le réseau revient.';
-  if (err.status === 401) return 'Ta session a expiré : reconnecte-toi.';
-  if (err.status === 403) return 'Cette fonction vient avec le forfait Pro.';
-  return 'Le téléchargement a échoué. Réessaie.';
-}
-
 const COPY_FEEDBACK: Record<Exclude<CopyState, 'idle'>, string> = {
   copied: 'Numéros copiés. Colle-les dans une liste de diffusion WhatsApp.',
   empty: "Aucun numéro à copier pour l'instant.",
@@ -86,7 +79,6 @@ export function InterestedView({
   now,
   onMore,
   onCopy,
-  onDownload,
   onArrived,
 }: {
   campaign: InterestedCampaign;
@@ -98,7 +90,7 @@ export function InterestedView({
   loading: boolean;
   /** respondentContacts: full numbers and WhatsApp buttons. */
   contacts: boolean;
-  /** csvExport and respondentContacts: copy the numbers, download the file. */
+  /** csvExport and respondentContacts: copy the numbers. */
   exportable: boolean;
   busy: boolean;
   copyState: CopyState;
@@ -106,10 +98,10 @@ export function InterestedView({
   now: Date;
   onMore: () => void;
   onCopy: () => void;
-  onDownload: () => void;
   onArrived: () => void;
 }) {
   const base = `/app/campagnes/${campaign.id}?onglet=interesses`;
+  const toExport = exportHref({ ...DEFAULT_EXPORT, answer: filter, campaignId: campaign.id });
   const moment = campaign.status === 'ARRIVED' ? 'ARRIVED' : campaign.availability;
   // A product already in stock never "arrives".
   const canArrive =
@@ -134,21 +126,16 @@ export function InterestedView({
 
       <div className="flex flex-wrap gap-2.5">
         {exportable ? (
-          <>
-            <Button variant="secondary" onClick={onCopy}>
-              <Icon name={copyState === 'copied' ? 'check' : 'copy'} className="size-5" />
-              Copier les numéros
-            </Button>
-            <Button variant="secondary" disabled={busy} onClick={onDownload}>
-              Télécharger pour Excel
-            </Button>
-          </>
+          <Button variant="secondary" onClick={onCopy}>
+            <Icon name={copyState === 'copied' ? 'check' : 'copy'} className="size-5" />
+            Copier les numéros
+          </Button>
         ) : (
-          <>
-            <ProAction label="Copier les numéros" />
-            <ProAction label="Télécharger pour Excel" />
-          </>
+          <ProAction label="Copier les numéros" />
         )}
+        <Button href={toExport} variant="secondary">
+          Télécharger pour Excel
+        </Button>
       </div>
       <p role="status" className="text-sm text-ink-soft empty:hidden">
         {copyState === 'idle' ? '' : COPY_FEEDBACK[copyState]}
@@ -304,7 +291,6 @@ export function InterestedTab({
   const [list, setList] = useState<Listing>(EMPTY);
   const [copyState, setCopyState] = useState<CopyState>('idle');
   const [actionError, setActionError] = useState<string | null>(null);
-  const [downloading, setDownloading] = useState(false);
   const path = `/api/shops/${shopId}/campaigns/${encodeURIComponent(campaign.id)}`;
 
   const load = useCallback(
@@ -349,18 +335,6 @@ export function InterestedTab({
     }
   }
 
-  async function download() {
-    setActionError(null);
-    setDownloading(true);
-    try {
-      await downloadFile(`${path}/export`, `tamani-${campaign.id}.csv`);
-    } catch (err) {
-      setActionError(downloadMessage(err));
-    } finally {
-      setDownloading(false);
-    }
-  }
-
   return (
     <InterestedView
       campaign={campaign}
@@ -372,13 +346,12 @@ export function InterestedTab({
       loading={list.loading}
       contacts={contacts}
       exportable={exportable}
-      busy={busy || downloading}
+      busy={busy}
       copyState={copyState}
       error={list.error ?? actionError}
       now={new Date()}
       onMore={() => void load(list.next, list.items)}
       onCopy={() => void copy()}
-      onDownload={() => void download()}
       onArrived={onArrived}
     />
   );

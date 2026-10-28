@@ -57,7 +57,6 @@ const props = (over: Partial<Props> = {}): Props => ({
   now,
   onMore: () => {},
   onCopy: () => {},
-  onDownload: () => {},
   onArrived: () => {},
   ...over,
 });
@@ -135,8 +134,17 @@ describe('InterestedView', () => {
     expect(text(el)).toContain('+221 77 ••• •• 12');
     expect(out).toContain('Passe au Pro pour contacter Awa');
     expect(out).not.toContain('wa.me');
-    expect(out.match(/href="\/app\/plus/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(out.match(/href="\/app\/plus/g)?.length).toBeGreaterThanOrEqual(2);
+    // The export page shows its preview on every plan.
+    expect(out).toContain('href="/app/exporter?quoi=reponses&amp;reponse=oui&amp;campagne=c1"');
     expect(text(el)).toContain('Pro');
+  });
+
+  it('leads « Télécharger pour Excel » to the export page, with the campaign and the filter', () => {
+    const yes = html(<InterestedView {...props()} />);
+    expect(yes).toContain('href="/app/exporter?quoi=reponses&amp;reponse=oui&amp;campagne=c1"');
+    const no = html(<InterestedView {...props({ filter: 'no' })} />);
+    expect(no).toContain('href="/app/exporter?quoi=reponses&amp;reponse=non&amp;campagne=c1"');
   });
 
   it('filters yes and no with their counts', () => {

@@ -26,6 +26,7 @@ import {
   type ClientFilterState,
 } from '@/lib/tamani/client-filters';
 import type { ClientCounts, ClientRow } from '@/lib/tamani/client-view';
+import { exportHref } from '@/lib/tamani/export-view';
 import { phoneCountryChoices } from '@/lib/tamani/phone-countries';
 import { PLANS } from '@/lib/tamani/plans';
 
@@ -126,7 +127,14 @@ function Clients() {
 
   return (
     <>
-      <PageHeader title="Clients" />
+      <PageHeader
+        title="Clients"
+        action={
+          <Button href={exportHref({ what: 'clients', filters: state })} variant="secondary">
+            Exporter
+          </Button>
+        }
+      />
       <div className="mt-6">
         <SearchField
           placeholder={contacts ? 'Rechercher un prénom ou un numéro' : 'Rechercher un prénom'}
