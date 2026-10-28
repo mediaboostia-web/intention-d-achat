@@ -40,6 +40,8 @@ import { leavePage } from '@/lib/tamani/leave-page';
 import { formatXof } from '@/lib/tamani/share-message';
 import { TIMING_LABELS } from '@/lib/tamani/timing';
 import { pluralizeUnit } from '@/lib/tamani/verdict-display';
+import { cn } from '@/lib/utils';
+import { PhotoGallery } from './photo-gallery';
 import { popupErrorMessage, postStep, postView } from './popup-client';
 
 const MIN_COUNTER = 3;
@@ -530,6 +532,7 @@ export function PopupView({
   left = false,
 }: PopupViewProps) {
   const photo = c.product.photos[0] ? cloudinaryVariant(c.product.photos[0], POPUP_PHOTO) : null;
+  const hasPhotos = c.product.photos.length > 0;
   const canGoBack = c.accepting && state.step !== 'interest' && state.step !== 'thanks';
   return (
     <main className="relative flex h-dvh flex-col overflow-hidden bg-ink text-ink">
@@ -543,19 +546,25 @@ export function PopupView({
       )}
       <div className="relative mx-auto flex h-full w-full max-w-md flex-col">
         <ShopChip shop={c.shop} />
-        {/* The photo gives way to the sheet on a small screen. */}
-        <div className="flex min-h-0 flex-1 items-center justify-center px-6 py-3">
-          {photo && (
-            <img
-              src={photo}
-              alt={c.product.name}
-              fetchPriority="high"
-              className="frame max-h-full w-auto max-w-full rounded-card bg-surface object-contain"
+        {/* The photos keep their height; the sheet scrolls in the rest of the screen. */}
+        <div className="flex flex-1 items-center py-3">
+          {hasPhotos && (
+            <PhotoGallery
+              photos={c.product.photos}
+              name={c.product.name}
+              className="h-[38dvh] min-h-40 w-full lg:h-[44dvh]"
             />
           )}
         </div>
         <BottomSheet label="Ta réponse" className="shrink-0">
-          <div className="max-h-[calc(100dvh-6.5rem)] overflow-y-auto overscroll-contain">
+          <div
+            className={cn(
+              'overflow-y-auto overscroll-contain',
+              hasPhotos
+                ? 'max-h-[calc(62dvh-6.5rem)] lg:max-h-[calc(56dvh-6.5rem)]'
+                : 'max-h-[calc(100dvh-6.5rem)]',
+            )}
+          >
             <ProductHeader c={c} count={interestedCount} />
             {!c.accepting ? (
               <>

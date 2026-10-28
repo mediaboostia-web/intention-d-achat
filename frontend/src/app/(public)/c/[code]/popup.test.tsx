@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { html, text } from '@/components/ui/test-html';
 import type { PublicCampaign } from '@/lib/server/tamani/public-campaign';
 import { EMPTY_ANSWERS, initialPopupState, type PopupState } from '@/lib/tamani/popup-machine';
+import { PhotoGallery } from './photo-gallery';
 import { PopupView } from './popup-sheet';
 
 const campaign: PublicCampaign = {
@@ -46,6 +47,42 @@ const at = (step: PopupState['step'], over: Partial<PopupState> = {}): PopupStat
   ...start,
   step,
   ...over,
+});
+
+describe('PhotoGallery', () => {
+  const photos = [
+    'https://res.cloudinary.com/demo/image/upload/v1/a.jpg',
+    'https://res.cloudinary.com/demo/image/upload/v1/b.jpg',
+    'https://res.cloudinary.com/demo/image/upload/v1/c.jpg',
+  ];
+  const imgs = (out: string) => out.match(/<img [^>]*>/g) ?? [];
+
+  it('shows every photo whole, one per view, with a dot each', () => {
+    const out = html(<PhotoGallery photos={photos} name="Livre de commerce" />);
+    expect(out).toContain('aria-roledescription="carrousel"');
+    expect(out).toContain('aria-label="Photos de Livre de commerce"');
+    expect(out).toContain('snap-mandatory');
+    const tags = imgs(out);
+    expect(tags).toHaveLength(3);
+    expect(tags.every((t) => t.includes('object-contain'))).toBe(true);
+    expect(tags[0]).toContain('alt="Livre de commerce, photo 1 sur 3"');
+    expect(tags[0]).toContain('loading="eager"');
+    expect(tags[0]).toMatch(/fetchPriority="high"|fetchpriority="high"/);
+    expect(tags[1]).toContain('loading="lazy"');
+    expect(tags[2]).toContain('loading="lazy"');
+    expect(tags[2]).toContain('w_600/v1/c.jpg');
+    expect(out.match(/aria-label="Photo \d"/g)).toHaveLength(3);
+    expect(out.match(/aria-current="true"/g)).toHaveLength(1);
+    expect(out).toContain('aria-label="Photo suivante"');
+  });
+
+  it('shows one photo without dots, and nothing without a photo', () => {
+    const out = html(<PhotoGallery photos={photos.slice(0, 1)} name="Livre" />);
+    expect(imgs(out)).toHaveLength(1);
+    expect(out).not.toContain('aria-label="Photo 1"');
+    expect(out).not.toContain('Photo suivante');
+    expect(html(<PhotoGallery photos={[]} name="Livre" />)).toBe('');
+  });
 });
 
 describe('PopupView', () => {
@@ -140,13 +177,20 @@ describe('PopupView', () => {
     );
   });
 
-  it('keeps the page on one screen: the photo shrinks, the sheet scrolls', () => {
+  it('keeps the page on one screen: the photos keep their height, the sheet scrolls', () => {
     const out = html(<PopupView campaign={campaign} state={start} />);
     expect(out).toMatch(/<main[^>]*class="[^"]*\bh-dvh\b/);
-    expect(out).toMatch(
-      /class="[^"]*\bmin-h-0\b[^"]*\bflex-1\b|class="[^"]*\bflex-1\b[^"]*\bmin-h-0\b/,
-    );
+    expect(out).toContain('h-[38dvh]');
+    expect(out).toContain('max-h-[calc(62dvh-6.5rem)]');
     expect(out).toContain('overflow-y-auto');
+    const bare = html(
+      <PopupView
+        campaign={{ ...campaign, product: { ...campaign.product, photos: [] } }}
+        state={start}
+      />,
+    );
+    expect(bare).not.toContain('carrousel');
+    expect(bare).toContain('max-h-[calc(100dvh-6.5rem)]');
   });
 
   it('thanks the respondent by name and offers to edit', () => {
