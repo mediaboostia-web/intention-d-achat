@@ -36,6 +36,15 @@ beforeEach(async () => {
   prismaMock.respondent.count.mockResolvedValue(1);
 });
 
+describe('GET /api/shops/[orgId]/clients filters', () => {
+  it('answers 400 to a filter it does not know', async () => {
+    const res = await GET(apiRequest('/api/shops/org_1/clients?periode=2026-13'), shop);
+    expect(res.status).toBe(400);
+    const ok = await GET(apiRequest('/api/shops/org_1/clients?pays=BJ&reponse=oui'), shop);
+    expect(ok.status).toBe(200);
+  });
+});
+
 describe('GET /api/shops/[orgId]/clients', () => {
   it('members list clients', async () => {
     prismaMock.subscription.findUnique.mockResolvedValue(pro as never);

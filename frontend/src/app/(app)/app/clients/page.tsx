@@ -1,21 +1,39 @@
 'use client';
 
 // /app/clients: the client book, most recently seen first, searched by
-// first name (and number on Pro) and filtered by resellers or consumers.
-// The orders filter (« Ont commandé ») arrives with lot 7.
-import { Suspense, useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+// first name (and number on Pro) and filtered by type, answer, campaign,
+// zone, period and country (lot 6b), all kept in the address. The orders
+// filter (« Ont commandé ») arrives with lot 7.
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  ClientFilterChips,
+  ClientFilterSheet,
+  type FilterChoices,
+} from '@/components/app/ClientFilters';
 import { ClientList } from '@/components/app/ClientList';
 import { SearchField } from '@/components/app/SearchField';
 import { useShop } from '@/components/app/ShopProvider';
 import { Button, FilterBar, Notice, PageHeader } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
+import {
+  NO_CLIENT_FILTERS,
+  clientFilterSearch,
+  filterChips,
+  parseClientSearch,
+  recentMonths,
+  type ClientFilterState,
+} from '@/lib/tamani/client-filters';
 import type { ClientCounts, ClientRow } from '@/lib/tamani/client-view';
+import { phoneCountryChoices } from '@/lib/tamani/phone-countries';
 import { PLANS } from '@/lib/tamani/plans';
 
-const TYPES = ['revendeurs', 'usagers'] as const;
-type Type = (typeof TYPES)[number];
+const NO_CHOICES: FilterChoices = { campaigns: [], zones: [], countries: [], months: [] };
+const at = (state: ClientFilterState) => {
+  const qs = clientFilterSearch(state);
+  return qs ? `/app/clients?${qs}` : '/app/clients';
+};
 
 interface Listing {
   items: ClientRow[];
@@ -30,19 +48,25 @@ const EMPTY: Listing = { items: [], next: null, counts: null, loading: true, err
 function Clients() {
   const { shop } = useShop();
   const params = useSearchParams();
-  const raw = params.get('type');
-  const type = TYPES.find((t) => t === raw) ?? null;
-  const q = (params.get('q') ?? '').trim();
+  const router = useRouter();
+  const search = params.toString();
+  // An address the parser refuses shows the whole book, not an error.
+  const state = useMemo(
+    () => parseClientSearch(new URLSearchParams(search)) ?? NO_CLIENT_FILTERS,
+    [search],
+  );
+  const query = clientFilterSearch(state);
+  const q = state.q ?? '';
   const [list, setList] = useState<Listing>(EMPTY);
+  const [choices, setChoices] = useState<FilterChoices>(NO_CHOICES);
+  const [choicesLoaded, setChoicesLoaded] = useState(false);
 
   const load = useCallback(
     async (cursor: string | null, keep: ClientRow[]) => {
       setList((l) => ({ ...l, loading: true, error: null }));
-      const query = new URLSearchParams();
-      if (type) query.set('type', type);
-      if (q) query.set('q', q);
-      if (cursor) query.set('cursor', cursor);
-      const qs = query.toString();
+      const next = new URLSearchParams(query);
+      if (cursor) next.set('cursor', cursor);
+      const qs = next.toString();
       try {
         const page = await api<{
           items: ClientRow[];
@@ -60,7 +84,7 @@ function Clients() {
         setList((l) => ({ ...l, loading: false, error: errorMessage(err) }));
       }
     },
-    [shop.id, type, q],
+    [shop.id, query],
   );
 
   useEffect(() => {
@@ -68,14 +92,35 @@ function Clients() {
     void load(null, []);
   }, [load]);
 
-  const href = (t: Type | null) => {
-    const next = new URLSearchParams();
-    if (t) next.set('type', t);
-    if (q) next.set('q', q);
-    const qs = next.toString();
-    return qs ? `/app/clients?${qs}` : '/app/clients';
-  };
-  const filtered = type !== null || q !== '';
+  // The campaigns and zones load once, when the sheet first opens.
+  const loadChoices = useCallback(async () => {
+    if (choicesLoaded) return;
+    setChoicesLoaded(true);
+    try {
+      const [campaigns, zones] = await Promise.all([
+        api<{ items: Array<{ id: string; title: string }> }>(
+          `/api/shops/${shop.id}/campaigns?limit=50`,
+        ),
+        api<{ items: Array<{ id: string; name: string }> }>(`/api/shops/${shop.id}/zones`),
+      ]);
+      setChoices((c) => ({ ...c, campaigns: campaigns.items, zones: zones.items }));
+    } catch {
+      setChoicesLoaded(false);
+    }
+  }, [choicesLoaded, shop.id]);
+  useEffect(() => {
+    setChoices((c) => ({
+      ...c,
+      countries: phoneCountryChoices(shop.country),
+      months: recentMonths(new Date()),
+    }));
+  }, [shop.country]);
+
+  const chips = filterChips(state, {
+    campaigns: new Map(choices.campaigns.map((c) => [c.id, c.title])),
+    zones: new Map(choices.zones.map((z) => [z.id, z.name])),
+  });
+  const filtered = query !== '';
   const empty = !list.loading && !list.error && list.items.length === 0;
   const contacts = PLANS[shop.plan.id].features.respondentContacts;
 
@@ -87,28 +132,40 @@ function Clients() {
           placeholder={contacts ? 'Rechercher un prénom ou un numéro' : 'Rechercher un prénom'}
         />
       </div>
-      <FilterBar
-        className="mt-3"
-        label="Afficher"
-        items={[
-          { id: 'all', label: 'Tous', href: href(null), active: type === null },
-          {
-            id: 'resellers',
-            label: 'Revendeurs',
-            icon: 'box',
-            href: href('revendeurs'),
-            active: type === 'revendeurs',
-            count: list.counts?.RESELLER ?? 0,
-          },
-          {
-            id: 'consumers',
-            label: 'Usagers',
-            icon: 'user',
-            href: href('usagers'),
-            active: type === 'usagers',
-            count: list.counts?.CONSUMER ?? 0,
-          },
-        ]}
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <FilterBar
+          label="Afficher"
+          items={[
+            { id: 'all', label: 'Tous', href: at({ ...state, type: null }), active: !state.type },
+            {
+              id: 'resellers',
+              label: 'Revendeurs',
+              icon: 'box',
+              href: at({ ...state, type: 'RESELLER' }),
+              active: state.type === 'RESELLER',
+              count: list.counts?.RESELLER ?? 0,
+            },
+            {
+              id: 'consumers',
+              label: 'Usagers',
+              icon: 'user',
+              href: at({ ...state, type: 'CONSUMER' }),
+              active: state.type === 'CONSUMER',
+              count: list.counts?.CONSUMER ?? 0,
+            },
+          ]}
+        />
+        <ClientFilterSheet
+          state={state}
+          choices={choices}
+          active={chips.filter((c) => c.key !== 'type').length}
+          onOpen={() => void loadChoices()}
+          onApply={(next) => router.replace(at({ ...next, q: state.q }))}
+        />
+      </div>
+      <ClientFilterChips
+        chips={chips.filter((c) => c.key !== 'type')}
+        clearHref={at({ ...NO_CLIENT_FILTERS, q: state.q })}
       />
 
       {list.items.length > 0 && (
@@ -135,7 +192,9 @@ function Clients() {
       )}
       {empty && !filtered && <ClientList rows={[]} shopName={shop.name} now={new Date()} />}
       {empty && q && <p className="mt-6 text-ink-soft">Aucun client ne correspond à « {q} ».</p>}
-      {empty && !q && type && <p className="mt-6 text-ink-soft">Aucun client ici.</p>}
+      {empty && !q && filtered && (
+        <p className="mt-6 text-ink-soft">Aucun client avec ces filtres.</p>
+      )}
       {list.next && !list.loading && (
         <Button
           variant="secondary"
