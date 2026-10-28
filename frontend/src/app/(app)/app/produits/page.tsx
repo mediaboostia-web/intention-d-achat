@@ -6,18 +6,21 @@
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SearchField } from '@/components/app/SearchField';
+import { useListLayout } from '@/components/app/use-list-layout';
 import { useShop } from '@/components/app/ShopProvider';
 import {
   Button,
   EmptyState,
   Fab,
   FilterBar,
+  LayoutSwitch,
   Notice,
   PageHeader,
   ProductCard,
 } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
+import { cn } from '@/lib/utils';
 import type { ShopProduct } from '@/lib/tamani/product-form';
 
 type View = 'sale' | 'campaign' | 'archived';
@@ -41,6 +44,7 @@ function ProductList() {
   const view: View = VIEWS[params.get('vue') ?? ''] ?? 'sale';
   const q = (params.get('q') ?? '').trim();
   const [list, setList] = useState<Listing>(EMPTY);
+  const [layout, setLayout] = useListLayout('produits');
 
   const fetchPage = useCallback(
     (cursor: string | null) => {
@@ -105,35 +109,45 @@ function ProductList() {
       <div className="mt-6">
         <SearchField placeholder="Rechercher un produit" />
       </div>
-      <FilterBar
-        className="mt-3"
-        label="Afficher"
-        items={[
-          { id: 'sale', label: 'Tous', href: href(null), active: view === 'sale' },
-          {
-            id: 'campaign',
-            label: 'En campagne',
-            icon: 'megaphone',
-            href: href('campagne'),
-            active: view === 'campaign',
-            count: list.counts?.campaign ?? 0,
-          },
-          {
-            id: 'archived',
-            label: 'Archivés',
-            icon: 'archive',
-            href: href('archives'),
-            active: view === 'archived',
-            count: list.counts?.archived ?? 0,
-          },
-        ]}
-      />
+      <div className="mt-3 flex items-center gap-3">
+        <FilterBar
+          className="min-w-0 flex-1"
+          label="Afficher"
+          items={[
+            { id: 'sale', label: 'Tous', href: href(null), active: view === 'sale' },
+            {
+              id: 'campaign',
+              label: 'En campagne',
+              icon: 'megaphone',
+              href: href('campagne'),
+              active: view === 'campaign',
+              count: list.counts?.campaign ?? 0,
+            },
+            {
+              id: 'archived',
+              label: 'Archivés',
+              icon: 'archive',
+              href: href('archives'),
+              active: view === 'archived',
+              count: list.counts?.archived ?? 0,
+            },
+          ]}
+        />
+        <LayoutSwitch value={layout} onChange={setLayout} />
+      </div>
 
       {list.items.length > 0 && (
-        <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+        <ul
+          className={cn(
+            'mt-6',
+            layout === 'card'
+              ? 'grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] sm:gap-4'
+              : 'frame divide-y-2 divide-grid overflow-hidden rounded-card bg-surface',
+          )}
+        >
           {list.items.map((p) => (
-            <li key={p.id}>
-              <ProductCard product={p} href={`/app/produits/${p.id}`} className="h-full" />
+            <li key={p.id} className="min-w-0">
+              <ProductCard product={p} layout={layout} href={`/app/produits/${p.id}`} />
             </li>
           ))}
         </ul>

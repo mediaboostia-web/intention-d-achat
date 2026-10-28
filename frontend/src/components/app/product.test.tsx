@@ -45,7 +45,7 @@ const form = (props: Partial<Parameters<typeof ProductForm>[0]> = {}) => (
 
 describe('ProductCard', () => {
   it('ProductCard shows the price line and an Archivé badge', () => {
-    const card = <ProductCard product={product} href="/app/produits/p1" />;
+    const card = <ProductCard product={product} layout="list" href="/app/produits/p1" />;
     const t = text(card);
     expect(t).toContain('Marmites inox 5 L');
     expect(t).toContain('7 500 FCFA (gros : 6 000 FCFA dès 12)');

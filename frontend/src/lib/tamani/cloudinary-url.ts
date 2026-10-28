@@ -6,6 +6,8 @@
 export const POPUP_PHOTO = 'f_auto,q_auto,w_600';
 export const THUMB = 'c_fill,g_auto,w_128,h_128,f_auto,q_auto';
 export const OG_PHOTO = 'c_fill,g_auto,w_1200,h_630,f_jpg,q_auto';
+/** A list card banner (lot 7a): 16:7, sharp on a 320 px card at twice the density. */
+export const BANNER = 'c_fill,g_auto,w_640,h_280,f_auto,q_auto';
 
 const UPLOAD = /^(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(.+)$/;
 

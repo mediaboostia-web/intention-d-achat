@@ -6,6 +6,7 @@
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SearchField } from '@/components/app/SearchField';
+import { useListLayout } from '@/components/app/use-list-layout';
 import { useShop } from '@/components/app/ShopProvider';
 import {
   Button,
@@ -13,12 +14,14 @@ import {
   EmptyState,
   Fab,
   FilterBar,
+  LayoutSwitch,
   Notice,
   PageHeader,
   type IconName,
 } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
+import { cn } from '@/lib/utils';
 import type { CampaignStatus } from '@/lib/tamani/campaign-actions';
 import type { ShopCampaign } from '@/lib/tamani/campaign-view';
 
@@ -51,6 +54,7 @@ function CampaignList() {
   // An unknown or empty ?statut= means "Toutes": the API refuses an empty status.
   const status = FILTERS.find((f) => f.status !== null && f.status === raw)?.status ?? null;
   const [list, setList] = useState<Listing>(EMPTY);
+  const [layout, setLayout] = useListLayout('campagnes');
 
   const load = useCallback(
     async (cursor: string | null, keep: ShopCampaign[]) => {
@@ -108,29 +112,39 @@ function CampaignList() {
       <div className="mt-6">
         <SearchField placeholder="Rechercher une campagne" />
       </div>
-      <FilterBar
-        className="mt-3"
-        label="Afficher"
-        items={FILTERS.map((f) => ({
-          id: f.status ?? 'all',
-          label: f.label,
-          href: href(f.status),
-          active: f.status === status,
-          // Until the counts arrive, only "Toutes" and the open chip show.
-          ...(f.status ? { count: list.counts?.[f.status] ?? 0 } : {}),
-          ...(f.icon ? { icon: f.icon } : {}),
-        }))}
-      />
+      <div className="mt-3 flex items-center gap-3">
+        <FilterBar
+          className="min-w-0 flex-1"
+          label="Afficher"
+          items={FILTERS.map((f) => ({
+            id: f.status ?? 'all',
+            label: f.label,
+            href: href(f.status),
+            active: f.status === status,
+            // Until the counts arrive, only "Toutes" and the open chip show.
+            ...(f.status ? { count: list.counts?.[f.status] ?? 0 } : {}),
+            ...(f.icon ? { icon: f.icon } : {}),
+          }))}
+        />
+        <LayoutSwitch value={layout} onChange={setLayout} />
+      </div>
 
       {list.items.length > 0 && (
-        <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+        <ul
+          className={cn(
+            'mt-6',
+            layout === 'card'
+              ? 'grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] sm:gap-4'
+              : 'frame divide-y-2 divide-grid overflow-hidden rounded-card bg-surface',
+          )}
+        >
           {list.items.map((c) => (
-            <li key={c.id}>
+            <li key={c.id} className="min-w-0">
               <CampaignCard
                 campaign={c}
+                layout={layout}
                 now={now}
                 href={`/app/campagnes/${c.id}`}
-                className="h-full"
               />
             </li>
           ))}

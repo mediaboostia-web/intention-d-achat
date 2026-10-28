@@ -14,7 +14,7 @@ describe('thumbnails', () => {
     expect(src(html(<Avatar name="Diallo Import" src={UPLOADED} />))).toBe(SMALL);
   });
 
-  it('a product card asks for a small square of its photo', () => {
+  it('a product line asks for a small square of its photo', () => {
     const product = {
       name: 'Marmites inox 5 L',
       unitLabel: 'pièce',
@@ -24,10 +24,10 @@ describe('thumbnails', () => {
       photos: [UPLOADED],
       archivedAt: null,
     };
-    expect(src(html(<ProductCard product={product} />))).toBe(SMALL);
+    expect(src(html(<ProductCard product={product} layout="list" />))).toBe(SMALL);
   });
 
-  it('a campaign card asks for a small square of its photo', () => {
+  it('a campaign line asks for a small square of its photo', () => {
     const campaign = {
       title: 'Marmites inox 5 L',
       status: 'ACTIVE' as const,
@@ -38,6 +38,6 @@ describe('thumbnails', () => {
       arrivedAt: null,
       product: { photos: [UPLOADED] },
     };
-    expect(src(html(<CampaignCard campaign={campaign} />))).toBe(SMALL);
+    expect(src(html(<CampaignCard campaign={campaign} layout="list" />))).toBe(SMALL);
   });
 });
