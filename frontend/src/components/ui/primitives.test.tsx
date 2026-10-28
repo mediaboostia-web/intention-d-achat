@@ -3,6 +3,32 @@ import { WORDMARK_PATH } from '@/lib/design/logo-paths';
 import { Badge, Button, Card, ChoiceButton, Input, Logo, PhoneInput } from '.';
 import { html, text } from './test-html';
 
+describe('PhoneInput with a country choice', () => {
+  it('shows the chosen dial code over a select of the countries', () => {
+    const out = html(
+      <PhoneInput
+        id="p"
+        label="Ton numéro"
+        countries={[
+          { code: 'BJ', label: 'Bénin', dialCode: '+229' },
+          { code: 'FR', label: 'France', dialCode: '+33' },
+        ]}
+        country="FR"
+        onCountryChange={() => {}}
+      />,
+    );
+    expect(out).toContain('aria-label="Pays du numéro"');
+    expect(out).toMatch(/<option value="FR" selected="">France \(\+33\)<\/option>/);
+    expect(out).toMatch(/>\+33</);
+  });
+
+  it('keeps the plain dial code without countries', () => {
+    const out = html(<PhoneInput id="p" label="Ton numéro" dialCode="+221" />);
+    expect(out).not.toContain('<select');
+    expect(out).toMatch(/>\+221</);
+  });
+});
+
 describe('Button', () => {
   it('renders a link when given href', () => {
     const out = html(<Button href="/app/campagnes">Mes campagnes</Button>);

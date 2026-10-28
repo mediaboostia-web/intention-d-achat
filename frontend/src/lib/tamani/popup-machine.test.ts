@@ -94,6 +94,48 @@ describe('popupReducer', () => {
     expect(popupReducer(s, { type: 'notMe' }).remembered).toBeNull();
   });
 
+  it('itsMe brings back the person « pas toi ? » set aside', () => {
+    const memory: DeviceMemory = { deviceId: 'd', respondent: awa, saved: {} };
+    const s = { ...initialPopupState({ deliveryEnabled: false, memory, campaignId: 'camp_1' }) };
+    const notMe = popupReducer({ ...s, step: 'contact' }, { type: 'notMe' });
+    expect(notMe).toMatchObject({ remembered: null, forgotten: awa });
+    expect(popupReducer(notMe, { type: 'itsMe' })).toMatchObject({
+      remembered: awa,
+      forgotten: null,
+    });
+    // « Retour » on the form also comes back to the person first.
+    expect(popupReducer(notMe, { type: 'back' })).toMatchObject({
+      step: 'contact',
+      remembered: awa,
+      forgotten: null,
+    });
+    expect(
+      popupReducer(notMe, { type: 'completed', respondent: { ...awa, firstName: 'Fatou' } })
+        .forgotten,
+    ).toBeNull();
+  });
+
+  it('keeps a delivery place until a zone or a pickup replaces it', () => {
+    const [placed] = run({ ...fresh(), step: 'delivery' }, [
+      { type: 'delivery', wantsDelivery: true, zoneId: null, place: 'Lomé' },
+    ]);
+    expect(placed!.answers).toMatchObject({
+      wantsDelivery: true,
+      zoneId: null,
+      deliveryPlace: 'Lomé',
+    });
+    const zoned = popupReducer(
+      { ...placed!, step: 'delivery' },
+      { type: 'delivery', wantsDelivery: true, zoneId: 'zone_1' },
+    );
+    expect(zoned.answers).toMatchObject({ zoneId: 'zone_1', deliveryPlace: null });
+    const pickup = popupReducer(
+      { ...placed!, step: 'delivery' },
+      { type: 'delivery', wantsDelivery: false, zoneId: null },
+    );
+    expect(pickup.answers.deliveryPlace).toBeNull();
+  });
+
   it('popupReducer runs without memory', () => {
     const s = fresh();
     expect(s).toMatchObject({ step: 'interest', remembered: null, answers: EMPTY_ANSWERS });
@@ -163,6 +205,18 @@ describe('answersBody', () => {
     });
   });
 
+  it('sends the place of a delivery elsewhere', () => {
+    expect(
+      answersBody({
+        ...EMPTY_ANSWERS,
+        interested: true,
+        wantsDelivery: true,
+        zoneId: null,
+        deliveryPlace: 'Lomé',
+      }),
+    ).toMatchObject({ wantsDelivery: true, zoneId: null, deliveryPlace: 'Lomé' });
+  });
+
   it('sends a no with its reason only', () => {
     expect(
       answersBody({ ...EMPTY_ANSWERS, interested: false, notInterestedReason: 'NO_NEED' }),
@@ -182,7 +236,11 @@ describe('stepBody', () => {
       wantsDelivery: false,
       zoneId: null,
     });
+    expect(
+      stepBody({ type: 'delivery', wantsDelivery: true, zoneId: null, place: 'Lomé' }),
+    ).toEqual({ wantsDelivery: true, zoneId: null, deliveryPlace: 'Lomé' });
     expect(stepBody({ type: 'back' })).toEqual({});
+    expect(stepBody({ type: 'itsMe' })).toEqual({});
   });
 });
 

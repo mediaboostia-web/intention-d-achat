@@ -39,6 +39,7 @@ import {
 import { leavePage } from '@/lib/tamani/leave-page';
 import { formatXof } from '@/lib/tamani/share-message';
 import { TIMING_LABELS } from '@/lib/tamani/timing';
+import { phoneCountryChoices } from '@/lib/tamani/phone-countries';
 import { pluralizeUnit } from '@/lib/tamani/verdict-display';
 import { cn } from '@/lib/utils';
 import { PhotoGallery } from './photo-gallery';
@@ -46,7 +47,7 @@ import { popupErrorMessage, postStep, postView } from './popup-client';
 
 const MIN_COUNTER = 3;
 
-type Contact = { firstName: string; phone: string };
+type Contact = { firstName: string; phone: string; phoneCountry?: string };
 
 export interface PopupViewProps {
   campaign: PublicCampaign;
@@ -210,9 +211,42 @@ function QuantityStep({ c, answers, onAction }: StepProps) {
   );
 }
 
+function PlaceField({ answers, onAction }: Pick<StepProps, 'answers' | 'onAction'>) {
+  const [place, setPlace] = useState(answers.deliveryPlace ?? '');
+  const ok = place.trim().length >= 2;
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (ok) onAction({ type: 'delivery', wantsDelivery: true, zoneId: null, place: place.trim() });
+  };
+  return (
+    <form onSubmit={submit}>
+      <Question>Où te livrer ?</Question>
+      <Input
+        id="popup-place"
+        label="Où ? (quartier, ville ou pays)"
+        maxLength={80}
+        required
+        value={place}
+        onChange={(e) => setPlace(e.target.value)}
+      />
+      <Button type="submit" size="lg" className="mt-4 w-full" disabled={!ok}>
+        Continuer
+      </Button>
+    </form>
+  );
+}
+
 function DeliveryStep({ c, answers, onAction }: StepProps) {
-  const [pickZone, setPickZone] = useState(false);
-  if (pickZone) {
+  // Coming back to this step shows the choice made before.
+  const [mode, setMode] = useState<'ask' | 'zones' | 'place'>(() =>
+    answers.wantsDelivery !== true
+      ? 'ask'
+      : c.zones.length === 0 || (answers.zoneId === null && answers.deliveryPlace)
+        ? 'place'
+        : 'zones',
+  );
+  if (mode === 'place') return <PlaceField answers={answers} onAction={onAction} />;
+  if (mode === 'zones') {
     return (
       <>
         <Question>Dans quel quartier ?</Question>
@@ -226,6 +260,12 @@ function DeliveryStep({ c, answers, onAction }: StepProps) {
               {z.name}
             </ChoiceButton>
           ))}
+          <ChoiceButton
+            selected={answers.wantsDelivery === true && answers.deliveryPlace !== null}
+            onClick={() => setMode('place')}
+          >
+            Autre endroit
+          </ChoiceButton>
         </div>
       </>
     );
@@ -236,11 +276,7 @@ function DeliveryStep({ c, answers, onAction }: StepProps) {
       <div className="grid gap-3">
         <ChoiceButton
           selected={answers.wantsDelivery === true}
-          onClick={() =>
-            c.zones.length > 0
-              ? setPickZone(true)
-              : onAction({ type: 'delivery', wantsDelivery: true, zoneId: null })
-          }
+          onClick={() => setMode(c.zones.length > 0 ? 'zones' : 'place')}
         >
           Oui, livre-moi
         </ChoiceButton>
@@ -268,6 +304,8 @@ function ContactStep({
 }: StepProps & { state: PopupState; busy: boolean; onContact: (contact: Contact) => void }) {
   const [firstName, setFirstName] = useState('');
   const [phone, setPhone] = useState('');
+  const [country, setCountry] = useState(c.shop.country);
+  const [countries] = useState(() => phoneCountryChoices(c.shop.country));
   const title =
     state.answers.interested === false
       ? 'Pour être prévenu des prochains arrivages'
@@ -304,7 +342,9 @@ function ContactStep({
   }
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (firstName.trim() && phone.trim()) onContact({ firstName: firstName.trim(), phone });
+    if (firstName.trim() && phone.trim()) {
+      onContact({ firstName: firstName.trim(), phone, phoneCountry: country });
+    }
   };
   return (
     <form onSubmit={submit}>
@@ -323,6 +363,9 @@ function ContactStep({
           id="popup-phone"
           label="Ton numéro WhatsApp"
           dialCode={c.shop.dialCode}
+          countries={countries}
+          country={country}
+          onCountryChange={setCountry}
           hint={consent(c.shop.name)}
           maxLength={30}
           required
@@ -333,6 +376,15 @@ function ContactStep({
       <Button type="submit" size="lg" className="mt-4 w-full" disabled={busy}>
         Envoyer ma réponse
       </Button>
+      {state.forgotten && (
+        <button
+          type="button"
+          onClick={() => onAction({ type: 'itsMe' })}
+          className="mt-3 min-h-12 font-bold text-primary underline decoration-2 underline-offset-4"
+        >
+          C&apos;est bien moi, {state.forgotten.firstName}
+        </button>
+      )}
     </form>
   );
 }

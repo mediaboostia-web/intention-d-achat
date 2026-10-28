@@ -86,6 +86,68 @@ describe('PhotoGallery', () => {
   });
 });
 
+describe('PopupView: delivery elsewhere, phone country, its-me', () => {
+  const yes = {
+    ...start.answers,
+    interested: true,
+    buyerType: 'CONSUMER' as const,
+    quantity: 2,
+    timing: 'ON_ARRIVAL' as const,
+  };
+
+  it('offers « Autre endroit » after the zones', () => {
+    const t = text(
+      <PopupView
+        campaign={campaign}
+        state={at('delivery', { answers: { ...yes, wantsDelivery: true, zoneId: 'zone_1' } })}
+      />,
+    );
+    expect(t).toMatch(/Médina.*Autre endroit/);
+  });
+
+  it('asks where, 80 characters at most, keeping what was typed', () => {
+    const out = html(
+      <PopupView
+        campaign={campaign}
+        state={at('delivery', {
+          answers: { ...yes, wantsDelivery: true, zoneId: null, deliveryPlace: 'Lomé' },
+        })}
+      />,
+    );
+    expect(out).toContain('Où ? (quartier, ville ou pays)');
+    expect(out).toContain('maxLength="80"');
+    expect(out).toContain('value="Lomé"');
+    expect(out).toContain('Continuer');
+  });
+
+  it('a shop without zones asks where at once', () => {
+    const out = html(
+      <PopupView
+        campaign={{ ...campaign, zones: [] }}
+        state={at('delivery', { answers: { ...yes, wantsDelivery: true, zoneId: null } })}
+      />,
+    );
+    expect(out).toContain('Où ? (quartier, ville ou pays)');
+    expect(out).not.toContain('Autre endroit');
+  });
+
+  it('lets the respondent pick the country of the number, the shop first', () => {
+    const out = html(<PopupView campaign={campaign} state={at('contact')} />);
+    expect(out).toContain('aria-label="Pays du numéro"');
+    const options = out.match(/<option [^>]*value="([A-Z]{2})"/g) ?? [];
+    expect(options[0]).toContain('value="SN"');
+    expect(options.length).toBeGreaterThan(200);
+    expect(out).toMatch(/<option[^>]*value="FR"[^>]*>France \(\+33\)/);
+  });
+
+  it('offers « C’est bien moi » after « pas toi ? »', () => {
+    const t = text(
+      <PopupView campaign={campaign} state={at('contact', { remembered: null, forgotten: awa })} />,
+    );
+    expect(t).toContain("C'est bien moi, Awa");
+  });
+});
+
 describe('PopupView', () => {
   it('opens on the question with the product, its price and its arrival', () => {
     const t = text(<PopupView campaign={campaign} state={start} />);
