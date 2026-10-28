@@ -71,7 +71,12 @@ export function Logo({
     >
       <Mark />
       <svg x={60} y={8} width={WORD_W} height={30} viewBox={WORDMARK_VIEWBOX}>
-        <path d={WORDMARK_PATH} fill={tone === 'inverse' ? colors.surface : colors.primary} />
+        {tone === 'inverse' ? (
+          <path d={WORDMARK_PATH} fill={colors.surface} />
+        ) : (
+          // The class follows the night theme's primary; the attribute is the fallback.
+          <path d={WORDMARK_PATH} fill={colors.primary} className="fill-primary" />
+        )}
       </svg>
     </svg>
   );

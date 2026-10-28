@@ -188,7 +188,7 @@ export function ClientFilterSheet({
         ref={dialog}
         onClose={() => setOpen(false)}
         aria-label="Filtrer les clients"
-        className="m-0 mt-auto max-h-[90dvh] w-full max-w-none rounded-t-sheet bg-paper p-5 shadow-sheet backdrop:bg-ink/40 lg:m-auto lg:max-w-md lg:rounded-card"
+        className="m-0 mt-auto max-h-[90dvh] w-full max-w-none rounded-t-sheet bg-paper p-5 shadow-sheet backdrop:bg-deep/40 night:backdrop:bg-deep/70 lg:m-auto lg:max-w-md lg:rounded-card"
       >
         {open && (
           <ClientFilterForm

@@ -68,12 +68,12 @@ export function SideNav({
   return (
     <nav
       aria-label="Menu principal"
-      className="bg-cover sticky top-0 hidden h-dvh w-64 shrink-0 flex-col overflow-y-auto border-r-[2.5px] border-ink px-4 py-6 text-surface lg:flex"
+      className="bg-cover sticky top-0 hidden h-dvh w-64 shrink-0 flex-col overflow-y-auto border-r-[2.5px] border-ink px-4 py-6 text-deep-ink lg:flex"
     >
       <Link href="/app" className="self-start rounded-control px-2 focus-visible:outline-accent">
         <Logo tone="inverse" size={30} />
       </Link>
-      <div className="mt-6 flex items-center gap-3 rounded-card bg-surface/10 p-3">
+      <div className="mt-6 flex items-center gap-3 rounded-card bg-deep-ink/10 p-3">
         <Avatar name={shop.name} src={shop.logoUrl} />
         <div className="min-w-0">
           <p className="font-hand text-lg leading-snug font-bold break-words">{shop.name}</p>
@@ -88,7 +88,7 @@ export function SideNav({
         ))}
       </ul>
       <div className="mt-auto flex flex-col gap-3 pt-6">
-        <div className="rounded-card bg-surface/10 p-3">
+        <div className="rounded-card bg-deep-ink/10 p-3">
           <p className="text-sm">
             <span className="font-bold">
               {usage.used} / {usage.limit}
@@ -101,7 +101,7 @@ export function SideNav({
             aria-valuemin={0}
             aria-valuemax={usage.limit}
             aria-valuenow={usage.used}
-            className="mt-2 h-2 overflow-hidden rounded-full bg-surface/20"
+            className="mt-2 h-2 overflow-hidden rounded-full bg-deep-ink/20"
           >
             <div className="h-full rounded-full bg-accent" style={{ width: `${filled}%` }} />
           </div>
@@ -139,7 +139,7 @@ function SideLink({ item, pathname }: { item: NavItem; pathname: string }) {
         'transition-colors motion-reduce:transition-none',
         active
           ? 'border-ink bg-accent text-accent-ink'
-          : 'border-transparent text-surface hover:bg-surface/10',
+          : 'border-transparent text-deep-ink hover:bg-deep-ink/10',
       )}
     >
       <Icon name={item.icon} />

@@ -7,7 +7,9 @@ import { Avatar, BottomNav, Logo, SideNav } from '@/components/ui';
 import { PLANS } from '@/lib/tamani/plans';
 import { NotificationBell } from './NotificationBell';
 import { PushPrompt } from './PushPrompt';
+import { useShellPrefs } from './shell-prefs';
 import { useShop } from './shop-context';
+import { ThemeToggle } from './ThemeToggle';
 
 /**
  * The shop space: sidebar from 1024px, bottom bar below, the page in
@@ -18,6 +20,7 @@ import { useShop } from './shop-context';
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { shop, usage, me } = useShop();
+  useShellPrefs();
   return (
     <div className="min-h-dvh bg-paper lg:flex">
       <a
@@ -39,6 +42,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {shop.name}
           </span>
           <div className="ml-auto flex items-center gap-2 lg:absolute lg:top-6 lg:right-6 lg:z-10">
+            <ThemeToggle />
             <NotificationBell />
             <Link href="/app/profil" aria-label="Ton profil" className="rounded-full">
               <Avatar name={me.name ?? shop.name} src={shop.logoUrl} size="sm" />

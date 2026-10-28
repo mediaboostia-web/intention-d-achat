@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { colors } from './tokens';
+import { colors, nightColors } from './tokens';
 
 const css = readFileSync(path.resolve(__dirname, '../../app/globals.css'), 'utf8');
 // The first `@theme {` block (not `@theme inline`) closes on a `}` at column 0.
@@ -23,5 +23,28 @@ describe('globals.css @theme mirrors tokens.ts', () => {
 
   it('declares no color that tokens.ts does not know', () => {
     expect(Object.keys(declared).sort()).toEqual(Object.keys(colors).map(kebab).sort());
+  });
+});
+
+// The night block redefines only the colours that change at night.
+const dark = css.match(/:root\[data-theme='dark'\]\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+const declaredAtNight = Object.fromEntries(
+  [...dark.matchAll(/--color-([a-z-]+):\s*(#[0-9A-Fa-f]{6})\s*;/g)].map((m) => [
+    m[1],
+    m[2]!.toUpperCase(),
+  ]),
+);
+
+describe("globals.css [data-theme='dark'] mirrors nightColors", () => {
+  it('gives every token its night value', () => {
+    expect(dark).not.toBe('');
+    for (const [key, hex] of Object.entries(nightColors)) {
+      expect(declaredAtNight[kebab(key)] ?? declared[kebab(key)], key).toBe(hex.toUpperCase());
+    }
+  });
+
+  it('redefines no colour that tokens.ts does not know', () => {
+    const known = Object.keys(colors).map(kebab);
+    for (const name of Object.keys(declaredAtNight)) expect(known, name).toContain(name);
   });
 });

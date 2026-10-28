@@ -245,7 +245,7 @@ describe('BottomNav and SideNav', () => {
     const open = anchor(out, '/app/campagnes');
     expect(open).toContain('aria-current="page"');
     expect(open).toContain('bg-accent');
-    expect(anchor(out, '/app/produits')).toContain('hover:bg-surface/10');
+    expect(anchor(out, '/app/produits')).toContain('hover:bg-deep-ink/10');
   });
 });
 

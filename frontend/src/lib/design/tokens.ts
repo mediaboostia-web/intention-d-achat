@@ -20,9 +20,39 @@ export const colors = {
   neutralVerdict: '#596071',
   whatsapp: '#25D366',
   whatsappInk: '#073B1F',
+  /** The notebook's cover (sidebar, ink cards): dark in both themes. */
+  deep: '#10204A',
+  deepInk: '#FFFFFF',
 } as const satisfies Record<string, `#${string}`>;
 
 export type ColorToken = keyof typeof colors;
+
+/**
+ * "Carnet de nuit", the shop space's night theme: navy paper, faint squares,
+ * the ink turns to chalk. Same keys as the day; globals.css redefines them
+ * under :root[data-theme='dark'] (tokens-sync.test.ts).
+ */
+export const nightColors = {
+  bg: '#0C1430',
+  surface: '#131F45',
+  grid: '#18264B',
+  margin: '#6E3A52',
+  ink: '#EEF1FA',
+  inkSoft: '#C6CDE2',
+  inkMuted: '#9EA8C4',
+  primary: '#93B2FF',
+  primaryInk: '#0C1430',
+  accent: '#FFCC1F',
+  accentInk: '#10204A',
+  success: '#5FD39A',
+  warning: '#F4A867',
+  danger: '#FF8F85',
+  neutralVerdict: '#9EA8C4',
+  whatsapp: '#25D366',
+  whatsappInk: '#073B1F',
+  deep: '#070D24',
+  deepInk: '#EEF1FA',
+} as const satisfies Record<ColorToken, `#${string}`>;
 
 /** Color family of a verdict stamp (see lib/tamani/verdict-display.ts). */
 export type VerdictTone = 'success' | 'warning' | 'danger' | 'neutral' | 'primary';
@@ -35,7 +65,7 @@ export const verdictToneColor: Readonly<Record<VerdictTone, ColorToken>> = {
   primary: 'primary',
 };
 
-/** Every text/background pairing the UI uses. Each must reach 4.5:1. */
+/** Every text/background pairing the UI uses. Each must reach 4.5:1, by day and by night. */
 export const contrastPairs: ReadonlyArray<{ fg: ColorToken; bg: ColorToken; use: string }> = [
   { fg: 'ink', bg: 'bg', use: 'texte sur le papier' },
   { fg: 'ink', bg: 'surface', use: 'texte sur une carte' },
@@ -51,8 +81,9 @@ export const contrastPairs: ReadonlyArray<{ fg: ColorToken; bg: ColorToken; use:
   { fg: 'primaryInk', bg: 'danger', use: "badge plein N'achète pas" },
   { fg: 'accentInk', bg: 'accent', use: 'onglet actif, choix sélectionné' },
   { fg: 'whatsappInk', bg: 'whatsapp', use: 'bouton WhatsApp' },
-  { fg: 'surface', bg: 'ink', use: 'texte sur une carte encre' },
-  { fg: 'accent', bg: 'ink', use: 'montant sur une carte encre' },
+  { fg: 'surface', bg: 'ink', use: 'texte sur un bouton encre' },
+  { fg: 'deepInk', bg: 'deep', use: 'texte sur la couverture du cahier' },
+  { fg: 'accent', bg: 'deep', use: 'montant et lien sur la couverture' },
   ...(['bg', 'surface'] as const).flatMap((bg) =>
     Object.values(verdictToneColor).map((fg) => ({ fg, bg, use: 'tampon de verdict' })),
   ),

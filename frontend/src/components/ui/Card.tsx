@@ -6,7 +6,7 @@ type Tone = 'surface' | 'paper' | 'ink';
 const TONES: Record<Tone, string> = {
   surface: 'bg-surface text-ink',
   paper: 'bg-paper text-ink',
-  ink: 'bg-ink text-surface',
+  ink: 'bg-deep text-deep-ink',
 };
 
 export function Card({
