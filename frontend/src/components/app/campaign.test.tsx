@@ -221,12 +221,21 @@ describe('CampaignActions', () => {
   it('campaign page actions match campaignActions', () => {
     const statuses: CampaignStatus[] = ['DRAFT', 'ACTIVE', 'CLOSED', 'ARRIVED'];
     for (const status of statuses) {
-      const labels = (
-        html(<CampaignActions status={status} busy={false} onMove={() => {}} />).match(
-          /<button [^>]*>([^<]+)<\/button>/g,
-        ) ?? []
-      ).map((b) => b.replace(/<[^>]+>/g, ''));
-      expect(labels, status).toEqual(campaignActions(status).map((a) => a.label));
+      for (const availability of ['INCOMING', 'IN_STOCK'] as const) {
+        const labels = (
+          html(
+            <CampaignActions
+              status={status}
+              availability={availability}
+              busy={false}
+              onMove={() => {}}
+            />,
+          ).match(/<button [^>]*>([^<]+)<\/button>/g) ?? []
+        ).map((b) => b.replace(/<[^>]+>/g, ''));
+        expect(labels, `${status} ${availability}`).toEqual(
+          campaignActions(status, availability).map((a) => a.label),
+        );
+      }
     }
   });
 });

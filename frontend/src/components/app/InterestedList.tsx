@@ -111,7 +111,10 @@ export function InterestedView({
 }) {
   const base = `/app/campagnes/${campaign.id}?onglet=interesses`;
   const moment = campaign.status === 'ARRIVED' ? 'ARRIVED' : campaign.availability;
-  const canArrive = campaign.status === 'ACTIVE' || campaign.status === 'CLOSED';
+  // A product already in stock never "arrives".
+  const canArrive =
+    campaign.availability === 'INCOMING' &&
+    (campaign.status === 'ACTIVE' || campaign.status === 'CLOSED');
 
   return (
     <div className="flex flex-col gap-5">

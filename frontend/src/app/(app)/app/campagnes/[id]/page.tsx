@@ -139,6 +139,7 @@ function CampaignDetail() {
       <CampaignActions
         className="mt-6"
         status={campaign.status}
+        availability={campaign.availability}
         busy={busy}
         onMove={(to) => void move(to)}
       />

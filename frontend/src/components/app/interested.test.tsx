@@ -153,6 +153,11 @@ describe('InterestedView', () => {
     expect(html(<InterestedView {...arrived} />)).toContain(encodeURIComponent('arrivé !'));
   });
 
+  it('never asks a product already in stock whether it has arrived', () => {
+    const inStock = props({ campaign: { ...props().campaign, availability: 'IN_STOCK' } });
+    expect(text(<InterestedView {...inStock} />)).not.toContain('Le produit est arrivé ?');
+  });
+
   it('an empty list says so', () => {
     expect(text(<InterestedView {...props({ rows: [], counts: { yes: 0, no: 0 } })} />)).toContain(
       "Pas encore d'intéressé",
