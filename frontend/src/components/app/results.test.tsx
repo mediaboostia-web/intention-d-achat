@@ -380,6 +380,36 @@ describe('result sentences', () => {
       'Sur 10 revendeurs qui disent oui, 8 achètent vraiment ; sur 10 usagers, 4,5. Ce sont tes réglages.',
     );
   });
+
+  it('coefNote says when a coefficient was learned from the orders', () => {
+    expect(
+      coefNote({
+        consumer: 0.42,
+        reseller: 0.72,
+        source: { consumer: 'LEARNED', reseller: 'LEARNED' },
+      }),
+    ).toBe(
+      'Sur 10 revendeurs qui disent oui, 7,2 achètent vraiment ; sur 10 usagers, 4,2. Ces chiffres sont appris de tes commandes.',
+    );
+    expect(
+      coefNote({
+        consumer: 0.5,
+        reseller: 0.72,
+        source: { consumer: 'DEFAULT', reseller: 'LEARNED' },
+      }),
+    ).toBe(
+      'Sur 10 revendeurs qui disent oui, 7,2 achètent vraiment ; sur 10 usagers, 5. Le chiffre des revendeurs est appris de tes commandes ; celui des usagers est la valeur de départ.',
+    );
+    expect(
+      coefNote({
+        consumer: 0.42,
+        reseller: 0.8,
+        source: { consumer: 'LEARNED', reseller: 'SHOP' },
+      }),
+    ).toBe(
+      'Sur 10 revendeurs qui disent oui, 8 achètent vraiment ; sur 10 usagers, 4,2. Le chiffre des usagers est appris de tes commandes ; celui des revendeurs vient de tes réglages.',
+    );
+  });
 });
 
 describe('campaign tabs', () => {

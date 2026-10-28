@@ -217,10 +217,25 @@ export function toServeLine(interested: number, announced: number, unitLabel: st
 /** 0.45 → "4,5": how many buy out of 10 who say yes. */
 const outOfTen = (coef: number) => String(Math.round(coef * 100) / 10).replace('.', ',');
 
+/** Where a coefficient that was not learned comes from, after « celui des usagers ». */
+const SETTING_ORIGIN: Readonly<Record<'DEFAULT' | 'SHOP', string>> = {
+  DEFAULT: 'est la valeur de départ',
+  SHOP: 'vient de tes réglages',
+};
+
 export function coefNote(coefs: Coefficients): string {
   const base = `Sur 10 revendeurs qui disent oui, ${outOfTen(coefs.reseller)} achètent vraiment ; sur 10 usagers, ${outOfTen(coefs.consumer)}.`;
-  const defaults = coefs.source.consumer === 'DEFAULT' && coefs.source.reseller === 'DEFAULT';
-  return defaults
+  const { consumer, reseller } = coefs.source;
+  if (consumer === 'LEARNED' && reseller === 'LEARNED') {
+    return `${base} Ces chiffres sont appris de tes commandes.`;
+  }
+  if (reseller === 'LEARNED' && consumer !== 'LEARNED') {
+    return `${base} Le chiffre des revendeurs est appris de tes commandes ; celui des usagers ${SETTING_ORIGIN[consumer]}.`;
+  }
+  if (consumer === 'LEARNED' && reseller !== 'LEARNED') {
+    return `${base} Le chiffre des usagers est appris de tes commandes ; celui des revendeurs ${SETTING_ORIGIN[reseller]}.`;
+  }
+  return consumer === 'DEFAULT' && reseller === 'DEFAULT'
     ? `${base} Ce sont les valeurs de départ, tu peux les régler dans Réglages.`
     : `${base} Ce sont tes réglages.`;
 }
