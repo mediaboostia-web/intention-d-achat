@@ -16,6 +16,8 @@ const row = (over: Partial<InterestedRow> = {}): InterestedRow => ({
   timing: 'ON_ARRIVAL',
   wantsDelivery: true,
   zoneName: 'Médina',
+  deliveryPlace: null,
+  country: 'SN',
   sourceLabel: 'Statut',
   completedAt: '2026-10-26T09:05:00.000Z',
   ...over,
@@ -36,16 +38,25 @@ describe('responsesCsv', () => {
         timing: null,
         wantsDelivery: false,
         zoneName: null,
+        country: null,
         sourceLabel: null,
       }),
     ]).split('\r\n');
     expect(lines[0]).toBe(
-      '﻿Date;Prénom;Numéro WhatsApp;Intéressé;Achète pour;Quantité;Option;Quand;Livraison;Quartier;Raison du non;Source',
+      '﻿Date;Prénom;Numéro WhatsApp;Pays;Intéressé;Achète pour;Quantité;Option;Quand;Livraison;Quartier;Lieu;Raison du non;Source',
     );
     expect(lines[1]).toBe(
-      "26/10/2026 09:05;Awa;'+221 77 123 45 12;Oui;Revendeur;12;Rouge;Dès l'arrivée;Livraison;Médina;;Statut",
+      "26/10/2026 09:05;Awa;'+221 77 123 45 12;Sénégal;Oui;Revendeur;12;Rouge;Dès l'arrivée;Livraison;Médina;;;Statut",
     );
-    expect(lines[2]).toBe('26/10/2026 09:05;;;Non;;;;;Retrait;;Trop cher;');
+    expect(lines[2]).toBe('26/10/2026 09:05;;;;Non;;;;;Retrait;;;Trop cher;');
+  });
+
+  it('writes the place of a delivery elsewhere, a formula made harmless', () => {
+    const lines = responsesCsv([
+      row({ zoneName: null, deliveryPlace: '=HYPERLINK("x")', country: 'FR' }),
+    ]).split('\r\n');
+    expect(lines[1]).toContain(';France;');
+    expect(lines[1]).toContain(`;Livraison;;"'=HYPERLINK(""x"")";`);
   });
 });
 

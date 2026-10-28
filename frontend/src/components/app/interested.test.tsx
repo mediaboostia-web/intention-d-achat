@@ -25,6 +25,8 @@ const awa: InterestedRow = {
   timing: 'ON_ARRIVAL',
   wantsDelivery: true,
   zoneName: 'Médina',
+  deliveryPlace: null,
+  country: 'SN',
   sourceLabel: 'Lien principal',
   completedAt: '2026-10-26T10:00:00.000Z',
 };
@@ -98,6 +100,9 @@ describe('interestedDetail', () => {
     expect(interestedDetail(awa, 'pièce')).toBe("3 pièces · Revendeur · Médina · Dès l'arrivée");
     expect(interestedDetail({ ...awa, zoneName: null, wantsDelivery: false }, 'pièce')).toBe(
       "3 pièces · Revendeur · Retrait · Dès l'arrivée",
+    );
+    expect(interestedDetail({ ...awa, zoneName: null, deliveryPlace: 'Lomé' }, 'pièce')).toBe(
+      "3 pièces · Revendeur · Livraison · Lomé · Dès l'arrivée",
     );
     expect(
       interestedDetail(

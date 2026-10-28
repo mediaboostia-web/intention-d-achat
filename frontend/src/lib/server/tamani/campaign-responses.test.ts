@@ -18,6 +18,7 @@ const answer = (id: string, over: object = {}) => ({
   option: 'Rouge',
   timing: 'ON_ARRIVAL',
   wantsDelivery: true,
+  deliveryPlace: null,
   completedAt: at('2026-10-26T10:00:00Z'),
   zone: { name: 'Médina' },
   link: { label: 'Statut' },
@@ -65,6 +66,8 @@ describe('listCampaignResponses', () => {
       timing: 'ON_ARRIVAL',
       wantsDelivery: true,
       zoneName: 'Médina',
+      deliveryPlace: null,
+      country: 'SN',
       sourceLabel: 'Statut',
       completedAt: '2026-10-26T10:00:00.000Z',
     });

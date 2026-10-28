@@ -63,6 +63,7 @@ export const GET = shopHandler<Params>('MEMBER', async (_req, { params }) => {
         timing: true,
         wantsDelivery: true,
         zoneId: true,
+        deliveryPlace: true,
         linkId: true,
       },
     }),

@@ -24,6 +24,7 @@ export interface StatsRow {
   timing: string | null;
   wantsDelivery: boolean | null;
   zoneId: string | null;
+  deliveryPlace: string | null;
   linkId: string | null;
 }
 
@@ -107,6 +108,9 @@ export function computeCampaignStats(
     .map(([zoneId, t]) => ({ zoneId, name: zoneName.get(zoneId) ?? '', ...t }))
     .sort((a, b) => byQuantity(a, b) || a.name.localeCompare(b.name, 'fr'));
   const pickup = tally(yes, (y) => (y.wantsDelivery === false ? 'PICKUP' : null)).get('PICKUP');
+  const elsewhere = tally(yes, (y) =>
+    y.wantsDelivery && !y.zoneId && y.deliveryPlace ? 'ELSEWHERE' : null,
+  ).get('ELSEWHERE');
 
   const timings = tally(yes, (y) => (isTiming(y.timing) ? y.timing : null));
   const byTiming = TIMINGS.flatMap((timing) => {
@@ -160,6 +164,7 @@ export function computeCampaignStats(
     },
     byZone,
     pickup: pickup ?? { respondents: 0, quantity: 0 },
+    elsewhere: elsewhere ?? { respondents: 0, quantity: 0 },
     byTiming,
     byOption,
     bySource,

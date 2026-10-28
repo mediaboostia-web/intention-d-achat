@@ -472,6 +472,7 @@ model Response {
   wantsDelivery       Boolean?
   zoneId              String?
   zone                DeliveryZone? @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  deliveryPlace       String? // « Autre endroit » (lot 6b): a delivery outside the shop's zones
   completedAt         DateTime?
   locked              Boolean       @default(false) // over the monthly quota: kept, hidden until upgrade
   suspicious          Boolean       @default(false)

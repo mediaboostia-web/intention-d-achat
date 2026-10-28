@@ -9,7 +9,7 @@ import type { Timing } from '@/lib/tamani/timing';
 import type { Cursor } from '@/lib/server/notifications/cursor';
 import { buildPage } from '@/lib/server/pagination/paginate';
 import type { Db } from './locks';
-import { displayPhone, maskPhone } from './phone';
+import { displayPhone, maskPhone, phoneCountryOf } from './phone';
 
 export type ResponseFilter = 'yes' | 'no';
 
@@ -38,6 +38,7 @@ const ROW_SELECT = {
   option: true,
   timing: true,
   wantsDelivery: true,
+  deliveryPlace: true,
   completedAt: true,
   zone: { select: { name: true } },
   link: { select: { label: true } },
@@ -63,6 +64,9 @@ function toRow(r: Row, canSeeContacts: boolean): InterestedRow {
     timing: (r.timing as Timing | null) ?? null,
     wantsDelivery: r.wantsDelivery,
     zoneName: r.zone?.name ?? null,
+    deliveryPlace: r.deliveryPlace,
+    // The country says no more than the dial code a masked number shows.
+    country: phone === null ? null : phoneCountryOf(phone),
     sourceLabel: r.link?.label ?? null,
     completedAt: (r.completedAt ?? new Date(0)).toISOString(),
   };

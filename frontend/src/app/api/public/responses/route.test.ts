@@ -99,7 +99,15 @@ describe('POST /api/public/responses', () => {
 
   it('400 VALIDATION_FAILED on a bad body', async () => {
     fakePublicDb();
-    for (const body of ['{', { ...step, deviceId: 'not-a-uuid' }, { ...step, firstName: 'Awa' }]) {
+    for (const body of [
+      '{',
+      { ...step, deviceId: 'not-a-uuid' },
+      { ...step, firstName: 'Awa' },
+      { ...step, deliveryPlace: 'x'.repeat(81) },
+      { ...step, deliveryPlace: 'L' },
+      { ...step, deliveryPlace: 'Lo\u0007mé' },
+      { ...step, phoneCountry: 'ZZ' },
+    ]) {
       const res = await POST(post(body));
       expect(res.status).toBe(400);
       expect(await res.json()).toMatchObject({ error: 'VALIDATION_FAILED' });

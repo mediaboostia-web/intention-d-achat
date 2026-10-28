@@ -50,7 +50,7 @@ describe('GET …/export', () => {
       /^attachment; filename="tamani-marmites-inox-\d{4}-\d{2}-\d{2}\.csv"$/,
     );
     const text = await res.text();
-    expect(text.split('\r\n')[1]).toContain(";Awa;'+221 77 123 45 12;Oui;Usager;2;");
+    expect(text.split('\r\n')[1]).toContain(";Awa;'+221 77 123 45 12;Sénégal;Oui;Usager;2;");
     expect(prismaMock.response.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {

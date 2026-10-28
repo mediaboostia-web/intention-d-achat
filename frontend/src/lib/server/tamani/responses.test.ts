@@ -185,6 +185,75 @@ describe('upsertResponse', () => {
     expect(prismaMock.response.create).not.toHaveBeenCalled();
   });
 
+  it('keeps a delivery place only for a delivery without a zone', async () => {
+    const { responses } = fakePublicDb();
+    const step = (fields: object) =>
+      upsertResponse(prismaMock, { ...base, ...yes, ...fields }, NOW);
+    await step({ wantsDelivery: true, zoneId: null, deliveryPlace: 'Lomé' });
+    expect(responses[0]).toMatchObject({
+      wantsDelivery: true,
+      zoneId: null,
+      deliveryPlace: 'Lomé',
+    });
+    await step({ wantsDelivery: true, zoneId: 'zone_1' });
+    expect(responses[0]).toMatchObject({ zoneId: 'zone_1', deliveryPlace: null });
+    await step({ wantsDelivery: true, zoneId: null, deliveryPlace: 'Cotonou' });
+    expect(responses[0]).toMatchObject({ zoneId: null, deliveryPlace: 'Cotonou' });
+    await step({ wantsDelivery: false });
+    expect(responses[0]).toMatchObject({ wantsDelivery: false, deliveryPlace: null });
+  });
+
+  it('a zone sent with a place wins, and a "no" clears the place', async () => {
+    const { responses } = fakePublicDb();
+    await upsertResponse(
+      prismaMock,
+      { ...base, ...yes, wantsDelivery: true, zoneId: 'zone_1', deliveryPlace: 'Lomé' },
+      NOW,
+    );
+    expect(responses[0]).toMatchObject({ zoneId: 'zone_1', deliveryPlace: null });
+    await upsertResponse(
+      prismaMock,
+      { ...base, ...yes, wantsDelivery: true, zoneId: null, deliveryPlace: 'Lomé' },
+      NOW,
+    );
+    await upsertResponse(prismaMock, { ...base, interested: false }, NOW);
+    expect(responses[0]).toMatchObject({ interested: false, deliveryPlace: null });
+  });
+
+  it('refuses a delivery place when the campaign does not deliver', async () => {
+    fakePublicDb(publicLink({ campaign: { deliveryEnabled: false } }));
+    expect(
+      await failure(upsertResponse(prismaMock, { ...base, deliveryPlace: 'Lomé' }, NOW)),
+    ).toEqual({ code: 'VALIDATION_FAILED', status: 400 });
+    expect(prismaMock.response.create).not.toHaveBeenCalled();
+  });
+
+  it('reads the number in the country the respondent chose', async () => {
+    fakePublicDb();
+    await upsertResponse(
+      prismaMock,
+      { ...base, ...yes, firstName: 'Awa', phone: '6 12 34 56 78', phoneCountry: 'FR' },
+      NOW,
+    );
+    expect(prismaMock.respondent.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { organizationId_phoneE164: { organizationId: 'org_1', phoneE164: '+33612345678' } },
+      }),
+    );
+  });
+
+  it('upsertResponse falls back to the shop country without phoneCountry', async () => {
+    fakePublicDb();
+    await upsertResponse(prismaMock, { ...base, ...yes, ...contact }, NOW);
+    expect(prismaMock.respondent.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          organizationId_phoneE164: { organizationId: 'org_1', phoneE164: '+221771234567' },
+        },
+      }),
+    );
+  });
+
   it('refuses to complete an unfinished yes', async () => {
     fakePublicDb();
     const noQuantity = {

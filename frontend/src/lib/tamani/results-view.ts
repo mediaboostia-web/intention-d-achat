@@ -75,6 +75,8 @@ export interface CampaignStats {
   byBuyerType: Record<BuyerType, { respondents: number; announced: number }>;
   byZone: Array<{ zoneId: string; name: string; respondents: number; quantity: number }>;
   pickup: { respondents: number; quantity: number };
+  /** Yes answers delivered outside the zones (« Autre endroit »). */
+  elsewhere: { respondents: number; quantity: number };
   byTiming: Array<{ timing: Timing; respondents: number; quantity: number }>;
   byOption: Array<{ option: string; respondents: number; quantity: number }>;
   bySource: Array<{
@@ -110,6 +112,10 @@ export interface InterestedRow {
   timing: Timing | null;
   wantsDelivery: boolean | null;
   zoneName: string | null;
+  /** « Autre endroit »: where to deliver outside the zones. */
+  deliveryPlace: string | null;
+  /** Two letters, read from the number. */
+  country: string | null;
   sourceLabel: string | null;
   completedAt: string;
 }
@@ -294,7 +300,13 @@ export function interestedDetail(row: InterestedRow, unitLabel: string): string 
   if (!row.interested) {
     return row.reason ? NOT_INTERESTED_REASON_LABELS[row.reason] : 'Pas intéressé';
   }
-  const where = row.zoneName ?? (row.wantsDelivery === false ? 'Retrait' : null);
+  const where =
+    row.zoneName ??
+    (row.wantsDelivery === false
+      ? 'Retrait'
+      : row.deliveryPlace
+        ? `Livraison · ${row.deliveryPlace}`
+        : null);
   return [
     row.quantity === null ? null : `${row.quantity} ${pluralizeUnit(unitLabel, row.quantity)}`,
     row.option,

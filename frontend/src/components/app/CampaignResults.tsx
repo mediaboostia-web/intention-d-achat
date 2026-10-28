@@ -200,6 +200,9 @@ export function CampaignResults({
     ...(stats.pickup.respondents > 0
       ? [{ id: 'pickup', label: 'Retrait sur place', value: stats.pickup.respondents }]
       : []),
+    ...(stats.elsewhere.respondents > 0
+      ? [{ id: 'elsewhere', label: 'Autre endroit', value: stats.elsewhere.respondents }]
+      : []),
   ];
   // A buyer type nobody chose is left out.
   const buyers = (['RESELLER', 'CONSUMER'] as const)

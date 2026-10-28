@@ -33,6 +33,7 @@ const row = (over: Partial<StatsRow> = {}): StatsRow => ({
   timing: null,
   wantsDelivery: null,
   zoneId: null,
+  deliveryPlace: null,
   linkId: 'l1',
   ...over,
 });
@@ -178,6 +179,21 @@ describe('computeCampaignStats', () => {
     const enough = computeCampaignStats(rows, campaign({ stockQuantity: 300 }), zones, coefs);
     expect(enough.result.stockStatus).toBe('ENOUGH');
     expect(computeCampaignStats(rows, campaign(), zones, coefs).result.stockStatus).toBeNull();
+  });
+
+  it('counts the yes delivered to another place', () => {
+    const s = computeCampaignStats(
+      [
+        row({ quantity: 2, wantsDelivery: true, deliveryPlace: 'Lomé' }),
+        row({ quantity: 3, wantsDelivery: true, deliveryPlace: 'Paris' }),
+        row({ quantity: 4, wantsDelivery: true }),
+        row({ quantity: 5, wantsDelivery: true, zoneId: 'z1' }),
+      ],
+      campaign(),
+      zones,
+      coefs,
+    );
+    expect(s.elsewhere).toEqual({ respondents: 2, quantity: 5 });
   });
 
   it('has no interest rate without a completed answer', () => {

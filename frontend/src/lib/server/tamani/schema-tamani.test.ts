@@ -152,6 +152,13 @@ describe('Tamani core schema (lot 3)', () => {
     expect(sql).not.toMatch(/\bDROP\b/);
   });
 
+  it('Response keeps the place of a delivery elsewhere', () => {
+    expect(field(modelBlock('Response'), 'deliveryPlace String?')).toBe(true);
+    const sql = readFileSync(resolve(PRISMA, 'migrations/8c_delivery_place/migration.sql'), 'utf8');
+    expect(sql).toMatch(/ALTER TABLE "Response" ADD COLUMN\s+"deliveryPlace" TEXT/);
+    expect(sql).not.toMatch(/\bDROP\b/);
+  });
+
   it('migration folders sort as text in the order they were written', () => {
     // Prisma applies them in text order: a "10_…" would run before "2_…".
     const names = readdirSync(resolve(PRISMA, 'migrations'), { withFileTypes: true })

@@ -37,6 +37,7 @@ const stats: CampaignStatsBody['stats'] = {
   },
   byZone: [{ zoneId: 'z1', name: 'Médina', respondents: 24, quantity: 120 }],
   pickup: { respondents: 10, quantity: 40 },
+  elsewhere: { respondents: 3, quantity: 9 },
   byTiming: [
     { timing: 'ON_ARRIVAL', respondents: 38, quantity: 210 },
     { timing: 'WEEK_AFTER', respondents: 19, quantity: 100 },
@@ -166,6 +167,16 @@ describe('CampaignResults', () => {
     );
     expect(t).toContain('Usagers 42 · 170 pièces');
     expect(t).not.toMatch(/Revendeurs 0/);
+  });
+
+  it('lists the deliveries to another place under Où livrer', () => {
+    const t = text(render({ stats, access: 'PLAN' }));
+    expect(t).toMatch(/Retrait sur place.*Autre endroit/);
+    expect(
+      text(
+        render({ stats: { ...stats, elsewhere: { respondents: 0, quantity: 0 } }, access: 'PLAN' }),
+      ),
+    ).not.toContain('Autre endroit');
   });
 
   it('lists where, when and the price signal', () => {

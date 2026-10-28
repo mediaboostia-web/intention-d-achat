@@ -33,6 +33,8 @@ export interface PublicCampaign {
     logoUrl: string | null;
     description: string | null;
     dialCode: string;
+    /** Two letters: the first choice of the respondent's phone country. */
+    country: string;
   };
   poweredByBadge: boolean;
 }
@@ -93,6 +95,7 @@ export async function getPublicCampaign(
       logoUrl: org.logoUrl,
       description: org.description,
       dialCode: SHOP_COUNTRIES.find((c) => c.code === org.country)?.dialCode ?? '+221',
+      country: org.country,
     },
     poweredByBadge: PLANS[effectivePlan(org.subscription, now).plan].features.poweredByBadge,
   };

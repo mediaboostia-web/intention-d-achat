@@ -37,6 +37,7 @@ const campaign: PublicCampaign = {
     logoUrl: null,
     description: null,
     dialCode: '+221',
+    country: 'SN',
   },
   poweredByBadge: true,
 };
