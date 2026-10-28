@@ -1,11 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import {
   NO_ORDER_FILTERS,
+  ORDER_TRANSITIONS,
+  canTransition,
+  fulfillmentText,
+  orderActions,
   orderSearch,
   orderStatusLabel,
   orderUnitPrice,
   orderWhatsappMessage,
   parseOrderSearch,
+  productQuantity,
+  type Fulfillment,
+  type OrderStatus,
 } from './orders-view';
 
 const parse = (qs: string) => parseOrderSearch(new URLSearchParams(qs));
@@ -88,5 +95,47 @@ describe('orderUnitPrice', () => {
     expect(orderUnitPrice(riz, 'CONSUMER', 50)).toBe(17500);
     expect(orderUnitPrice({ ...riz, wholesalePrice: null }, 'RESELLER', 50)).toBe(17500);
     expect(orderUnitPrice({ ...riz, wholesaleMinQty: null }, 'RESELLER', 50)).toBe(17500);
+  });
+});
+
+describe('ORDER_TRANSITIONS and orderActions', () => {
+  it('allows the moves of the spec and no other', () => {
+    expect(canTransition('TO_CONFIRM', 'CONFIRMED')).toBe(true);
+    expect(canTransition('TO_CONFIRM', 'CANCELLED')).toBe(true);
+    expect(canTransition('CONFIRMED', 'FULFILLED')).toBe(true);
+    expect(canTransition('CONFIRMED', 'CANCELLED')).toBe(true);
+    expect(canTransition('TO_CONFIRM', 'FULFILLED')).toBe(false);
+    expect(canTransition('FULFILLED', 'CANCELLED')).toBe(false);
+    expect(ORDER_TRANSITIONS.CANCELLED).toEqual([]);
+  });
+
+  it('names the buttons of each status, « Marquer récupérée » for a pickup', () => {
+    const labels = (s: OrderStatus, f: Fulfillment) => orderActions(s, f).map((a) => a.label);
+    expect(labels('TO_CONFIRM', 'DELIVERY')).toEqual(['Confirmer', 'Annuler']);
+    expect(labels('CONFIRMED', 'DELIVERY')).toEqual(['Marquer livrée', 'Annuler']);
+    expect(labels('CONFIRMED', 'PICKUP')).toEqual(['Marquer récupérée', 'Annuler']);
+    expect(labels('FULFILLED', 'PICKUP')).toEqual([]);
+    expect(labels('CANCELLED', 'DELIVERY')).toEqual([]);
+    expect(orderActions('CONFIRMED', 'PICKUP').map((a) => a.to)).toEqual([
+      'FULFILLED',
+      'CANCELLED',
+    ]);
+  });
+});
+
+describe('productQuantity and fulfillmentText', () => {
+  it('writes the pieces of a product', () => {
+    expect(productQuantity({ quantity: 24, unitLabel: 'sac', productName: 'Riz parfumé' })).toBe(
+      '24 sacs de Riz parfumé',
+    );
+    expect(productQuantity({ quantity: 1, unitLabel: 'pièce', productName: 'Marmite' })).toBe(
+      '1 pièce de Marmite',
+    );
+  });
+
+  it('says where the order goes', () => {
+    expect(fulfillmentText('PICKUP', null)).toBe('Retrait à la boutique');
+    expect(fulfillmentText('DELIVERY', 'Médina')).toBe('Livraison à Médina');
+    expect(fulfillmentText('DELIVERY', null)).toBe('Livraison, sans quartier');
   });
 });

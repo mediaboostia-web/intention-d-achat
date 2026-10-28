@@ -5,25 +5,15 @@
 import 'server-only';
 import type { NextResponse } from 'next/server';
 import { BUYER_TYPES, type BuyerType } from '@/lib/tamani/labels';
-import { orderUnitPrice, type OrderStatus } from '@/lib/tamani/orders-view';
+import { orderUnitPrice } from '@/lib/tamani/orders-view';
 import { COUNTED } from './campaign-responses';
 import { isUniqueViolation, tamaniError, type TamaniErrorCode } from './errors';
 import { validationFailed } from './http';
 import type { Db } from './locks';
 
-export { orderUnitPrice };
-
-/** Moves a wholesaler may make; FULFILLED and CANCELLED are final. */
-export const ORDER_TRANSITIONS: Readonly<Record<OrderStatus, readonly OrderStatus[]>> = {
-  TO_CONFIRM: ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED: ['FULFILLED', 'CANCELLED'],
-  FULFILLED: [],
-  CANCELLED: [],
-};
-
-export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
-  return ORDER_TRANSITIONS[from].includes(to);
-}
+// The price rule and the status moves live with the shared views: the order
+// form previews the same price and the order page offers the same moves.
+export { ORDER_TRANSITIONS, canTransition, orderUnitPrice } from '@/lib/tamani/orders-view';
 
 /** A refusal of the order rules, turned into the route's answer by orderFailure. */
 export class OrderError extends Error {

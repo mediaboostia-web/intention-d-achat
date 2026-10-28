@@ -17,6 +17,51 @@ export function orderStatusLabel(status: OrderStatus, fulfillment: Fulfillment):
   return fulfillment === 'PICKUP' ? 'Récupérée' : 'Livrée';
 }
 
+/** Moves a wholesaler may make; FULFILLED and CANCELLED are final. The server checks the same table. */
+export const ORDER_TRANSITIONS: Readonly<Record<OrderStatus, readonly OrderStatus[]>> = {
+  TO_CONFIRM: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['FULFILLED', 'CANCELLED'],
+  FULFILLED: [],
+  CANCELLED: [],
+};
+
+export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
+  return ORDER_TRANSITIONS[from].includes(to);
+}
+
+/** The buttons of an order's page, in ORDER_TRANSITIONS order. */
+export function orderActions(
+  status: OrderStatus,
+  fulfillment: Fulfillment,
+): Array<{ to: OrderStatus; label: string }> {
+  return ORDER_TRANSITIONS[status].map((to) => ({
+    to,
+    label:
+      to === 'CONFIRMED'
+        ? 'Confirmer'
+        : to === 'CANCELLED'
+          ? 'Annuler'
+          : fulfillment === 'PICKUP'
+            ? 'Marquer récupérée'
+            : 'Marquer livrée',
+  }));
+}
+
+/** "24 sacs de Riz parfumé". */
+export function productQuantity(o: {
+  quantity: number;
+  unitLabel: string;
+  productName: string;
+}): string {
+  return `${o.quantity} ${pluralizeUnit(o.unitLabel, o.quantity)} de ${o.productName}`;
+}
+
+/** "Retrait à la boutique", "Livraison à Médina", "Livraison, sans quartier". */
+export function fulfillmentText(fulfillment: Fulfillment, zoneName: string | null): string {
+  if (fulfillment === 'PICKUP') return 'Retrait à la boutique';
+  return zoneName ? `Livraison à ${zoneName}` : 'Livraison, sans quartier';
+}
+
 /** The wholesale price for a reseller who reaches the minimum, else the unit price. */
 export function orderUnitPrice(
   product: { unitPrice: number; wholesalePrice: number | null; wholesaleMinQty: number | null },
