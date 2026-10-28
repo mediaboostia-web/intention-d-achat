@@ -59,6 +59,8 @@ export type PopupAction =
   | { type: 'delivery'; wantsDelivery: boolean; zoneId: string | null; place?: string | null }
   | { type: 'completed'; respondent: RememberedRespondent }
   | { type: 'edit' }
+  /** « En fait, ça m'intéresse » on the end dialog of a no. */
+  | { type: 'changeMind' }
   | { type: 'notMe' }
   | { type: 'itsMe' }
   | { type: 'back' }
@@ -144,6 +146,10 @@ export function popupReducer(state: PopupState, action: PopupAction): PopupState
       return { ...state, step: 'thanks', remembered: action.respondent, forgotten: null };
     case 'edit':
       return { ...state, step: 'interest' };
+    case 'changeMind':
+      // Only a finished no turns into a yes; the buyer question comes next.
+      if (state.step !== 'thanks' || a.interested !== false) return state;
+      return { ...state, step: 'buyer', answers: { ...EMPTY_ANSWERS, interested: true } };
     case 'notMe':
       return { ...state, remembered: null, forgotten: state.remembered ?? state.forgotten };
     case 'itsMe':
@@ -174,6 +180,8 @@ export function stepBody(action: PopupAction): ResponseStepBody {
   switch (action.type) {
     case 'interest':
       return { interested: action.interested };
+    case 'changeMind':
+      return { interested: true };
     case 'reason':
       return { notInterestedReason: action.reason };
     case 'buyer':

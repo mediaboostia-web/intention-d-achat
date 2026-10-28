@@ -241,6 +241,30 @@ describe('stepBody', () => {
     ).toEqual({ wantsDelivery: true, zoneId: null, deliveryPlace: 'Lomé' });
     expect(stepBody({ type: 'back' })).toEqual({});
     expect(stepBody({ type: 'itsMe' })).toEqual({});
+    // « En fait, ça m'intéresse » tells the server the answer turned to yes.
+    expect(stepBody({ type: 'changeMind' })).toEqual({ interested: true });
+  });
+});
+
+describe('changeMind (lot 7a)', () => {
+  it('turns a finished no into a yes and goes on to the buyer question', () => {
+    const no = popupReducer(
+      { ...initialPopupState({ deliveryEnabled: true, memory: null, campaignId: 'c1' }) },
+      { type: 'interest', interested: false },
+    );
+    const done = { ...no, step: 'thanks' as const };
+    const next = popupReducer(done, { type: 'changeMind' });
+    expect(next.step).toBe('buyer');
+    expect(next.answers).toEqual({ ...EMPTY_ANSWERS, interested: true });
+  });
+
+  it('does nothing outside the end of a no', () => {
+    const yes = {
+      ...initialPopupState({ deliveryEnabled: true, memory: null, campaignId: 'c1' }),
+      step: 'thanks' as const,
+      answers: { ...EMPTY_ANSWERS, interested: true },
+    };
+    expect(popupReducer(yes, { type: 'changeMind' })).toBe(yes);
   });
 });
 

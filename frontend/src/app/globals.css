@@ -58,6 +58,8 @@
   --shadow-sheet: 0 -12px 34px rgb(16 32 74 / 0.28);
 
   --animate-sheet-up: sheet-up 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fade-in: fade-in 200ms ease-out both;
+  --animate-dialog-in: dialog-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 
   @keyframes sheet-up {
     from {
@@ -65,6 +67,19 @@
     }
     to {
       transform: none;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
     }
   }
 }

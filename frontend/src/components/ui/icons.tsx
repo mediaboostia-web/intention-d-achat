@@ -34,7 +34,8 @@ export type IconName =
   | 'sun'
   | 'sidebar'
   | 'grid'
-  | 'rows';
+  | 'rows'
+  | 'heart';
 
 // Drawn with the pen: one 2px round stroke in currentColor, no fill, so an
 // icon takes the colour of the text next to it.
@@ -228,6 +229,9 @@ const SHAPES: Record<IconName, ReactNode> = {
       <rect x="4" y="15" width="4.5" height="4.5" rx="1" />
       <path d="M11.5 6.75H20M11.5 17.25H20" />
     </>
+  ),
+  heart: (
+    <path d="M12 20s-7.5-4.5-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.5 12 20 12 20Z" />
   ),
   logout: (
     <path d="M14 4.5H6.5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1H14M10.5 12h10M17 8.5l3.5 3.5-3.5 3.5" />

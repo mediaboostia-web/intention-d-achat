@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { ChoiceButton } from '@/components/ui/ChoiceButton';
 import { Input } from '@/components/ui/Input';
 import { Logo } from '@/components/ui/Logo';
+import { Picto } from '@/components/ui/Picto';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import type { PublicCampaign } from '@/lib/server/tamani/public-campaign';
 import { POPUP_PHOTO, cloudinaryVariant, THUMB } from '@/lib/tamani/cloudinary-url';
@@ -37,6 +38,7 @@ import {
   type ResponseStepBody,
 } from '@/lib/tamani/popup-machine';
 import { leavePage } from '@/lib/tamani/leave-page';
+import { poweredByHref, stockLine, thanksCopy } from '@/lib/tamani/popup-copy';
 import { formatXof } from '@/lib/tamani/share-message';
 import { TIMING_LABELS } from '@/lib/tamani/timing';
 import { phoneCountryChoices } from '@/lib/tamani/phone-countries';
@@ -44,6 +46,7 @@ import { pluralizeUnit } from '@/lib/tamani/verdict-display';
 import { cn } from '@/lib/utils';
 import { PhotoGallery } from './photo-gallery';
 import { popupErrorMessage, postStep, postView } from './popup-client';
+import { ThanksDialog } from './thanks-dialog';
 
 const MIN_COUNTER = 3;
 
@@ -58,8 +61,10 @@ export interface PopupViewProps {
   onAction?: (action: PopupAction) => void;
   onContact?: (contact: Contact) => void;
   onLeave?: () => void;
-  /** The browser kept the page open after « Fermer la page ». */
+  /** The browser kept the page open after « Fermer ». */
   left?: boolean;
+  /** The app's address (APP_URL), where « Propulsé par Tamani » leads. */
+  homeUrl?: string;
 }
 
 function Question({ children }: { children: ReactNode }) {
@@ -103,18 +108,19 @@ function ProductHeader({ c, count }: { c: PublicCampaign; count: number | null }
         {formatXof(product.unitPrice)}{' '}
         <span className="font-sans text-sm text-ink-muted">pour 1 {product.unitLabel}</span>
       </p>
-      <p className="mt-3 text-ink-soft">
-        {c.availabilityText}.
-        {count !== null && count >= MIN_COUNTER && (
-          <>
-            {' '}
-            <b className="text-ink">{count} personnes</b> sont déjà intéressées.
-          </>
-        )}
+      <p className="mt-3 flex items-center gap-2 font-bold text-ink">
+        <Picto name={c.availability === 'IN_STOCK' ? 'stall' : 'calendar'} />
+        <span>{c.availabilityText}</span>
       </p>
       {c.stockQuantity !== null && (
-        <p className="mt-1 font-bold text-warning">
-          Plus que {c.stockQuantity} {pluralizeUnit(product.unitLabel, c.stockQuantity)}
+        <p className="mt-1.5 flex items-center gap-2 font-bold text-ink">
+          <Picto name="cartons" />
+          <span>{stockLine(c.stockQuantity, product.unitLabel)}</span>
+        </p>
+      )}
+      {count !== null && count >= MIN_COUNTER && (
+        <p className="mt-2 text-ink-soft">
+          <b className="text-ink">{count} personnes</b> sont déjà intéressées.
         </p>
       )}
     </>
@@ -422,18 +428,14 @@ function StepContent({
   c,
   state,
   busy,
-  left,
   onAction,
   onContact,
-  onLeave,
 }: {
   c: PublicCampaign;
   state: PopupState;
   busy: boolean;
-  left: boolean;
   onAction: (action: PopupAction) => void;
   onContact: (contact: Contact) => void;
-  onLeave: () => void;
 }) {
   const a = state.answers;
   switch (state.step) {
@@ -538,36 +540,13 @@ function StepContent({
         />
       );
     case 'thanks':
+      // The end dialog (ThanksDialog) speaks; behind it, a summary of the answer.
       return (
-        <>
-          <Question>
-            {state.remembered ? `Merci ${state.remembered.firstName} !` : 'Merci !'}
-          </Question>
-          <p className="text-lg text-ink">
-            <b>{c.shop.name}</b> te préviendra.
-          </p>
-          <ul className="mt-3 grid gap-1 text-ink-soft">
-            {recap(c, a).map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-          <Button
-            variant="secondary"
-            className="mt-5 w-full"
-            onClick={() => onAction({ type: 'edit' })}
-          >
-            Modifier ma réponse
-          </Button>
-          {left ? (
-            <p role="status" className="mt-3 text-center font-bold text-ink">
-              C&apos;est noté. Tu peux fermer cette page.
-            </p>
-          ) : (
-            <Button variant="ghost" className="mt-2 w-full" onClick={onLeave}>
-              Fermer la page
-            </Button>
-          )}
-        </>
+        <ul className="mt-4 grid gap-1 text-ink-soft">
+          {recap(c, a).map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
       );
   }
 }
@@ -582,10 +561,28 @@ export function PopupView({
   onContact = () => {},
   onLeave = () => {},
   left = false,
+  homeUrl = '',
 }: PopupViewProps) {
   const photo = c.product.photos[0] ? cloudinaryVariant(c.product.photos[0], POPUP_PHOTO) : null;
   const hasPhotos = c.product.photos.length > 0;
   const canGoBack = c.accepting && state.step !== 'interest' && state.step !== 'thanks';
+  const done = c.accepting && state.step === 'thanks';
+  const poweredBy = c.poweredByBadge && (
+    <a
+      href={poweredByHref(homeUrl, c.shop.slug)}
+      target="_blank"
+      rel="noopener"
+      className="mt-4 flex min-h-11 items-center justify-center gap-1.5 text-xs text-ink-muted"
+    >
+      <Logo variant="mark" size={16} />
+      <span>
+        Propulsé par{' '}
+        <b className="text-ink underline decoration-accent decoration-2 underline-offset-2">
+          Tamani
+        </b>
+      </span>
+    </a>
+  );
   return (
     <main className="relative flex h-dvh flex-col overflow-hidden bg-ink text-ink">
       {photo && (
@@ -596,7 +593,7 @@ export function PopupView({
           className="absolute inset-0 size-full scale-110 object-cover opacity-60 blur-2xl"
         />
       )}
-      <div className="relative mx-auto flex h-full w-full max-w-md flex-col">
+      <div inert={done} className="relative mx-auto flex h-full w-full max-w-md flex-col">
         <ShopChip shop={c.shop} />
         {/* The photos keep their height; the sheet scrolls in the rest of the screen. */}
         <div className="flex flex-1 items-center py-3">
@@ -644,10 +641,8 @@ export function PopupView({
                   c={c}
                   state={state}
                   busy={busy}
-                  left={left}
                   onAction={onAction}
                   onContact={onContact}
-                  onLeave={onLeave}
                 />
                 {error && (
                   <p role="alert" className="mt-3 font-bold text-danger">
@@ -666,23 +661,34 @@ export function PopupView({
                 )}
               </>
             )}
-            {c.poweredByBadge && (
-              <a
-                href={`/?ref=${encodeURIComponent(c.shop.slug)}`}
-                className="mt-4 flex items-center justify-center gap-1.5 text-xs text-ink-muted"
-              >
-                <Logo variant="mark" size={16} />
-                Propulsé par Tamani
-              </a>
-            )}
+            {poweredBy}
           </div>
         </BottomSheet>
       </div>
+      {done && (
+        <ThanksDialog
+          copy={thanksCopy({
+            interested: state.answers.interested === true,
+            firstName: state.remembered?.firstName ?? null,
+            shopName: c.shop.name,
+            productName: c.product.name,
+            unitLabel: c.product.unitLabel,
+            quantity: state.answers.quantity,
+          })}
+          interested={state.answers.interested === true}
+          recap={recap(c, state.answers).slice(1)}
+          left={left}
+          footer={poweredBy}
+          onClose={onLeave}
+          onEdit={() => onAction({ type: 'edit' })}
+          onChangeMind={() => onAction({ type: 'changeMind' })}
+        />
+      )}
     </main>
   );
 }
 
-export function PopupSheet({ campaign }: { campaign: PublicCampaign }) {
+export function PopupSheet({ campaign, homeUrl }: { campaign: PublicCampaign; homeUrl: string }) {
   const [state, dispatch] = useReducer(popupReducer, campaign, (c) =>
     initialPopupState({
       deliveryEnabled: c.deliveryEnabled,
@@ -784,6 +790,7 @@ export function PopupSheet({ campaign }: { campaign: PublicCampaign }) {
       onContact={onContact}
       onLeave={onLeave}
       left={left}
+      homeUrl={homeUrl}
     />
   );
 }
