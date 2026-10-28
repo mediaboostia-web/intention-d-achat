@@ -2,7 +2,12 @@ import { prismaMock } from '@/test-utils/prisma-mock';
 import { describe, it, expect } from 'vitest';
 import type { BuyerType } from '@/lib/tamani/labels';
 import { finishedCampaignWhere } from './campaign-status';
-import { clientReliability, learnedCoefficients, loadLearnedCoefficients } from './reliability';
+import {
+  clientReliability,
+  learnableCampaignWhere,
+  learnedCoefficients,
+  loadLearnedCoefficients,
+} from './reliability';
 
 const fallback = { consumer: 0.5, reseller: 0.7 };
 
@@ -131,7 +136,22 @@ describe('loadLearnedCoefficients', () => {
     order,
   });
 
-  it('reads the counted yes answers of the shop’s finished campaigns', async () => {
+  it('a campaign teaches only once finished and followed up in orders, none still open', () => {
+    // A shop that keeps its orders elsewhere must not learn that nobody buys.
+    expect(learnableCampaignWhere(now)).toEqual({
+      AND: [
+        finishedCampaignWhere(now),
+        { orders: { some: { responseId: { not: null } } } },
+        {
+          orders: {
+            none: { responseId: { not: null }, status: { in: ['TO_CONFIRM', 'CONFIRMED'] } },
+          },
+        },
+      ],
+    });
+  });
+
+  it('reads the counted yes answers of the campaigns the shop followed up', async () => {
     prismaMock.response.findMany.mockResolvedValue([]);
     await loadLearnedCoefficients(prismaMock, 'org_1', fallback, now);
     expect(prismaMock.response.findMany).toHaveBeenCalledWith(
@@ -144,7 +164,7 @@ describe('loadLearnedCoefficients', () => {
           interested: true,
           buyerType: { in: ['CONSUMER', 'RESELLER'] },
           quantity: { gt: 0 },
-          campaign: finishedCampaignWhere(now),
+          campaign: learnableCampaignWhere(now),
         },
         select: {
           buyerType: true,

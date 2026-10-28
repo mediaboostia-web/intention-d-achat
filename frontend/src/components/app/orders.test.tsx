@@ -195,6 +195,21 @@ describe('À livrer par quartier', () => {
     expect(t).not.toContain('Tous les produits');
   });
 
+  it('shows each order’s note on its line: the option and the place to prepare the round', () => {
+    const noted = { ...confirmed, id: 'o7', notes: 'Couleur : Rouge\nLieu : Keur Massar' };
+    const t = text(
+      <OrderListView
+        {...listProps({
+          filters: toDeliver,
+          rows: [],
+          groups: [{ ...groups[1]!, orders: [noted] }],
+        })}
+      />,
+    );
+    expect(t).toContain('Couleur : Rouge');
+    expect(t).toContain('Lieu : Keur Massar');
+  });
+
   it('says when nothing is to deliver', () => {
     const t = text(<OrderListView {...listProps({ filters: toDeliver, rows: [], groups: [] })} />);
     expect(t).toContain('Rien à livrer pour le moment');
@@ -324,7 +339,7 @@ describe('OrderForm', () => {
       country="SN"
       initial={{ productId: 'p1', buyerType: 'RESELLER', quantity: '12', ...initial }}
       error={null}
-      onSubmit={async () => {}}
+      onSubmit={async () => true}
     />
   );
 

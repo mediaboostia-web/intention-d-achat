@@ -15,6 +15,7 @@ import {
   orderFormToBody,
   orderPricePreview,
   orderPriceText,
+  submitOnce,
   type OrderBody,
   type OrderFormErrors,
   type OrderFormValues,
@@ -63,7 +64,8 @@ export function OrderForm({
   country: string;
   initial?: Partial<OrderFormValues>;
   error: string | null;
-  onSubmit: (body: OrderBody) => Promise<void>;
+  /** True once the order is made (the page then moves on), false on a failure. */
+  onSubmit: (body: OrderBody) => Promise<boolean>;
   className?: string | undefined;
 }) {
   const [v, setV] = useState<OrderFormValues>(() => ({
@@ -116,12 +118,7 @@ export function OrderForm({
       return;
     }
     setErrors({});
-    setSubmitting(true);
-    try {
-      await onSubmit(result.body);
-    } finally {
-      setSubmitting(false);
-    }
+    await submitOnce(() => onSubmit(result.body), setSubmitting);
   }
 
   return (

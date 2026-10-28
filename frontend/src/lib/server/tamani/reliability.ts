@@ -2,9 +2,11 @@
 // client who says yes buys, and the share of announced demand each buyer
 // type really buys, which replaces the settings' coefficients once there is
 // enough of it. Only fulfilled orders (delivered or picked up) count as a
-// purchase, and only yes answers of finished campaigns (CLOSED or ARRIVED)
-// are weighed: a running campaign may still turn into orders.
+// purchase, and only yes answers of campaigns the shop has followed up are
+// weighed (learnableCampaignWhere): a running campaign may still turn into
+// orders, and a shop that keeps its orders elsewhere has taught nothing.
 import 'server-only';
+import type { Prisma } from '@prisma/client';
 import { BUYER_TYPES, type BuyerType } from '@/lib/tamani/labels';
 import { COUNTED } from './campaign-responses';
 import { finishedCampaignWhere } from './campaign-status';
@@ -53,6 +55,39 @@ export interface LearnedCoefficients {
 const bounded = (n: number) => Math.min(LEARNED_MAX, Math.max(LEARNED_MIN, n));
 
 /**
+ * A campaign that teaches (spec §5.4.1, « commandes réelles »): finished,
+ * with at least one order made from its answers, and none of those still
+ * to confirm or to deliver. Without orders, its yes answers would read as
+ * « nobody bought » and turn real demand into STOP; while its deliveries
+ * run, the answers not yet converted would too.
+ */
+export function learnableCampaignWhere(now: Date): Prisma.CampaignWhereInput {
+  const fromAnswers = { responseId: { not: null } };
+  return {
+    AND: [
+      finishedCampaignWhere(now),
+      { orders: { some: fromAnswers } },
+      { orders: { none: { ...fromAnswers, status: { in: ['TO_CONFIRM', 'CONFIRMED'] } } } },
+    ],
+  };
+}
+
+/** Which of these campaigns of the shop teach (learnableCampaignWhere). */
+export async function learnableCampaignIds(
+  db: Db,
+  organizationId: string,
+  ids: readonly string[],
+  now: Date,
+): Promise<Set<string>> {
+  if (ids.length === 0) return new Set();
+  const rows = await db.campaign.findMany({
+    where: { organizationId, id: { in: [...ids] }, ...learnableCampaignWhere(now) },
+    select: { id: true },
+  });
+  return new Set(rows.map((c) => c.id));
+}
+
+/**
  * One row per counted yes answer of a finished campaign: the quantity it
  * announced and the quantity its fulfilled order bought (0 without one).
  * Per buyer type, Σ bought / Σ announced, to the hundredth, bounded to
@@ -91,8 +126,9 @@ const isBuyerType = (v: string | null): v is BuyerType =>
   v !== null && (BUYER_TYPES as readonly string[]).includes(v);
 
 /**
- * The shop's counted yes answers on finished campaigns, with what their
- * orders bought. Callers pass it only when the plan has `reliability`.
+ * The shop's counted yes answers on the campaigns it followed up, with
+ * what their orders bought. Callers pass it only when the plan has
+ * `reliability`.
  */
 export async function loadLearnedCoefficients(
   db: Db,
@@ -107,7 +143,7 @@ export async function loadLearnedCoefficients(
       interested: true,
       buyerType: { in: [...BUYER_TYPES] },
       quantity: { gt: 0 },
-      campaign: finishedCampaignWhere(now),
+      campaign: learnableCampaignWhere(now),
     },
     orderBy: [{ completedAt: 'desc' }, { id: 'desc' }],
     take: MAX_LEARNING_ROWS,

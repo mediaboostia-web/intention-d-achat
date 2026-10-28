@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { orderUnitPrice as serverOrderUnitPrice } from '@/lib/server/tamani/orders';
 import {
   emptyOrderForm,
+  submitOnce,
   orderFormToBody,
   orderPricePreview,
   orderPriceText,
@@ -128,5 +129,33 @@ describe('orderFormToBody', () => {
     });
     const big = orderFormToBody({ ...filled, quantity: '100001' });
     expect(!big.ok && big.errors).toEqual({ quantity: 'Écris une quantité entre 1 et 100 000.' });
+  });
+});
+
+describe('submitOnce', () => {
+  it('stays busy after a success, while the page moves to the new order', async () => {
+    const busy: boolean[] = [];
+    await submitOnce(
+      async () => true,
+      (b) => busy.push(b),
+    );
+    expect(busy).toEqual([true]);
+  });
+
+  it('frees the button after a failure, or a throw', async () => {
+    const busy: boolean[] = [];
+    await submitOnce(
+      async () => false,
+      (b) => busy.push(b),
+    );
+    expect(busy).toEqual([true, false]);
+    const again: boolean[] = [];
+    await expect(
+      submitOnce(
+        () => Promise.reject(new Error('network')),
+        (b) => again.push(b),
+      ),
+    ).rejects.toThrow('network');
+    expect(again).toEqual([true, false]);
   });
 });

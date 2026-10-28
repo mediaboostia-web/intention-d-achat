@@ -100,6 +100,11 @@ export function OrderLine({ order }: { order: OrderRow }) {
             <span className="block text-xs text-ink-muted">{order.client.phone}</span>
           )}
           <span className="block text-sm text-ink-soft">{productQuantity(order)}</span>
+          {order.notes && (
+            <span className="line-clamp-3 block text-sm whitespace-pre-line text-ink-muted">
+              {order.notes}
+            </span>
+          )}
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1">
           <span className="font-bold text-ink tabular-nums">

@@ -78,10 +78,18 @@ export async function convertResponseToOrder(
       wantsDelivery: true,
       zoneId: true,
       deliveryPlace: true,
+      option: true,
       campaign: {
         select: {
           productId: true,
-          product: { select: { unitPrice: true, wholesalePrice: true, wholesaleMinQty: true } },
+          product: {
+            select: {
+              unitPrice: true,
+              wholesalePrice: true,
+              wholesaleMinQty: true,
+              optionLabel: true,
+            },
+          },
         },
       },
       order: { select: { id: true } },
@@ -96,6 +104,11 @@ export async function convertResponseToOrder(
   const unitPrice = orderUnitPrice(answer.campaign.product, buyerType, quantity);
   const delivery = answer.wantsDelivery === true;
   const place = delivery && answer.zoneId === null ? answer.deliveryPlace : null;
+  // What the round needs and the order has no field for: the size or colour, then where.
+  const notes = [
+    answer.option ? `${answer.campaign.product.optionLabel ?? 'Option'} : ${answer.option}` : null,
+    place ? `Lieu : ${place}` : null,
+  ].filter((line) => line !== null);
   try {
     return await tx.saleOrder.create({
       data: {
@@ -111,7 +124,7 @@ export async function convertResponseToOrder(
         fulfillment: delivery ? 'DELIVERY' : 'PICKUP',
         zoneId: delivery ? answer.zoneId : null,
         status: 'TO_CONFIRM',
-        notes: place ? `Lieu : ${place}` : null,
+        notes: notes.length > 0 ? notes.join('\n') : null,
         createdAt: now,
       },
       select: { id: true },

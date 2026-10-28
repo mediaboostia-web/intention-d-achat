@@ -63,7 +63,8 @@ describe('lastInterestText', () => {
 
 describe('reliabilityText', () => {
   const NBSP = ' ';
-  const PENDING = "Le taux s'affiche dès 2 « oui » sur des campagnes terminées.";
+  const PENDING =
+    "Le taux s'affiche dès 2 « oui » sur des campagnes terminées dont les commandes sont livrées ou annulées.";
 
   it('reads the spec sentence with the rate', () => {
     expect(reliabilityText({ yesCount: 5, fulfilledCount: 4, rate: 0.8 }, 'Awa')).toEqual({
@@ -87,7 +88,7 @@ describe('reliabilityText', () => {
       pending: PENDING,
     });
     expect(reliabilityText({ yesCount: 0, fulfilledCount: 0, rate: null }, null)).toEqual({
-      line: "Ce client n'a pas encore dit oui sur une campagne terminée.",
+      line: "Ce client n'a pas encore dit oui sur une campagne terminée et suivie en commandes.",
       pending: PENDING,
     });
   });

@@ -9,6 +9,7 @@ import {
   updateClientNotes,
   visibleClientWhere,
 } from './clients';
+import { learnableCampaignWhere } from './reliability';
 import { ORDER_SELECT, toOrderRow } from './serializers';
 
 const COUNTED = { completedAt: { not: null }, locked: false, suspicious: false };
@@ -375,6 +376,7 @@ describe('getClient', () => {
   beforeEach(() => {
     prismaMock.saleOrder.findMany.mockResolvedValue([]);
     aggregate().mockResolvedValue({ _sum: { totalAmount: null } });
+    prismaMock.campaign.findMany.mockResolvedValue([]);
   });
 
   it('getClient lists every visible interest, newest first', async () => {
@@ -451,17 +453,31 @@ describe('getClient', () => {
     expect(client).toMatchObject({ orders: [], totalSpent: 0 });
   });
 
-  it('PRO reliability weighs yes answers of finished campaigns and their fulfilled orders', async () => {
+  it('PRO reliability weighs only the campaigns the shop followed up in orders', async () => {
     prismaMock.respondent.findFirst.mockResolvedValue({
       ...detail,
       responses: [
         ...detail.responses,
         yesAnswer('resp_3', closed, 'FULFILLED'),
+        yesAnswer('resp_5', closed, null),
         // Still running: it may yet turn into an order.
         yesAnswer('resp_4', running, 'FULFILLED'),
       ],
     } as never);
+    // c1 still has an open order and c_resp_4 runs: only these two teach.
+    prismaMock.campaign.findMany.mockResolvedValue([
+      { id: 'c_resp_3' },
+      { id: 'c_resp_5' },
+    ] as never);
     const client = await getClient(prismaMock, 'org_1', 'r1', PRO_CARD);
+    expect(prismaMock.campaign.findMany).toHaveBeenCalledWith({
+      where: {
+        organizationId: 'org_1',
+        id: { in: ['c2', 'c1', 'c_resp_3', 'c_resp_5', 'c_resp_4'] },
+        ...learnableCampaignWhere(NOW),
+      },
+      select: { id: true },
+    });
     expect(client?.reliability).toEqual({ yesCount: 2, fulfilledCount: 1, rate: 0.5 });
     // The weighing stays here: an interest carries only what the card shows.
     expect(Object.keys(client!.interests[0]!)).not.toContain('order');
@@ -470,6 +486,7 @@ describe('getClient', () => {
 
   it('PRO reliability has no rate under 2 finished yes answers', async () => {
     prismaMock.respondent.findFirst.mockResolvedValue(detail as never);
+    prismaMock.campaign.findMany.mockResolvedValue([{ id: 'c1' }] as never);
     const client = await getClient(prismaMock, 'org_1', 'r1', PRO_CARD);
     expect(client?.reliability).toEqual({ yesCount: 1, fulfilledCount: 0, rate: null });
   });

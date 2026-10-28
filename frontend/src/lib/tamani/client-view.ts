@@ -104,9 +104,14 @@ export function reliabilityText(
 ): { line: string; pending: string | null } {
   const who = firstName ?? 'Ce client';
   const pending =
-    r.rate === null ? "Le taux s'affiche dès 2 « oui » sur des campagnes terminées." : null;
+    r.rate === null
+      ? "Le taux s'affiche dès 2 « oui » sur des campagnes terminées dont les commandes sont livrées ou annulées."
+      : null;
   if (r.yesCount === 0) {
-    return { line: `${who} n'a pas encore dit oui sur une campagne terminée.`, pending };
+    return {
+      line: `${who} n'a pas encore dit oui sur une campagne terminée et suivie en commandes.`,
+      pending,
+    };
   }
   const counts = `${who} a dit oui ${r.yesCount} fois, a acheté ${r.fulfilledCount} fois`;
   const line = r.rate === null ? `${counts}.` : `${counts} · ${Math.round(r.rate * 100)}${NBSP}%`;

@@ -179,7 +179,9 @@ describe('ClientDetailView', () => {
   it('PRO card under 2 finished yes answers says when the rate comes', () => {
     const t = text(card({ ...pro, reliability: { yesCount: 1, fulfilledCount: 0, rate: null } }));
     expect(t).toContain('Awa a dit oui 1 fois, a acheté 0 fois.');
-    expect(t).toContain("Le taux s'affiche dès 2 « oui » sur des campagnes terminées.");
+    expect(t).toContain(
+      "Le taux s'affiche dès 2 « oui » sur des campagnes terminées dont les commandes sont livrées ou annulées.",
+    );
   });
 
   it('FREE card shows the reliability as a Pro card', () => {

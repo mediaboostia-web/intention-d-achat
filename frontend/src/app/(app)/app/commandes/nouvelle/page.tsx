@@ -67,7 +67,7 @@ export default function NewOrderPage() {
     };
   }, [shop.id, attempt]);
 
-  async function create(body: OrderBody) {
+  async function create(body: OrderBody): Promise<boolean> {
     setError(null);
     try {
       const res = await api<{ order: OrderRow }>(`/api/shops/${shop.id}/orders`, {
@@ -75,8 +75,10 @@ export default function NewOrderPage() {
         body,
       });
       router.push(`/app/commandes/${encodeURIComponent(res.order.id)}`);
+      return true;
     } catch (err) {
       setError(errorMessage(err));
+      return false;
     }
   }
 

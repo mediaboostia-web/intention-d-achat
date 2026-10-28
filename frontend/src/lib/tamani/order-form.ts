@@ -125,3 +125,21 @@ export function orderFormToBody(
     },
   };
 }
+
+/**
+ * Sends the form once: busy until `send` says it failed (false or a throw).
+ * After a success the page is moving to the new order, so the button stays
+ * busy and a second tap on a slow network cannot make a second order.
+ */
+export async function submitOnce(
+  send: () => Promise<boolean>,
+  setBusy: (busy: boolean) => void,
+): Promise<void> {
+  setBusy(true);
+  let done = false;
+  try {
+    done = await send();
+  } finally {
+    if (!done) setBusy(false);
+  }
+}

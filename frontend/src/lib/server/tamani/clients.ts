@@ -24,10 +24,9 @@ import type {
 } from '@/lib/tamani/client-view';
 import type { Cursor } from '@/lib/server/notifications/cursor';
 import { buildPage } from '@/lib/server/pagination/paginate';
-import { isFinished } from './campaign-status';
 import type { Db } from './locks';
 import { displayPhone, maskPhone } from './phone';
-import { clientReliability } from './reliability';
+import { clientReliability, learnableCampaignIds } from './reliability';
 import { ORDER_SELECT, toOrderRow } from './serializers';
 
 /** An answer that counts: completed, within the quota, not suspicious. */
@@ -285,11 +284,20 @@ export async function getClient(
       _sum: { totalAmount: true },
     }),
   ]);
-  const reliability = opts.reliability
+  // Only the campaigns the shop followed up in orders say whether a yes buys.
+  const learnable = opts.reliability
+    ? await learnableCampaignIds(
+        db,
+        organizationId,
+        [...new Set(r.responses.map((x) => x.campaignId))],
+        now,
+      )
+    : null;
+  const reliability = learnable
     ? clientReliability(
         r.responses.map((x) => ({
           interested: x.interested === true,
-          campaignFinished: isFinished(x.campaign, now),
+          campaignFinished: learnable.has(x.campaignId),
           fulfilled: x.order?.status === 'FULFILLED',
         })),
       )

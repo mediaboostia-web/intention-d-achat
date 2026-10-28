@@ -168,6 +168,25 @@ describe('convertResponseToOrder', () => {
     });
   });
 
+  it('keeps the answer’s option in the note, before the place', async () => {
+    prismaMock.response.findFirst.mockResolvedValue(
+      answer({
+        option: 'Rouge',
+        zoneId: null,
+        deliveryPlace: 'Keur Massar',
+        campaign: { productId: 'prod_1', product: { ...product, optionLabel: 'Couleur' } },
+      }) as never,
+    );
+    await convert();
+    expect(created().data).toMatchObject({ notes: 'Couleur : Rouge\nLieu : Keur Massar' });
+  });
+
+  it('names a nameless option « Option »', async () => {
+    prismaMock.response.findFirst.mockResolvedValue(answer({ option: '5 L' }) as never);
+    await convert();
+    expect(created().data).toMatchObject({ notes: 'Option : 5 L' });
+  });
+
   it('defaults to a consumer and one piece when the answer says neither', async () => {
     prismaMock.response.findFirst.mockResolvedValue(
       answer({ buyerType: null, quantity: null }) as never,
