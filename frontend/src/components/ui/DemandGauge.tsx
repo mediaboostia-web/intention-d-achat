@@ -3,17 +3,20 @@ import { cn } from '@/lib/utils';
 /**
  * Demand against the reference (the planned order, else the stock),
  * coloured in like notebook squares: ten squares up to the reference, the
- * realistic demand in ink, the announced one hatched beyond it.
+ * realistic demand in ink, the announced one hatched beyond it. An in-stock
+ * campaign names its reference "en stock".
  */
 export function DemandGauge({
   realistic,
   announced,
   reference,
+  referenceLabel = 'prévu',
   className,
 }: {
   realistic: number;
   announced: number;
   reference: number;
+  referenceLabel?: 'prévu' | 'en stock';
   className?: string;
 }) {
   const per = reference / 10;
@@ -47,11 +50,12 @@ export function DemandGauge({
           annoncé <b className="text-primary">{announced}</b>
         </span>
         <span>
-          prévu <b className="text-primary">{reference}</b>
+          {referenceLabel} <b className="text-primary">{reference}</b>
         </span>
       </p>
       <p className="sr-only">
-        Demande réaliste {realistic}, annoncée {announced}, pour {reference} prévues.
+        Demande réaliste {realistic}, annoncée {announced}, pour {reference}{' '}
+        {referenceLabel === 'prévu' ? 'prévues' : 'en stock'}.
       </p>
     </div>
   );

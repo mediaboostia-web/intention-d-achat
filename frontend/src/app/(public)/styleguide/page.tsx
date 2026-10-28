@@ -28,8 +28,10 @@ import {
   Switch,
   Tabs,
   Textarea,
+  StockCard,
   VerdictCard,
 } from '@/components/ui';
+import { provisionalNote, stockAdviceDisplay } from '@/lib/tamani/results-view';
 import { DEFAULT_SHARE_TEMPLATE } from '@/lib/tamani/share-message';
 import { colors } from '@/lib/design/tokens';
 
@@ -344,6 +346,26 @@ export default function StyleguidePage() {
               completedResponses={300}
               reference={2000}
               unitLabel="sac de 25 kg"
+            />
+          </div>
+        </Section>
+
+        <Section title="L'état du stock (produit en stock)">
+          <div className="grid gap-8 sm:grid-cols-2">
+            <StockCard
+              {...stockAdviceDisplay(
+                { status: 'ENOUGH', leftover: 24, restock: 0, provisional: true },
+                30,
+                'pièce',
+              )}
+              note={provisionalNote(6)}
+            />
+            <StockCard
+              {...stockAdviceDisplay(
+                { status: 'SHORTAGE', leftover: 0, restock: 40, provisional: false },
+                30,
+                'bouteille',
+              )}
             />
           </div>
         </Section>

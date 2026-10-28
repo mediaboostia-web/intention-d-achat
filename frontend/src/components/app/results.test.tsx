@@ -6,7 +6,11 @@ import {
   coefNote,
   percentRows,
   priceSignal,
+  provisionalNote,
+  stockAdviceDisplay,
   stockLine,
+  toServeLine,
+  type CampaignResult,
   type CampaignStatsBody,
 } from '@/lib/tamani/results-view';
 
@@ -176,7 +180,151 @@ describe('CampaignResults', () => {
   });
 });
 
+const inStock = (
+  over: Partial<CampaignStatsBody['stats']> = {},
+  result: Partial<CampaignResult> = {},
+): CampaignStatsBody['stats'] => ({
+  ...stats,
+  availability: 'IN_STOCK',
+  completed: 1,
+  interested: 1,
+  notInterested: 0,
+  interestRate: 1,
+  announced: 12,
+  reference: 30,
+  stock: 30,
+  byBuyerType: {
+    CONSUMER: { respondents: 1, announced: 12 },
+    RESELLER: { respondents: 0, announced: 0 },
+  },
+  byZone: [],
+  pickup: { respondents: 0, quantity: 0 },
+  byTiming: [{ timing: 'THIS_WEEK', respondents: 1, quantity: 12 }],
+  noReasons: [],
+  result: {
+    ...stats.result!,
+    estimate: {
+      announced: 12,
+      realistic: 6,
+      low: 5,
+      high: 7,
+      byBuyerType: {
+        CONSUMER: { respondents: 1, announced: 12, realistic: 6 },
+        RESELLER: { respondents: 0, announced: 0, realistic: 0 },
+      },
+    },
+    verdict: { code: 'WAIT', ratio: null, missingResponses: 19 },
+    money: null,
+    stockStatus: 'ENOUGH',
+    stockAdvice: { status: 'ENOUGH', leftover: 24, restock: 0, provisional: true },
+    ...result,
+  },
+  ...over,
+});
+
+describe('CampaignResults for an in-stock campaign', () => {
+  it('leads with the people to serve and its stock, never a wait', () => {
+    const el = render({ stats: inStock(), access: 'PLAN' });
+    const t = text(el);
+    expect(t).toContain('À servir maintenant');
+    expect(t).toContain('1 intéressé · 12 pièces');
+    expect(t).toContain('Cette semaine');
+    expect(t).toContain('Stock suffisant');
+    expect(t).toContain("Il t'en restera environ 24 pièces.");
+    expect(t).toContain('Estimation provisoire : 1 réponse sur 20.');
+    expect(t).toContain('en stock 30');
+    expect(t).not.toContain('On attend');
+    expect(t).not.toContain('prévu');
+    expect(html(el)).toContain('href="/app/campagnes/c1?onglet=interesses"');
+  });
+
+  it('asks for a restock on a shortage and avoids no dead stock', () => {
+    const el = render({
+      stats: inStock(
+        { completed: 25, interested: 25, announced: 100 },
+        {
+          stockStatus: 'SHORTAGE',
+          stockAdvice: { status: 'SHORTAGE', leftover: 0, restock: 40, provisional: false },
+          money: { avoidedDeadStock: null, expectedProfit: 40000 },
+          verdict: { code: 'STOP', ratio: 0.3, missingResponses: 0 },
+        },
+      ),
+      access: 'PLAN',
+    });
+    const t = text(el);
+    expect(t).toContain('Réassort');
+    expect(t).toContain('~40');
+    expect(t).toContain("Rupture probable : prévois un réassort d'environ 40 pièces.");
+    expect(t).not.toContain('provisoire');
+    expect(t).not.toContain('dormi au dépôt');
+    expect(t).not.toContain('Prévois de recommander');
+  });
+
+  it('keeps the people to serve when the stock reading is locked', () => {
+    const t = text(render({ stats: inStock(), access: 'LOCKED' }));
+    expect(t).toContain('À servir maintenant');
+    expect(t).toContain('Ton stock va-t-il suffire ?');
+    expect(t).toContain('Pro');
+    expect(t).not.toContain('Stock suffisant');
+  });
+
+  it('asks for the stock when the campaign has none', () => {
+    const el = render({
+      stats: inStock({ stock: null, reference: null }, { stockStatus: null, stockAdvice: null }),
+      access: 'PLAN',
+    });
+    expect(text(el)).toContain("Indique ton stock dans la campagne pour savoir s'il suffira.");
+    expect(html(el)).toContain('href="/app/campagnes/c1?onglet=modifier"');
+  });
+});
+
 describe('result sentences', () => {
+  it('stockAdviceDisplay stamps the stock when it is enough', () => {
+    expect(
+      stockAdviceDisplay(
+        { status: 'ENOUGH', leftover: 24, restock: 0, provisional: true },
+        30,
+        'pièce',
+      ),
+    ).toEqual({
+      word: 'Stock suffisant',
+      figure: '30',
+      unit: 'pièces en stock',
+      sentence: "Il t'en restera environ 24 pièces.",
+      tone: 'success',
+    });
+    expect(
+      stockAdviceDisplay(
+        { status: 'ENOUGH', leftover: 0, restock: 0, provisional: false },
+        30,
+        'pièce',
+      ).sentence,
+    ).toBe('Tout ton stock devrait partir.');
+  });
+
+  it('stockAdviceDisplay stamps the restock, rounded like the verdict', () => {
+    expect(
+      stockAdviceDisplay(
+        { status: 'SHORTAGE', leftover: 0, restock: 211, provisional: false },
+        30,
+        'sac',
+      ),
+    ).toEqual({
+      word: 'Réassort',
+      figure: '~210',
+      unit: 'sacs',
+      sentence: "Rupture probable : prévois un réassort d'environ 210 sacs.",
+      tone: 'warning',
+    });
+  });
+
+  it('provisionalNote and toServeLine count in French', () => {
+    expect(provisionalNote(1)).toBe('Estimation provisoire : 1 réponse sur 20.');
+    expect(provisionalNote(12)).toBe('Estimation provisoire : 12 réponses sur 20.');
+    expect(toServeLine(6, 12, 'bouteille')).toBe('6 intéressés · 12 bouteilles');
+    expect(toServeLine(1, 1, 'pièce')).toBe('1 intéressé · 1 pièce');
+  });
+
   it('percentRows gives each share of the total', () => {
     expect(
       percentRows([

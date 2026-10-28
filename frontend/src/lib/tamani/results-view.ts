@@ -8,7 +8,12 @@ import {
   type NotInterestedReason,
 } from './labels';
 import { TIMING_LABELS, type Availability, type Timing } from './timing';
-import { approxQuantity, pluralizeUnit, type VerdictCode } from './verdict-display';
+import {
+  DEFAULT_MIN_RESPONSES,
+  approxQuantity,
+  pluralizeUnit,
+  type VerdictCode,
+} from './verdict-display';
 
 /** Realistic demand (spec §5.4.1), computed by lib/server/tamani/estimate.ts. */
 export interface DemandEstimate {
@@ -159,6 +164,48 @@ export function stockLine(i: {
   if (i.status !== 'SHORTAGE' || i.stock === null) return null;
   const q = approxQuantity(i.realistic);
   return `La demande réaliste (~${q} ${pluralizeUnit(i.unitLabel, q)}) dépasse ton stock de ${i.stock}. Prévois de recommander.`;
+}
+
+/** An in-stock campaign's stamp: the stock when it is enough, else the restock to plan. */
+export function stockAdviceDisplay(
+  advice: StockAdvice,
+  stock: number,
+  unitLabel: string,
+): { word: string; figure: string; unit: string; sentence: string; tone: 'success' | 'warning' } {
+  if (advice.status === 'ENOUGH') {
+    const left = approxQuantity(advice.leftover);
+    return {
+      word: 'Stock suffisant',
+      figure: String(stock),
+      unit: `${pluralizeUnit(unitLabel, stock)} en stock`,
+      sentence:
+        left === 0
+          ? 'Tout ton stock devrait partir.'
+          : `Il t'en restera environ ${left} ${pluralizeUnit(unitLabel, left)}.`,
+      tone: 'success',
+    };
+  }
+  const q = approxQuantity(advice.restock);
+  const units = pluralizeUnit(unitLabel, q);
+  return {
+    word: 'Réassort',
+    figure: `~${q}`,
+    unit: units,
+    sentence: `Rupture probable : prévois un réassort d'environ ${q} ${units}.`,
+    tone: 'warning',
+  };
+}
+
+/** "Estimation provisoire : 12 réponses sur 20." */
+export function provisionalNote(completed: number): string {
+  const answers = completed > 1 ? 'réponses' : 'réponse';
+  return `Estimation provisoire : ${completed} ${answers} sur ${DEFAULT_MIN_RESPONSES}.`;
+}
+
+/** "6 intéressés · 12 bouteilles": who is waiting to be served. */
+export function toServeLine(interested: number, announced: number, unitLabel: string): string {
+  const people = interested > 1 ? 'intéressés' : 'intéressé';
+  return `${interested} ${people} · ${announced} ${pluralizeUnit(unitLabel, announced)}`;
 }
 
 /** 0.45 → "4,5": how many buy out of 10 who say yes. */

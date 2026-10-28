@@ -14,6 +14,7 @@ import {
   EmptyState,
   MoneyCard,
   Notice,
+  StockCard,
   VerdictCard,
 } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -22,7 +23,10 @@ import {
   coefNote,
   percentRows,
   priceSignal,
+  provisionalNote,
+  stockAdviceDisplay,
   stockLine,
+  toServeLine,
   type CampaignStatsBody,
 } from '@/lib/tamani/results-view';
 import { TIMING_LABELS } from '@/lib/tamani/timing';
@@ -32,6 +36,98 @@ const plural = (n: number, one: string, many: string) => (n > 1 ? many : one);
 
 function Heading({ children }: { children: ReactNode }) {
   return <h2 className="mt-8 font-hand text-2xl font-bold text-primary">{children}</h2>;
+}
+
+function OfferedNote() {
+  return (
+    <p className="mt-3 font-hand text-lg text-ink-soft">
+      Verdict offert pour ta première campagne. Avec Pro, tu l&apos;as sur toutes.
+    </p>
+  );
+}
+
+/**
+ * An in-stock campaign (lot 6b): the people to serve now, then whether the
+ * stock will last. Never a wait: they want to buy today.
+ */
+function InStockHead({
+  body,
+  base,
+  unitLabel,
+  calc,
+  money,
+  locked,
+}: {
+  body: CampaignStatsBody;
+  base: string;
+  unitLabel: string;
+  calc: ReactNode;
+  money: ReactNode;
+  locked: (title: string, pitch: string) => ReactNode;
+}) {
+  const { stats, access } = body;
+  const result = access === 'LOCKED' ? null : stats.result;
+  const units = (n: number) => pluralizeUnit(unitLabel, n);
+  const advice = result?.stockAdvice ?? null;
+  return (
+    <>
+      {stats.interested > 0 && (
+        <Card className="mb-8">
+          <h2 className="font-hand text-2xl font-bold text-primary">À servir maintenant</h2>
+          <p className="mt-2 text-lg font-bold text-ink">
+            {toServeLine(stats.interested, stats.announced, unitLabel)}
+          </p>
+          {stats.byTiming.length > 0 && (
+            <DataList
+              className="mt-2"
+              items={stats.byTiming.map((t) => ({
+                id: t.timing,
+                label: TIMING_LABELS[t.timing],
+                value: `${t.respondents} · ${t.quantity} ${units(t.quantity)}`,
+              }))}
+            />
+          )}
+          <Button className="mt-4" href={`${base}?onglet=interesses`}>
+            Voir les intéressés
+          </Button>
+        </Card>
+      )}
+      {stats.stock === null ? (
+        <Notice
+          tone="info"
+          action={
+            <Button href={`${base}?onglet=modifier`} variant="secondary">
+              Indiquer le stock
+            </Button>
+          }
+        >
+          Indique ton stock dans la campagne pour savoir s&apos;il suffira.
+        </Notice>
+      ) : advice ? (
+        <StockCard
+          {...stockAdviceDisplay(advice, stats.stock, unitLabel)}
+          note={advice.provisional ? provisionalNote(stats.completed) : undefined}
+        />
+      ) : (
+        locked(
+          'Ton stock va-t-il suffire ?',
+          'Avec Pro, Tamani compare la demande réaliste à ton stock et te dit quand réassortir.',
+        )
+      )}
+      {result && access === 'OFFERED' && <OfferedNote />}
+      {result && stats.stock !== null && stats.stock > 0 && (
+        <DemandGauge
+          className="mt-6"
+          realistic={result.estimate.realistic}
+          announced={stats.announced}
+          reference={stats.stock}
+          referenceLabel="en stock"
+        />
+      )}
+      {calc}
+      {money}
+    </>
+  );
 }
 
 export function CampaignResults({
@@ -80,14 +176,17 @@ export function CampaignResults({
     );
   }
 
-  const shortage = result
-    ? stockLine({
-        status: result.stockStatus,
-        realistic: result.estimate.realistic,
-        stock: stats.stock,
-        unitLabel,
-      })
-    : null;
+  const inStock = stats.availability === 'IN_STOCK';
+  // In stock, the stock card says it; the shortage line is for an order to come.
+  const shortage =
+    result && !inStock
+      ? stockLine({
+          status: result.stockStatus,
+          realistic: result.estimate.realistic,
+          stock: stats.stock,
+          unitLabel,
+        })
+      : null;
   const signal = priceSignal(stats.noReasons, stats.notInterested);
   const when = percentRows(
     stats.byTiming.map((t) => ({
@@ -114,11 +213,81 @@ export function CampaignResults({
   const rate = stats.interestRate === null ? '' : ` (${Math.round(stats.interestRate * 100)} %)`;
   const missing = Math.max(DEFAULT_MIN_RESPONSES - stats.completed, 0);
 
+  const calc = result && (
+    <details className="mt-6">
+      <summary className="cursor-pointer font-bold text-primary">
+        Comment c&apos;est calculé ?
+      </summary>
+      <CalcTable
+        className="mt-2"
+        rows={[
+          {
+            label: 'Revendeurs',
+            count: result.estimate.byBuyerType.RESELLER.respondents,
+            announced: result.estimate.byBuyerType.RESELLER.announced,
+            coef: result.coefs.reseller,
+            realistic: result.estimate.byBuyerType.RESELLER.realistic,
+          },
+          {
+            label: 'Usagers',
+            count: result.estimate.byBuyerType.CONSUMER.respondents,
+            announced: result.estimate.byBuyerType.CONSUMER.announced,
+            coef: result.coefs.consumer,
+            realistic: result.estimate.byBuyerType.CONSUMER.realistic,
+          },
+        ]}
+        total={{ announced: result.estimate.announced, realistic: result.estimate.realistic }}
+        footnote={coefNote(result.coefs)}
+      />
+    </details>
+  );
+  const money = result?.money && (
+    <MoneyCard
+      className="mt-7"
+      avoidedDeadStock={result.money.avoidedDeadStock}
+      expectedProfit={result.money.expectedProfit}
+      addCostPriceHref={`/app/produits/${productId}`}
+      {...(stats.reference === null || inStock ? {} : { reference: stats.reference })}
+    />
+  );
+  /** What the plan hides, with the way to Pro. */
+  const locked = (title: string, pitch: string) => (
+    <Card>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-hand text-2xl font-bold text-primary">{title}</h2>
+        <Badge tone="accent">Pro</Badge>
+      </div>
+      <p className="mt-2 text-lg font-bold text-ink">
+        {answers(stats.completed)}, {stats.announced} {units(stats.announced)} annoncées.
+      </p>
+      {offerOpen ? (
+        <p className="mt-1 text-ink-soft">
+          Ton premier verdict est offert. Il arrive dès qu&apos;une campagne atteint{' '}
+          {DEFAULT_MIN_RESPONSES} réponses : encore {missing} pour celle-ci.
+        </p>
+      ) : (
+        <p className="mt-1 text-ink-soft">{pitch}</p>
+      )}
+      <Button className="mt-4" href="/app/plus" variant={offerOpen ? 'secondary' : 'primary'}>
+        Passer au Pro
+      </Button>
+    </Card>
+  );
+
   return (
     <div>
       {pending && <div className="mb-6">{pending}</div>}
 
-      {result ? (
+      {inStock ? (
+        <InStockHead
+          body={body}
+          base={base}
+          unitLabel={unitLabel}
+          calc={calc}
+          money={money}
+          locked={locked}
+        />
+      ) : result ? (
         <>
           <VerdictCard
             code={result.verdict.code}
@@ -136,11 +305,7 @@ export function CampaignResults({
                   },
                 })}
           />
-          {access === 'OFFERED' && (
-            <p className="mt-3 font-hand text-lg text-ink-soft">
-              Verdict offert pour ta première campagne. Avec Pro, tu l&apos;as sur toutes.
-            </p>
-          )}
+          {access === 'OFFERED' && <OfferedNote />}
           {stats.reference !== null && stats.reference > 0 && (
             <DemandGauge
               className="mt-6"
@@ -149,65 +314,14 @@ export function CampaignResults({
               reference={stats.reference}
             />
           )}
-          <details className="mt-6">
-            <summary className="cursor-pointer font-bold text-primary">
-              Comment c&apos;est calculé ?
-            </summary>
-            <CalcTable
-              className="mt-2"
-              rows={[
-                {
-                  label: 'Revendeurs',
-                  count: result.estimate.byBuyerType.RESELLER.respondents,
-                  announced: result.estimate.byBuyerType.RESELLER.announced,
-                  coef: result.coefs.reseller,
-                  realistic: result.estimate.byBuyerType.RESELLER.realistic,
-                },
-                {
-                  label: 'Usagers',
-                  count: result.estimate.byBuyerType.CONSUMER.respondents,
-                  announced: result.estimate.byBuyerType.CONSUMER.announced,
-                  coef: result.coefs.consumer,
-                  realistic: result.estimate.byBuyerType.CONSUMER.realistic,
-                },
-              ]}
-              total={{ announced: result.estimate.announced, realistic: result.estimate.realistic }}
-              footnote={coefNote(result.coefs)}
-            />
-          </details>
-          {result.money && (
-            <MoneyCard
-              className="mt-7"
-              avoidedDeadStock={result.money.avoidedDeadStock}
-              expectedProfit={result.money.expectedProfit}
-              addCostPriceHref={`/app/produits/${productId}`}
-              {...(stats.reference === null ? {} : { reference: stats.reference })}
-            />
-          )}
+          {calc}
+          {money}
         </>
       ) : (
-        <Card>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-hand text-2xl font-bold text-primary">Combien commander ?</h2>
-            <Badge tone="accent">Pro</Badge>
-          </div>
-          <p className="mt-2 text-lg font-bold text-ink">
-            {answers(stats.completed)}, {stats.announced} {units(stats.announced)} annoncées.
-          </p>
-          {offerOpen ? (
-            <p className="mt-1 text-ink-soft">
-              Ton premier verdict est offert. Il arrive dès qu&apos;une campagne atteint{' '}
-              {DEFAULT_MIN_RESPONSES} réponses : encore {missing} pour celle-ci.
-            </p>
-          ) : (
-            <p className="mt-1 text-ink-soft">
-              Avec Pro, Tamani calcule la demande réaliste et te dit combien commander.
-            </p>
-          )}
-          <Button className="mt-4" href="/app/plus" variant={offerOpen ? 'secondary' : 'primary'}>
-            Passer au Pro
-          </Button>
-        </Card>
+        locked(
+          'Combien commander ?',
+          'Avec Pro, Tamani calcule la demande réaliste et te dit combien commander.',
+        )
       )}
 
       <Heading>Les chiffres</Heading>
