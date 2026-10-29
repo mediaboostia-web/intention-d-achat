@@ -53,7 +53,7 @@ describe('GET /api/shops/me', () => {
     };
     expect(body.shop.id).toBe('org_1');
     expect(body.role).toBe('OWNER');
-    expect(body.usage).toEqual({ responsesThisMonth: 42, monthlyLimit: 150 });
+    expect(body.usage).toEqual({ responsesThisMonth: 42, monthlyLimit: 0 });
     expect(body.me).toEqual({ firstName: 'Fatou', name: 'Fatou Ndiaye' });
   });
 

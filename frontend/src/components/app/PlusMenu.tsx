@@ -90,7 +90,7 @@ export function PlusMenu({
             <span className="font-bold text-ink-soft">{planSentence(plan)}</span>
             {limits.maxActiveCampaigns !== null &&
               note(
-                `${limits.maxActiveCampaigns} campagnes en cours au plus, ${limits.monthlyResponses} réponses par mois.`,
+                `${limits.maxActiveCampaigns} campagne en cours au plus, ${limits.includedResponses ?? 0} réponses.`,
               )}
             {plan.inGrace && (
               <span className="text-sm font-bold text-warning">

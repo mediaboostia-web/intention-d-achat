@@ -179,7 +179,7 @@ describe('getPublicCampaign', () => {
       fixture({
         org: {
           subscription: {
-            plan: 'PRO',
+            plan: 'MONTH',
             currentPeriodEnd: new Date(now.getTime() + 20 * DAY),
             graceUntil: new Date(now.getTime() + 25 * DAY),
           },

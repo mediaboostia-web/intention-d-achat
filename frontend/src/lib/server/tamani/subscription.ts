@@ -41,10 +41,10 @@ function addMonthsUtc(date: Date, months: number): Date {
  */
 export function extendSubscription(
   current: SubscriptionDates | null,
-  plan: 'PRO' | 'BUSINESS',
+  plan: 'MONTH' | 'MONTH_MAX',
   months: 1 | 12,
   now: Date,
-): { plan: 'PRO' | 'BUSINESS'; currentPeriodEnd: Date; graceUntil: Date } {
+): { plan: 'MONTH' | 'MONTH_MAX'; currentPeriodEnd: Date; graceUntil: Date } {
   const stillActive =
     current?.plan === plan && current.currentPeriodEnd !== null && current.currentPeriodEnd > now;
   const start = stillActive && current.currentPeriodEnd ? current.currentPeriodEnd : now;

@@ -15,7 +15,8 @@ export function monthWindowUtc(now: Date): { start: Date; end: Date } {
 
 async function monthlyUsage(db: Db, organizationId: string, now: Date) {
   const sub = await db.subscription.findUnique({ where: { organizationId } });
-  const limit = PLANS[effectivePlan(sub, now).plan].monthlyResponses;
+  // Lot 8 task 5 counts answers per pass; until then, the pass total per month.
+  const limit = PLANS[effectivePlan(sub, now).plan].includedResponses ?? Number.MAX_SAFE_INTEGER;
   const { start, end } = monthWindowUtc(now);
   const completedAt = { gte: start, lt: end };
   const used = await db.response.count({

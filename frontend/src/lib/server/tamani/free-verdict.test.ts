@@ -39,7 +39,7 @@ describe('claimFreeVerdict', () => {
 
 describe('verdictAccess', () => {
   it('opens the verdict to a plan with the estimate', () => {
-    expect(verdictAccess(PLANS.PRO, null, 'c1')).toBe('PLAN');
+    expect(verdictAccess(PLANS.MONTH, null, 'c1')).toBe('PLAN');
   });
 
   it('offers the free plan its reserved campaign only', () => {

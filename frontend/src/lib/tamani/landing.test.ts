@@ -13,32 +13,30 @@ import {
 import { PLANS } from './plans';
 
 describe('pricingTiers reads PLANS', () => {
-  it('shows the monthly prices', () => {
-    const [free, pro, business] = pricingTiers(1);
-    expect(free).toEqual({
-      id: 'FREE',
-      label: 'Gratuit',
+  it('lists the trial and the five passes with their price and what they hold', () => {
+    const tiers = pricingTiers();
+    expect(tiers.map((x) => x.id)).toEqual([
+      'TRIAL',
+      'WEEK',
+      'TWO_WEEKS',
+      'MONTH',
+      'MONTH_PLUS',
+      'MONTH_MAX',
+    ]);
+    expect(tiers[0]).toEqual({
+      id: 'TRIAL',
+      label: 'Essai gratuit',
       price: '0',
       unit: 'FCFA',
-      per: 'Pour toujours',
+      per: '3 jours · 50 réponses',
     });
-    expect(pro).toEqual({
-      id: 'PRO',
-      label: 'Pro',
-      price: '9 900',
-      unit: 'FCFA par mois',
-      per: 'Sans engagement',
+    expect(tiers[5]).toEqual({
+      id: 'MONTH_MAX',
+      label: 'Pass Mois Max',
+      price: '24 900',
+      unit: 'FCFA',
+      per: '30 jours · 15 000 réponses',
     });
-    expect(business?.price).toBe('24 900');
-  });
-
-  it('shows a year as its monthly share and what was paid', () => {
-    const [free, pro, business] = pricingTiers(12);
-    expect(free?.per).toBe('Pour toujours');
-    expect(pro?.price).toBe('8 250');
-    expect(pro?.per).toBe('Payé 99 000 FCFA pour 12 mois, au lieu de 118 800.');
-    expect(business?.price).toBe('20 750');
-    expect(business?.per).toBe('Payé 249 000 FCFA pour 12 mois, au lieu de 298 800.');
   });
 });
 
@@ -103,9 +101,12 @@ describe('landingJsonLd', () => {
       priceCurrency: string;
     }[];
     expect(offers.map((o) => [o.name, o.price, o.priceCurrency])).toEqual([
-      [PLANS.FREE.label, '0', 'XOF'],
-      [PLANS.PRO.label, String(PLANS.PRO.monthlyPriceXof), 'XOF'],
-      [PLANS.BUSINESS.label, String(PLANS.BUSINESS.monthlyPriceXof), 'XOF'],
+      ['Essai gratuit', '0', 'XOF'],
+      ['Pass Semaine', '3900', 'XOF'],
+      ['Pass 2 Semaines', '5900', 'XOF'],
+      ['Pass Mois', '9900', 'XOF'],
+      ['Pass Mois Plus', '14900', 'XOF'],
+      ['Pass Mois Max', '24900', 'XOF'],
     ]);
   });
 
@@ -154,9 +155,13 @@ describe('landing copy', () => {
     expect(copy).not.toMatch(/[–—]/);
   });
 
-  it('takes the Free plan figures from PLANS', () => {
-    const free = LANDING_FAQ.find((q) => q.question.startsWith('Le forfait Gratuit'));
-    expect(free?.answer).toContain(`${PLANS.FREE.maxActiveCampaigns} campagnes en cours`);
-    expect(free?.answer).toContain(`${PLANS.FREE.monthlyResponses} réponses par mois`);
+  it('takes the trial figures from PLANS', () => {
+    const trial = LANDING_FAQ.find((q) => q.question.startsWith("L'essai gratuit"));
+    expect(trial?.answer).toContain(`${PLANS.TRIAL.durationDays} jours`);
+    expect(trial?.answer).toContain(`${PLANS.TRIAL.includedResponses} réponses`);
+  });
+
+  it('speaks of passes, never of Pro, Gratuit or 12 months', () => {
+    expect(copy).not.toMatch(/\bPro\b|forfait Gratuit|12 mois/);
   });
 });

@@ -13,7 +13,7 @@ const window = {
   lt: new Date('2026-11-01T00:00:00.000Z'),
 };
 const activePro = {
-  plan: 'PRO',
+  plan: 'MONTH',
   currentPeriodEnd: new Date('2026-11-24T00:00:00Z'),
   graceUntil: new Date('2026-11-29T00:00:00Z'),
 };
@@ -28,11 +28,9 @@ describe('monthWindowUtc', () => {
 });
 
 describe('shouldLockNewCompletion', () => {
-  it('locks once the FREE quota of 150 is used', async () => {
+  it('without a pass, every new completion waits', async () => {
     prismaMock.subscription.findUnique.mockResolvedValue(null);
-    prismaMock.response.count.mockResolvedValueOnce(149);
-    expect(await shouldLockNewCompletion(prismaMock, 'org_1', now)).toBe(false);
-    prismaMock.response.count.mockResolvedValueOnce(150);
+    prismaMock.response.count.mockResolvedValueOnce(0);
     expect(await shouldLockNewCompletion(prismaMock, 'org_1', now)).toBe(true);
     expect(prismaMock.response.count).toHaveBeenCalledWith({
       where: { organizationId: 'org_1', locked: false, completedAt: window },
@@ -58,7 +56,7 @@ describe('unlockCurrentMonth', () => {
     expect(prismaMock.response.findMany).toHaveBeenCalledWith({
       where: { organizationId: 'org_1', locked: true, completedAt: window },
       orderBy: [{ completedAt: 'asc' }, { id: 'asc' }],
-      take: 2850,
+      take: 850,
       select: { id: true },
     });
     expect(prismaMock.response.updateMany).toHaveBeenCalledWith({
@@ -80,7 +78,7 @@ describe('responsesThisMonth', () => {
   it("responsesThisMonth counts this month's unlocked completions against the plan", async () => {
     prismaMock.subscription.findUnique.mockResolvedValue(null);
     prismaMock.response.count.mockResolvedValue(42);
-    expect(await responsesThisMonth(prismaMock, 'org_1', now)).toEqual({ used: 42, limit: 150 });
+    expect(await responsesThisMonth(prismaMock, 'org_1', now)).toEqual({ used: 42, limit: 0 });
     expect(prismaMock.response.count).toHaveBeenCalledWith({
       where: { organizationId: 'org_1', locked: false, completedAt: window },
     });

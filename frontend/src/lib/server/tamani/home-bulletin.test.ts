@@ -7,7 +7,7 @@ const now = new Date('2026-10-27T12:00:00Z');
 const monthStart = new Date('2026-10-01T00:00:00Z');
 const weekAgo = new Date('2026-10-20T12:00:00Z');
 
-const pro = { plan: 'PRO', currentPeriodEnd: new Date('2026-11-20T00:00:00Z'), graceUntil: null };
+const pro = { plan: 'MONTH', currentPeriodEnd: new Date('2026-11-20T00:00:00Z'), graceUntil: null };
 
 const shop = (over: object = {}) => ({
   coefConsumer: 0.5,

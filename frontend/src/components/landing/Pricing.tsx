@@ -7,12 +7,12 @@ const PROMISES: readonly { icon: IconName; title: string; text: string }[] = [
   {
     icon: 'receipt',
     title: "Rien n'est prélevé tout seul",
-    text: "Mobile money ou carte. Tu paies 1 mois ou 12 mois d'avance.",
+    text: "Mobile money ou carte. Tu paies ton pass d'avance, pour 7, 14 ou 30 jours.",
   },
   {
     icon: 'check',
     title: 'Aucune réponse perdue',
-    text: "Au-delà de ton quota, elles t'attendent.",
+    text: "Au-delà de ton pass, elles t'attendent.",
   },
   {
     icon: 'lock',
@@ -22,44 +22,24 @@ const PROMISES: readonly { icon: IconName; title: string; text: string }[] = [
 ];
 
 type Cell = string | boolean;
-const { FREE, PRO, BUSINESS } = PLANS;
-const ROWS: readonly [string, Cell, Cell, Cell][] = [
-  ['Campagnes en cours', String(FREE.maxActiveCampaigns), 'Illimitées', 'Illimitées'],
+const { TRIAL, WEEK, MONTH_MAX } = PLANS;
+const RANGE = `${formatPrice(WEEK.includedResponses ?? 0)} à ${formatPrice(MONTH_MAX.includedResponses ?? 0)}`;
+const ROWS: readonly [string, Cell, Cell][] = [
+  ['Durée', `${TRIAL.durationDays} jours`, '7, 14 ou 30 jours'],
+  ['Réponses', formatPrice(TRIAL.includedResponses ?? 0), RANGE],
+  ['Campagnes en cours', String(TRIAL.maxActiveCampaigns), 'Illimitées'],
+  ['Réponses et totaux', true, true],
+  ['Quantité conseillée et verdict', TRIAL.features.estimate, WEEK.features.estimate],
   [
-    'Réponses par mois',
-    formatPrice(FREE.monthlyResponses),
-    formatPrice(PRO.monthlyResponses),
-    formatPrice(BUSINESS.monthlyResponses),
+    'Numéros des clients et WhatsApp',
+    TRIAL.features.respondentContacts,
+    WEEK.features.respondentContacts,
   ],
-  ['Réponses et totaux', true, true, true],
-  [
-    'Quantité conseillée et verdict',
-    FREE.features.estimate,
-    PRO.features.estimate,
-    BUSINESS.features.estimate,
-  ],
-  [
-    'Un lien par groupe',
-    FREE.features.sourceLinks,
-    PRO.features.sourceLinks,
-    BUSINESS.features.sourceLinks,
-  ],
-  ['Numéros des clients et WhatsApp', 'Masqués', true, true],
-  ['Commandes et livraisons par quartier', true, true, true],
-  [
-    'Fiabilité des clients',
-    FREE.features.reliability,
-    PRO.features.reliability,
-    BUSINESS.features.reliability,
-  ],
-  [
-    'Export pour Excel',
-    FREE.features.csvExport,
-    PRO.features.csvExport,
-    BUSINESS.features.csvExport,
-  ],
-  ['Mention « Propulsé par Tamani »', 'Oui', 'Non', 'Non'],
-  ["Membres d'équipe", String(FREE.seats), String(PRO.seats), `${BUSINESS.seats} (bientôt)`],
+  ['Un lien par groupe', TRIAL.features.sourceLinks, WEEK.features.sourceLinks],
+  ['Commandes et livraisons par quartier', true, true],
+  ['Fiabilité des clients', TRIAL.features.reliability, WEEK.features.reliability],
+  ['Export pour Excel', TRIAL.features.csvExport, WEEK.features.csvExport],
+  ['Mention « Propulsé par Tamani »', 'Oui', 'Non'],
 ];
 
 function CellValue({ value }: { value: Cell }) {
@@ -83,8 +63,8 @@ export function Pricing() {
           Un prix plus petit qu&apos;un carton qui dort.
         </h2>
         <p className="lp-lead">
-          Commence gratuitement. Passe à Pro quand tu veux la quantité conseillée et les numéros de
-          tes clients.
+          Essaie 3 jours gratuitement. Prends ensuite un pass : tu paies des réponses, jamais des
+          campagnes.
         </p>
         <PricingTags />
         <ul className="lp-promise">
@@ -108,9 +88,8 @@ export function Pricing() {
               <thead>
                 <tr>
                   <th scope="col">Ce que tu as</th>
-                  <th scope="col">{FREE.label}</th>
-                  <th scope="col">{PRO.label}</th>
-                  <th scope="col">{BUSINESS.label}</th>
+                  <th scope="col">{TRIAL.label}</th>
+                  <th scope="col">Avec un pass</th>
                 </tr>
               </thead>
               <tbody>

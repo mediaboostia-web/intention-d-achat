@@ -287,7 +287,7 @@ describe('shop pages', () => {
         <PlusPage />
       </ShopTestProvider>,
     );
-    expect(free).toContain('Gratuit');
+    expect(free).toContain('Sans pass');
     expect(free).toContain('Se déconnecter');
     // « Ton compte » moved to Profil (feedback 2, §8).
     expect(free).not.toContain('awa@example.com');
@@ -296,13 +296,13 @@ describe('shop pages', () => {
       <ShopTestProvider
         shop={{
           ...TEST_SHOP,
-          plan: { id: 'PRO', inGrace: false, currentPeriodEnd: '2026-11-24T12:00:00.000Z' },
+          plan: { id: 'MONTH', inGrace: false, currentPeriodEnd: '2026-11-24T12:00:00.000Z' },
         }}
       >
         <PlusPage />
       </ShopTestProvider>,
     );
-    expect(pro).toContain("Pro jusqu'au 24 novembre");
+    expect(pro).toContain("Pass Mois jusqu'au 24 novembre");
   });
 
   it('plus is one list, an icon on each line, Aide hidden without a link', () => {

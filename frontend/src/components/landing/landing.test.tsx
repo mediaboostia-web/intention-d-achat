@@ -4,7 +4,6 @@ import path from 'node:path';
 import { html, text } from '@/components/ui/test-html';
 import { WORDMARK_PATH, WORDMARK_VIEWBOX } from '@/lib/design/logo-paths';
 import { LANDING_FAQ, LANDING_LINKS } from '@/lib/tamani/landing';
-import { PLANS } from '@/lib/tamani/plans';
 import { BeforeAfter } from './BeforeAfter';
 import { Community } from './Community';
 import { ORBIT_NETWORKS } from './content';
@@ -218,12 +217,14 @@ describe('BeforeAfter', () => {
 });
 
 describe('Pricing', () => {
-  it('shows the PLANS prices and the month/year switch', () => {
+  it('shows the trial and the passes from PLANS, without a 12-month switch', () => {
     const t = text(<Pricing />);
-    expect(t).toContain('9 900');
+    for (const label of ['Essai gratuit', 'Pass Semaine', 'Pass Mois Max'])
+      expect(t).toContain(label);
+    expect(t).toContain('3 900');
     expect(t).toContain('24 900');
-    expect(t).toContain(`${PLANS.FREE.monthlyResponses} réponses par mois`);
-    expect(html(<Pricing />)).toMatch(/<button[^>]*aria-pressed="true"[^>]*>Au mois</);
+    expect(t).toContain('30 jours · 15 000 réponses');
+    expect(t).not.toMatch(/12 mois|Au mois|\bPro\b/);
   });
 });
 
