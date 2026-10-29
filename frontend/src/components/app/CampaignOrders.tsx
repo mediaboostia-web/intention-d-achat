@@ -47,6 +47,7 @@ function StockLeft({
 export function CampaignOrdersView({
   campaignId,
   unitLabel,
+  currency,
   summary,
   rows,
   hasMore,
@@ -57,6 +58,8 @@ export function CampaignOrdersView({
 }: {
   campaignId: string;
   unitLabel: string;
+  /** The shop's currency (lot 7b). */
+  currency: string;
   summary: CampaignOrderSummary;
   rows: readonly OrderRow[];
   hasMore: boolean;
@@ -83,7 +86,7 @@ export function CampaignOrdersView({
 
       {rows.length > 0 && (
         <div className="frame overflow-hidden rounded-card bg-surface">
-          <OrderLines rows={rows} label="Commandes de la campagne" />
+          <OrderLines rows={rows} label="Commandes de la campagne" currency={currency} />
         </div>
       )}
 
@@ -157,10 +160,12 @@ export function CampaignOrdersTab({
   shopId,
   campaignId,
   unitLabel,
+  currency,
 }: {
   shopId: string;
   campaignId: string;
   unitLabel: string;
+  currency: string;
 }) {
   const [list, setList] = useState<Listing>(EMPTY);
 
@@ -215,6 +220,7 @@ export function CampaignOrdersTab({
     <CampaignOrdersView
       campaignId={campaignId}
       unitLabel={unitLabel}
+      currency={currency}
       summary={list.summary}
       rows={list.items}
       hasMore={list.next !== null}

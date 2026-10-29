@@ -141,7 +141,12 @@ function ProductList() {
         <ul className={cn('mt-6', listClass(layout))}>
           {list.items.map((p) => (
             <li key={p.id} className="min-w-0">
-              <ProductCard product={p} layout={layout} href={`/app/produits/${p.id}`} />
+              <ProductCard
+                product={p}
+                layout={layout}
+                currency={shop.currency}
+                href={`/app/produits/${p.id}`}
+              />
             </li>
           ))}
         </ul>

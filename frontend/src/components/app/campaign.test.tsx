@@ -87,6 +87,7 @@ const wizard = (initial: WizardState, zonesCount: number | null = 2) => (
     zonesCount={zonesCount}
     initial={initial}
     now={now}
+    currency="XOF"
     onSubmit={async () => null}
   />
 );
@@ -127,6 +128,18 @@ describe('CampaignWizard', () => {
     expect(text(wizard(initialWizardState('p1')))).toContain(
       '7 500 FCFA (gros : 6 000 FCFA dès 12)',
     );
+    const gn = text(
+      <CampaignWizard
+        products={products}
+        zonesCount={2}
+        initial={initialWizardState('p1')}
+        now={now}
+        currency="GNF"
+        onSubmit={async () => null}
+      />,
+    );
+    expect(gn).toContain('7 500 FG (gros : 6 000 FG dès 12)');
+    expect(gn).not.toContain('FCFA');
     expect(out).toMatch(/aria-pressed="true"[^>]*>.*Marmites inox 5 L/s);
     expect(out).toContain('href="/app/produits/nouveau"');
     expect(text(wizard(initialWizardState('p1')))).toContain('Étape 1 sur 6');
@@ -137,6 +150,7 @@ describe('CampaignWizard', () => {
         zonesCount={2}
         initial={initialWizardState('p1')}
         now={now}
+        currency="XOF"
         onSubmit={async () => null}
       />,
     );
@@ -247,7 +261,9 @@ describe('CampaignActions', () => {
 
 describe('CampaignEditForm', () => {
   it('opens on the saved values', () => {
-    const out = html(<CampaignEditForm campaign={campaign} onSave={async () => {}} />);
+    const out = html(
+      <CampaignEditForm campaign={campaign} currency="XOF" onSave={async () => {}} />,
+    );
     const input = (id: string) =>
       (out.match(/<(?:input|textarea) [^>]*>/g) ?? []).find((t) => t.includes(`id="${id}"`)) ?? '';
     expect(input('edit-title')).toContain('value="Marmites inox 5 L"');
@@ -322,6 +338,7 @@ type OrdersProps = ComponentProps<typeof CampaignOrdersView>;
 const ordersProps = (over: Partial<OrdersProps> = {}): OrdersProps => ({
   campaignId: 'c1',
   unitLabel: 'sac',
+  currency: 'XOF',
   summary: { confirmed: 3, fulfilled: 1, toConfirm: 2, stockLeft: 26 },
   rows: [order],
   hasMore: false,
@@ -355,6 +372,9 @@ describe('CampaignOrders', () => {
     expect(out).toContain('href="/app/commandes/o1"');
     expect(t).toContain('3 sacs de Riz parfumé');
     expect(t).toContain('52 500 FCFA');
+    const cd = text(<CampaignOrdersView {...ordersProps({ currency: 'CDF' })} />);
+    expect(cd).toContain('52 500 FC');
+    expect(cd).not.toContain('FCFA');
     // The stock left is the screen's one bold figure.
     expect(out).toMatch(/font-sign[^>]*>26</);
   });
@@ -414,7 +434,9 @@ describe('CampaignOrders', () => {
       '/api/shops/org_1/campaigns/c1/orders?cursor=abc',
     );
     // Until the first page arrives, a placeholder.
-    const out = html(<CampaignOrdersTab shopId="org_1" campaignId="c1" unitLabel="sac" />);
+    const out = html(
+      <CampaignOrdersTab shopId="org_1" campaignId="c1" unitLabel="sac" currency="XOF" />,
+    );
     expect(out).toContain('role="status"');
     expect(out).toContain('Chargement des commandes');
   });

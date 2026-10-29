@@ -13,7 +13,7 @@ import { errorMessage } from '@/lib/tamani/api-messages';
 import type { ProductBody, ShopProduct } from '@/lib/tamani/product-form';
 
 function NewProduct() {
-  const { shop } = useShop();
+  const { shop, reload } = useShop();
   const router = useRouter();
   const params = useSearchParams();
   const first = params.get('premier') === '1';
@@ -27,6 +27,8 @@ function NewProduct() {
         method: 'POST',
         body,
       });
+      // The first product locks the country (lot 7b): Réglages must know it.
+      if (!shop.countryLocked) void reload();
       router.push(
         first
           ? `/app/campagnes/nouvelle?produit=${encodeURIComponent(res.product.id)}`
@@ -62,6 +64,7 @@ function NewProduct() {
         submitLabel="Ajouter le produit"
         submittingLabel="Ajout…"
         units={units}
+        currency={shop.currency}
         error={error}
         onSubmit={create}
       />

@@ -1,3 +1,4 @@
+import { currencyLabel, formatMoney } from '@/lib/tamani/currency';
 import { cn, formatPrice } from '@/lib/utils';
 import { DataList } from './DataList';
 
@@ -10,12 +11,15 @@ export function MoneyCard({
   expectedProfit,
   reference,
   addCostPriceHref,
+  currency,
   className,
 }: {
   avoidedDeadStock: number | null;
   expectedProfit: number | null;
   reference?: number;
   addCostPriceHref?: string;
+  /** The shop's currency (lot 7b). */
+  currency: string;
   className?: string;
 }) {
   if (avoidedDeadStock === null && expectedProfit === null) {
@@ -46,7 +50,8 @@ export function MoneyCard({
         <>
           <p className="mt-1 font-sign text-3xl leading-snug whitespace-nowrap">
             <span className="highlight">
-              {formatPrice(avoidedDeadStock)} <small className="text-[0.5em]">FCFA</small>
+              {formatPrice(avoidedDeadStock)}{' '}
+              <small className="text-[0.5em]">{currencyLabel(currency)}</small>
             </span>
           </p>
           <p className="mt-1 text-sm text-ink-soft">
@@ -63,7 +68,7 @@ export function MoneyCard({
             {
               id: 'profit',
               label: 'Bénéfice attendu',
-              value: `~${formatPrice(expectedProfit, 'FCFA')}`,
+              value: `~${formatMoney(expectedProfit, currency)}`,
             },
           ]}
         />

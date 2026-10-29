@@ -76,6 +76,7 @@ function NewCampaign() {
             products={products}
             zonesCount={zonesCount}
             initial={initialWizardState(products.some((p) => p.id === wanted) ? wanted : null)}
+            currency={shop.currency}
             onSubmit={submit}
           />
         )}

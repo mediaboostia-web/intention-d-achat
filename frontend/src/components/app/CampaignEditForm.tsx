@@ -28,11 +28,14 @@ const COUNT_HINT = 'Écris un nombre entier, par exemple 120.';
 
 export function CampaignEditForm({
   campaign,
+  currency,
   onSave,
   error,
   className,
 }: {
   campaign: ShopCampaign;
+  /** The shop's currency (lot 7b). */
+  currency: string;
   onSave: (body: CampaignPatchBody) => Promise<void>;
   error?: string | null | undefined;
   className?: string | undefined;
@@ -155,6 +158,7 @@ export function CampaignEditForm({
               availableAt: campaign.availableAt ? new Date(campaign.availableAt) : null,
             },
             now,
+            currency,
             campaign.defaultLink?.url,
           )}
         />

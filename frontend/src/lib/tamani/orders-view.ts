@@ -2,7 +2,7 @@
 // their words, the list's filters kept in the address, the frozen price
 // rule and the WhatsApp message of a confirmed order. Pure and shared: the
 // server freezes the price with the same rule the form previews.
-import { formatPrice } from '@/lib/utils';
+import { formatMoney } from './currency';
 import type { BuyerType } from './labels';
 import { pluralizeUnit } from './verdict-display';
 
@@ -173,6 +173,8 @@ export function orderWhatsappMessage(o: {
   totalAmount: number;
   fulfillment: Fulfillment;
   zoneName: string | null;
+  /** The shop's currency (lot 7b). */
+  currency: string;
 }): string {
   const hello = o.firstName ? `Bonjour ${o.firstName},` : 'Bonjour,';
   const where =
@@ -181,5 +183,5 @@ export function orderWhatsappMessage(o: {
       : o.zoneName
         ? `Livraison à ${o.zoneName}.`
         : 'Livraison.';
-  return `${hello} ta commande de ${o.quantity} ${pluralizeUnit(o.unitLabel, o.quantity)} de ${o.productName} est confirmée. Total : ${formatPrice(o.totalAmount, 'FCFA')}. ${where} À bientôt, ${o.shopName}.`;
+  return `${hello} ta commande de ${o.quantity} ${pluralizeUnit(o.unitLabel, o.quantity)} de ${o.productName} est confirmée. Total : ${formatMoney(o.totalAmount, o.currency)}. ${where} À bientôt, ${o.shopName}.`;
 }

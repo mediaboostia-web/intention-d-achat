@@ -16,7 +16,7 @@ const filled = {
 
 describe('productFormToBody', () => {
   it('turns the typed values into the API body', () => {
-    expect(productFormToBody({ ...filled, costPrice: '5 000 F' })).toEqual({
+    expect(productFormToBody({ ...filled, costPrice: '5 000 F' }, 'XOF')).toEqual({
       ok: true,
       body: {
         name: 'Marmites inox 5 L',
@@ -42,7 +42,7 @@ describe('productFormToBody', () => {
       [{ options: ['Rouge'] }, 'optionLabel'],
     ];
     for (const [patch, field] of cases) {
-      expect(productFormToBody({ ...filled, ...patch }), field).toMatchObject({
+      expect(productFormToBody({ ...filled, ...patch }, 'XOF'), field).toMatchObject({
         ok: false,
         errors: { [field]: expect.any(String) },
       });
@@ -80,6 +80,15 @@ describe('productToForm', () => {
       optionLabel: 'Couleur',
       options: ['Rouge', 'Noir'],
     });
-    expect(productFormToBody(form)).toMatchObject({ ok: true, body: { unitPrice: 7500 } });
+    expect(productFormToBody(form, 'XOF')).toMatchObject({ ok: true, body: { unitPrice: 7500 } });
+  });
+});
+
+describe('productFormToBody in the shop currency (lot 7b)', () => {
+  it('asks for the price in the shop currency', () => {
+    expect(productFormToBody({ ...filled, unitPrice: 'beaucoup' }, 'GNF')).toEqual({
+      ok: false,
+      errors: { unitPrice: 'Écris le prix en FG, sans virgule, par exemple 7 500.' },
+    });
   });
 });

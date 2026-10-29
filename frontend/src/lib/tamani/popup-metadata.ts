@@ -5,14 +5,14 @@
 import type { Metadata } from 'next';
 import type { PublicCampaign } from '@/lib/server/tamani/public-campaign';
 import { OG_PHOTO, cloudinaryVariant } from './cloudinary-url';
-import { formatXof } from './share-message';
+import { formatMoney } from './currency';
 
 const NO_INDEX = { index: false, follow: false };
 
 export function popupMetadata(c: PublicCampaign | null, appUrl: string): Metadata {
   if (!c) return { title: 'Lien introuvable · Tamani', robots: NO_INDEX };
   const base = appUrl.replace(/\/+$/, '');
-  const title = `${c.product.name} · ${formatXof(c.product.unitPrice)}`;
+  const title = `${c.product.name} · ${formatMoney(c.product.unitPrice, c.shop.currency)}`;
   const description = `${c.shop.name} · ${c.availabilityText}. Réponds en moins de 30 secondes.`;
   const photo = c.product.photos[0];
   const image = {

@@ -29,7 +29,8 @@ import { TIMING_LABELS, type Timing } from '@/lib/tamani/timing';
 import { frenchSpacing } from '@/lib/tamani/typography';
 import { pluralizeUnit } from '@/lib/tamani/verdict-display';
 import { waChatLink } from '@/lib/tamani/wa';
-import { cn, formatPrice } from '@/lib/utils';
+import { formatMoney } from '@/lib/tamani/currency';
+import { cn } from '@/lib/utils';
 import { clientName } from './ClientList';
 import { OrderLines } from './OrderList';
 import type { OrgRole } from './shop-context';
@@ -53,7 +54,7 @@ function interestDetail(i: ClientInterest): string {
 
 const SECTION_TITLE = 'font-hand text-2xl font-bold text-primary';
 
-function ClientOrders({ client }: { client: ClientDetail }) {
+function ClientOrders({ client, currency }: { client: ClientDetail; currency: string }) {
   return (
     <section aria-labelledby="orders-title" className="mt-8">
       <h2 id="orders-title" className={SECTION_TITLE}>
@@ -63,11 +64,11 @@ function ClientOrders({ client }: { client: ClientDetail }) {
         <>
           <p className="mt-2 text-sm text-ink-muted">Total acheté</p>
           <p className="font-sign text-4xl leading-tight text-ink">
-            {formatPrice(client.totalSpent, 'FCFA')}
+            {formatMoney(client.totalSpent, currency)}
           </p>
           <p className="text-sm text-ink-soft">Les commandes livrées ou récupérées.</p>
           <div className="frame mt-3 overflow-hidden rounded-card bg-surface">
-            <OrderLines rows={client.orders} label="Ses commandes" />
+            <OrderLines rows={client.orders} label="Ses commandes" currency={currency} />
           </div>
         </>
       ) : (
@@ -324,6 +325,7 @@ function ClientDeletion({ onDelete }: { onDelete: () => Promise<void> }) {
 export function ClientDetailView({
   client,
   shopName,
+  currency,
   now,
   role,
   onSaveNote,
@@ -331,6 +333,8 @@ export function ClientDetailView({
 }: {
   client: ClientDetail;
   shopName: string;
+  /** The shop's currency (lot 7b). */
+  currency: string;
   now: Date;
   /** The deletion is for an ADMIN or the OWNER (the server asks ADMIN). */
   role: OrgRole;
@@ -383,7 +387,7 @@ export function ClientDetailView({
         </Notice>
       )}
 
-      <ClientOrders client={client} />
+      <ClientOrders client={client} currency={currency} />
       <ClientReliability reliability={client.reliability} firstName={client.firstName} />
       <ClientNote initial={client.notes} onSave={onSaveNote} />
 
@@ -483,6 +487,7 @@ export function ClientScreen({ id }: { id: string }) {
     <ClientDetailView
       client={client}
       shopName={shop.name}
+      currency={shop.currency}
       now={new Date()}
       role={role}
       onSaveNote={async (notes) => {

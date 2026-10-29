@@ -122,10 +122,11 @@ describe('ClientDetailView', () => {
     ],
   };
 
-  const card = (c: ClientDetail, role: OrgRole = 'OWNER') => (
+  const card = (c: ClientDetail, role: OrgRole = 'OWNER', currency = 'XOF') => (
     <ClientDetailView
       client={c}
       shopName="Diallo Import"
+      currency={currency}
       now={now}
       role={role}
       onSaveNote={async () => {}}
@@ -172,6 +173,9 @@ describe('ClientDetailView', () => {
     ]);
     expect(t).toContain('Total acheté 37 500 FCFA');
     expect(out).toMatch(/font-sign[^>]*>37 500 FCFA</);
+    const gn = text(card(pro, 'OWNER', 'GNF'));
+    expect(gn).toContain('Total acheté 37 500 FG');
+    expect(gn).not.toContain('FCFA');
     expect(t).toContain('Awa a dit oui 5 fois, a acheté 4 fois · 80 %');
     expect(t).not.toContain('Avec Pro');
   });

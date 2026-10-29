@@ -5,7 +5,8 @@
 // are kept as typed and checked by productFormToBody on submit.
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button, Input, Notice, Switch, Textarea } from '@/components/ui';
-import { parseCount, parseFcfa } from '@/lib/tamani/fcfa-input';
+import { currencyLabel } from '@/lib/tamani/currency';
+import { parseCount, parseAmount } from '@/lib/tamani/fcfa-input';
 import {
   emptyProductForm,
   productFormToBody,
@@ -35,14 +36,17 @@ const FIELD_IDS: Record<keyof ProductFormValues, string> = {
 const used = (s: string) => s.trim() !== '';
 
 /** How the price will read in the WhatsApp message, once the unit price parses. */
-function pricePreview(v: ProductFormValues, wholesale: boolean): string | null {
-  const unitPrice = parseFcfa(v.unitPrice);
+function pricePreview(v: ProductFormValues, wholesale: boolean, currency: string): string | null {
+  const unitPrice = parseAmount(v.unitPrice);
   if (unitPrice === null) return null;
-  return formatPriceLine({
-    unitPrice,
-    wholesalePrice: wholesale ? parseFcfa(v.wholesalePrice) : null,
-    wholesaleMinQty: wholesale ? parseCount(v.wholesaleMinQty, 2) : null,
-  });
+  return formatPriceLine(
+    {
+      unitPrice,
+      wholesalePrice: wholesale ? parseAmount(v.wholesalePrice) : null,
+      wholesaleMinQty: wholesale ? parseCount(v.wholesaleMinQty, 2) : null,
+    },
+    currency,
+  );
 }
 
 export function ProductForm({
@@ -53,6 +57,7 @@ export function ProductForm({
   error,
   errors: serverErrors,
   units = [],
+  currency,
   className,
 }: {
   initial?: ProductFormValues;
@@ -63,6 +68,8 @@ export function ProductForm({
   errors?: ProductFormErrors | undefined;
   /** Units the shop already uses, shown after the common ones. */
   units?: readonly string[];
+  /** The shop's currency (lot 7b): the labels, the hints and the preview. */
+  currency: string;
   className?: string | undefined;
 }) {
   const [v, setV] = useState(initial);
@@ -98,7 +105,7 @@ export function ProductForm({
       ...(wholesale ? {} : { wholesalePrice: '', wholesaleMinQty: '' }),
       ...(hasOptions ? {} : { optionLabel: '', options: [] }),
     };
-    const result = productFormToBody(values);
+    const result = productFormToBody(values, currency);
     if (!result.ok) {
       setLocal(result.errors);
       const first = (Object.keys(FIELD_IDS) as Array<keyof ProductFormValues>).find(
@@ -116,7 +123,8 @@ export function ProductForm({
     }
   }
 
-  const preview = pricePreview(v, wholesale);
+  const preview = pricePreview(v, wholesale, currency);
+  const money = currencyLabel(currency);
 
   return (
     <form
@@ -149,7 +157,7 @@ export function ProductForm({
       <div className="grid gap-6 sm:grid-cols-2">
         <Input
           id={FIELD_IDS.unitPrice}
-          label="Prix à l'unité (FCFA)"
+          label={`Prix à l'unité (${money})`}
           inputMode="numeric"
           placeholder="7 500"
           value={v.unitPrice}
@@ -202,7 +210,7 @@ export function ProductForm({
           <div className="grid gap-6 sm:grid-cols-2">
             <Input
               id={FIELD_IDS.wholesalePrice}
-              label="Prix de gros (FCFA)"
+              label={`Prix de gros (${money})`}
               inputMode="numeric"
               placeholder="6 000"
               value={v.wholesalePrice}
@@ -225,7 +233,7 @@ export function ProductForm({
 
       <Input
         id={FIELD_IDS.costPrice}
-        label="Prix d'achat (FCFA)"
+        label={`Prix d'achat (${money})`}
         hint="Pour calculer ton bénéfice. Jamais montré à tes clients."
         inputMode="numeric"
         placeholder="5 000"

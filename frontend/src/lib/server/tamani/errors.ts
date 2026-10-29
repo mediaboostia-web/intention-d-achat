@@ -8,6 +8,7 @@ import { requestIdHeaders } from './http';
 export const TAMANI_ERRORS = [
   'SHOP_ALREADY_EXISTS',
   'SHOP_NOT_FOUND',
+  'SHOP_COUNTRY_LOCKED',
   'ZONE_NOT_FOUND',
   'ZONE_ALREADY_EXISTS',
   'PRODUCT_NOT_FOUND',
@@ -36,6 +37,7 @@ export type TamaniErrorCode = (typeof TAMANI_ERRORS)[number];
 const DEFAULT_MESSAGES: Record<TamaniErrorCode, string> = {
   SHOP_ALREADY_EXISTS: 'Tu as déjà une boutique.',
   SHOP_NOT_FOUND: "Tu n'as pas encore de boutique.",
+  SHOP_COUNTRY_LOCKED: 'Le pays ne change plus une fois un produit ajouté.',
   ZONE_NOT_FOUND: 'Cette zone de livraison est introuvable.',
   ZONE_ALREADY_EXISTS: 'Cette zone de livraison existe déjà.',
   PRODUCT_NOT_FOUND: 'Ce produit est introuvable.',

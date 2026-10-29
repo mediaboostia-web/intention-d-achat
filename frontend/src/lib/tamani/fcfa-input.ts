@@ -1,14 +1,15 @@
-// Amounts and counts typed by a wholesaler. FCFA has no decimals: "7 500",
-// "7.500" (dot as thousands separator) and "7500 F" all mean 7500, while
-// "7,5" or "7500.50" are refused rather than guessed.
+// Amounts and counts typed by a wholesaler. FCFA, the Guinean franc and the
+// Congolese franc have no decimals: "7 500", "7.500" (dot as thousands
+// separator), "7500 F", "65 000 FG" or "18 000 FC" all read as whole units,
+// while "7,5" or "7500.50" are refused rather than guessed.
 
 const MAX_FCFA = 100_000_000;
 
-/** Whole FCFA from 1 to 100 000 000, or null. */
-export function parseFcfa(raw: string): number | null {
+/** Whole units from 1 to 100 000 000, the local currency name typed after it dropped, or null. */
+export function parseAmount(raw: string): number | null {
   const compact = raw
     .trim()
-    .replace(/\s*(f\s*cfa|cfa|f)$/i, '')
+    .replace(/\s*(f\s*cfa|cfa|gnf|fg|cdf|fc|f)$/i, '')
     // \s covers the no-break spaces Intl and phone keyboards insert.
     .replace(/\s/g, '');
   if (!/^\d{1,3}(\.\d{3})+$|^\d+$/.test(compact)) return null;

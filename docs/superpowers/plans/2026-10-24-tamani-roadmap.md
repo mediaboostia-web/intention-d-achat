@@ -370,7 +370,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 | 6b | Retouches après le test du lot 6 | Un produit en stock se lit « à servir » et « état du stock » ; livraison ailleurs et numéros étrangers ; galerie de photos ; onglets et actions de la campagne ; filtres des clients ; page Exporter avec aperçu ; notifications demandées sur téléphone ; Plus et Profil (ajout du 2026-10-28). | 6 |
 | 7 | Commandes et clients | Conversion d'une réponse en commande, commandes manuelles, statuts, livraisons par quartier, filtre « a commandé », note et anonymisation des clients, fiabilité et coefficients appris. | 3, 5, 6, 6b |
 | 7a | Passe UX/UI | Mode nuit ; sur ordinateur, barre latérale repliable, barre du haut (recherche, jour / nuit, cloche, profil) et accueil en pleine page avec les verdicts en cartes ; cartes ou liste sur Campagnes et Produits ; pop-up retouché (stock, fenêtre de fin, lien Tamani) ; menu du téléphone par le côté sur la page d'accueil (ajout du 2026-10-28). | 7 |
-| 7b | Pays et monnaies | Toute l'Afrique francophone : chaque pays a sa monnaie, ses prix et ses numéros (ajout du 2026-10-27). | 3, 4 |
+| 7b | Pays et monnaies | Zone FCFA (UEMOA et CEMAC), Guinée et RD Congo : chaque boutique a la monnaie de son pays, écrite sous son nom local (FCFA, FG, FC) dans tous les prix, le message de partage, le pop-up et les commandes ; le pays se fige au premier produit ; anciens numéros béninois à 8 chiffres acceptés (ajout du 2026-10-27). | 3, 4 |
 | 8 | Forfaits prépayés et SasPay | Passes (Semaine, Mois, Grossiste) et recharges payés en mode test SasPay : activation idempotente, réponses comptées par pass, rappels et grâce, plafond du Gratuit. Bictorys retiré. | 3, 5, 6, 7, 7b |
 | 9 | Admin, accueil, légal, production | Admin Tamani, page d'accueil, CGU et confidentialité, mise en ligne sur Vercel avec SasPay en mode live. | tous |
 
@@ -619,6 +619,18 @@ Le porteur veut couvrir toute l'Afrique francophone. Aujourd'hui tout est en FCF
 3. **Prix et montants** : `formatPrice`, le message de partage, l'argent du verdict et l'export lisent la monnaie de la boutique ; les montants restent des entiers dans la plus petite unité.
 4. **Numéros** : la normalisation de `phone.ts` et les indicatifs couvrent chaque pays ajouté.
 5. **Paiement** : vérifier dans l'OpenAPI SasPay les pays et les moyens couverts avant d'ouvrir un pays au paiement ; la règle de marge de 70 % se vérifie par monnaie.
+- **Décisions du porteur (2026-10-29)** :
+  - **Pays du lot** : les 8 pays de l'UEMOA (FCFA, XOF), les 6 pays de la CEMAC (FCFA, XAF), la Guinée (franc guinéen, GNF) et la RD Congo (franc congolais, CDF). Les autres pays francophones viendront plus tard.
+  - **Affichage** : le nom local à côté des prix, « 6 500 FCFA » en UEMOA comme en CEMAC, « 65 000 FG » en Guinée, « 18 000 FC » en RD Congo. Le code ISO (XOF, XAF, GNF, CDF) reste interne, pour SasPay.
+  - **Changer de pays** : possible tant que la boutique n'a aucun produit ; ensuite le pays et la monnaie sont figés (des prix saisis en FCFA ne doivent pas se lire en francs guinéens). Pour changer ensuite, la boutique nous contacte.
+- **Fait** ([plan](2026-10-29-tamani-07b-pays-monnaies.md)) :
+  - **Pays** : 16 pays dans l'ordre UEMOA, CEMAC, Guinée, RD Congo ; l'API refuse un autre pays.
+  - **Monnaie** : posée d'après le pays à la création et au changement de pays ; la migration `9b_currency_by_country` a corrigé les boutiques existantes (toutes étaient en XOF).
+  - **Affichage** : tous les montants passent par `formatMoney` / `currencyLabel` (prix, message de partage, aperçu du lien, pop-up, produits, commandes, fiche client, argent du verdict, accueil). Un test refuse « FCFA » écrit en dur hors de la page d'accueil, des forfaits et des paiements (les prix de Tamani restent en FCFA jusqu'au lot 8).
+  - **Prix tapés** : « 65 000 FG » ou « 18 000 FC » se lisent 65000 et 18000.
+  - **Pays figé** : au premier produit (archivés compris), sous un verrou que prend aussi chaque création de produit ; un changement refusé répond `409 SHOP_COUNTRY_LOCKED` et Réglages grise le choix en disant pourquoi.
+  - **Numéros** : chaque pays est reconnu ; un ancien numéro béninois à 8 chiffres prend « 01 » devant.
+  - **Reporté au lot 8** : la couverture SasPay par pays et la marge de 70 % par monnaie. L'export n'a pas de colonne d'argent : rien à changer.
 
 ### Lot 8 : Forfaits prépayés et SasPay
 1. **Client SasPay** dans `frontend/src/lib/server/payments/saspay.ts` (`PaymentProvider.charge` via une session de checkout, plus `verifyPayment(paymentId)`).

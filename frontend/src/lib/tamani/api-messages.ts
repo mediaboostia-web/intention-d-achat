@@ -7,6 +7,7 @@ import { ApiError } from '@/lib/api';
 export const TAMANI_ERROR_CODES = [
   'SHOP_ALREADY_EXISTS',
   'SHOP_NOT_FOUND',
+  'SHOP_COUNTRY_LOCKED',
   'ZONE_NOT_FOUND',
   'ZONE_ALREADY_EXISTS',
   'PRODUCT_NOT_FOUND',
@@ -37,6 +38,8 @@ const MESSAGES: Record<string, string> = {
   // Tamani
   SHOP_ALREADY_EXISTS: 'Tu as déjà une boutique : on t’y emmène.',
   SHOP_NOT_FOUND: "Tu n'as pas encore de boutique. Crée-la pour commencer.",
+  SHOP_COUNTRY_LOCKED:
+    'Le pays ne change plus une fois un produit ajouté : tes prix sont dans sa monnaie. Écris-nous pour le changer.',
   ZONE_NOT_FOUND: "Cette zone n'existe plus. Recharge la page.",
   ZONE_ALREADY_EXISTS: 'Tu as déjà une zone avec ce nom.',
   PRODUCT_NOT_FOUND: "Ce produit n'existe plus. Recharge la liste.",

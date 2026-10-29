@@ -20,6 +20,7 @@ import { jsonOk, readJson, validationFailed } from '@/lib/server/tamani/http';
 import { CampaignPatch, compact } from '@/lib/server/tamani/inputs';
 import { shopHandler } from '@/lib/server/tamani/route';
 import { toCampaign, toLink } from '@/lib/server/tamani/serializers';
+import { shopCurrency } from '@/lib/server/tamani/shop';
 
 type Params = { orgId: string; campaignId: string };
 
@@ -29,7 +30,11 @@ export const GET = shopHandler<Params>('MEMBER', async (_req, { params }) => {
     include: { product: true, links: { orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] } },
   });
   if (!campaign) return tamaniError('CAMPAIGN_NOT_FOUND', 404);
-  return jsonOk({ campaign: toCampaign(campaign, new Date()), links: campaign.links.map(toLink) });
+  const currency = await shopCurrency(prisma, params.orgId);
+  return jsonOk({
+    campaign: toCampaign(campaign, new Date(), currency),
+    links: campaign.links.map(toLink),
+  });
 });
 
 export const PATCH = shopHandler<Params>('MEMBER', async (req, { params }) => {
@@ -86,7 +91,9 @@ export const PATCH = shopHandler<Params>('MEMBER', async (req, { params }) => {
         include: { product: true, links: { where: { isDefault: true } } },
       });
     });
-    return jsonOk({ campaign: toCampaign(campaign, now) });
+    return jsonOk({
+      campaign: toCampaign(campaign, now, await shopCurrency(prisma, params.orgId)),
+    });
   } catch (err) {
     if (err instanceof CampaignLimitReached) return tamaniError('CAMPAIGN_LIMIT_REACHED', 409);
     throw err;

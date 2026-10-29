@@ -29,7 +29,13 @@ export function photoUrls(photos: Prisma.JsonValue): string[] {
 
 type SubscriptionDates = Pick<Subscription, 'plan' | 'currentPeriodEnd' | 'graceUntil'>;
 
-export function toShop(org: Organization, sub: SubscriptionDates | null, now: Date) {
+/** `countryLocked`: the shop has a product, so its country and currency stay (lot 7b). */
+export function toShop(
+  org: Organization,
+  sub: SubscriptionDates | null,
+  now: Date,
+  countryLocked = false,
+) {
   const { plan, inGrace } = effectivePlan(sub, now);
   return {
     id: org.id,
@@ -38,6 +44,7 @@ export function toShop(org: Organization, sub: SubscriptionDates | null, now: Da
     whatsappPhone: org.whatsappPhone,
     country: org.country,
     currency: org.currency,
+    countryLocked,
     logoUrl: org.logoUrl,
     description: org.description,
     coefConsumer: org.coefConsumer,
@@ -101,7 +108,12 @@ export function toLink(l: CampaignLink) {
  * A campaign as the shop sees it: effective status (an expired ACTIVE
  * campaign reads CLOSED) and the share message ready to send.
  */
-export function toCampaign(c: Campaign & { product: Product; links: CampaignLink[] }, now: Date) {
+/** `currency`: the shop's (lot 7b), so the share message writes its price in FG or FC. */
+export function toCampaign(
+  c: Campaign & { product: Product; links: CampaignLink[] },
+  now: Date,
+  currency: string,
+) {
   const link = c.links.find((l) => l.isDefault);
   const defaultLink = link ? toLink(link) : null;
   const availability = c.availability === 'IN_STOCK' ? 'IN_STOCK' : 'INCOMING';
@@ -134,7 +146,7 @@ export function toCampaign(c: Campaign & { product: Product; links: CampaignLink
     defaultLink,
     shareMessage: renderShareMessage(c.shareTemplate, {
       produit: c.product.name,
-      prix: formatPriceLine(c.product),
+      prix: formatPriceLine(c.product, currency),
       disponibilite: formatAvailability({ availability, availableAt: c.availableAt }, now),
       lien: defaultLink?.url ?? '',
     }),

@@ -19,6 +19,27 @@ export async function getShopForUser(
 }
 
 /** The plan in force for a shop: its limits and features (FREE without a subscription). */
+/**
+ * Lot 7b: a shop's country (and so its currency) is fixed by its first
+ * product, archived ones included: prices typed in FCFA must never read as
+ * Guinean francs.
+ */
+export async function shopHasProducts(db: Db, organizationId: string): Promise<boolean> {
+  return (await db.product.findFirst({ where: { organizationId }, select: { id: true } })) !== null;
+}
+
+/** The shop's currency (lot 7b), XOF when the shop cannot be read. */
+export async function shopCurrency(db: Db, organizationId: string): Promise<string> {
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { currency: true },
+  });
+  return org?.currency ?? 'XOF';
+}
+
+/** Taken by a country change and by every product creation of the shop. */
+export const shopCountryLock = (organizationId: string) => `shop-country:${organizationId}`;
+
 export async function shopPlan(db: Db, organizationId: string, now: Date): Promise<PlanDefinition> {
   const sub = await db.subscription.findUnique({ where: { organizationId } });
   return PLANS[effectivePlan(sub, now).plan];

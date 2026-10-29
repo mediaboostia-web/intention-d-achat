@@ -43,7 +43,7 @@ describe('cards', () => {
   });
 
   it('without a photo the banner keeps its place with a picture of the product kind', () => {
-    const out = html(<ProductCard product={product([])} layout="card" />);
+    const out = html(<ProductCard currency="XOF" product={product([])} layout="card" />);
     expect(out).not.toContain('<img');
     expect(out).toMatch(/aspect-\[16\/7\][^"]*"[^>]*>\s*<svg/);
   });
@@ -51,7 +51,7 @@ describe('cards', () => {
   it('a long name breaks inside the card instead of pushing the grid', () => {
     for (const out of [
       html(<CampaignCard campaign={campaign([], LONG)} layout="card" />),
-      html(<ProductCard product={product([], LONG)} layout="card" />),
+      html(<ProductCard currency="XOF" product={product([], LONG)} layout="card" />),
     ]) {
       expect(out).toMatch(new RegExp(`class="[^"]*break-words[^"]*">${LONG}<`));
       expect(out).toMatch(/^<(div|a)[^>]*class="[^"]*min-w-0/);
@@ -63,7 +63,7 @@ describe('list lines', () => {
   it('a line has a 44px thumbnail and cuts a long name', () => {
     for (const out of [
       html(<CampaignCard campaign={campaign([UPLOADED], LONG)} layout="list" />),
-      html(<ProductCard product={product([UPLOADED], LONG)} layout="list" />),
+      html(<ProductCard currency="XOF" product={product([UPLOADED], LONG)} layout="list" />),
     ]) {
       expect(out.match(/<img [^>]*>/)?.[0]).toContain('size-11');
       expect(out).toMatch(new RegExp(`class="[^"]*truncate[^"]*">${LONG}<`));

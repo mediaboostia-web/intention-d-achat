@@ -2,7 +2,13 @@
 import { prismaMock } from '@/test-utils/prisma-mock';
 import { mockNextCookies, __cookieStore } from '@/test-utils/mock-cookies';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { apiRequest, asMember, routeParams, signIn } from '@/test-utils/shop-fixtures';
+import {
+  apiRequest,
+  asMember,
+  routeParams,
+  runTransactionsInline,
+  signIn,
+} from '@/test-utils/shop-fixtures';
 import { activeCampaignWhere } from '@/lib/server/tamani/campaign-status';
 
 mockNextCookies();
@@ -42,6 +48,8 @@ beforeEach(async () => {
   __cookieStore.clear();
   await signIn();
   asMember('org_1');
+  // Creation runs under the shop-country lock (lot 7b).
+  runTransactionsInline();
   prismaMock.product.create.mockImplementation((async (args: { data: object }) =>
     product(args.data as Record<string, unknown>)) as never);
 });
@@ -292,5 +300,20 @@ describe('/api/shops/[orgId]/products/[productId]', () => {
       const res = await del();
       expect(res.status).toBe(403);
     });
+  });
+});
+
+describe('POST /api/shops/[orgId]/products country lock (lot 7b)', () => {
+  it('a new product takes the shop-country lock, so a racing country change waits for it', async () => {
+    runTransactionsInline();
+    const res = await POST(
+      apiRequest('/api/shops/org_1/products', {
+        method: 'POST',
+        body: { name: 'Riz 25 kg', unitLabel: 'sac', unitPrice: 18000 },
+      }),
+      routeParams({ orgId: 'org_1' }),
+    );
+    expect(res.status).toBe(201);
+    expect(JSON.stringify(prismaMock.$executeRaw.mock.calls)).toContain('shop-country:org_1');
   });
 });

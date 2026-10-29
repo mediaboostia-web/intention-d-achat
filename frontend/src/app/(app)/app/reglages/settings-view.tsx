@@ -18,6 +18,7 @@ import { api, ApiError } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import { nationalNumber } from '@/lib/tamani/countries';
 import { shopCompleteness, type ShopGap } from '@/lib/tamani/shop-completeness';
+import { shopSettingsBody } from '@/lib/tamani/shop-settings';
 
 const SECTIONS = {
   boutique: 'Boutique',
@@ -107,19 +108,18 @@ export function SettingsView({ google }: { google: boolean }) {
     try {
       await api(`/api/shops/${shop.id}`, {
         method: 'PATCH',
-        body: {
-          name: v.name,
-          whatsappPhone: v.whatsappPhone,
-          country: v.country,
-          logoUrl: v.logoUrl,
-          description: v.description.trim() || null,
-        },
+        body: shopSettingsBody(v, shop),
       });
       await reload();
       toast('Boutique enregistrée.', 'success');
     } catch (err) {
       if (err instanceof ApiError && err.code === 'INVALID_PHONE') {
         setShopErrors({ whatsappPhone: errorMessage(err) });
+      } else if (err instanceof ApiError && err.code === 'SHOP_COUNTRY_LOCKED') {
+        // A product was added elsewhere: reload, and the form comes back
+        // with the shop's country, greyed out.
+        setShopError(errorMessage(err));
+        await reload();
       } else {
         setShopError(errorMessage(err));
       }
@@ -187,8 +187,10 @@ export function SettingsView({ google }: { google: boolean }) {
           >
             <fieldset disabled={!admin} className="disabled:opacity-60">
               <ShopForm
+                key={`${shop.country}:${shop.countryLocked}`}
                 formId="shop-form"
                 hideSubmit
+                countryLocked={shop.countryLocked}
                 initial={{
                   name: shop.name,
                   country: shop.country,

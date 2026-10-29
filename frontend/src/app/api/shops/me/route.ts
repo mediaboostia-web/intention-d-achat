@@ -12,7 +12,7 @@ import { tamaniError } from '@/lib/server/tamani/errors';
 import { jsonOk } from '@/lib/server/tamani/http';
 import { responsesThisMonth } from '@/lib/server/tamani/quota';
 import { toShop } from '@/lib/server/tamani/serializers';
-import { getShopForUser } from '@/lib/server/tamani/shop';
+import { getShopForUser, shopHasProducts } from '@/lib/server/tamani/shop';
 import { firstName } from '@/lib/tamani/names';
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -28,12 +28,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     });
     if (!org) return tamaniError('SHOP_NOT_FOUND', 404);
     const now = new Date();
-    const [usage, user] = await Promise.all([
+    const [usage, user, locked] = await Promise.all([
       responsesThisMonth(prisma, org.id, now),
       prisma.user.findUnique({ where: { id: auth.user.sub }, select: { name: true } }),
+      shopHasProducts(prisma, org.id),
     ]);
     return jsonOk({
-      shop: toShop(org, org.subscription, now),
+      shop: toShop(org, org.subscription, now, locked),
       role: found.role,
       usage: { responsesThisMonth: usage.used, monthlyLimit: usage.limit },
       me: { firstName: firstName(user?.name), name: user?.name?.trim() || null },

@@ -35,6 +35,8 @@ export interface PublicCampaign {
     dialCode: string;
     /** Two letters: the first choice of the respondent's phone country. */
     country: string;
+    /** The prices' currency (lot 7b): the popup writes FCFA, FG or FC. */
+    currency: string;
   };
   poweredByBadge: boolean;
 }
@@ -96,6 +98,7 @@ export async function getPublicCampaign(
       description: org.description,
       dialCode: SHOP_COUNTRIES.find((c) => c.code === org.country)?.dialCode ?? '+221',
       country: org.country,
+      currency: org.currency,
     },
     poweredByBadge: PLANS[effectivePlan(org.subscription, now).plan].features.poweredByBadge,
   };

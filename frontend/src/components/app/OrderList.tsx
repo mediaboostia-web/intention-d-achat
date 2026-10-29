@@ -36,7 +36,7 @@ import {
   type OrderStatus,
   type ToDeliverGroup,
 } from '@/lib/tamani/orders-view';
-import { formatPrice } from '@/lib/utils';
+import { formatMoney } from '@/lib/tamani/currency';
 import { clientName } from './ClientList';
 import { useShop } from './ShopProvider';
 
@@ -85,7 +85,7 @@ export function PaidMark() {
   );
 }
 
-export function OrderLine({ order }: { order: OrderRow }) {
+export function OrderLine({ order, currency }: { order: OrderRow; currency: string }) {
   return (
     <li>
       <Link
@@ -108,7 +108,7 @@ export function OrderLine({ order }: { order: OrderRow }) {
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1">
           <span className="font-bold text-ink tabular-nums">
-            {formatPrice(order.totalAmount, 'FCFA')}
+            {formatMoney(order.totalAmount, currency)}
           </span>
           <span className="flex flex-wrap items-center justify-end gap-2">
             {order.paid && <PaidMark />}
@@ -120,17 +120,26 @@ export function OrderLine({ order }: { order: OrderRow }) {
   );
 }
 
-export function OrderLines({ rows, label }: { rows: readonly OrderRow[]; label: string }) {
+export function OrderLines({
+  rows,
+  label,
+  currency,
+}: {
+  rows: readonly OrderRow[];
+  label: string;
+  /** The shop's currency (lot 7b). */
+  currency: string;
+}) {
   return (
     <ul aria-label={label} className="divide-y-2 divide-grid">
       {rows.map((o) => (
-        <OrderLine key={o.id} order={o} />
+        <OrderLine key={o.id} order={o} currency={currency} />
       ))}
     </ul>
   );
 }
 
-function ZoneCard({ group }: { group: ToDeliverGroup }) {
+function ZoneCard({ group, currency }: { group: ToDeliverGroup; currency: string }) {
   const title = group.zoneName ?? 'Sans quartier';
   const n = group.orders.length;
   return (
@@ -151,7 +160,11 @@ function ZoneCard({ group }: { group: ToDeliverGroup }) {
         </ul>
       </div>
       <div className="border-t-2 border-grid">
-        <OrderLines rows={group.orders} label={`Commandes à livrer, ${title}`} />
+        <OrderLines
+          rows={group.orders}
+          label={`Commandes à livrer, ${title}`}
+          currency={currency}
+        />
       </div>
     </Card>
   );
@@ -169,6 +182,7 @@ function withSelected(
 
 export function OrderListView({
   filters,
+  currency,
   rows,
   counts,
   groups,
@@ -181,6 +195,8 @@ export function OrderListView({
   onFilter,
 }: {
   filters: OrderFilters;
+  /** The shop's currency (lot 7b). */
+  currency: string;
   rows: readonly OrderRow[];
   /** For the whole shop, from the first page; null until it arrives. */
   counts: OrderCounts | null;
@@ -286,13 +302,13 @@ export function OrderListView({
 
       {!toDeliver && rows.length > 0 && (
         <div className="frame mt-5 overflow-hidden rounded-card bg-surface">
-          <OrderLines rows={rows} label="Commandes" />
+          <OrderLines rows={rows} label="Commandes" currency={currency} />
         </div>
       )}
       {toDeliver && groups.length > 0 && (
         <div className="mt-5 flex flex-col gap-5">
           {groups.map((g) => (
-            <ZoneCard key={g.zoneId ?? 'none'} group={g} />
+            <ZoneCard key={g.zoneId ?? 'none'} group={g} currency={currency} />
           ))}
         </div>
       )}
@@ -453,6 +469,7 @@ export function OrdersScreen() {
   return (
     <OrderListView
       filters={filters}
+      currency={shop.currency}
       rows={list.items}
       counts={list.counts}
       groups={list.groups}

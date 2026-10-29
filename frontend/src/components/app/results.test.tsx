@@ -76,6 +76,7 @@ const render = (body: Omit<CampaignStatsBody, 'offerOpen'> & { offerOpen?: boole
     campaignId="c1"
     productId="p1"
     unitLabel="pièce"
+    currency="XOF"
   />
 );
 
@@ -492,5 +493,21 @@ describe('campaign orders copy', () => {
       { id: 'fulfilled', label: 'Livrées', value: '1 sac' },
       { id: 'toConfirm', label: 'À confirmer', value: '2 sacs' },
     ]);
+  });
+});
+
+describe('CampaignResults currency (lot 7b)', () => {
+  it('writes the money in the shop currency', () => {
+    const t = text(
+      <CampaignResults
+        body={{ offerOpen: false, stats, access: 'PLAN' }}
+        campaignId="c1"
+        productId="p1"
+        unitLabel="pièce"
+        currency="GNF"
+      />,
+    );
+    expect(t).toMatch(/\d FG/);
+    expect(t).not.toContain('FCFA');
   });
 });

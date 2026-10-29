@@ -121,6 +121,7 @@ export default function NewOrderPage() {
             campaigns={choices.campaigns}
             zones={choices.zones}
             country={shop.country}
+            currency={shop.currency}
             error={error}
             onSubmit={create}
           />

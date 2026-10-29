@@ -50,9 +50,24 @@ describe('previewMessage', () => {
         product,
         { availability: 'INCOMING', availableAt: new Date('2026-11-03T10:00:00Z') },
         now,
+        'XOF',
       ),
     ).toBe(
       `🔔 Nouveau : *Marmites inox 5 L* à 7 500 FCFA (gros : 6 000 FCFA dès 12). Arrivage dans 10 jours. Tu en veux ? Réponds en moins de 30 secondes 👉 ${PREVIEW_LINK}`,
     );
+  });
+});
+
+describe('previewMessage in the shop currency (lot 7b)', () => {
+  it('writes the price in FG for a Guinean shop', () => {
+    const m = previewMessage(
+      DEFAULT_SHARE_TEMPLATE,
+      product,
+      { availability: 'INCOMING', availableAt: new Date('2026-11-03T10:00:00Z') },
+      now,
+      'GNF',
+    );
+    expect(m).toContain('7 500 FG (gros : 6 000 FG dès 12)');
+    expect(m).not.toContain('FCFA');
   });
 });

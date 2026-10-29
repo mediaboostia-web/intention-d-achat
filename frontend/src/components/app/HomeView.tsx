@@ -32,7 +32,8 @@ import {
 } from '@/lib/tamani/home-view';
 import { relativeTime } from '@/lib/tamani/relative-time';
 import { waShareLink } from '@/lib/tamani/wa';
-import { cn, formatPrice } from '@/lib/utils';
+import { formatMoney } from '@/lib/tamani/currency';
+import { cn } from '@/lib/utils';
 import { useShop } from './shop-context';
 
 /** `summary` is given by tests; the page loads it. */
@@ -90,6 +91,7 @@ export function HomeView({ summary: given }: { summary?: ShopSummary }) {
             <WeekCard week={summary.week} />
             <MoneyProtected
               amount={summary.moneyProtectedThisMonth}
+              currency={shop.currency}
               prefix="d-"
               className="mt-6 hidden lg:block"
             />
@@ -101,6 +103,7 @@ export function HomeView({ summary: given }: { summary?: ShopSummary }) {
             {/* On a phone the money keeps its place after the campaigns (spec §3). */}
             <MoneyProtected
               amount={summary.moneyProtectedThisMonth}
+              currency={shop.currency}
               prefix="m-"
               className="mt-8 lg:hidden"
             />
@@ -429,10 +432,12 @@ function VerdictTiles({ summary }: { summary: ShopSummary }) {
 
 function MoneyProtected({
   amount,
+  currency,
   prefix,
   className,
 }: {
   amount: number;
+  currency: string;
   /** The phone and the desktop copies each need their own heading id. */
   prefix: string;
   className: string;
@@ -444,8 +449,8 @@ function MoneyProtected({
         Argent protégé ce mois-ci
       </h2>
       <p className="mt-2 text-lg text-ink">
-        <span className="highlight font-sign text-3xl">{formatPrice(amount, 'FCFA')}</span> de stock
-        qui ne dormira pas au dépôt, grâce à tes verdicts.
+        <span className="highlight font-sign text-3xl">{formatMoney(amount, currency)}</span> de
+        stock qui ne dormira pas au dépôt, grâce à tes verdicts.
       </p>
     </section>
   );

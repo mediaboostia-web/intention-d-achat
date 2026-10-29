@@ -148,6 +148,7 @@ function CampaignScreen() {
         />
 
         <MoneyCard
+          currency="XOF"
           className="mt-7"
           avoidedDeadStock={850500}
           expectedProfit={444000}
@@ -430,7 +431,12 @@ export default function StyleguidePage() {
             <StatTile label="Usagers" value={42} hint="170 pièces annoncées" />
           </div>
           <div className="mt-6 grid gap-6 md:grid-cols-2">
-            <MoneyCard avoidedDeadStock={null} expectedProfit={null} addCostPriceHref="#" />
+            <MoneyCard
+              currency="XOF"
+              avoidedDeadStock={null}
+              expectedProfit={null}
+              addCostPriceHref="#"
+            />
             <EmptyState
               title="Pas encore de campagne"
               action={<Button href="#">Créer une campagne</Button>}
