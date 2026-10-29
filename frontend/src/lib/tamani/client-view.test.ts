@@ -45,8 +45,8 @@ describe('clientWhatsappMessage', () => {
 
 describe('lockedContactText', () => {
   it('names the client the Pro plan would let you reach', () => {
-    expect(lockedContactText('Awa')).toBe('Passe au Pro pour contacter Awa.');
-    expect(lockedContactText(null)).toBe('Passe au Pro pour contacter ce client.');
+    expect(lockedContactText('Awa')).toBe('Prends un pass pour contacter Awa.');
+    expect(lockedContactText(null)).toBe('Prends un pass pour contacter ce client.');
   });
 });
 
@@ -97,10 +97,10 @@ describe('reliabilityText', () => {
 describe('lockedReliabilityText', () => {
   it('names what Pro tells about the client', () => {
     expect(lockedReliabilityText('Awa')).toBe(
-      'Avec Pro, tu vois si Awa achète vraiment après avoir dit oui.',
+      'Avec un pass, tu vois si Awa achète vraiment après avoir dit oui.',
     );
     expect(lockedReliabilityText(null)).toBe(
-      'Avec Pro, tu vois si ce client achète vraiment après avoir dit oui.',
+      'Avec un pass, tu vois si ce client achète vraiment après avoir dit oui.',
     );
   });
 });

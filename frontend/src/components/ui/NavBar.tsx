@@ -57,13 +57,13 @@ export function SideNav({
   pathname,
   shop,
   usage,
-  upgrade,
+  cta,
 }: {
   pathname: string;
   shop: { name: string; logoUrl: string | null; planLabel: string };
   usage: { used: number; limit: number };
-  /** Free plan: offer the upgrade under the quota. */
-  upgrade: boolean;
+  /** « Prendre un pass » under the meter when the shop needs one; null hides it. */
+  cta: string | null;
 }) {
   const items = [...APP_NAV.filter((item) => item.id !== 'more'), ...DESKTOP_EXTRA_NAV];
   const filled = usage.limit > 0 ? Math.min(100, Math.round((usage.used / usage.limit) * 100)) : 0;
@@ -91,7 +91,7 @@ export function SideNav({
         <Avatar name={shop.name} src={shop.logoUrl} />
         <div className="min-w-0 collapsed:hidden">
           <p className="font-hand text-lg leading-snug font-bold break-words">{shop.name}</p>
-          <p className="text-sm">Forfait {shop.planLabel}</p>
+          <p className="text-sm">{shop.planLabel}</p>
         </div>
       </div>
       <ul className="mt-6 flex flex-col gap-1.5">
@@ -107,11 +107,11 @@ export function SideNav({
             <span className="font-bold">
               {usage.used} / {usage.limit}
             </span>{' '}
-            réponses ce mois
+            réponses du pass
           </p>
           <div
             role="meter"
-            aria-label="Réponses du mois"
+            aria-label="Réponses du pass"
             aria-valuemin={0}
             aria-valuemax={usage.limit}
             aria-valuenow={usage.used}
@@ -119,12 +119,12 @@ export function SideNav({
           >
             <div className="h-full rounded-full bg-accent" style={{ width: `${filled}%` }} />
           </div>
-          {upgrade && (
+          {cta && (
             <Link
-              href="/app/plus#forfait"
+              href="/app/abonnement"
               className="mt-3 inline-flex min-h-12 items-center font-bold text-accent underline decoration-2 underline-offset-4 focus-visible:outline-accent"
             >
-              Passer au Pro
+              {cta}
             </Link>
           )}
         </div>
@@ -137,7 +137,7 @@ export function SideNav({
 
 const ACCOUNT: NavItem = {
   id: 'account',
-  label: 'Compte et forfait',
+  label: 'Compte et pass',
   href: '/app/plus',
   icon: 'more',
 };

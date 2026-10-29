@@ -79,7 +79,7 @@ export function clientWhatsappMessage(p: {
 
 /** Free plan: why the WhatsApp button is locked (spec §5.6). */
 export function lockedContactText(firstName: string | null): string {
-  return `Passe au Pro pour contacter ${firstName ?? 'ce client'}.`;
+  return `Prends un pass pour contacter ${firstName ?? 'ce client'}.`;
 }
 
 /** The note's limit after trim, the server's ClientNotesPatch. */
@@ -120,7 +120,7 @@ export function reliabilityText(
 
 /** Free plan: what the reliability card would tell (spec §5.6). */
 export function lockedReliabilityText(firstName: string | null): string {
-  return `Avec Pro, tu vois si ${firstName ?? 'ce client'} achète vraiment après avoir dit oui.`;
+  return `Avec un pass, tu vois si ${firstName ?? 'ce client'} achète vraiment après avoir dit oui.`;
 }
 
 /** "Riz parfumé, 3 sacs" for a yes, "Riz parfumé, non" for a no. */

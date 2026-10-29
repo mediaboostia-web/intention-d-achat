@@ -45,7 +45,7 @@ describe('ExportView', () => {
     expect(t).toContain('Client 10');
     expect(t).toContain('+221 77 123 45 12');
     expect(out).toContain('overflow-x-auto');
-    expect(t).not.toContain('Passe au Pro');
+    expect(t).not.toContain('Prends un pass');
   });
 
   it('offers the four things to export', () => {
@@ -67,8 +67,8 @@ describe('ExportView', () => {
     const out = html(el);
     const t = text(el);
     expect(t).toContain('77 •• •• 12');
-    expect(t).toContain('Passe au Pro pour télécharger');
-    expect(out).toContain('href="/app/plus#forfait"');
+    expect(t).toContain('Prends un pass pour télécharger');
+    expect(out).toContain('href="/app/abonnement"');
     expect(t).not.toContain('Télécharger (');
     expect(t).not.toContain('Copier les numéros');
   });

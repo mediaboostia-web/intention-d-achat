@@ -317,7 +317,7 @@ describe('shop pages', () => {
     const labels = items.map((li) => text(<div dangerouslySetInnerHTML={{ __html: li }} />));
     const order = [
       'Produits',
-      'Forfait',
+      'Mon pass',
       'Réglages de la boutique',
       'Notifications',
       'Profil',
@@ -329,13 +329,13 @@ describe('shop pages', () => {
     expect(out.match(/<ul/g)).toHaveLength(1);
     for (const href of [
       '/app/produits',
+      '/app/abonnement',
       '/app/reglages',
       '/app/reglages#notifications',
       '/app/profil',
     ]) {
       expect(out, href).toContain(`href="${href}"`);
     }
-    expect(items[1]).toContain('id="forfait"');
     expect(text(page)).not.toContain('Aide');
     expect(out).not.toContain('wa.me');
   });

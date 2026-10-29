@@ -13,7 +13,7 @@ const apiError = (status: number, error?: string) =>
 describe('errorMessage', () => {
   it('errorMessage explains CAMPAIGN_LIMIT_REACHED', () => {
     const text = errorMessage(apiError(409, 'CAMPAIGN_LIMIT_REACHED'));
-    expect(text).toContain('3 campagnes');
+    expect(text).toContain('une seule campagne');
     expect(text).toContain('brouillon');
   });
 

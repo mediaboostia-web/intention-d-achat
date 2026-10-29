@@ -301,9 +301,9 @@ export function OrderDetailView({
           </Button>
         ) : (
           client.phone && (
-            <Button href="/app/plus#forfait" variant="secondary">
+            <Button href="/app/abonnement" variant="secondary">
               Écrire sur WhatsApp
-              <Badge tone="accent">Pro</Badge>
+              <Badge tone="accent">Pass</Badge>
             </Button>
           )
         )}

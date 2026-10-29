@@ -44,7 +44,7 @@ export function ContactButton({ client, shopName }: { client: ClientRow; shopNam
   if (!client.phone) return null;
   return (
     <Link
-      href="/app/plus#forfait"
+      href="/app/abonnement"
       aria-label={lockedContactText(client.firstName)}
       className="flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-grid bg-surface text-ink-muted hover:border-ink"
     >

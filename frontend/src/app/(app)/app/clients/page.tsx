@@ -1,7 +1,7 @@
 'use client';
 
 // /app/clients: the client book, most recently seen first, searched by
-// first name (and number on Pro) and filtered by type, answer, campaign,
+// first name (and number with a pass) and filtered by type, answer, campaign,
 // zone, period and country (lot 6b), all kept in the address. The orders
 // filter (« Ont commandé ») arrives with lot 7.
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';

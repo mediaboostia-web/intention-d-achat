@@ -53,9 +53,9 @@ const MESSAGES: Record<string, string> = {
   CAMPAIGN_CLOSED: 'Cette campagne est terminée.',
   ANSWERS_CLOSED: 'Les réponses sont fermées pour ce mois.',
   CAMPAIGN_LIMIT_REACHED:
-    'Tu as déjà 3 campagnes en cours, le maximum du forfait Gratuit. Termine-en une ou passe au Pro. Tu peux aussi enregistrer celle-ci en brouillon.',
+    "Sans pass ou pendant l'essai, une seule campagne peut être en cours. Termine-la ou prends un pass. Tu peux aussi enregistrer celle-ci en brouillon.",
   INVALID_CAMPAIGN_TRANSITION: 'Cette campagne ne peut pas passer à ce statut. Recharge la page.',
-  PLAN_FEATURE_LOCKED: 'Cette fonction vient avec le forfait Pro.',
+  PLAN_FEATURE_LOCKED: 'Cette fonction vient avec un pass.',
   INVALID_PHONE: "Ce numéro WhatsApp n'est pas valide. Vérifie l'indicatif et les chiffres.",
   INVALID_RESPONSE_TOKEN: 'Cette réponse ne peut plus être modifiée depuis ce téléphone.',
   RATE_LIMITED: 'Trop de tentatives. Attends quelques minutes et réessaie.',

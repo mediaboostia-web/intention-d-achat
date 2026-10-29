@@ -7,12 +7,21 @@
 // what is coming up. A shop without a campaign sees its first steps instead.
 // On a desktop (lot 7a) the three actions sit on the title row, the
 // verdicts become tiles, and from 1280px what to do, the activity and what
-// is coming up move to a column on the right.
+// is coming up move to a column on the right. The pass meter (lot 8) sits
+// under the title at every width.
 // Notifications are not asked here (feedback 2, §7): PushPrompt asks on a
 // phone, Réglages keeps the switch.
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Button, Icon, Notice, PageHeader, VerdictTile, type IconName } from '@/components/ui';
+import {
+  Button,
+  Icon,
+  Notice,
+  PageHeader,
+  PassMeter,
+  VerdictTile,
+  type IconName,
+} from '@/components/ui';
 import type { VerdictTone } from '@/lib/design/tokens';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -38,7 +47,7 @@ import { useShop } from './shop-context';
 
 /** `summary` is given by tests; the page loads it. */
 export function HomeView({ summary: given }: { summary?: ShopSummary }) {
-  const { shop, me } = useShop();
+  const { shop, me, usage, role } = useShop();
   const [loaded, setLoaded] = useState<{ summary: ShopSummary | null; error: string | null }>({
     summary: given ?? null,
     error: null,
@@ -83,6 +92,12 @@ export function HomeView({ summary: given }: { summary?: ShopSummary }) {
           {error}
         </Notice>
       )}
+      <PassMeter
+        usage={{ ...usage, plan: shop.plan.id }}
+        canBuy={role !== 'MEMBER'}
+        now={now}
+        className="mt-6"
+      />
       {!summary && !error && <HomeLoading />}
       {summary && !summary.hasCampaign && <FirstSteps summary={summary} />}
       {summary?.hasCampaign && (

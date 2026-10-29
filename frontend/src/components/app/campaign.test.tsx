@@ -197,7 +197,7 @@ describe('CampaignWizard', () => {
     s = wizardReducer(s, { type: 'failed', error: limit });
 
     const out = html(wizard(s));
-    expect(out).toMatch(/role="alert"[^>]*>.*3 campagnes/s);
+    expect(out).toMatch(/role="alert"[^>]*>.*une seule campagne/s);
     expect(out).toContain('Marmites dispo ! {lien}');
     const t = text(wizard(s));
     expect(t).toContain('Enregistrer en brouillon');
@@ -210,8 +210,8 @@ describe('SourceLinks', () => {
   it('SourceLinks on FREE shows the Pro lock and no form', () => {
     const out = html(<SourceLinks shopId="org_1" campaignId="c1" links={[link]} locked />);
     const t = text(<SourceLinks shopId="org_1" campaignId="c1" links={[link]} locked />);
-    expect(t).toContain('Les liens par source viennent avec le forfait Pro.');
-    expect(t).toContain('Pro');
+    expect(t).toContain('Les liens par source viennent avec un pass.');
+    expect(t).toContain('Pass');
     expect(out).not.toMatch(/<form|<input/);
   });
 
