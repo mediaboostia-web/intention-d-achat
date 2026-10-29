@@ -96,6 +96,18 @@ describe('Textarea and Select', () => {
       text(<Select id="p" label="Pays" options={[{ value: 'ML', label: 'Mali' }]} />),
     ).toContain('Mali');
   });
+
+  it('a disabled Select looks fixed: muted, no arrow (lot 7b, the locked country)', () => {
+    const open = html(<Select id="p" label="Pays" options={[{ value: 'GN', label: 'Guinée' }]} />);
+    const fixed = html(
+      <Select id="p" label="Pays" disabled options={[{ value: 'GN', label: 'Guinée' }]} />,
+    );
+    expect(open).toContain('<svg');
+    expect(fixed).not.toContain('<svg');
+    expect(fixed).toMatch(/<select[^>]*disabled/);
+    expect(fixed).toMatch(/<select[^>]*class="[^"]*bg-bg[^"]*text-ink-soft/);
+    expect(fixed).toMatch(/<select[^>]*class="[^"]*cursor-not-allowed/);
+  });
 });
 
 describe('Switch', () => {
