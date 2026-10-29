@@ -24,8 +24,8 @@
 - **Sans pass** (après l'essai, ou après un pass et sa grâce) : le lien marche, chaque nouvelle réponse est en attente, numéros masqués, 1 campagne en cours.
 - **Grâce** : 3 jours après la fin d'un pass payé, fonctions gardées ; l'essai n'a pas de grâce.
 - **Clé SasPay** (porteur, 2026-10-29) : SasPay ne propose pas de clé de test à ce compte, on développe donc avec la clé live. Les tests automatiques ne joignent jamais SasPay (`fetch` simulé) et ne lisent pas la clé ; les lectures (tarifs, réseaux) et les sessions non payées ne déplacent pas d'argent ; un vrai paiement n'a lieu qu'avec l'accord explicite du porteur, sur le plus petit pass, payé par lui sur son propre compte marchand.
-- **Frais** : `fee_charge_mode: "DEDUCTED"` (Tamani absorbe). **Pays** : paiement dans les 14 pays XOF et XAF seulement ; GN et CD voient « Bientôt disponible ».
-- **Marge** : chaque offre payante garde au moins 70 % avec 5 % de frais SasPay, 2 % de retrait et 0,25 FCFA par réponse (test pur, tâche 2).
+- **Frais** : `fee_charge_mode: "DEDUCTED"` (Tamani absorbe). **Pays** : paiement dans les 10 pays que SasPay encaisse (SN, CI, ML, BF, TG, BJ, NE, CM, GA, CG, relevé de la tâche 1) ; les autres (GW, TD, CF, GQ, GN, CD) voient « Bientôt disponible ».
+- **Marge** : chaque offre payante garde au moins 70 % avec 6 % d'encaissement SasPay, 4,5 % de retrait (les pires réseaux relevés à la tâche 1) et 0,25 FCFA par réponse (test pur, tâche 2).
 - **SasPay** (CLAUDE.md, « Intégration de l'API SasPay ») :
   - appels serveur seulement ; la clé jamais dans le navigateur, un log ou git ;
   - montants en chaînes décimales (`"9900.00"`), convertis à la frontière ;
@@ -56,15 +56,24 @@
 
 Aucun code de production. Elle lit la clé live de `frontend/.env.local` (pas de clé de test chez SasPay) ; on vérifie seulement son préfixe et sa longueur, et rien n'est payé.
 
+**Fait le 2026-10-29** (outil `tools/saspay-recon.mjs` du scratchpad) :
+- `my-rates` : 67 couples pays-réseau. Encaissement possible dans 10 pays FCFA. Le pire réseau prend 5,7 % (Congo, Airtel et MTN), puis 5,5 % (Niger, Airtel) et 5,15 % (Sénégal, Orange et Wave) ; 3,5 % au Bénin et au Cameroun. Orange CI et Orange BF demandent un OTP, géré par la page hébergée.
+- Aucun réseau d'encaissement en Guinée-Bissau, au Tchad, en Centrafrique ni en Guinée équatoriale.
+- Retrait : jusqu'à 4,5 % (par exemple Moov BF, 3,2 % + 50 F).
+- Les vraies réponses sont **enveloppées** `{ success, data, code }`, contrairement aux exemples de l'OpenAPI.
+- Une session a les champs de l'exemple, `fee_charge_mode: "DEDUCTED"` est bien gardé, `checkout_url` est sur `https://checkout.saspay.me`, et une session expire au bout d'une heure par défaut.
+- `POST /checkout-sessions/{id}/cancel/` → `status: "CANCELLED"`.
+- La session de 500 XOF a été annulée sans paiement.
+
 **Files :**
 - Create (scratchpad, hors dépôt) : `tools/saspay-recon.mjs`. Il lit la clé depuis `.env.local` et n'affiche jamais la clé, un email ni un numéro.
 - Modify : la ligne « Marge » de la spec §5.6, avec les vrais tarifs.
 
-- [ ] **Step 1 :** `GET /pricing/my-rates/` et `GET /networks/`. Noter, pour chacun des 14 pays XOF/XAF, les réseaux payin disponibles et leur tarif (pourcentage, fixe, plancher, plafond, `otp_required`).
-- [ ] **Step 2 :** `POST /checkout-sessions/` de 500 XOF (BJ), puis `GET /checkout-sessions/{id}/status/`. Comparer les deux corps à l'exemple de l'OpenAPI (corps à plat, sans enveloppe).
-- [ ] **Step 3 :** ne pas payer la session : c'est du vrai argent. Les champs de `GET /payments/{transaction_id}/verify/` (`requested_amount`, `debited_amount`, `net_amount`, `currency`, `status`) se lisent sur l'exemple de l'OpenAPI. Ils seront confirmés au seul paiement réel de la tâche 14, accepté par le porteur ; d'ici là, ce point est marqué « non vérifié ».
-- [ ] **Step 4 :** recalculer la marge de chaque offre avec le pire tarif payin réel. Expected : toutes ≥ 70 %. Sinon, s'arrêter et montrer le chiffre au porteur, car c'est sa grille.
-- [ ] **Step 5 :** un pays sans réseau payin rejoint GN et CD dans « Bientôt disponible » (`PAYMENT_COUNTRIES`, tâche 2). Le noter en ruling.
+- [x] **Step 1 :** `GET /pricing/my-rates/` et `GET /networks/`. Noter, pour chacun des 14 pays XOF/XAF, les réseaux payin disponibles et leur tarif (pourcentage, fixe, plancher, plafond, `otp_required`).
+- [x] **Step 2 :** `POST /checkout-sessions/` de 500 XOF (BJ), puis `GET /checkout-sessions/{id}/status/`. Comparer les deux corps à l'exemple de l'OpenAPI (corps à plat, sans enveloppe).
+- [x] **Step 3 :** ne pas payer la session : c'est du vrai argent. Les champs de `GET /payments/{transaction_id}/verify/` (`requested_amount`, `debited_amount`, `net_amount`, `currency`, `status`) se lisent sur l'exemple de l'OpenAPI. Ils seront confirmés au seul paiement réel de la tâche 14, accepté par le porteur ; d'ici là, ce point est marqué « non vérifié ».
+- [x] **Step 4 :** recalculer la marge de chaque offre avec le pire tarif payin réel. Expected : toutes ≥ 70 %. Sinon, s'arrêter et montrer le chiffre au porteur, car c'est sa grille.
+- [x] **Step 5 :** un pays sans réseau payin rejoint GN et CD dans « Bientôt disponible » (`PAYMENT_COUNTRIES`, tâche 2). Le noter en ruling.
 
 ### Task 2 : La grille, pure, avec ses garde-fous de marge
 
@@ -79,16 +88,16 @@ Aucun code de production. Elle lit la clé live de `frontend/.env.local` (pas de
   - `PLANS: Record<PlanId, PlanDefinition>` ;
   - `PASS_IDS = ['WEEK','TWO_WEEKS','MONTH','MONTH_PLUS','MONTH_MAX'] as const` (`type PassId`) ;
   - `isPassId(v): v is PassId`, `passPrice(id): number`, `passResponses(id): number` (pas de recharges) ;
-  - `MARGIN_ASSUMPTIONS = { saspayFee: 0.05, payoutFee: 0.02, costPerResponse: 0.25, floor: 0.7 }`, `marginOf(priceXof, responses): number` ;
-  - `PAYMENT_CURRENCIES = ['XOF', 'XAF']`, `PAYMENT_COUNTRIES` (les 14 codes de `SHOP_COUNTRIES` en XOF ou XAF, moins ceux de la tâche 1), `isPaymentCountry(code)` ;
+  - `MARGIN_ASSUMPTIONS = { saspayFee: 0.06, payoutFee: 0.045, costPerResponse: 0.25, floor: 0.7 }`, `marginOf(priceXof, responses): number` ;
+  - `PAYMENT_CURRENCIES = ['XOF', 'XAF']`, `PAYMENT_COUNTRIES = ['SN', 'CI', 'ML', 'BF', 'TG', 'BJ', 'NE', 'CM', 'GA', 'CG']` (relevé de la tâche 1), `isPaymentCountry(code)` ;
   - labels : « Sans pass », « Essai gratuit », « Pass Semaine », « Pass 2 Semaines », « Pass Mois », « Pass Mois Plus », « Pass Mois Max », « Pass Illimité ».
 
 - [ ] **Step 1 : tests qui échouent** (`plans.test.ts`) :
   - `the porteur's grid` : prix, durées et réponses exactes des Global Constraints, `PLANS.UNLIMITED.priceXof === null` ;
   - `trial opens everything but source links and export` : `TRIAL.features` = `estimate`, `respondentContacts`, `reliability`, `poweredByBadge` à `true`, `sourceLinks` et `csvExport` à `false`, et `maxActiveCampaigns === 1` ;
   - `no pass masks numbers and keeps one campaign` : `FREE.features.respondentContacts === false` et `FREE.maxActiveCampaigns === 1` ;
-  - `every paid offer keeps 70 % margin` : pour chaque `PASS_IDS`, `marginOf(...) >= 0.7`. Plus `marginOf(24900, 15000)` ≈ 0.779 au millième, et `marginOf(3900, 150)` ≈ 0.920 ;
-  - `payment opens in FCFA countries only` : `isPaymentCountry('BJ')`, `('GA')` vrais ; `('GN')`, `('CD')` faux.
+  - `every paid offer keeps 70 % margin` : pour chaque `PASS_IDS`, `marginOf(...) >= 0.7`. Plus `marginOf(24900, 15000)` ≈ 0.744 au millième, et `marginOf(3900, 150)` ≈ 0.885 ;
+  - `payment opens in FCFA countries only` : `isPaymentCountry('BJ')`, `('GA')`, `('CG')` vrais ; `('GN')`, `('CD')`, `('TD')`, `('GW')` faux.
 - [ ] **Step 2 :** `pnpm --filter frontend exec vitest run src/lib/tamani/plans.test.ts`. Expected : FAIL.
 - [ ] **Step 3 :** écrire `plans.ts`. Adapter les lecteurs listés :
   - la page d'accueil garde une grille simple tirée de `PLANS`, que la tâche 12 remplace ;
@@ -196,10 +205,11 @@ Aucun code de production. Elle lit la clé live de `frontend/.env.local` (pas de
 
 - [ ] **Step 1 : tests qui échouent** (`saspay.test.ts`, `fetch` simulé) :
   - `toSaspayAmount` ;
-  - `createCheckoutSession` envoie `POST {base}/checkout-sessions/` avec `Authorization: Bearer <clé>`, `amount: "9900.00"`, `fee_charge_mode: "DEDUCTED"`, `currency`, `country`, `customer_email`, `customer_name`, `return_url`, `metadata`, `expires_at`, et lit `id` et `checkout_url` à plat (exemple OpenAPI) ;
+  - `createCheckoutSession` envoie `POST {base}/checkout-sessions/` avec `Authorization: Bearer <clé>`, `amount: "9900.00"`, `fee_charge_mode: "DEDUCTED"`, `currency`, `country`, `customer_email`, `customer_name`, `return_url`, `metadata`, `expires_at`, et lit `id` et `checkout_url` dans `data` (les vraies réponses sont enveloppées `{ success, data, code }`, tâche 1) ;
   - `a 401 is not retryable and never echoes the key` ;
   - `a 429 and a 503 are retryable` ;
-  - `checkoutSessionStatus reads status, transaction_id, transaction_status` ;
+  - `checkoutSessionStatus reads status, transaction_id, transaction_status` dans `data` ;
+  - `an error reads its code from error.code, or code when it is a string` ;
   - `verifyPayment reads status, requested_amount, currency` ;
   - `getSaspay is null without SASPAY_API_KEY`.
 - [ ] **Step 2 :** lancer le test. Expected : FAIL.
@@ -266,7 +276,7 @@ Aucun code de production. Elle lit la clé live de `frontend/.env.local` (pas de
   - `startCheckout(db, saspay, { organizationId, userId, offer, now, appUrl }): Promise<{ orderId: string; checkoutUrl: string }>` :
     - refuse un pays hors `PAYMENT_COUNTRIES` ;
     - réutilise un `Order` `PENDING` non expiré de la même boutique et de la même offre qui a déjà un `paymentUrl` (double tap) ;
-    - sinon crée l'`Order` (`provider 'saspay'`, `amount = offerPrice`, `currency = shop.currency`, `organizationId`, `offer`, `userId`, `expiresAt = now + 24 h`), ouvre la session hors transaction (`return_url = ${appUrl}/app/abonnement/retour?achat=<orderId>`, `metadata { orderId, organizationId, offer }`, email et nom du compte), puis écrit `providerChargeId` et `paymentUrl` ;
+    - sinon crée l'`Order` (`provider 'saspay'`, `amount = offerPrice`, `currency = shop.currency`, `organizationId`, `offer`, `userId`, `expiresAt = now + 1 h`, la durée par défaut d'une session SasPay, envoyée aussi en `expires_at`), ouvre la session hors transaction (`return_url = ${appUrl}/app/abonnement/retour?achat=<orderId>`, `metadata { orderId, organizationId, offer }`, email et nom du compte), puis écrit `providerChargeId` et `paymentUrl` ;
   - `activateFromPayment(tx, orderId, now): Promise<'ACTIVATED' | 'ALREADY_DONE'>`, dans une transaction avec `advisoryXactLock(tx, billingLock(orgId))` :
     - `updateMany({ where: { id, activatedAt: null }, data: { status: 'PAID', paidAt, activatedAt } })` ; 0 ligne → `'ALREADY_DONE'` ;
     - puis `applyPurchase` sur `Subscription` (upsert), puis `unlockPending` ;

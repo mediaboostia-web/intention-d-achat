@@ -651,7 +651,8 @@ Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08
 - **Pas de recharges** (second message du 2026-10-29) : les seuls prix sont les pass. Pour plus de réponses, on prend un autre pass ; il démarre tout de suite et garde les réponses non utilisées. **Pass 12 mois** retiré.
 - **Clé SasPay** : SasPay ne propose pas de clé de test à ce compte, on développe donc avec la clé live. Les tests automatiques ne joignent jamais SasPay (`fetch` simulé) et ne lisent pas la clé ; les lectures (tarifs, réseaux) et les sessions non payées ne déplacent pas d'argent ; un vrai paiement n'a lieu qu'avec l'accord explicite du porteur, sur le plus petit pass, payé par lui sur son propre compte marchand.
 - **Frais** absorbés par Tamani (`DEDUCTED`).
-- **Pays** : paiement dans la zone FCFA d'abord ; Guinée et RDC « Bientôt disponible ».
+- **Pays** : paiement dans la zone FCFA d'abord. Le relevé SasPay du 2026-10-29 donne 10 pays encaissés (SN, CI, ML, BF, TG, BJ, NE, CM, GA, CG) ; GW, TD, CF, GQ, GN et CD affichent « Bientôt disponible ».
+- **Marge réelle** (relevé du 2026-10-29) : 74,4 % (Mois Max) à 88,5 % (Semaine), avec 6 % d'encaissement, 4,5 % de retrait et 0,25 FCFA par réponse.
 - **Grâce** : 3 jours.
 - **Page d'accueil** : la grille se fait glisser, propre et simple.
 
