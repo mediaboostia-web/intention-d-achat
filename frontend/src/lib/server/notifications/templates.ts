@@ -19,6 +19,7 @@
  * right channel (no email vs. transactional vs. marketing).
  */
 
+import { formatDateFr } from '@/lib/tamani/dates';
 import type { CreateNotificationInput } from './index';
 
 export function welcomeNotification(userId: string, email: string): CreateNotificationInput {
@@ -49,5 +50,26 @@ export function paymentReceived(
     body: `Order ${orderId} for ${amount} ${currency} confirmed.`,
     data: { orderId, amount, currency },
     dedupeKey: `payment-received:${orderId}`,
+  };
+}
+
+/**
+ * Tamani lot 8: a pass bought through SasPay is active. Sent to the shop's
+ * owner and admins, once per purchase and person.
+ */
+export function passActivated(
+  userId: string,
+  orderId: string,
+  passLabel: string,
+  endsAt: Date,
+  now: Date,
+): CreateNotificationInput {
+  return {
+    userId,
+    type: 'tamani.pass',
+    title: 'Pass actif',
+    body: `Ton ${passLabel} est actif jusqu'au ${formatDateFr(endsAt, now)}.`,
+    data: { orderId, url: '/app/abonnement' },
+    dedupeKey: `pass-activated:${orderId}:${userId}`,
   };
 }

@@ -4,6 +4,7 @@
 import 'server-only';
 import { z } from 'zod';
 import { isShopCountry } from '@/lib/tamani/countries';
+import { isPlanId } from '@/lib/tamani/plans';
 import { checkProductRules } from '@/lib/tamani/product-rules';
 import { BUYER_TYPES, NOT_INTERESTED_REASONS } from '@/lib/tamani/labels';
 import { ORDER_STATUSES } from '@/lib/tamani/orders-view';
@@ -231,3 +232,8 @@ export const responseStepSchema = z
   });
 
 export type ResponseStepInput = z.infer<typeof responseStepSchema>;
+
+/** A pass purchase (lot 8): a known plan; the route says which ones are sold online. */
+export const BillingCheckout = z.object({
+  offer: z.string().refine(isPlanId),
+});

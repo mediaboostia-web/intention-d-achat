@@ -29,6 +29,10 @@ export const TAMANI_ERROR_CODES = [
   'RESPONSE_NOT_INTERESTED',
   'BILLING_NOT_CONFIGURED',
   'PAYMENT_VERIFY_FAILED',
+  'PAYMENT_COUNTRY_UNAVAILABLE',
+  'OFFER_NOT_BUYABLE',
+  'PAYMENT_PROVIDER_UNAVAILABLE',
+  'PURCHASE_NOT_FOUND',
   'PUSH_NOT_CONFIGURED',
 ] as const;
 
@@ -63,6 +67,12 @@ const MESSAGES: Record<string, string> = {
   RESPONSE_NOT_INTERESTED: "Cette personne n'a pas dit oui : il n'y a pas de commande à créer.",
   BILLING_NOT_CONFIGURED: "Le paiement en ligne n'est pas encore ouvert.",
   PAYMENT_VERIFY_FAILED: "On n'a pas pu vérifier ton paiement. Réessaie dans un instant.",
+  PAYMENT_COUNTRY_UNAVAILABLE:
+    "Le paiement en ligne n'est pas encore disponible dans ton pays. Écris-nous pour prendre un pass.",
+  OFFER_NOT_BUYABLE: "Ce pass ne s'achète pas en ligne : écris-nous pour un devis.",
+  PAYMENT_PROVIDER_UNAVAILABLE:
+    'Le paiement est indisponible pour le moment. Réessaie dans quelques minutes.',
+  PURCHASE_NOT_FOUND: 'Cet achat est introuvable.',
   PUSH_NOT_CONFIGURED: 'Les notifications sur le téléphone ne sont pas encore disponibles.',
   // Kit: auth
   INVALID_CREDENTIALS: 'Email ou mot de passe incorrect.',

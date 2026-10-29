@@ -29,6 +29,10 @@ describe('TAMANI_ERRORS', () => {
         'RESPONSE_NOT_INTERESTED',
         'BILLING_NOT_CONFIGURED',
         'PAYMENT_VERIFY_FAILED',
+        'PAYMENT_COUNTRY_UNAVAILABLE',
+        'OFFER_NOT_BUYABLE',
+        'PAYMENT_PROVIDER_UNAVAILABLE',
+        'PURCHASE_NOT_FOUND',
         'PUSH_NOT_CONFIGURED',
       ].sort(),
     );

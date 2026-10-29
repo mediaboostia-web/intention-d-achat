@@ -10,7 +10,7 @@ import { effectivePlan } from './subscription';
 /** Without a paid pass, the popup closes past this many answers in the month (spec §5.6). */
 export const RECORDED_CEILING = 1000;
 
-type PassRow = Pick<
+export type PassRow = Pick<
   Subscription,
   'plan' | 'periodStart' | 'currentPeriodEnd' | 'graceUntil' | 'responsesIncluded'
 >;
@@ -28,15 +28,32 @@ const pendingWhere = (organizationId: string) => ({
   completedAt: { not: null },
 });
 
-/** The pass in force and the answers it counted, from its start to the end of its grace. */
-async function passCount(db: Db, organizationId: string, now: Date) {
-  const sub: PassRow | null = await db.subscription.findUnique({ where: { organizationId } });
+/** Answers counted in a pass: from its start to the end of its grace. */
+export function passWindow(sub: PassRow): { gte?: Date; lt: Date } | null {
+  if (!sub.currentPeriodEnd) return null;
+  const lt = sub.graceUntil ?? sub.currentPeriodEnd;
+  return sub.periodStart ? { gte: sub.periodStart, lt } : { lt };
+}
+
+/**
+ * The pass in force and the answers it counted. Pass the subscription when
+ * it is already read (undefined reads it).
+ */
+export async function passCount(
+  db: Db,
+  organizationId: string,
+  now: Date,
+  preloaded?: PassRow | null,
+) {
+  const sub: PassRow | null =
+    preloaded === undefined
+      ? await db.subscription.findUnique({ where: { organizationId } })
+      : preloaded;
   const { plan, inGrace, endsAt } = effectivePlan(sub, now);
-  if (plan === 'FREE' || !sub?.currentPeriodEnd) {
+  const countedAt = sub ? passWindow(sub) : null;
+  if (plan === 'FREE' || !sub || !countedAt) {
     return { plan, inGrace, endsAt, used: 0, included: 0 };
   }
-  const lt = sub.graceUntil ?? sub.currentPeriodEnd;
-  const countedAt = sub.periodStart ? { gte: sub.periodStart, lt } : { lt };
   const used = await db.response.count({ where: { organizationId, countedAt } });
   return { plan, inGrace, endsAt, used, included: sub.responsesIncluded };
 }
