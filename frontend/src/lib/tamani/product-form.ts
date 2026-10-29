@@ -1,7 +1,7 @@
 // The product form keeps what the wholesaler typed (strings); this turns
 // it into the API body, or into one message per field to fix.
 import { formatPrice } from '@/lib/utils';
-import { parseCount, parseFcfa } from './fcfa-input';
+import { parseCount, parseAmount } from './fcfa-input';
 import { productRuleViolation } from './product-rules';
 
 export interface ProductFormValues {
@@ -78,7 +78,7 @@ export function productFormToBody(
   const errors: ProductFormErrors = {};
   const optionalPrice = (raw: string, field: keyof ProductFormValues) => {
     if (raw.trim() === '') return null;
-    const n = parseFcfa(raw);
+    const n = parseAmount(raw);
     if (n === null) errors[field] = PRICE_HINT;
     return n;
   };
@@ -87,7 +87,7 @@ export function productFormToBody(
   if (name === '') errors.name = 'Donne un nom à ton produit.';
   else if (name.length > 80) errors.name = '80 caractères au plus.';
 
-  const unitPrice = parseFcfa(v.unitPrice);
+  const unitPrice = parseAmount(v.unitPrice);
   if (unitPrice === null) errors.unitPrice = PRICE_HINT;
   const wholesalePrice = optionalPrice(v.wholesalePrice, 'wholesalePrice');
   const costPrice = optionalPrice(v.costPrice, 'costPrice');

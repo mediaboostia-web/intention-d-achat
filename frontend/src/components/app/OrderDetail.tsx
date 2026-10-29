@@ -11,7 +11,7 @@ import { Badge, Button, DataList, Icon, Input, Notice, Switch, Textarea } from '
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import { formatDateFr } from '@/lib/tamani/dates';
-import { parseCount, parseFcfa } from '@/lib/tamani/fcfa-input';
+import { parseCount, parseAmount } from '@/lib/tamani/fcfa-input';
 import { BUYER_TYPE_LABELS } from '@/lib/tamani/labels';
 import { ORDER_MAX_QUANTITY } from '@/lib/tamani/order-form';
 import {
@@ -50,7 +50,7 @@ function PriceEditor({
   const [price, setPrice] = useState(formatPrice(order.unitPrice));
   const [quantity, setQuantity] = useState(String(order.quantity));
   const [errors, setErrors] = useState<{ price?: string; quantity?: string }>({});
-  const unitPrice = parseFcfa(price);
+  const unitPrice = parseAmount(price);
   const parsedQty = parseCount(quantity, 1);
   const qty = parsedQty !== null && parsedQty <= ORDER_MAX_QUANTITY ? parsedQty : null;
   const changed =

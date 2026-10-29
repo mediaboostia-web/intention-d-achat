@@ -5,7 +5,7 @@
 // are kept as typed and checked by productFormToBody on submit.
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button, Input, Notice, Switch, Textarea } from '@/components/ui';
-import { parseCount, parseFcfa } from '@/lib/tamani/fcfa-input';
+import { parseCount, parseAmount } from '@/lib/tamani/fcfa-input';
 import {
   emptyProductForm,
   productFormToBody,
@@ -36,11 +36,11 @@ const used = (s: string) => s.trim() !== '';
 
 /** How the price will read in the WhatsApp message, once the unit price parses. */
 function pricePreview(v: ProductFormValues, wholesale: boolean): string | null {
-  const unitPrice = parseFcfa(v.unitPrice);
+  const unitPrice = parseAmount(v.unitPrice);
   if (unitPrice === null) return null;
   return formatPriceLine({
     unitPrice,
-    wholesalePrice: wholesale ? parseFcfa(v.wholesalePrice) : null,
+    wholesalePrice: wholesale ? parseAmount(v.wholesalePrice) : null,
     wholesaleMinQty: wholesale ? parseCount(v.wholesaleMinQty, 2) : null,
   });
 }
