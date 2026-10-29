@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { html, text } from '@/components/ui/test-html';
 import { PassMeter } from '@/components/ui';
-import type { BillingData } from '@/lib/tamani/billing-view';
+import { PASS_FEATURES, type BillingData } from '@/lib/tamani/billing-view';
 
 vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigation')).navigation);
 
@@ -87,6 +87,12 @@ describe('BillingView', () => {
     const cards = out.split('<li>').filter((c) => c.includes('Le meilleur prix par réponse'));
     expect(cards).toHaveLength(1);
     expect(cards[0]).toContain('Pass Mois Max</h3>');
+  });
+
+  it('the pass page lists what every pass includes', () => {
+    const t = text(view());
+    expect(t).toContain('Dans chaque pass');
+    for (const f of PASS_FEATURES) expect(t).toContain(f);
   });
 
   it('the subscription page shows the per-campaign detail', () => {

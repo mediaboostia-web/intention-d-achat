@@ -643,8 +643,8 @@ Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08
   - Pass Semaine : 3 900 FCFA, 150 réponses ;
   - Pass 2 Semaines : 5 900 FCFA, 350 réponses ;
   - Pass Mois : 9 900 FCFA, 1 000 réponses ;
-  - Pass Mois Plus : 14 900 FCFA, 5 000 réponses ;
-  - Pass Mois Max : 24 900 FCFA, 15 000 réponses ;
+  - Pass Mois Plus : 14 900 FCFA, 2 500 réponses (5 000 jusqu'au 2026-10-29 au soir) ;
+  - Pass Mois Max : 24 900 FCFA, 5 000 réponses (15 000 jusqu'au 2026-10-29 au soir) ;
   - Pass Illimité : sur devis, par le support.
 
   Le porteur a envisagé 100 puis 50 FCFA par réponse, puis a gardé cette grille ; il a demandé des noms simples le même jour (Semaine, 2 Semaines, Mois, Mois Plus, Mois Max, sur le modèle des pass de crédit téléphone).
@@ -652,9 +652,9 @@ Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08
 - **Après l'essai** : plus de Gratuit permanent. Le lien marche et les nouvelles réponses attendent l'achat d'un pass.
 - **Pas de recharges** (second message du 2026-10-29) : les seuls prix sont les pass. Pour plus de réponses, on prend un autre pass ; il démarre tout de suite et garde les réponses non utilisées. **Pass 12 mois** retiré.
 - **Clé SasPay** : SasPay ne propose pas de clé de test à ce compte, on développe donc avec la clé live. Les tests automatiques ne joignent jamais SasPay (`fetch` simulé) et ne lisent pas la clé ; les lectures (tarifs, réseaux) et les sessions non payées ne déplacent pas d'argent ; un vrai paiement n'a lieu qu'avec l'accord explicite du porteur, sur le plus petit pass, payé par lui sur son propre compte marchand.
-- **Frais** absorbés par Tamani (`DEDUCTED`).
+- **Frais** payés par le client, en plus du prix (`ADD_ON`, porteur, 2026-10-29 au soir). Le mode `DEDUCTED` d'abord choisi était de toute façon ignoré par SasPay, faute de l'option « Autoriser le choix du mode de frais par l'API » sur le compte.
 - **Pays** : paiement dans la zone FCFA d'abord. Le relevé SasPay du 2026-10-29 donne 10 pays encaissés (SN, CI, ML, BF, TG, BJ, NE, CM, GA, CG) ; GW, TD, CF, GQ, GN et CD affichent « Bientôt disponible ».
-- **Marge réelle** (relevé du 2026-10-29) : 74,4 % (Mois Max) à 88,5 % (Semaine), avec 6 % d'encaissement, 4,5 % de retrait et 0,25 FCFA par réponse.
+- **Marge réelle** (relevé du 2026-10-29, relu le soir) : 84,5 % (Mois Max) à 88,5 % (Semaine) avec la nouvelle grille, en comptant encore 6 % d'encaissement, 4,5 % de retrait et 0,25 FCFA par réponse.
 - **Grâce** : 3 jours.
 - **Page d'accueil** : la grille se fait glisser, propre et simple.
 
@@ -683,7 +683,7 @@ Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08
 - **Tâches planifiées** : `billing-verify` et `subscription-renewals` exportent `GET`, la méthode qu'envoie Vercel Cron, et `POST`. Les tâches du kit n'exportent que `POST` : c'est signalé au porteur, pas changé.
 - **Page de retour** : elle avale les erreurs de SasPay et montre l'achat tel quel. Elle interroge l'API toutes les 3 s pendant 2 minutes, puis propose « Vérifier encore ».
 - **Clés des notifications** : elles finissent par l'identifiant de la personne, car `dedupeKey` est unique pour tous les utilisateurs. Le Pass Illimité reçoit aussi les rappels.
-- **Badge** : « Le meilleur prix par réponse » va sur le Mois Max (1,7 FCFA la réponse), pas sur « Confort ».
+- **Badge** : « Le meilleur prix par réponse » va sur le Mois Max (5 FCFA la réponse avec la nouvelle grille), pas sur « Confort ».
 - **Accueil** : un seul compteur à toutes les largeurs.
 - **Bandeaux** : ils sont cachés sur « Mon pass » et sur sa page de retour.
 - **Limite de campagnes** : le message dit une campagne en cours, sans pass ou pendant l'essai.

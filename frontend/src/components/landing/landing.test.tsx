@@ -4,6 +4,7 @@ import path from 'node:path';
 import { html, text } from '@/components/ui/test-html';
 import { WORDMARK_PATH, WORDMARK_VIEWBOX } from '@/lib/design/logo-paths';
 import { LANDING_FAQ, LANDING_LINKS } from '@/lib/tamani/landing';
+import { PASS_FEATURES, TRIAL_LIMITS } from '@/lib/tamani/billing-view';
 import { BeforeAfter } from './BeforeAfter';
 import { Community } from './Community';
 import { ORBIT_NETWORKS } from './content';
@@ -224,8 +225,14 @@ describe('BeforeAfter', () => {
 });
 
 describe('Pricing', () => {
-  const cards = (out: string) => out.split('<li').filter((c) => c.includes('</h3>'));
-  const names = (out: string) => [...out.matchAll(/<h3[^>]*>(.*?)<\/h3>/g)].map((m) => m[1]);
+  // The rail's cards only: « Dans chaque pass » below them is an h3 too.
+  const rail = (out: string) =>
+    out.slice(out.indexOf('lp-rail__track'), out.indexOf('lp-included'));
+  const cards = (out: string) =>
+    rail(out)
+      .split('<li')
+      .filter((c) => c.includes('</h3>'));
+  const names = (out: string) => [...rail(out).matchAll(/<h3[^>]*>(.*?)<\/h3>/g)].map((m) => m[1]);
 
   it("seven cards in the porteur's order", () => {
     expect(names(html(<Pricing />))).toEqual([
@@ -240,7 +247,8 @@ describe('Pricing', () => {
     const t = text(<Pricing />);
     expect(t).toContain('3 900 FCFA');
     expect(t).toContain('24 900 FCFA');
-    expect(t).toContain('30 jours · 15 000 réponses');
+    expect(t).toContain('30 jours · 5 000 réponses');
+    expect(t).toContain('30 jours · 2 500 réponses');
     expect(t).toContain('Pour un arrivage à écouler vite.');
     const out = html(<Pricing />);
     expect(out.match(/href="\/signup"/g)).toHaveLength(6);
@@ -262,6 +270,15 @@ describe('Pricing', () => {
     expect(last(NO_LINKS)).not.toContain('href=');
     expect(last(ALL_LINKS)).toContain('Contacter le support');
     expect(last(ALL_LINKS)).toContain('href="https://wa.me/221770000000"');
+  });
+
+  it('lists what every pass includes, and what the trial leaves out', () => {
+    const out = html(<Pricing />);
+    const t = text(<Pricing />);
+    expect(t).toContain('Dans chaque pass');
+    for (const f of PASS_FEATURES) expect(t).toContain(f);
+    expect(out.match(/<li class="lp-included__item"/g)).toHaveLength(PASS_FEATURES.length);
+    expect(t).toContain(TRIAL_LIMITS);
   });
 
   it('the line under the cards', () => {

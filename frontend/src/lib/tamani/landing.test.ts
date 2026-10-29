@@ -37,7 +37,7 @@ describe('pricingOffers reads PLANS', () => {
       name: 'Pass Mois Max',
       price: '24 900 FCFA',
       durationLabel: '30 jours',
-      responsesLabel: '15 000 réponses',
+      responsesLabel: '5 000 réponses',
       forWho: 'Pour les grands groupes.',
       badge: 'Le meilleur prix par réponse',
     });

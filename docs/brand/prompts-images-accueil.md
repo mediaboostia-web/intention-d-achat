@@ -30,6 +30,10 @@ Si tu reprends plus tard dans une autre conversation, commence par **joindre la 
 | 7 | `avant.png` | Paysage 3:2 | Avant / après, côté « Avant » |
 | 8 | `apres.png` | Paysage 3:2 | Avant / après, côté « Avec Tamani » |
 | 9 | `communaute.png` | Paysage 3:2 | Rejoindre la communauté |
+| 10 | `menu-support.png` | Paysage 3:2 | Menu du téléphone, ligne « Écrire au support » |
+| 11 | `menu-groupe.png` | Paysage 3:2 | Menu du téléphone, ligne « Rejoindre le groupe » |
+| 12 | `connexion.png` | Portrait 2:3 | Page de connexion, colonne de gauche sur ordinateur |
+| 13 | `inscription.png` | Portrait 2:3 | Page d'inscription, colonne de gauche sur ordinateur |
 
 ## Les deux blocs à réutiliser
 
@@ -215,6 +219,56 @@ Scène : sous un auvent rayé bleu et jaune, au marché, six grossistes et impor
 Cadrage : le groupe au centre, l'auvent en haut de l'image.
 
 Format paysage 3:2 (1536 × 1024). Fond blanc pur, le dessin se fond dans le blanc sur les bords. Aucun texte, aucun chiffre, aucun logo. Le jaune #FFCC1F seulement sur l'auvent et sur le foulard de la grossiste.
+```
+
+Les prompts 10 à 13 (2026-10-29) se collent dans la même conversation que les autres. Le site les affichera dès qu'ils seront dans `docs/brand/mockups/images/` et branchés dans le code.
+
+## Prompt 10 : le support, dans le menu du téléphone (`menu-support.png`)
+
+```text
+Même style que la planche de référence. La grossiste est là.
+
+Scène : la grossiste, debout dans sa boutique, tient son téléphone et sourit, soulagée. Sur l'écran, une grande bulle jaune et une bulle blanche, comme une conversation WhatsApp. À côté d'elle, dessinée plus petite dans un cercle comme une vignette, une jeune femme souriante avec un casque-micro léger qui lui répond depuis son téléphone. Le message de l'image : quelqu'un de vrai t'aide tout de suite.
+
+Cadrage : la grossiste à gauche, la vignette de la conseillère en haut à droite, beaucoup de blanc autour.
+
+Format paysage 3:2 (1536 × 1024). Fond blanc pur, le dessin se fond dans le blanc sur les bords. Aucun texte, aucun chiffre, aucun logo. Le jaune #FFCC1F seulement sur la bulle de l'écran et le foulard de la grossiste.
+```
+
+## Prompt 11 : le groupe WhatsApp, dans le menu du téléphone (`menu-groupe.png`)
+
+```text
+Même style que la planche de référence. La grossiste est là, avec d'autres personnes.
+
+Scène : quatre grossistes et importateurs, deux femmes et deux hommes de 25 à 55 ans, chacun dans sa boutique, dessinés en quatre petites vignettes rondes disposées en arc. La grossiste est dans la vignette du milieu, la plus grande. Chacun tient son téléphone. Entre les vignettes, des bulles de discussion jaunes et blanches relient les téléphones, comme un groupe qui s'entraide. Ambiance complice, sourires.
+
+Cadrage : l'arc de vignettes au centre, les bulles entre elles, de la marge blanche partout.
+
+Format paysage 3:2 (1536 × 1024). Fond blanc pur, le dessin se fond dans le blanc sur les bords. Aucun texte, aucun chiffre, aucun logo. Le jaune #FFCC1F seulement sur les bulles et le foulard de la grossiste.
+```
+
+## Prompt 12 : la page de connexion sur ordinateur (`connexion.png`)
+
+```text
+Même style que la planche de référence. La grossiste est là.
+
+Scène : tôt le matin, la grossiste relève le rideau métallique de sa boutique d'une main. De l'autre, elle regarde son téléphone : plusieurs petites bulles jaunes en sortent et montent vers le haut de l'image, comme des réponses de clients arrivées pendant la nuit. Derrière elle, les étagères pleines de cartons et de sacs de riz. Elle sourit : ses clients ont déjà répondu. Le message de l'image : ta journée commence avec les réponses de tes clients.
+
+Cadrage : la grossiste en pied, un peu à gauche du centre ; les bulles jaunes montent vers le coin en haut à droite ; garde un espace blanc calme en bas de l'image.
+
+Format portrait 2:3 (1024 × 1536). Fond blanc pur, le dessin se fond dans le blanc sur les bords. Aucun texte, aucun chiffre, aucun logo. Le jaune #FFCC1F seulement sur les bulles et le foulard.
+```
+
+## Prompt 13 : la page d'inscription sur ordinateur (`inscription.png`)
+
+```text
+Même style que la planche de référence. La grossiste est là.
+
+Scène : la grossiste est assise sur un carton dans sa boutique, son téléphone levé devant elle, l'air décidé. De son téléphone part un fil jaune qui se divise en plusieurs fils vers six petits téléphones tenus par des mains de clients différents, dessinés en cercle autour d'elle. Chaque petit téléphone renvoie une bulle blanche vers elle. À ses pieds, une pile de cartons bien rangée, ni trop haute ni trop basse. Le message de l'image : demande à ta communauté avant de commander, et commande juste.
+
+Cadrage : la grossiste au centre, le cercle de téléphones autour d'elle, beaucoup de blanc autour.
+
+Format portrait 2:3 (1024 × 1536). Fond blanc pur, le dessin se fond dans le blanc sur les bords. Aucun texte, aucun chiffre, aucun logo. Le jaune #FFCC1F seulement sur le fil qui part du téléphone et le foulard.
 ```
 
 ## Phrases pour corriger une image

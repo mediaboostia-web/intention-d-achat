@@ -9,11 +9,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Button, Card, Notice, OfferCard, PageHeader, PassMeter } from '@/components/ui';
+import { Button, Card, Icon, Notice, OfferCard, PageHeader, PassMeter } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import {
   BEST_VALUE_LABEL,
+  PASS_FEATURES,
   offerCards,
   purchaseStatusLabel,
   returnState,
@@ -138,6 +139,22 @@ export function BillingView({
             />
           </li>
         </ul>
+      </section>
+
+      <section aria-labelledby="inclus-title" className="mt-8">
+        <h2 id="inclus-title" className="font-hand text-2xl font-bold text-primary">
+          Dans chaque pass
+        </h2>
+        <Card className="mt-3">
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {PASS_FEATURES.map((f) => (
+              <li key={f} className="flex items-start gap-2">
+                <Icon name="check" className="mt-0.5 size-5 shrink-0 text-success" />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
       </section>
 
       {data.perCampaign.length > 0 && (

@@ -143,8 +143,8 @@ export function createSaspayClient(opts: {
         description: input.description,
         return_url: input.returnUrl,
         metadata: input.metadata,
-        // Tamani absorbs the fees (porteur, 2026-10-29).
-        fee_charge_mode: 'DEDUCTED',
+        // The customer pays SasPay's fees on top (porteur, 2026-10-29).
+        fee_charge_mode: 'ADD_ON',
         expires_at: input.expiresAt.toISOString(),
       });
       const id = str(data.id);

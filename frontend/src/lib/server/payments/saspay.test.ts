@@ -51,7 +51,7 @@ describe('toSaspayAmount', () => {
 });
 
 describe('createCheckoutSession', () => {
-  it('posts the session with the key, fees deducted, and reads data', async () => {
+  it('posts the session with the key, fees added on, and reads data', async () => {
     const { fetchImpl, saspay } = client(
       reply(201, {
         success: true,
@@ -82,7 +82,7 @@ describe('createCheckoutSession', () => {
       description: 'Tamani · Pass Mois',
       return_url: 'https://tamani.app/app/abonnement/retour?achat=ord_1',
       metadata: { orderId: 'ord_1', organizationId: 'org_1', offer: 'MONTH' },
-      fee_charge_mode: 'DEDUCTED',
+      fee_charge_mode: 'ADD_ON',
       expires_at: '2026-10-29T11:00:00.000Z',
     });
   });

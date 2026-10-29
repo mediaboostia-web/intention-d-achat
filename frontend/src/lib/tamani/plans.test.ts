@@ -23,8 +23,8 @@ describe('plans', () => {
       ['WEEK', 3900, 7, 150],
       ['TWO_WEEKS', 5900, 14, 350],
       ['MONTH', 9900, 30, 1000],
-      ['MONTH_PLUS', 14900, 30, 5000],
-      ['MONTH_MAX', 24900, 30, 15000],
+      ['MONTH_PLUS', 14900, 30, 2500],
+      ['MONTH_MAX', 24900, 30, 5000],
     ]);
     expect([PLANS.TRIAL.priceXof, PLANS.TRIAL.durationDays, PLANS.TRIAL.includedResponses]).toEqual(
       [0, 3, 50],
@@ -42,7 +42,7 @@ describe('plans', () => {
       'Pass Illimité',
     ]);
     expect(passPrice('MONTH')).toBe(9900);
-    expect(passResponses('MONTH_MAX')).toBe(15000);
+    expect(passResponses('MONTH_MAX')).toBe(5000);
   });
 
   it('trial opens everything but source links and export', () => {
@@ -84,7 +84,8 @@ describe('plans', () => {
     for (const id of PASS_IDS) {
       expect(marginOf(passPrice(id), passResponses(id))).toBeGreaterThanOrEqual(0.7);
     }
-    expect(marginOf(24900, 15000)).toBeCloseTo(0.744, 3);
+    expect(marginOf(24900, 5000)).toBeCloseTo(0.845, 3);
+    expect(marginOf(14900, 2500)).toBeCloseTo(0.853, 3);
     expect(marginOf(3900, 150)).toBeCloseTo(0.885, 3);
   });
 

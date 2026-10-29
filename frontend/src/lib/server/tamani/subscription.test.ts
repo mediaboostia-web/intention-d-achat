@@ -85,7 +85,7 @@ describe('applyPurchase', () => {
       periodStart: now,
       currentPeriodEnd: d('2026-12-10'),
       graceUntil: d('2026-12-13'),
-      responsesIncluded: 5600,
+      responsesIncluded: 3100,
     });
   });
 

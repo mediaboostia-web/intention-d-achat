@@ -90,6 +90,27 @@ export const FOR_WHO: Readonly<Record<'TRIAL' | PassId | 'UNLIMITED', string>> =
   UNLIMITED: 'Pour les très grandes communautés.',
 };
 
+/**
+ * What every pass holds, listed once under the cards (home page and « Mon
+ * pass ») so a visitor sees the value; the passes differ only in length and
+ * answers.
+ */
+export const PASS_FEATURES: readonly string[] = [
+  'Un lien à partager sur WhatsApp, Telegram ou Facebook',
+  'Tes clients répondent en moins de 30 secondes, sans appli',
+  'La quantité à commander, avec le calcul affiché',
+  "Le verdict et l'argent évité avant de commander",
+  'Les numéros des intéressés et un bouton WhatsApp',
+  'Les commandes et les livraisons par quartier',
+  'Le carnet de clients et leur fiabilité',
+  'Un lien par groupe pour savoir qui répond où',
+  "L'export pour Excel des réponses et des clients",
+  'Une alerte sur ton téléphone à chaque réponse',
+  'Campagnes illimitées, sans « Propulsé par Tamani »',
+];
+
+export const TRIAL_LIMITS = "L'essai ouvre tout, sauf les liens par groupe et l'export pour Excel.";
+
 /** The lowest price per answer of the grid (porteur, 2026-10-29). */
 export const BEST_VALUE: PassId = 'MONTH_MAX';
 export const BEST_VALUE_LABEL = 'Le meilleur prix par réponse';

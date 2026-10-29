@@ -99,8 +99,8 @@ export const PLANS: Readonly<Record<PlanId, PlanDefinition>> = {
   WEEK: pass('WEEK', 'Pass Semaine', 3900, 7, 150),
   TWO_WEEKS: pass('TWO_WEEKS', 'Pass 2 Semaines', 5900, 14, 350),
   MONTH: pass('MONTH', 'Pass Mois', 9900, 30, 1000),
-  MONTH_PLUS: pass('MONTH_PLUS', 'Pass Mois Plus', 14900, 30, 5000),
-  MONTH_MAX: pass('MONTH_MAX', 'Pass Mois Max', 24900, 30, 15000),
+  MONTH_PLUS: pass('MONTH_PLUS', 'Pass Mois Plus', 14900, 30, 2500),
+  MONTH_MAX: pass('MONTH_MAX', 'Pass Mois Max', 24900, 30, 5000),
   // On quote, granted by hand from the admin (lot 9).
   UNLIMITED: {
     id: 'UNLIMITED',
@@ -136,7 +136,9 @@ export function passResponses(id: PassId): number {
 /**
  * The margin rule (porteur, 2026-10-25): every paid offer keeps 70 % once
  * SasPay's payin (worst network read on 2026-10-29: 5.7 %), the withdrawal
- * (worst: 4.5 %) and 0.25 FCFA of servers per answer are paid.
+ * (worst: 4.5 %) and 0.25 FCFA of servers per answer are paid. The payin is
+ * now the customer's (fees added on, porteur 2026-10-29); it stays counted
+ * so the grid holds if Tamani absorbs the fees again.
  */
 export const MARGIN_ASSUMPTIONS = {
   saspayFee: 0.06,

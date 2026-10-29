@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   FOR_WHO,
+  PASS_FEATURES,
+  TRIAL_LIMITS,
   graceDaysLeft,
   meterLine,
   meterTone,
@@ -83,7 +85,19 @@ describe('offerCards', () => {
       bestValue: false,
     });
     expect(cards.filter((c) => c.bestValue).map((c) => c.id)).toEqual(['MONTH_MAX']);
-    expect(cards[4]?.responsesLabel).toBe('15 000 réponses');
+    expect(cards[4]?.responsesLabel).toBe('5 000 réponses');
+    expect(cards[3]?.responsesLabel).toBe('2 500 réponses');
+  });
+});
+
+describe('PASS_FEATURES', () => {
+  it('says what a visitor gets, in short lines', () => {
+    expect(PASS_FEATURES.length).toBeGreaterThanOrEqual(8);
+    for (const f of PASS_FEATURES) expect(f.length).toBeLessThanOrEqual(70);
+    expect(PASS_FEATURES.join(' ')).toMatch(/Campagnes illimitées/);
+    expect(TRIAL_LIMITS).toBe(
+      "L'essai ouvre tout, sauf les liens par groupe et l'export pour Excel.",
+    );
   });
 });
 
