@@ -188,6 +188,34 @@ describe('welcome', () => {
 });
 
 describe('ShopForm', () => {
+  it('greys the country once the shop has a product, and says why (lot 7b)', () => {
+    const out = html(
+      <ShopForm
+        submitLabel="Enregistrer"
+        submittingLabel="…"
+        submitting={false}
+        countryLocked
+        onSubmit={() => {}}
+      />,
+    );
+    expect(out).toMatch(
+      /<select[^>]*id="shop-country"[^>]*disabled=""|<select[^>]*disabled=""[^>]*id="shop-country"/,
+    );
+    expect(out).toContain('Le pays ne change plus une fois un produit ajouté.');
+    const open = html(
+      <ShopForm
+        submitLabel="Enregistrer"
+        submittingLabel="…"
+        submitting={false}
+        onSubmit={() => {}}
+      />,
+    );
+    expect(open).not.toContain('Le pays ne change plus');
+    // Every covered country is offered, Guinea and DR Congo included.
+    expect(open).toContain('value="GN"');
+    expect(open).toContain('value="CD"');
+  });
+
   it('ShopForm shows the error notice it is given', () => {
     const out = html(
       <ShopForm

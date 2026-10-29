@@ -7,6 +7,7 @@ describe('TAMANI_ERRORS', () => {
       [
         'SHOP_ALREADY_EXISTS',
         'SHOP_NOT_FOUND',
+        'SHOP_COUNTRY_LOCKED',
         'ZONE_NOT_FOUND',
         'ZONE_ALREADY_EXISTS',
         'PRODUCT_NOT_FOUND',

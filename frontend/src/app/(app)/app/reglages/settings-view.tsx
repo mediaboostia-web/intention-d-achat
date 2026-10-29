@@ -189,6 +189,7 @@ export function SettingsView({ google }: { google: boolean }) {
               <ShopForm
                 formId="shop-form"
                 hideSubmit
+                countryLocked={shop.countryLocked}
                 initial={{
                   name: shop.name,
                   country: shop.country,

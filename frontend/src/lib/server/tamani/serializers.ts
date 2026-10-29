@@ -29,7 +29,13 @@ export function photoUrls(photos: Prisma.JsonValue): string[] {
 
 type SubscriptionDates = Pick<Subscription, 'plan' | 'currentPeriodEnd' | 'graceUntil'>;
 
-export function toShop(org: Organization, sub: SubscriptionDates | null, now: Date) {
+/** `countryLocked`: the shop has a product, so its country and currency stay (lot 7b). */
+export function toShop(
+  org: Organization,
+  sub: SubscriptionDates | null,
+  now: Date,
+  countryLocked = false,
+) {
   const { plan, inGrace } = effectivePlan(sub, now);
   return {
     id: org.id,
@@ -38,6 +44,7 @@ export function toShop(org: Organization, sub: SubscriptionDates | null, now: Da
     whatsappPhone: org.whatsappPhone,
     country: org.country,
     currency: org.currency,
+    countryLocked,
     logoUrl: org.logoUrl,
     description: org.description,
     coefConsumer: org.coefConsumer,

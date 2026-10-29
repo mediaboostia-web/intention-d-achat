@@ -3,7 +3,7 @@
 // the URL after requireOrgRole.
 import 'server-only';
 import { z } from 'zod';
-import { isSupportedCountry } from 'libphonenumber-js/min';
+import { isShopCountry } from '@/lib/tamani/countries';
 import { checkProductRules } from '@/lib/tamani/product-rules';
 import { BUYER_TYPES, NOT_INTERESTED_REASONS } from '@/lib/tamani/labels';
 import { ORDER_STATUSES } from '@/lib/tamani/orders-view';
@@ -30,7 +30,8 @@ export const cloudinaryUrl = z
 const country = z
   .string()
   .regex(/^[A-Z]{2}$/)
-  .refine((c) => isSupportedCountry(c), 'Unsupported country');
+  // Lot 7b: only the countries Tamani covers, each with its currency.
+  .refine((c) => isShopCountry(c), 'Unsupported country');
 const shopName = z.string().trim().min(1).max(60);
 /** What the popup shows of the shop (lot 5b); blank clears it. */
 const shopDescription = z

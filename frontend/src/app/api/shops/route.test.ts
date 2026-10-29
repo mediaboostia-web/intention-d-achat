@@ -143,3 +143,19 @@ describe('GET /api/shops/me', () => {
     expect(((await res.json()) as { error: string }).error).toBe('SHOP_NOT_FOUND');
   });
 });
+
+describe('POST /api/shops currency (lot 7b)', () => {
+  it('a shop in Guinea is in Guinean francs', async () => {
+    const res = await post({ ...body, country: 'GN', whatsappPhone: '620 12 34 56' });
+    expect(res.status).toBe(201);
+    expect(prismaMock.organization.create.mock.calls[0]![0].data).toMatchObject({
+      country: 'GN',
+      currency: 'GNF',
+    });
+  });
+
+  it('refuses a country Tamani does not cover', async () => {
+    const res = await post({ ...body, country: 'FR' });
+    expect(res.status).toBe(400);
+  });
+});

@@ -58,6 +58,7 @@ export function ShopForm({
   onSubmit,
   formId,
   hideSubmit = false,
+  countryLocked = false,
 }: {
   initial?: ShopFormValues;
   withZones?: boolean;
@@ -73,6 +74,8 @@ export function ShopForm({
   formId?: string;
   /** The submit button lives elsewhere, e.g. in a section header. */
   hideSubmit?: boolean;
+  /** A product exists: the country, and so the currency, stay (lot 7b). */
+  countryLocked?: boolean;
 }) {
   const [values, setValues] = useState(initial);
   const [localErrors, setLocalErrors] = useState<ShopFormErrors>({});
@@ -115,6 +118,8 @@ export function ShopForm({
         label="Pays"
         options={COUNTRY_OPTIONS}
         value={values.country}
+        disabled={countryLocked}
+        hint={countryLocked ? 'Le pays ne change plus une fois un produit ajouté.' : undefined}
         onChange={(e) => set('country', e.target.value)}
       />
       <PhoneInput

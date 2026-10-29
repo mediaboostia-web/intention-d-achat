@@ -8,6 +8,7 @@
 export const runtime = 'nodejs';
 
 import 'server-only';
+import { currencyForCountry } from '@/lib/tamani/countries';
 import { NextResponse, type NextRequest } from 'next/server';
 import { verifyCsrf } from '@/lib/server/auth';
 import { requireAuth } from '@/lib/server/middleware';
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             ownerId: userId,
             whatsappPhone: phone,
             country,
-            currency: 'XOF',
+            currency: currencyForCountry(country),
             logoUrl: logoUrl ?? null,
             members: { create: { userId, role: 'OWNER' } },
             subscription: { create: { plan: 'FREE' } },

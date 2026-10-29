@@ -17,6 +17,7 @@ export const TEST_SHOP: Shop = {
   whatsappPhone: '+221771234567',
   country: 'SN',
   currency: 'XOF',
+  countryLocked: false,
   logoUrl: null,
   description: null,
   coefConsumer: 0.4,

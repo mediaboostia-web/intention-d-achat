@@ -11,7 +11,9 @@ import { buildPage, clampLimit, cursorWhere, decodeCursor } from '@/lib/server/p
 import { jsonOk, readJson, validationFailed } from '@/lib/server/tamani/http';
 import { activeCampaignWhere } from '@/lib/server/tamani/campaign-status';
 import { ProductCreate, SEARCH_MAX, checkProductRules } from '@/lib/server/tamani/inputs';
+import { advisoryXactLock } from '@/lib/server/tamani/locks';
 import { shopHandler } from '@/lib/server/tamani/route';
+import { shopCountryLock } from '@/lib/server/tamani/shop';
 import { toShopProduct } from '@/lib/server/tamani/serializers';
 
 async function countViews(organizationId: string, now: Date) {
@@ -57,8 +59,10 @@ export const POST = shopHandler('MEMBER', async (req, { params }) => {
   if (!parsed.success) return validationFailed();
   const broken = checkProductRules(parsed.data);
   if (broken) return validationFailed(broken);
-  const product = await prisma.product.create({
-    data: { ...parsed.data, organizationId: params.orgId },
+  // The shop-country lock: a country change running now waits, then sees this product (lot 7b).
+  const product = await prisma.$transaction(async (tx) => {
+    await advisoryXactLock(tx, shopCountryLock(params.orgId));
+    return tx.product.create({ data: { ...parsed.data, organizationId: params.orgId } });
   });
   return jsonOk({ product: toShopProduct(product) }, 201);
 });

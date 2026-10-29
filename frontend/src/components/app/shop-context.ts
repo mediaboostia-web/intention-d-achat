@@ -13,6 +13,8 @@ export interface Shop {
   whatsappPhone: string;
   country: string;
   currency: string;
+  /** A product exists: the country, and so the currency, no longer change (lot 7b). */
+  countryLocked: boolean;
   logoUrl: string | null;
   description: string | null;
   coefConsumer: number;

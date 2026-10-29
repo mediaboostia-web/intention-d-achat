@@ -2,7 +2,14 @@
 import { prismaMock } from '@/test-utils/prisma-mock';
 import { mockNextCookies, __cookieStore } from '@/test-utils/mock-cookies';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { apiRequest, asMember, asNonMember, routeParams, signIn } from '@/test-utils/shop-fixtures';
+import {
+  apiRequest,
+  asMember,
+  asNonMember,
+  routeParams,
+  runTransactionsInline,
+  signIn,
+} from '@/test-utils/shop-fixtures';
 
 mockNextCookies();
 
@@ -111,11 +118,14 @@ describe('PATCH /api/shops/[orgId]', () => {
   });
 
   it('normalizes a new WhatsApp number with the shop country', async () => {
+    runTransactionsInline();
+    prismaMock.product.findFirst.mockResolvedValue(null);
     const res = await patch({ whatsappPhone: '76 12 34 56', country: 'ML' });
     expect(res.status).toBe(200);
     expect(prismaMock.organization.update.mock.calls[0]![0].data).toEqual({
       whatsappPhone: '+22376123456',
       country: 'ML',
+      currency: 'XOF',
     });
   });
 
@@ -135,5 +145,52 @@ describe('PATCH /api/shops/[orgId]', () => {
     const res = await patch({ name: 'Awa Market' }, false);
     expect(res.status).toBe(403);
     expect(prismaMock.organization.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('PATCH /api/shops/[orgId] country (lot 7b)', () => {
+  beforeEach(() => {
+    runTransactionsInline();
+  });
+
+  it('a shop without products changes country and currency together, under the country lock', async () => {
+    prismaMock.product.findFirst.mockResolvedValue(null);
+    const res = await patch({ country: 'CM' });
+    expect(res.status).toBe(200);
+    expect(prismaMock.organization.update.mock.calls[0]![0].data).toMatchObject({
+      country: 'CM',
+      currency: 'XAF',
+    });
+    expect(prismaMock.product.findFirst.mock.calls[0]![0]).toMatchObject({
+      where: { organizationId: 'org_1' },
+    });
+    expect(JSON.stringify(prismaMock.$executeRaw.mock.calls)).toContain('shop-country:org_1');
+  });
+
+  it('after the first product the country stays: 409 SHOP_COUNTRY_LOCKED', async () => {
+    prismaMock.product.findFirst.mockResolvedValue({ id: 'p1' } as never);
+    const res = await patch({ country: 'GN' });
+    expect(res.status).toBe(409);
+    expect(await errorOf(res)).toBe('SHOP_COUNTRY_LOCKED');
+    expect(prismaMock.organization.update).not.toHaveBeenCalled();
+  });
+
+  it('the same country sent again is no change, even with products', async () => {
+    prismaMock.product.findFirst.mockResolvedValue({ id: 'p1' } as never);
+    const res = await patch({ name: 'Chez Awa', country: 'SN' });
+    expect(res.status).toBe(200);
+  });
+
+  it('refuses a country Tamani does not cover', async () => {
+    const res = await patch({ country: 'FR' });
+    expect(res.status).toBe(400);
+  });
+
+  it('GET says whether the country is locked', async () => {
+    prismaMock.product.findFirst.mockResolvedValue({ id: 'p1' } as never);
+    const body = (await (await GET(apiRequest('/api/shops/org_1'), params)).json()) as {
+      shop: { countryLocked: boolean };
+    };
+    expect(body.shop.countryLocked).toBe(true);
   });
 });
