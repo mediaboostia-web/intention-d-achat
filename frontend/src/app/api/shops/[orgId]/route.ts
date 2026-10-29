@@ -19,6 +19,7 @@ import { shopCountryLock, shopHasProducts } from '@/lib/server/tamani/shop';
 import { currencyForCountry } from '@/lib/tamani/countries';
 
 class CountryLocked extends Error {}
+class InvalidPhone extends Error {}
 
 export const GET = shopHandler('MEMBER', async (_req, { params }) => {
   const [org, locked] = await Promise.all([
@@ -37,40 +38,40 @@ export const PATCH = shopHandler('ADMIN', async (req, { params }) => {
   if (!parsed.success) return validationFailed();
   const data = compact(parsed.data);
 
-  const current = await prisma.organization.findUnique({
-    where: { id: params.orgId },
-    select: { country: true },
-  });
-  if (data.whatsappPhone !== undefined) {
-    const phone = normalizePhone(
-      data.whatsappPhone,
-      shopCountry(data.country ?? current?.country ?? 'SN'),
-    );
-    if (!phone) return tamaniError('INVALID_PHONE', 400);
-    data.whatsappPhone = phone;
-  }
-
-  const moves = data.country !== undefined && data.country !== current?.country;
   try {
-    const org = moves
-      ? await prisma.$transaction(async (tx) => {
-          await advisoryXactLock(tx, shopCountryLock(params.orgId));
-          if (await shopHasProducts(tx, params.orgId)) throw new CountryLocked();
-          return tx.organization.update({
-            where: { id: params.orgId },
-            data: { ...data, currency: currencyForCountry(data.country ?? 'SN') },
-            include: { subscription: true },
-          });
-        })
-      : await prisma.organization.update({
-          where: { id: params.orgId },
-          data,
-          include: { subscription: true },
-        });
+    const org = await prisma.$transaction(async (tx) => {
+      // A country sent is read under the lock, so two tabs cannot leave a
+      // country with another country's currency; a refused move answers
+      // before the number is checked against the new country.
+      if (data.country !== undefined) await advisoryXactLock(tx, shopCountryLock(params.orgId));
+      const current = await tx.organization.findUnique({
+        where: { id: params.orgId },
+        select: { country: true },
+      });
+      const moves = data.country !== undefined && data.country !== current?.country;
+      if (moves && (await shopHasProducts(tx, params.orgId))) throw new CountryLocked();
+      if (data.whatsappPhone !== undefined) {
+        const phone = normalizePhone(
+          data.whatsappPhone,
+          shopCountry(data.country ?? current?.country ?? 'SN'),
+        );
+        if (!phone) throw new InvalidPhone();
+        data.whatsappPhone = phone;
+      }
+      return tx.organization.update({
+        where: { id: params.orgId },
+        data: {
+          ...data,
+          ...(data.country !== undefined && { currency: currencyForCountry(data.country) }),
+        },
+        include: { subscription: true },
+      });
+    });
     const locked = await shopHasProducts(prisma, params.orgId);
     return jsonOk({ shop: toShop(org, org.subscription, new Date(), locked) });
   } catch (err) {
     if (err instanceof CountryLocked) return tamaniError('SHOP_COUNTRY_LOCKED', 409);
+    if (err instanceof InvalidPhone) return tamaniError('INVALID_PHONE', 400);
     throw err;
   }
 });

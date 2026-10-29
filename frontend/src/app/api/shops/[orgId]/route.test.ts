@@ -39,6 +39,7 @@ beforeEach(async () => {
   __cookieStore.clear();
   await signIn();
   asMember('org_1');
+  runTransactionsInline();
   prismaMock.organization.findUnique.mockResolvedValue(org as never);
   prismaMock.organization.update.mockImplementation((async (args: { data: object }) => ({
     ...org,
@@ -192,5 +193,30 @@ describe('PATCH /api/shops/[orgId] country (lot 7b)', () => {
       shop: { countryLocked: boolean };
     };
     expect(body.shop.countryLocked).toBe(true);
+  });
+});
+
+describe('PATCH /api/shops/[orgId] country under the lock (lot 7b review)', () => {
+  beforeEach(() => {
+    runTransactionsInline();
+  });
+
+  it('a locked country answers 409 before the phone is read against the new country', async () => {
+    prismaMock.product.findFirst.mockResolvedValue({ id: 'p1' } as never);
+    const res = await patch({ country: 'GN', whatsappPhone: '77 123 45 67' });
+    expect(res.status).toBe(409);
+    expect(await errorOf(res)).toBe('SHOP_COUNTRY_LOCKED');
+  });
+
+  it('reads the current country under the lock and writes the currency with any country', async () => {
+    prismaMock.product.findFirst.mockResolvedValue({ id: 'p1' } as never);
+    const res = await patch({ country: 'SN', name: 'Chez Awa' });
+    expect(res.status).toBe(200);
+    expect(prismaMock.organization.update.mock.calls[0]![0].data).toMatchObject({
+      country: 'SN',
+      currency: 'XOF',
+    });
+    const lock = prismaMock.$executeRaw.mock.invocationCallOrder[0]!;
+    expect(lock).toBeLessThan(prismaMock.organization.findUnique.mock.invocationCallOrder[0]!);
   });
 });
