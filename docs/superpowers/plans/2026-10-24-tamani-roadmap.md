@@ -635,6 +635,8 @@ Le porteur veut couvrir toute l'Afrique francophone. Aujourd'hui tout est en FCF
 ### Lot 8 : Forfaits prépayés et SasPay
 Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08-forfaits-saspay.md) (14 tâches). Spec §5.6, §5.7 et §6.7, réécrits le 2026-10-29.
 
+**Fait** (2026-10-29, branche `plan/08-forfaits-saspay`) : tâches 1 à 13, 2 336 tests verts. La recette de bout en bout (tâche 14) suit, avec un seul vrai paiement accepté par le porteur.
+
 **Décisions du porteur (2026-10-29)**
 - **Grille** :
   - Essai gratuit : 3 jours, 50 réponses, 1 campagne ;
@@ -656,10 +658,40 @@ Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08
 - **Grâce** : 3 jours.
 - **Page d'accueil** : la grille se fait glisser, propre et simple.
 
-**Rulings de conception (2026-10-29, à confirmer au fil du plan)**
+**Rulings de conception (2026-10-29, confirmés pendant le plan)**
 - **Le webhook est un signal.** Son corps ne porte ni la session ni nos métadonnées. Le rapprochement idempotent lit la session, puis `verify`, et il tourne depuis le retour, le webhook (`after()`) et `billing-verify`. L'outbox n'est pas utilisée, car son `dispatcher.ts` est protégé.
 - **Sans pass et essai** : une seule campagne en cours.
 - **Les boutiques de développement existantes** restent « Sans pass ».
+
+**Rulings pris pendant le lot** (le détail et le coût de chaque choix sont dans le plan)
+- **Pays** : GW, TD, CF et GQ n'ont aucun réseau d'encaissement au relevé du 2026-10-29. Ils affichent « Bientôt disponible », comme GN et CD.
+- **Marge** : les hypothèses suivent les pires réseaux réels (6 % d'encaissement, 4,5 % de retrait).
+- **Boutiques existantes** : elles restent « Sans pass », sans essai rétroactif.
+- **Fin du pass** : `endsAt` vaut la fin du pass pendant qu'il court, puis la fin de la grâce. Le bandeau dit « Il te reste N jours pour le racheter », et N est compté à chaque passage de la tâche planifiée.
+- **Plafond sans pass** : « Réponses fermées pour ce mois » ne s'affiche qu'au premier écran. Une personne qui a déjà commencé finit sa réponse.
+- **Disjoncteur** : une erreur 4xx de SasPay ne l'ouvre jamais. Un 404 sur une session ne doit pas bloquer le paiement de toutes les boutiques.
+- **Journaux** : `SaspayError` ne recopie pas le message de SasPay, qui peut citer l'e-mail d'un client.
+- **Webhook sans identifiant** : sa clé de déduplication est l'événement plus l'empreinte de ses données.
+- **Bictorys** :
+  - trois fichiers protégés du kit le citent encore en commentaire ;
+  - le modèle `paymentReceived` et ses deux types d'outbox restent sans émetteur, car `dispatcher.ts` est protégé.
+- **Échec de paiement** : seule une session `CANCELLED` fait échouer l'achat. Un paiement `FAILED` laisse la commande ouverte, car la page hébergée peut repasser par un autre réseau. Une commande `EXPIRED` que SasPay dit payée s'active quand même.
+- **Contrôle du montant** : il est numérique (`"9900.00"` et `"9900"` valent 9 900).
+- **Activation** :
+  - elle prend le verrou de facturation, puis celui du quota ;
+  - sa transaction a 10 s pour démarrer et 30 s pour finir.
+- **Tâches planifiées** : `billing-verify` et `subscription-renewals` exportent `GET`, la méthode qu'envoie Vercel Cron, et `POST`. Les tâches du kit n'exportent que `POST` : c'est signalé au porteur, pas changé.
+- **Page de retour** : elle avale les erreurs de SasPay et montre l'achat tel quel. Elle interroge l'API toutes les 3 s pendant 2 minutes, puis propose « Vérifier encore ».
+- **Clés des notifications** : elles finissent par l'identifiant de la personne, car `dedupeKey` est unique pour tous les utilisateurs. Le Pass Illimité reçoit aussi les rappels.
+- **Badge** : « Le meilleur prix par réponse » va sur le Mois Max (1,7 FCFA la réponse), pas sur « Confort ».
+- **Accueil** : un seul compteur à toutes les largeurs.
+- **Bandeaux** : ils sont cachés sur « Mon pass » et sur sa page de retour.
+- **Limite de campagnes** : le message dit une campagne en cours, sans pass ou pendant l'essai.
+- **Page d'accueil** :
+  - la carte de l'essai dit « Gratuit » avec « Essayer gratuitement » ; les pass disent « Choisir » et mènent à l'inscription ;
+  - les trois promesses laissent la place à la ligne sous les cartes ; le tableau de comparaison reste, replié ;
+  - le JSON-LD garde l'essai comme offre à 0 XOF ;
+  - « compte gratuit » devient « 3 jours d'essai gratuit ».
 
 **Tâches** (dans l'ordre du plan)
 1. Reconnaissance SasPay (clé live, sans paiement) : vrais tarifs, couverture par pays, corps réels.

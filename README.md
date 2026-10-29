@@ -125,7 +125,14 @@ Les fichiers uploadés renvoient un `secure_url` Cloudinary servi directement pa
 |---|---|---|
 | POST | `/api/webhooks/saspay` | HMAC du corps brut (`X-Webhook-Signature`), fenêtre de 300 s ; signal du rapprochement |
 
-### Handlers cron — 5 routes (toutes `Authorization: Bearer ${CRON_SECRET}`)
+### Pass Tamani (`/api/shops/[orgId]/billing*`) — 3 routes
+| Méthode | Path | Auth |
+|---|---|---|
+| GET | `/billing` | membre de la boutique : pass en cours, réponses par campagne, achats |
+| POST | `/billing/checkout` | ADMIN ou OWNER + CSRF : ouvre le paiement SasPay, renvoie `checkoutUrl` |
+| GET | `/billing/orders/[orderId]` | membre : rapproche l'achat avec SasPay, puis renvoie où il en est |
+
+### Handlers cron — 8 routes (toutes `Authorization: Bearer ${CRON_SECRET}`)
 | Path | Schedule (`vercel.json`) |
 |---|---|
 | `/api/cron/outbox-drain` | toutes les minutes |
@@ -133,6 +140,9 @@ Les fichiers uploadés renvoient un `secure_url` Cloudinary servi directement pa
 | `/api/cron/verification-cleanup` | toutes les heures |
 | `/api/cron/order-expiration` | toutes les 5 min |
 | `/api/cron/webhook-log-purge` | quotidien |
+| `/api/cron/email-job-purge` | quotidien |
+| `/api/cron/billing-verify` | toutes les minutes (rapprochement des achats de pass) |
+| `/api/cron/subscription-renewals` | tous les jours à 8 h (rappel J-3, grâce, fin d'essai) |
 
 ### Admin (`/api/admin/*`) — 12 routes
 | Méthode | Path | Auth |
@@ -209,7 +219,7 @@ izikit/
 ├── frontend/                    L'app Next.js 16 (full-stack)
 │   ├── prisma/                  schema.prisma + migrations
 │   ├── scripts/                 make-superadmin.ts, seed-dev.ts, smoke-auth.ts (via tsx)
-│   ├── vercel.json              schedules cron (5 entrées)
+│   ├── vercel.json              schedules cron (8 entrées)
 │   ├── .env.example             référence env
 │   └── src/
 │       ├── app/api/             route handlers
