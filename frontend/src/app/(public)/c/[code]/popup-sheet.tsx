@@ -38,7 +38,13 @@ import {
   type ResponseStepBody,
 } from '@/lib/tamani/popup-machine';
 import { leavePage } from '@/lib/tamani/leave-page';
-import { poweredByHref, stockLine, thanksCopy } from '@/lib/tamani/popup-copy';
+import {
+  ANSWERS_CLOSED_TITLE,
+  answersClosedLine,
+  poweredByHref,
+  stockLine,
+  thanksCopy,
+} from '@/lib/tamani/popup-copy';
 import { formatMoney } from '@/lib/tamani/currency';
 import { TIMING_LABELS } from '@/lib/tamani/timing';
 import { phoneCountryChoices } from '@/lib/tamani/phone-countries';
@@ -566,6 +572,8 @@ export function PopupView({
 }: PopupViewProps) {
   const photo = c.product.photos[0] ? cloudinaryVariant(c.product.photos[0], POPUP_PHOTO) : null;
   const hasPhotos = c.product.photos.length > 0;
+  // A person who already started keeps their answer; nobody starts a new one.
+  const closedForMonth = c.answersClosed && state.step === 'interest';
   const canGoBack = c.accepting && state.step !== 'interest' && state.step !== 'thanks';
   const done = c.accepting && state.step === 'thanks';
   const poweredBy = c.poweredByBadge && (
@@ -626,6 +634,11 @@ export function PopupView({
                 <p className="text-ink-soft">
                   Demande à <b className="text-ink">{c.shop.name}</b> ses prochains arrivages.
                 </p>
+              </>
+            ) : closedForMonth ? (
+              <>
+                <Question>{ANSWERS_CLOSED_TITLE}</Question>
+                <p className="text-ink-soft">{answersClosedLine(c.shop.name)}</p>
               </>
             ) : (
               <>

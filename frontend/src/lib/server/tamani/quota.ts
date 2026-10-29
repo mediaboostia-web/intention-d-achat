@@ -1,10 +1,19 @@
-// Monthly quota of completed responses (spec §5.6). Over the quota a
-// response is kept but locked, never refused; an upgrade unlocks the
-// oldest locked responses of the month up to the new limit.
+// Answers counted per pass (spec §5.6). Over the pass a completed answer is
+// kept but pending (`locked`), never refused; a pass opens the oldest
+// pending answers up to its room. An answer counts once `countedAt` is set.
 import 'server-only';
-import { PLANS } from '@/lib/tamani/plans';
-import type { Db } from './locks';
+import type { Subscription } from '@prisma/client';
+import type { PlanId } from '@/lib/tamani/plans';
+import { advisoryXactLock, quotaLock, type Db } from './locks';
 import { effectivePlan } from './subscription';
+
+/** Without a paid pass, the popup closes past this many answers in the month (spec §5.6). */
+export const RECORDED_CEILING = 1000;
+
+type PassRow = Pick<
+  Subscription,
+  'plan' | 'periodStart' | 'currentPeriodEnd' | 'graceUntil' | 'responsesIncluded'
+>;
 
 /** Calendar month in UTC (Africa/Dakar is UTC+0): [start, end). */
 export function monthWindowUtc(now: Date): { start: Date; end: Date } {
@@ -13,56 +22,93 @@ export function monthWindowUtc(now: Date): { start: Date; end: Date } {
   return { start: new Date(Date.UTC(y, m, 1)), end: new Date(Date.UTC(y, m + 1, 1)) };
 }
 
-async function monthlyUsage(db: Db, organizationId: string, now: Date) {
-  const sub = await db.subscription.findUnique({ where: { organizationId } });
-  // Lot 8 task 5 counts answers per pass; until then, the pass total per month.
-  const limit = PLANS[effectivePlan(sub, now).plan].includedResponses ?? Number.MAX_SAFE_INTEGER;
-  const { start, end } = monthWindowUtc(now);
-  const completedAt = { gte: start, lt: end };
-  const used = await db.response.count({
-    where: { organizationId, locked: false, completedAt },
-  });
-  return { limit, used, completedAt };
+const pendingWhere = (organizationId: string) => ({
+  organizationId,
+  locked: true,
+  completedAt: { not: null },
+});
+
+/** The pass in force and the answers it counted, from its start to the end of its grace. */
+async function passCount(db: Db, organizationId: string, now: Date) {
+  const sub: PassRow | null = await db.subscription.findUnique({ where: { organizationId } });
+  const { plan, inGrace, endsAt } = effectivePlan(sub, now);
+  if (plan === 'FREE' || !sub?.currentPeriodEnd) {
+    return { plan, inGrace, endsAt, used: 0, included: 0 };
+  }
+  const lt = sub.graceUntil ?? sub.currentPeriodEnd;
+  const countedAt = sub.periodStart ? { gte: sub.periodStart, lt } : { lt };
+  const used = await db.response.count({ where: { organizationId, countedAt } });
+  return { plan, inGrace, endsAt, used, included: sub.responsesIncluded };
 }
 
-/** This month's counted responses against the plan's limit (the sidebar's quota). */
-export async function responsesThisMonth(
+/** The shop's pass meter: answers counted, answers included, answers waiting for a pass. */
+export async function passUsage(
   db: Db,
   organizationId: string,
   now: Date,
-): Promise<{ used: number; limit: number }> {
-  const { limit, used } = await monthlyUsage(db, organizationId, now);
-  return { used, limit };
+): Promise<{
+  plan: PlanId;
+  used: number;
+  included: number;
+  endsAt: Date | null;
+  inGrace: boolean;
+  pending: number;
+}> {
+  const { plan, used, included, endsAt, inGrace } = await passCount(db, organizationId, now);
+  const pending = await db.response.count({ where: pendingWhere(organizationId) });
+  return { plan, used, included, endsAt, inGrace, pending };
 }
 
+/** Two completions racing for the last answer of a pass queue on the shop's quota lock. */
 export async function shouldLockNewCompletion(
-  db: Db,
-  organizationId: string,
-  now: Date,
-): Promise<boolean> {
-  const { limit, used } = await monthlyUsage(db, organizationId, now);
-  return used >= limit;
-}
-
-/** Returns how many responses were unlocked. */
-export async function unlockCurrentMonth(
   tx: Db,
   organizationId: string,
   now: Date,
-): Promise<number> {
-  const { limit, used, completedAt } = await monthlyUsage(tx, organizationId, now);
-  const room = limit - used;
-  if (room <= 0) return 0;
+): Promise<boolean> {
+  await advisoryXactLock(tx, quotaLock(organizationId));
+  const { plan, used, included } = await passCount(tx, organizationId, now);
+  return plan === 'FREE' || used >= included;
+}
+
+/** Opens the oldest pending answers up to the pass's room; returns how many. */
+export async function unlockPending(tx: Db, organizationId: string, now: Date): Promise<number> {
+  await advisoryXactLock(tx, quotaLock(organizationId));
+  const { plan, used, included } = await passCount(tx, organizationId, now);
+  const room = included - used;
+  if (plan === 'FREE' || room <= 0) return 0;
   const oldest = await tx.response.findMany({
-    where: { organizationId, locked: true, completedAt },
+    where: pendingWhere(organizationId),
     orderBy: [{ completedAt: 'asc' }, { id: 'asc' }],
     take: room,
     select: { id: true },
   });
   if (oldest.length === 0) return 0;
   const { count } = await tx.response.updateMany({
-    where: { id: { in: oldest.map((r) => r.id) } },
-    data: { locked: false },
+    where: { id: { in: oldest.map((r) => r.id) }, locked: true },
+    data: { locked: false, countedAt: now },
   });
   return count;
+}
+
+/**
+ * Without a paid pass (no pass or the trial), the popup stops asking once
+ * the shop recorded RECORDED_CEILING answers this month, pending included:
+ * a big group without a pass must not cost us (margin rule). Pass the
+ * subscription when it is already read.
+ */
+export async function answersClosed(
+  db: Db,
+  organizationId: string,
+  now: Date,
+  sub?: Pick<Subscription, 'plan' | 'currentPeriodEnd' | 'graceUntil'> | null,
+): Promise<boolean> {
+  const row =
+    sub === undefined ? await db.subscription.findUnique({ where: { organizationId } }) : sub;
+  const { plan } = effectivePlan(row, now);
+  if (plan !== 'FREE' && plan !== 'TRIAL') return false;
+  const { start, end } = monthWindowUtc(now);
+  const recorded = await db.response.count({
+    where: { organizationId, completedAt: { gte: start, lt: end } },
+  });
+  return recorded >= RECORDED_CEILING;
 }

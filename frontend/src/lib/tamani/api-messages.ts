@@ -14,6 +14,7 @@ export const TAMANI_ERROR_CODES = [
   'PRODUCT_IN_USE',
   'CAMPAIGN_NOT_FOUND',
   'CAMPAIGN_CLOSED',
+  'ANSWERS_CLOSED',
   'CAMPAIGN_LIMIT_REACHED',
   'INVALID_CAMPAIGN_TRANSITION',
   'PLAN_FEATURE_LOCKED',
@@ -46,6 +47,7 @@ const MESSAGES: Record<string, string> = {
   PRODUCT_IN_USE: "Ce produit a une campagne en cours. Termine la campagne d'abord.",
   CAMPAIGN_NOT_FOUND: "Cette campagne n'existe plus. Recharge la liste.",
   CAMPAIGN_CLOSED: 'Cette campagne est terminée.',
+  ANSWERS_CLOSED: 'Les réponses sont fermées pour ce mois.',
   CAMPAIGN_LIMIT_REACHED:
     'Tu as déjà 3 campagnes en cours, le maximum du forfait Gratuit. Termine-en une ou passe au Pro. Tu peux aussi enregistrer celle-ci en brouillon.',
   INVALID_CAMPAIGN_TRANSITION: 'Cette campagne ne peut pas passer à ce statut. Recharge la page.',

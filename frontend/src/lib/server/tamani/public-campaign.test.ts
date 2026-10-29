@@ -97,6 +97,7 @@ describe('getPublicCampaign', () => {
     expect(Object.keys(result!).sort()).toEqual(
       [
         'accepting',
+        'answersClosed',
         'availability',
         'availabilityText',
         'campaignId',
@@ -156,7 +157,9 @@ describe('getPublicCampaign', () => {
     given(fixture({ campaign: { showLiveCounter: false, showStock: false } }));
     const result = await getPublicCampaign(prismaMock, 'Ab3dE7x', now);
     expect(result).toMatchObject({ interestedCount: null, stockQuantity: null });
-    expect(prismaMock.response.count).not.toHaveBeenCalled();
+    expect(prismaMock.response.count).not.toHaveBeenCalledWith({
+      where: expect.objectContaining({ interested: true }),
+    });
   });
 
   it('counts complete, interested, non-suspicious responses', async () => {
@@ -187,6 +190,16 @@ describe('getPublicCampaign', () => {
       }),
     );
     expect((await getPublicCampaign(prismaMock, 'Ab3dE7x', now))?.poweredByBadge).toBe(false);
+  });
+
+  it('closes the answers at 1 000 recorded this month without a pass', async () => {
+    given(fixture(), 1000);
+    expect((await getPublicCampaign(prismaMock, 'Ab3dE7x', now))?.answersClosed).toBe(true);
+    given(fixture({ campaign: { showLiveCounter: false } }), 12);
+    expect(await getPublicCampaign(prismaMock, 'Ab3dE7x', now)).toMatchObject({
+      accepting: true,
+      answersClosed: false,
+    });
   });
 
   it('returns null for an unknown or malformed code', async () => {

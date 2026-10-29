@@ -34,7 +34,7 @@ export function responseNotificationText(r: ResponseNotificationInput): {
   if (r.locked) {
     return {
       title,
-      body: "Une nouvelle réponse t'attend. Ton forfait du mois est plein : passe à Pro pour la voir.",
+      body: "Une nouvelle réponse t'attend. Prends un pass pour la voir.",
     };
   }
   if (!r.interested) {

@@ -1,5 +1,5 @@
-// GET /api/shops/me — the caller's shop and role, this month's responses
-// against the quota and the person's name (greeting, avatar), or 404
+// GET /api/shops/me — the caller's shop and role, the pass meter (answers
+// counted, included and pending) and the person's name (greeting, avatar), or 404
 // SHOP_NOT_FOUND (the shop space sends a new account to /app/bienvenue).
 export const runtime = 'nodejs';
 
@@ -10,7 +10,7 @@ import { prisma } from '@/lib/server/prisma';
 import { makeRequestContext, withRequestContext } from '@/lib/server/observability/request-context';
 import { tamaniError } from '@/lib/server/tamani/errors';
 import { jsonOk } from '@/lib/server/tamani/http';
-import { responsesThisMonth } from '@/lib/server/tamani/quota';
+import { passUsage } from '@/lib/server/tamani/quota';
 import { toShop } from '@/lib/server/tamani/serializers';
 import { getShopForUser, shopHasProducts } from '@/lib/server/tamani/shop';
 import { firstName } from '@/lib/tamani/names';
@@ -29,14 +29,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     if (!org) return tamaniError('SHOP_NOT_FOUND', 404);
     const now = new Date();
     const [usage, user, locked] = await Promise.all([
-      responsesThisMonth(prisma, org.id, now),
+      passUsage(prisma, org.id, now),
       prisma.user.findUnique({ where: { id: auth.user.sub }, select: { name: true } }),
       shopHasProducts(prisma, org.id),
     ]);
     return jsonOk({
       shop: toShop(org, org.subscription, now, locked),
       role: found.role,
-      usage: { responsesThisMonth: usage.used, monthlyLimit: usage.limit },
+      usage: {
+        used: usage.used,
+        included: usage.included,
+        endsAt: usage.endsAt?.toISOString() ?? null,
+        inGrace: usage.inGrace,
+        pending: usage.pending,
+      },
       me: { firstName: firstName(user?.name), name: user?.name?.trim() || null },
     });
   });

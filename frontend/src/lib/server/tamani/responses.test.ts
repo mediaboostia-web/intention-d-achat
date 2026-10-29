@@ -5,7 +5,10 @@ import { signResponseToken, verifyResponseToken } from './response-token';
 
 const limits = vi.hoisted(() => ({ recordDeviceNumber: vi.fn(async () => 1) }));
 vi.mock('./public-limits', () => limits);
-const quota = vi.hoisted(() => ({ shouldLockNewCompletion: vi.fn(async () => false) }));
+const quota = vi.hoisted(() => ({
+  shouldLockNewCompletion: vi.fn(async () => false),
+  answersClosed: vi.fn(async () => false),
+}));
 vi.mock('./quota', () => quota);
 
 const { upsertResponse, ResponseWriteError } = await import('./responses');
@@ -33,6 +36,7 @@ async function failure(p: Promise<unknown>) {
 beforeEach(() => {
   limits.recordDeviceNumber.mockResolvedValue(1);
   quota.shouldLockNewCompletion.mockResolvedValue(false);
+  quota.answersClosed.mockResolvedValue(false);
 });
 
 describe('upsertResponse', () => {
@@ -108,12 +112,37 @@ describe('upsertResponse', () => {
     });
   });
 
-  it('locks completion when monthly quota reached', async () => {
+  it('keeps the answer pending when the pass is full, and counts it otherwise', async () => {
     const { responses } = fakePublicDb();
     quota.shouldLockNewCompletion.mockResolvedValue(true);
     const result = await upsertResponse(prismaMock, { ...base, ...yes, ...contact }, NOW);
     expect(result.completed).toBe(true);
     expect(responses[0]).toMatchObject({ locked: true, completedAt: NOW });
+    expect(responses[0]?.countedAt ?? null).toBeNull();
+
+    const second = fakePublicDb();
+    quota.shouldLockNewCompletion.mockResolvedValue(false);
+    await upsertResponse(prismaMock, { ...base, ...yes, ...contact }, NOW);
+    expect(second.responses[0]).toMatchObject({ locked: false, countedAt: NOW });
+  });
+
+  it('answers 409 ANSWERS_CLOSED to a new answer once the month is closed', async () => {
+    const { responses } = fakePublicDb();
+    const started = await upsertResponse(prismaMock, { ...base, interested: true }, NOW);
+    quota.answersClosed.mockResolvedValue(true);
+    expect(
+      await failure(
+        upsertResponse(prismaMock, { ...base, deviceId: DEVICE_B, interested: true }, NOW),
+      ),
+    ).toEqual({ code: 'ANSWERS_CLOSED', status: 409 });
+    expect(responses).toHaveLength(1);
+    // An answer already started can still be finished.
+    const done = await upsertResponse(
+      prismaMock,
+      { ...base, token: started.token, ...yes, ...contact },
+      NOW,
+    );
+    expect(done.completed).toBe(true);
   });
 
   it('a completed response needs its token to change', async () => {

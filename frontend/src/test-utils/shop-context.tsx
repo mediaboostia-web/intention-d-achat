@@ -25,7 +25,13 @@ export const TEST_SHOP: Shop = {
   plan: { id: 'FREE', inGrace: false, endsAt: null },
 };
 
-export const TEST_USAGE: ShopUsage = { responsesThisMonth: 42, monthlyLimit: 150 };
+export const TEST_USAGE: ShopUsage = {
+  used: 42,
+  included: 150,
+  endsAt: null,
+  inGrace: false,
+  pending: 0,
+};
 export const TEST_ME: ShopMe = { firstName: 'Fatou', name: 'Fatou Ndiaye' };
 
 export function ShopTestProvider({

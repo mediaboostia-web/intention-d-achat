@@ -70,6 +70,7 @@ export interface FakeResponse {
   wantsDelivery: boolean | null;
   zoneId: string | null;
   completedAt: Date | null;
+  countedAt: Date | null;
   locked: boolean;
   suspicious: boolean;
 }
@@ -95,6 +96,7 @@ const BLANK = {
   wantsDelivery: null,
   zoneId: null,
   completedAt: null,
+  countedAt: null,
   locked: false,
   suspicious: false,
 };

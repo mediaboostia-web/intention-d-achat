@@ -13,7 +13,7 @@ import type { CountryCode } from 'libphonenumber-js/min';
 import { maskPhone, normalizePhone, shopCountry } from './phone';
 import { interestedWhere } from './public-campaign';
 import { recordDeviceNumber } from './public-limits';
-import { shouldLockNewCompletion } from './quota';
+import { answersClosed, shouldLockNewCompletion } from './quota';
 import { signResponseToken, verifyResponseToken } from './response-token';
 
 const SUSPICIOUS_NUMBERS = 3;
@@ -173,6 +173,10 @@ export async function upsertResponse(
     });
     // A finished answer changes only with the token handed out with it.
     if (row?.completedAt) throw new ResponseWriteError('INVALID_RESPONSE_TOKEN', 401);
+    // Past the month's ceiling without a pass, no new answer starts; one begun stays open.
+    if (!row && (await answersClosed(db, org.id, now))) {
+      throw new ResponseWriteError('ANSWERS_CLOSED', 409);
+    }
   }
 
   const answers = answerData(input);
@@ -214,12 +218,15 @@ export async function upsertResponse(
     }
     firstCompletion = row.completedAt === null;
     const numbers = await recordDeviceNumber(campaign.id, input.deviceId, phoneE164);
+    const locked = firstCompletion ? await shouldLockNewCompletion(db, org.id, now) : row.locked;
     row = await db.response.update({
       where: { id: row.id },
       data: {
         respondentId: person.id,
         completedAt: row.completedAt ?? now,
-        locked: firstCompletion ? await shouldLockNewCompletion(db, org.id, now) : row.locked,
+        locked,
+        // Counted in the pass at its first completion; a pending one when a pass opens it.
+        ...(firstCompletion && !locked && { countedAt: now }),
         suspicious: row.suspicious || numbers >= SUSPICIOUS_NUMBERS,
       },
     });

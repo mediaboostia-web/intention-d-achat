@@ -32,7 +32,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <SideNav
         pathname={pathname}
         shop={{ name: shop.name, logoUrl: shop.logoUrl, planLabel: PLANS[shop.plan.id].label }}
-        usage={{ used: usage.responsesThisMonth, limit: usage.monthlyLimit }}
+        usage={{ used: usage.used, limit: usage.included }}
         upgrade={shop.plan.id === 'FREE'}
       />
       <div className="relative min-w-0 flex-1">

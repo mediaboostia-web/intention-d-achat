@@ -14,6 +14,7 @@ describe('TAMANI_ERRORS', () => {
         'PRODUCT_IN_USE',
         'CAMPAIGN_NOT_FOUND',
         'CAMPAIGN_CLOSED',
+        'ANSWERS_CLOSED',
         'CAMPAIGN_LIMIT_REACHED',
         'INVALID_CAMPAIGN_TRANSITION',
         'PLAN_FEATURE_LOCKED',

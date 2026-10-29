@@ -47,6 +47,7 @@ const MESSAGES: Record<string, string> = {
   NETWORK: "Ta réponse n'est pas partie : vérifie ta connexion, puis touche à nouveau.",
   INVALID_PHONE: "Ce numéro WhatsApp n'est pas valide. Vérifie-le.",
   CAMPAIGN_CLOSED: 'Cette campagne vient de se terminer.',
+  ANSWERS_CLOSED: 'Les réponses sont fermées pour ce mois.',
   RATE_LIMITED: 'Trop de tentatives. Réessaie dans quelques minutes.',
   INVALID_RESPONSE_TOKEN: 'Cette réponse ne peut plus être modifiée depuis ce téléphone.',
 };
