@@ -30,11 +30,11 @@ const LINKS: ReadonlyArray<{ href: string; icon: IconName; label: string; note: 
   { href: '/app/profil', icon: 'user', label: 'Profil', note: 'Ton nom, ton mot de passe' },
 ];
 
-/** « Gratuit », or « Pro jusqu'au 24 novembre 2026 » for a paid plan with an end date. */
+/** « Sans pass », or « Pass Mois jusqu'au 24 novembre 2026 » for a pass with an end date. */
 export function planSentence(plan: Shop['plan']): string {
   const { label } = PLANS[plan.id];
-  if (plan.id === 'FREE' || !plan.currentPeriodEnd) return label;
-  return `${label} jusqu'au ${formatDateFr(new Date(plan.currentPeriodEnd))}`;
+  if (plan.id === 'FREE' || !plan.endsAt) return label;
+  return `${label} jusqu'au ${formatDateFr(new Date(plan.endsAt))}`;
 }
 
 function RowBody({

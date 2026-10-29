@@ -19,7 +19,7 @@ export interface Shop {
   description: string | null;
   coefConsumer: number;
   coefReseller: number;
-  plan: { id: PlanId; inGrace: boolean; currentPeriodEnd: string | null };
+  plan: { id: PlanId; inGrace: boolean; endsAt: string | null };
 }
 
 export type OrgRole = 'OWNER' | 'ADMIN' | 'MEMBER';

@@ -296,7 +296,7 @@ describe('shop pages', () => {
       <ShopTestProvider
         shop={{
           ...TEST_SHOP,
-          plan: { id: 'MONTH', inGrace: false, currentPeriodEnd: '2026-11-24T12:00:00.000Z' },
+          plan: { id: 'MONTH', inGrace: false, endsAt: '2026-11-24T12:00:00.000Z' },
         }}
       >
         <PlusPage />

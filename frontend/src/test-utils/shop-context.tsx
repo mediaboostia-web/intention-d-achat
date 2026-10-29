@@ -22,7 +22,7 @@ export const TEST_SHOP: Shop = {
   description: null,
   coefConsumer: 0.4,
   coefReseller: 0.7,
-  plan: { id: 'FREE', inGrace: false, currentPeriodEnd: null },
+  plan: { id: 'FREE', inGrace: false, endsAt: null },
 };
 
 export const TEST_USAGE: ShopUsage = { responsesThisMonth: 42, monthlyLimit: 150 };

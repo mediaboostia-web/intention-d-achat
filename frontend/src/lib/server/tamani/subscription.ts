@@ -1,11 +1,20 @@
-// Prepaid plans with a grace period (spec §5.6, §5.7). The plan in force is
+// Prepaid passes with a grace period (spec §5.6, §5.7). The plan in force is
 // computed from the period dates at read time; nothing downgrades a row.
 import 'server-only';
-import { isPlanId, type PlanId } from '@/lib/tamani/plans';
+import { PLANS, isPlanId, passResponses, type PassId, type PlanId } from '@/lib/tamani/plans';
 
-export const GRACE_DAYS = 5;
+export const GRACE_DAYS = 3;
 
 const DAY_MS = 86_400_000;
+
+/** The pass a Subscription row holds. */
+export interface PassState {
+  plan: PlanId;
+  periodStart: Date | null;
+  currentPeriodEnd: Date | null;
+  graceUntil: Date | null;
+  responsesIncluded: number;
+}
 
 type SubscriptionDates = {
   plan: string;
@@ -13,45 +22,58 @@ type SubscriptionDates = {
   graceUntil: Date | null;
 };
 
-/** A paid plan without an end date, or an unknown plan, reads FREE (fail closed). */
+const addDays = (date: Date, days: number) => new Date(date.getTime() + days * DAY_MS);
+
+/**
+ * A pass without an end date, or an unknown plan, reads FREE (fail closed).
+ * `endsAt` is the date the shop must act by: the pass's end, then the end of
+ * its grace. The trial has no grace.
+ */
 export function effectivePlan(
   sub: SubscriptionDates | null,
   now: Date,
-): { plan: PlanId; inGrace: boolean } {
-  const free = { plan: 'FREE' as const, inGrace: false };
+): { plan: PlanId; inGrace: boolean; endsAt: Date | null } {
+  const free = { plan: 'FREE' as const, inGrace: false, endsAt: null };
   if (!sub || !isPlanId(sub.plan) || sub.plan === 'FREE' || !sub.currentPeriodEnd) return free;
-  if (sub.currentPeriodEnd > now) return { plan: sub.plan, inGrace: false };
-  if (sub.graceUntil && sub.graceUntil > now) return { plan: sub.plan, inGrace: true };
+  if (sub.currentPeriodEnd > now) {
+    return { plan: sub.plan, inGrace: false, endsAt: sub.currentPeriodEnd };
+  }
+  if (sub.plan !== 'TRIAL' && sub.graceUntil && sub.graceUntil > now) {
+    return { plan: sub.plan, inGrace: true, endsAt: sub.graceUntil };
+  }
   return free;
 }
 
-/** Same day of month, months later, clamped to the month's last day (UTC). */
-function addMonthsUtc(date: Date, months: number): Date {
-  const y = date.getUTCFullYear();
-  const m = date.getUTCMonth() + months;
-  const lastDay = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-  const out = new Date(date);
-  out.setUTCFullYear(y, m, Math.min(date.getUTCDate(), lastDay));
-  return out;
+/** The free trial a new shop starts on: 50 answers over 3 days (porteur, 2026-10-29). */
+export function trialPass(now: Date): PassState {
+  const { durationDays, includedResponses } = PLANS.TRIAL;
+  return {
+    plan: 'TRIAL',
+    periodStart: now,
+    currentPeriodEnd: addDays(now, durationDays ?? 0),
+    graceUntil: null,
+    responsesIncluded: includedResponses ?? 0,
+  };
 }
 
 /**
- * A paid period: it follows the current one when the same plan is still
- * active (not in grace), otherwise it starts now.
+ * A pass starts now. It keeps the answers the pass in force has not used,
+ * trial and grace included: nothing paid for is lost (spec §5.6).
  */
-export function extendSubscription(
-  current: SubscriptionDates | null,
-  plan: 'MONTH' | 'MONTH_MAX',
-  months: 1 | 12,
+export function applyPurchase(
+  current: PassState | null,
+  pass: PassId,
+  used: number,
   now: Date,
-): { plan: 'MONTH' | 'MONTH_MAX'; currentPeriodEnd: Date; graceUntil: Date } {
-  const stillActive =
-    current?.plan === plan && current.currentPeriodEnd !== null && current.currentPeriodEnd > now;
-  const start = stillActive && current.currentPeriodEnd ? current.currentPeriodEnd : now;
-  const currentPeriodEnd = addMonthsUtc(start, months);
+): PassState {
+  const inForce = current !== null && effectivePlan(current, now).plan !== 'FREE';
+  const carried = inForce ? Math.max(0, current.responsesIncluded - used) : 0;
+  const currentPeriodEnd = addDays(now, PLANS[pass].durationDays ?? 0);
   return {
-    plan,
+    plan: pass,
+    periodStart: now,
     currentPeriodEnd,
-    graceUntil: new Date(currentPeriodEnd.getTime() + GRACE_DAYS * DAY_MS),
+    graceUntil: addDays(currentPeriodEnd, GRACE_DAYS),
+    responsesIncluded: passResponses(pass) + carried,
   };
 }
