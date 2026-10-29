@@ -32,8 +32,9 @@ export function welcomeNotification(userId: string, email: string): CreateNotifi
 }
 
 /**
- * Example: notification dispatched after a successful payment.
- * Called from the Bictorys webhook handler's `onPaid` post-commit hook.
+ * Example: notification dispatched after a successful payment, through the
+ * outbox kind `notification.payment_received` (no emitter since lot 8: a
+ * pass purchase notifies through `passActivated`).
  */
 export function paymentReceived(
   userId: string,

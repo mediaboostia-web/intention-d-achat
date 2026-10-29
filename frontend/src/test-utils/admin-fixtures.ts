@@ -15,7 +15,6 @@
 // Tests that need uniqueness override fields explicitly.
 import { vi } from 'vitest';
 import type { User, Order, OutboxEvent, EmailJob, Prisma } from '@prisma/client';
-import type { PaymentProvider, ChargeResult } from '@/lib/server/payments/provider';
 
 const FROZEN_NOW = new Date('2026-05-08T12:00:00.000Z');
 
@@ -118,7 +117,7 @@ export function seedOrder(overrides: OrderOverrides = {}): Order {
     customerName: null,
     metadata: (overrides.metadata ?? null) as Prisma.JsonValue,
     idempotencyKey: overrides.idempotencyKey ?? null,
-    provider: overrides.provider ?? 'bictorys',
+    provider: overrides.provider ?? 'saspay',
     providerChargeId: overrides.providerChargeId ?? null,
     paymentUrl: overrides.paymentUrl ?? null,
     paymentMethod: null,
@@ -247,36 +246,5 @@ export function mockRedis(map: Record<string, string | number> = {}): MockRedisS
       return [...store.keys()].filter((k) => re.test(k));
     }),
     __store: store,
-  };
-}
-
-/**
- * Stub PaymentProvider for orders/route.test.ts. By default returns a happy
- * ChargeResult; pass `{ openCircuit: true }` to make `.charge()` reject so
- * the CircuitBreaker can be exercised.
- */
-export interface MockBictorysOptions {
-  openCircuit?: boolean;
-  chargeResult?: ChargeResult;
-  chargeError?: Error;
-}
-
-export function mockBictorysProvider(
-  opts: MockBictorysOptions = {},
-): PaymentProvider & { charge: ReturnType<typeof vi.fn> } {
-  const charge = opts.openCircuit
-    ? vi.fn(async () => {
-        throw opts.chargeError ?? new Error('upstream provider failure');
-      })
-    : vi.fn(async () => ({
-        providerChargeId: 'bictorys_charge_test_1',
-        paymentUrl: 'https://checkout.test/bictorys/pay/test',
-        status: 'PENDING' as const,
-        ...(opts.chargeResult ?? {}),
-      }));
-
-  return {
-    name: 'bictorys',
-    charge,
   };
 }
