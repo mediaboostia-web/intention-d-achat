@@ -78,7 +78,27 @@ describe('vercel.json schema (CRON-07, D-20)', () => {
       '/api/cron/webhook-log-purge',
     ]);
     const at = (p: string) => cfg.crons?.find((c) => c.path === p)?.schedule;
-    expect(at('/api/cron/billing-verify')).toBe('*/1 * * * *');
     expect(at('/api/cron/subscription-renewals')).toBe('0 8 * * *');
+  });
+
+  // Vercel Hobby refuses a deployment whose cron runs more than once a day:
+  // the minute-by-minute drains are called by an external scheduler
+  // (cron-job.org, with the same Bearer CRON_SECRET), see CLAUDE.md.
+  it('every schedule runs at most once a day (Vercel Hobby)', () => {
+    if (!existsSync(VERCEL_JSON)) return;
+    const cfg = JSON.parse(readFileSync(VERCEL_JSON, 'utf8')) as VercelConfig;
+    for (const c of cfg.crons ?? []) {
+      const [minute, hour] = c.schedule.split(' ');
+      expect(minute, c.path).toMatch(/^\d+$/);
+      expect(hour, c.path).toMatch(/^\d+$/);
+    }
+  });
+
+  it('every cron route answers GET, the method Vercel Cron sends', () => {
+    const routes = fg.sync('*/route.ts', { cwd: APP_API_CRON, absolute: true });
+    expect(routes.length).toBe(8);
+    for (const file of routes) {
+      expect(readFileSync(file, 'utf8'), file).toMatch(/export (const|async function) GET\b/);
+    }
   });
 });

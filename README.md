@@ -132,7 +132,9 @@ Les fichiers uploadés renvoient un `secure_url` Cloudinary servi directement pa
 | POST | `/billing/checkout` | ADMIN ou OWNER + CSRF : ouvre le paiement SasPay, renvoie `checkoutUrl` |
 | GET | `/billing/orders/[orderId]` | membre : rapproche l'achat avec SasPay, puis renvoie où il en est |
 
-### Handlers cron — 8 routes (toutes `Authorization: Bearer ${CRON_SECRET}`)
+### Handlers cron — 8 routes (toutes `Authorization: Bearer ${CRON_SECRET}`, en `GET` ou `POST`)
+
+Sur Vercel Hobby, `vercel.json` ne peut lancer chaque tâche qu'une fois par jour. Les rythmes ci-dessous sont ceux dont le travail a besoin : `outbox-drain` et `email-queue-drain` (les codes d'inscription) toutes les minutes, `billing-verify` toutes les 5 minutes, appelés par cron-job.org avec le même en-tête `Authorization`.
 | Path | Schedule (`vercel.json`) |
 |---|---|
 | `/api/cron/outbox-drain` | toutes les minutes |
