@@ -4,6 +4,7 @@
 // Pure and shared with the browser.
 import type { Metadata } from 'next';
 import { formatPrice } from '@/lib/utils';
+import { BEST_VALUE_LABEL, FOR_WHO, offerCards, unlimitedCard } from './billing-view';
 import { PASS_IDS, PLANS, type PlanId } from './plans';
 
 export const LANDING_TITLE = 'Tamani : demande à ta communauté WhatsApp avant de commander';
@@ -65,7 +66,7 @@ export const LANDING_FAQ: readonly { question: string; answer: string }[] = [
   },
   {
     question: "L'essai gratuit, comment ça marche ?",
-    answer: `Ta boutique a ${TRIAL.durationDays} jours et ${TRIAL.includedResponses} réponses pour une campagne, avec le verdict et les numéros de tes clients. Ensuite, tes nouvelles réponses t'attendent : tu les ouvres en prenant un pass.`,
+    answer: `Ta boutique a ${TRIAL.durationDays} jours ou ${TRIAL.includedResponses} réponses, la première limite atteinte, pour une campagne, sans carte bancaire. Tu as le verdict et les numéros de tes clients. Ensuite, tes nouvelles réponses t'attendent : tu les ouvres en prenant un pass.`,
   },
   {
     question: 'Que se passe-t-il si je dépasse les réponses de mon pass ?',
@@ -79,30 +80,34 @@ export const LANDING_FAQ: readonly { question: string; answer: string }[] = [
   },
 ];
 
-export interface PricingTier {
+export interface PricingOffer {
   id: PlanId;
-  label: string;
-  /** The big figure: the price of the pass. */
+  name: string;
+  /** Written as the card shows it: « Gratuit », « 3 900 FCFA », « Sur devis ». */
   price: string;
-  unit: string;
-  /** The line under the price: how long, how many answers. */
-  per: string;
+  durationLabel: string;
+  responsesLabel: string;
+  forWho: string;
+  badge?: string;
 }
 
-const TIER_ORDER: readonly PlanId[] = ['TRIAL', ...PASS_IDS];
-
-/** The trial and the five passes, in the grid's order. */
-export function pricingTiers(): PricingTier[] {
-  return TIER_ORDER.map((id) => {
-    const { label, priceXof, durationDays, includedResponses } = PLANS[id];
-    return {
-      id,
-      label,
-      price: formatPrice(priceXof ?? 0),
-      unit: 'FCFA',
-      per: `${durationDays ?? 0} jours · ${formatPrice(includedResponses ?? 0)} réponses`,
-    };
-  });
+/** The home page grid: the trial, the five passes (prices in FCFA), the Illimité on quote. */
+export function pricingOffers(): PricingOffer[] {
+  return [
+    {
+      id: 'TRIAL',
+      name: TRIAL.label,
+      price: 'Gratuit',
+      durationLabel: `${TRIAL.durationDays} jours`,
+      responsesLabel: `${formatPrice(TRIAL.includedResponses ?? 0)} réponses`,
+      forWho: FOR_WHO.TRIAL,
+    },
+    ...offerCards('XOF').map(({ bestValue, ...card }) => ({
+      ...card,
+      ...(bestValue && { badge: BEST_VALUE_LABEL }),
+    })),
+    { id: 'UNLIMITED', ...unlimitedCard() },
+  ];
 }
 
 /** The bar stays put near the top of the page. */
@@ -177,7 +182,7 @@ export function landingJsonLd(appUrl: string): Record<string, unknown> {
         description:
           'Les grossistes et importateurs partagent un lien sur WhatsApp, Telegram ou Facebook. Leur communauté dit en moins de 30 secondes qui veut quoi et combien, et Tamani conseille la quantité à commander.',
         publisher: org,
-        offers: TIER_ORDER.map((id) => ({
+        offers: (['TRIAL', ...PASS_IDS] as const).map((id) => ({
           '@type': 'Offer',
           name: PLANS[id].label,
           price: String(PLANS[id].priceXof ?? 0),

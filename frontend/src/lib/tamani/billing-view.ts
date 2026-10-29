@@ -80,13 +80,14 @@ export function graceLine(days: number): string {
 }
 
 /** Who each pass is for, on the pass page and the home page grid. */
-export const FOR_WHO: Readonly<Record<'TRIAL' | PassId, string>> = {
+export const FOR_WHO: Readonly<Record<'TRIAL' | PassId | 'UNLIMITED', string>> = {
   TRIAL: 'Pour voir Tamani marcher sur un produit.',
   WEEK: 'Pour un arrivage à écouler vite.',
   TWO_WEEKS: 'Pour deux semaines de ventes.',
   MONTH: 'Pour vendre tout le mois.',
   MONTH_PLUS: 'Pour un groupe actif.',
   MONTH_MAX: 'Pour les grands groupes.',
+  UNLIMITED: 'Pour les très grandes communautés.',
 };
 
 /** The lowest price per answer of the grid (porteur, 2026-10-29). */
@@ -117,6 +118,17 @@ export function offerCards(currency: string): OfferCardData[] {
       bestValue: id === BEST_VALUE,
     };
   });
+}
+
+/** The Illimité: on quote, through the support (its button needs Tamani's WhatsApp). */
+export function unlimitedCard() {
+  return {
+    name: PLANS.UNLIMITED.label,
+    price: 'Sur devis',
+    durationLabel: `${PLANS.UNLIMITED.durationDays ?? 30} jours`,
+    responsesLabel: "autant de réponses qu'il te faut",
+    forWho: FOR_WHO.UNLIMITED,
+  };
 }
 
 export type ReturnState = 'checking' | 'active' | 'failed';

@@ -8,35 +8,41 @@ import {
   landingMetadata,
   navStep,
   pickWeighted,
-  pricingTiers,
+  pricingOffers,
 } from './landing';
 import { PLANS } from './plans';
 
-describe('pricingTiers reads PLANS', () => {
-  it('lists the trial and the five passes with their price and what they hold', () => {
-    const tiers = pricingTiers();
-    expect(tiers.map((x) => x.id)).toEqual([
-      'TRIAL',
-      'WEEK',
-      'TWO_WEEKS',
-      'MONTH',
-      'MONTH_PLUS',
-      'MONTH_MAX',
+describe('pricingOffers reads PLANS', () => {
+  it("seven cards in the porteur's order, each with who it is for", () => {
+    const offers = pricingOffers();
+    expect(offers.map((o) => [o.id, o.forWho])).toEqual([
+      ['TRIAL', 'Pour voir Tamani marcher sur un produit.'],
+      ['WEEK', 'Pour un arrivage à écouler vite.'],
+      ['TWO_WEEKS', 'Pour deux semaines de ventes.'],
+      ['MONTH', 'Pour vendre tout le mois.'],
+      ['MONTH_PLUS', 'Pour un groupe actif.'],
+      ['MONTH_MAX', 'Pour les grands groupes.'],
+      ['UNLIMITED', 'Pour les très grandes communautés.'],
     ]);
-    expect(tiers[0]).toEqual({
+    expect(offers[0]).toEqual({
       id: 'TRIAL',
-      label: 'Essai gratuit',
-      price: '0',
-      unit: 'FCFA',
-      per: '3 jours · 50 réponses',
+      name: 'Essai gratuit',
+      price: 'Gratuit',
+      durationLabel: '3 jours',
+      responsesLabel: '50 réponses',
+      forWho: 'Pour voir Tamani marcher sur un produit.',
     });
-    expect(tiers[5]).toEqual({
+    expect(offers[5]).toEqual({
       id: 'MONTH_MAX',
-      label: 'Pass Mois Max',
-      price: '24 900',
-      unit: 'FCFA',
-      per: '30 jours · 15 000 réponses',
+      name: 'Pass Mois Max',
+      price: '24 900 FCFA',
+      durationLabel: '30 jours',
+      responsesLabel: '15 000 réponses',
+      forWho: 'Pour les grands groupes.',
+      badge: 'Le meilleur prix par réponse',
     });
+    expect(offers.filter((o) => o.badge).map((o) => o.id)).toEqual(['MONTH_MAX']);
+    expect(offers[6]).toMatchObject({ name: 'Pass Illimité', price: 'Sur devis' });
   });
 });
 
@@ -94,7 +100,7 @@ describe('landingJsonLd', () => {
     expect(byType('WebSite')['@id']).toBe('https://tamani.app/#site');
   });
 
-  it('offers match PLANS', () => {
+  it('JSON-LD lists the five passes in XOF', () => {
     const offers = byType('SoftwareApplication')['offers'] as {
       name: string;
       price: string;
@@ -155,10 +161,13 @@ describe('landing copy', () => {
     expect(copy).not.toMatch(/[–—]/);
   });
 
-  it('takes the trial figures from PLANS', () => {
+  it('the FAQ answers how the free trial works', () => {
     const trial = LANDING_FAQ.find((q) => q.question.startsWith("L'essai gratuit"));
     expect(trial?.answer).toContain(`${PLANS.TRIAL.durationDays} jours`);
     expect(trial?.answer).toContain(`${PLANS.TRIAL.includedResponses} réponses`);
+    expect(trial?.answer).toContain('sans carte bancaire');
+    expect(trial?.answer).toContain('la première limite atteinte');
+    expect(trial?.answer).toContain('en prenant un pass');
   });
 
   it('speaks of passes, never of Pro, Gratuit or 12 months', () => {

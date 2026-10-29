@@ -161,6 +161,13 @@ describe('Hero', () => {
     expect(out).toMatch(/<ul aria-hidden="true">/);
     expect(text(<Hero />).match(/Telegram/g)).toHaveLength(2);
   });
+
+  it('promises the 3-day trial, not a free plan', () => {
+    const t = text(<Hero />) + text(<Community links={NO_LINKS} />);
+    expect(t).toContain("3 jours d'essai gratuit");
+    expect(t).not.toContain('Gratuit pour commencer');
+    expect(t).not.toContain('compte gratuit');
+  });
 });
 
 describe('Film', () => {
@@ -217,14 +224,63 @@ describe('BeforeAfter', () => {
 });
 
 describe('Pricing', () => {
-  it('shows the trial and the passes from PLANS, without a 12-month switch', () => {
+  const cards = (out: string) => out.split('<li').filter((c) => c.includes('</h3>'));
+  const names = (out: string) => [...out.matchAll(/<h3[^>]*>(.*?)<\/h3>/g)].map((m) => m[1]);
+
+  it("seven cards in the porteur's order", () => {
+    expect(names(html(<Pricing />))).toEqual([
+      'Essai gratuit',
+      'Pass Semaine',
+      'Pass 2 Semaines',
+      'Pass Mois',
+      'Pass Mois Plus',
+      'Pass Mois Max',
+      'Pass Illimité',
+    ]);
     const t = text(<Pricing />);
-    for (const label of ['Essai gratuit', 'Pass Semaine', 'Pass Mois Max'])
-      expect(t).toContain(label);
-    expect(t).toContain('3 900');
-    expect(t).toContain('24 900');
+    expect(t).toContain('3 900 FCFA');
+    expect(t).toContain('24 900 FCFA');
     expect(t).toContain('30 jours · 15 000 réponses');
-    expect(t).not.toMatch(/12 mois|Au mois|\bPro\b/);
+    expect(t).toContain('Pour un arrivage à écouler vite.');
+    const out = html(<Pricing />);
+    expect(out.match(/href="\/signup"/g)).toHaveLength(6);
+    expect(cards(out)[0]).toContain('Essayer gratuitement');
+  });
+
+  it('Mois Max carries « Le meilleur prix par réponse »', () => {
+    const badged = cards(html(<Pricing />)).filter((c) =>
+      c.includes('Le meilleur prix par réponse'),
+    );
+    expect(badged).toHaveLength(1);
+    expect(badged[0]).toContain('Pass Mois Max</h3>');
+  });
+
+  it('Illimité reads « Sur devis » and hides its button while whatsappContact is null', () => {
+    const last = (links: typeof NO_LINKS) => cards(html(<Pricing links={links} />)).at(-1) ?? '';
+    expect(last(NO_LINKS)).toContain('Sur devis');
+    expect(last(NO_LINKS)).not.toContain('Contacter le support');
+    expect(last(NO_LINKS)).not.toContain('href=');
+    expect(last(ALL_LINKS)).toContain('Contacter le support');
+    expect(last(ALL_LINKS)).toContain('href="https://wa.me/221770000000"');
+  });
+
+  it('the line under the cards', () => {
+    expect(text(<Pricing />)).toContain(
+      'Mobile Money ou carte · Pas de renouvellement automatique · Campagnes illimitées',
+    );
+  });
+
+  it('no 12-month toggle', () => {
+    const out = html(<Pricing />);
+    expect(out).not.toContain('aria-pressed');
+    expect(text(<Pricing />)).not.toMatch(/12 mois|Au mois|\bPro\b/);
+  });
+
+  it('the rail scrolls in CSS; its arrows name what they move', () => {
+    const out = html(<Pricing />);
+    expect(out).toContain('class="lp-rail__track"');
+    expect(out).toMatch(/<button[^>]*aria-label="Pass précédents"/);
+    expect(out).toMatch(/<button[^>]*aria-label="Pass suivants"/);
   });
 });
 

@@ -67,7 +67,7 @@ export function Hero() {
               </Button>
             </div>
             <ul className="lp-hero__checks">
-              {['Gratuit pour commencer', 'Sans carte bancaire', 'Prêt en 3 minutes'].map((c) => (
+              {["3 jours d'essai gratuit", 'Sans carte bancaire', 'Prêt en 3 minutes'].map((c) => (
                 <li key={c}>
                   <Icon name="check" />
                   {c}

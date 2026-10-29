@@ -14,7 +14,7 @@ export function Community({ links = LANDING_LINKS }: { links?: LandingLinks }) {
         'Les nouveautés de Tamani en premier',
         "Une vraie personne pour t'aider",
       ]
-    : ['Gratuit pour commencer', 'Sans carte bancaire', 'Ton premier lien en 3 minutes'];
+    : ["3 jours d'essai gratuit", 'Sans carte bancaire', 'Ton premier lien en 3 minutes'];
 
   return (
     <section
@@ -28,7 +28,7 @@ export function Community({ links = LANDING_LINKS }: { links?: LandingLinks }) {
           <p className="lp-club__text">
             {group
               ? "Dans le groupe WhatsApp de Tamani, des grossistes et des importateurs partagent leurs astuces, posent leurs questions et découvrent les nouveautés en premier. C'est gratuit."
-              : "Crée ton compte gratuit et lance ta première campagne aujourd'hui. Tes clients répondent en moins de 30 secondes."}
+              : "Crée ton compte et lance ta première campagne aujourd'hui. Tes clients répondent en moins de 30 secondes."}
           </p>
           <ul className="lp-club__list">
             {perks.map((p) => (
@@ -49,7 +49,8 @@ export function Community({ links = LANDING_LINKS }: { links?: LandingLinks }) {
             )}
           </div>
           <p className="lp-club__small">
-            Gratuit, sans carte bancaire. Ton premier lien est prêt en 3 minutes.
+            3 jours d&apos;essai gratuit, sans carte bancaire. Ton premier lien est prêt en 3
+            minutes.
           </p>
         </div>
         <div className="lp-club__photo">

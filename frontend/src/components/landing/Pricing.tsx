@@ -1,25 +1,8 @@
-import { Icon, type IconName } from '@/components/ui';
+import { Button, Icon, OfferCard } from '@/components/ui';
+import { LANDING_LINKS, pricingOffers, type LandingLinks } from '@/lib/tamani/landing';
 import { PLANS } from '@/lib/tamani/plans';
 import { formatPrice } from '@/lib/utils';
-import { PricingTags } from './PricingTags';
-
-const PROMISES: readonly { icon: IconName; title: string; text: string }[] = [
-  {
-    icon: 'receipt',
-    title: "Rien n'est prélevé tout seul",
-    text: "Mobile money ou carte. Tu paies ton pass d'avance, pour 7, 14 ou 30 jours.",
-  },
-  {
-    icon: 'check',
-    title: 'Aucune réponse perdue',
-    text: "Au-delà de ton pass, elles t'attendent.",
-  },
-  {
-    icon: 'lock',
-    title: 'Tes données restent à toi',
-    text: 'Tes clients et leurs numéros ne sont partagés avec personne.',
-  },
-];
+import { OfferRail } from './OfferRail';
 
 type Cell = string | boolean;
 const { TRIAL, WEEK, MONTH_MAX } = PLANS;
@@ -54,8 +37,39 @@ function CellValue({ value }: { value: Cell }) {
   return <>{value}</>;
 }
 
-/** 7. Pricing: price tags hanging from the stall, the guarantees, every detail on demand. */
-export function Pricing() {
+/**
+ * 7. Pricing (porteur, 2026-10-29): the trial, the five passes and the
+ * Illimité as a rail of cards, the line under them, every detail on demand.
+ * The Illimité's button waits for Tamani's WhatsApp number.
+ */
+export function Pricing({ links = LANDING_LINKS }: { links?: LandingLinks }) {
+  const help = links.whatsappContact;
+  const actionFor = (id: string) => {
+    if (id === 'TRIAL')
+      return (
+        <Button href="/signup" className="lp-press w-full">
+          Essayer gratuitement
+        </Button>
+      );
+    if (id === 'UNLIMITED')
+      return help ? (
+        <Button
+          href={help}
+          variant="secondary"
+          className="w-full"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Contacter le support
+        </Button>
+      ) : null;
+    return (
+      <Button href="/signup" variant="secondary" className="w-full">
+        Choisir
+      </Button>
+    );
+  };
+
   return (
     <section id="tarifs" className="lp-section" aria-labelledby="lp-price-title">
       <div className="lp-wrap lp-center">
@@ -66,18 +80,24 @@ export function Pricing() {
           Essaie 3 jours gratuitement. Prends ensuite un pass : tu paies des réponses, jamais des
           campagnes.
         </p>
-        <PricingTags />
-        <ul className="lp-promise">
-          {PROMISES.map((p) => (
-            <li key={p.title}>
-              <Icon name={p.icon} />
-              <span>
-                <b>{p.title}</b>
-                {p.text}
-              </span>
+        <OfferRail label="Les pass Tamani">
+          {pricingOffers().map((o) => (
+            <li key={o.id}>
+              <OfferCard
+                name={o.name}
+                price={o.price}
+                durationLabel={o.durationLabel}
+                responsesLabel={o.responsesLabel}
+                forWho={o.forWho}
+                badge={o.badge}
+                action={actionFor(o.id)}
+              />
             </li>
           ))}
-        </ul>
+        </OfferRail>
+        <p className="lp-rail__note">
+          Mobile Money ou carte · Pas de renouvellement automatique · Campagnes illimitées
+        </p>
         <details className="lp-compare">
           <summary>
             <Icon name="plus" />

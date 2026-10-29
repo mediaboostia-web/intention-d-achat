@@ -17,6 +17,7 @@ import {
   offerCards,
   purchaseStatusLabel,
   returnState,
+  unlimitedCard,
   type BillingData,
   type ReturnState,
 } from '@/lib/tamani/billing-view';
@@ -120,11 +121,7 @@ export function BillingView({
           ))}
           <li>
             <OfferCard
-              name={PLANS.UNLIMITED.label}
-              price="Sur devis"
-              durationLabel={`${PLANS.UNLIMITED.durationDays ?? 30} jours`}
-              responsesLabel="autant de réponses qu'il te faut"
-              forWho="Pour les très grandes communautés."
+              {...unlimitedCard()}
               action={
                 help ? (
                   <Button
