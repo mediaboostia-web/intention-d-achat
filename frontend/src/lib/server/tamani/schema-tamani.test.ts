@@ -159,6 +159,42 @@ describe('Tamani core schema (lot 3)', () => {
     expect(sql).not.toMatch(/\bDROP\b/);
   });
 
+  it('ships the passes as migration 9c_passes (lot 8)', () => {
+    const sub = modelBlock('Subscription');
+    expect(field(sub, 'periodStart DateTime?')).toBe(true);
+    expect(field(sub, 'responsesIncluded Int @default(0)')).toBe(true);
+    const response = modelBlock('Response');
+    expect(field(response, 'countedAt DateTime?')).toBe(true);
+    expect(response.replace(/\s+/g, '')).toContain('@@index([organizationId,countedAt])');
+    const order = modelBlock('Order');
+    for (const l of ['organizationId String?', 'offer String?', 'activatedAt DateTime?']) {
+      expect(field(order, l), l).toBe(true);
+    }
+    expect(order).toMatch(
+      /organization\s+Organization\?\s+@relation\(fields: \[organizationId\], references: \[id\], onDelete: SetNull\)/,
+    );
+    for (const l of [
+      '@@index([organizationId,createdAt])',
+      '@@index([provider,status,createdAt])',
+    ]) {
+      expect(order.replace(/\s+/g, ''), l).toContain(l);
+    }
+
+    const names = readdirSync(resolve(PRISMA, 'migrations'))
+      .filter((n) => !n.endsWith('.toml'))
+      .sort();
+    expect(names.slice(-2)).toEqual(['9b_currency_by_country', '9c_passes']);
+    const sql = readFileSync(resolve(PRISMA, 'migrations/9c_passes/migration.sql'), 'utf8');
+    expect(sql).toMatch(/ALTER TABLE "Subscription" ADD COLUMN\s+"periodStart"/);
+    expect(sql).toMatch(/"responsesIncluded" INTEGER NOT NULL DEFAULT 0/);
+    expect(sql).toMatch(/ALTER TABLE "Response" ADD COLUMN\s+"countedAt"/);
+    expect(sql).toMatch(
+      /UPDATE "Response" SET "countedAt" = "completedAt"\s+WHERE "completedAt" IS NOT NULL AND "locked" = false/,
+    );
+    expect(sql).toMatch(/ALTER TABLE "Order" ADD COLUMN\s+"organizationId"/);
+    expect(sql).not.toMatch(/\bDROP\b/);
+  });
+
   it('migration folders sort as text in the order they were written', () => {
     // Prisma applies them in text order: a "10_…" would run before "2_…".
     const names = readdirSync(resolve(PRISMA, 'migrations'), { withFileTypes: true })

@@ -122,6 +122,7 @@ model Organization {
   responses    Response[]
   saleOrders   SaleOrder[]
   subscription Subscription?
+  purchases    Order[]
 
   @@index([ownerId])
 }
@@ -318,6 +319,13 @@ model Order {
   customerName  String?
   metadata      Json? // app-specific fields
 
+  // Lot 8: a shop's pass purchase. activatedAt is set once, by the first
+  // reconciliation that sees SasPay's SUCCESS.
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  offer          String? // a PassId
+  activatedAt    DateTime?
+
   // Stripe-grade idempotency. Required header on POST /api/orders; replay
   // with same value returns the original Order row instead of double-charging.
   // Nullable so existing rows pre-migration don't break the @unique constraint.
@@ -342,6 +350,8 @@ model Order {
   @@index([userId, createdAt])
   @@index([status, expiresAt])
   @@index([provider, providerChargeId])
+  @@index([organizationId, createdAt])
+  @@index([provider, status, createdAt])
 }
 
 // ───────────────────────────────────────────────────────────────────────
@@ -479,7 +489,8 @@ model Response {
   zone                DeliveryZone? @relation(fields: [zoneId], references: [id], onDelete: SetNull)
   deliveryPlace       String? // « Autre endroit » (lot 6b): a delivery outside the shop's zones
   completedAt         DateTime?
-  locked              Boolean       @default(false) // over the monthly quota: kept, hidden until upgrade
+  locked              Boolean       @default(false) // over the pass: kept « en attente » until a pass
+  countedAt           DateTime? // lot 8: when the answer was counted in a pass (completion or unlock)
   suspicious          Boolean       @default(false)
   order               SaleOrder?
   createdAt           DateTime      @default(now())
@@ -488,6 +499,7 @@ model Response {
   @@unique([campaignId, deviceId])
   @@unique([campaignId, respondentId])
   @@index([organizationId, completedAt])
+  @@index([organizationId, countedAt])
   @@index([campaignId, completedAt])
   @@index([respondentId])
 }
@@ -529,12 +541,16 @@ model SaleOrder {
 }
 
 model Subscription {
-  id               String       @id @default(cuid())
-  organizationId   String       @unique
-  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  plan             String       @default("FREE") // FREE | PRO | BUSINESS
-  currentPeriodEnd DateTime?
-  graceUntil       DateTime?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  id                String       @id @default(cuid())
+  organizationId    String       @unique
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan              String       @default("FREE") // a PlanId of lib/tamani/plans.ts (lot 8)
+  // Lot 8: the pass in force. Answers count from periodStart to the end of
+  // the grace; responsesIncluded holds the pass plus the carried-over answers.
+  periodStart       DateTime?
+  currentPeriodEnd  DateTime?
+  graceUntil        DateTime?
+  responsesIncluded Int          @default(0)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 }
