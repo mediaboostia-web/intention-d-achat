@@ -619,6 +619,10 @@ Le porteur veut couvrir toute l'Afrique francophone. Aujourd'hui tout est en FCF
 3. **Prix et montants** : `formatPrice`, le message de partage, l'argent du verdict et l'export lisent la monnaie de la boutique ; les montants restent des entiers dans la plus petite unité.
 4. **Numéros** : la normalisation de `phone.ts` et les indicatifs couvrent chaque pays ajouté.
 5. **Paiement** : vérifier dans l'OpenAPI SasPay les pays et les moyens couverts avant d'ouvrir un pays au paiement ; la règle de marge de 70 % se vérifie par monnaie.
+- **Décisions du porteur (2026-10-29)** :
+  - **Pays du lot** : les 8 pays de l'UEMOA (FCFA, XOF), les 6 pays de la CEMAC (FCFA, XAF), la Guinée (franc guinéen, GNF) et la RD Congo (franc congolais, CDF). Les autres pays francophones viendront plus tard.
+  - **Affichage** : le nom local à côté des prix, « 6 500 FCFA » en UEMOA comme en CEMAC, « 65 000 FG » en Guinée, « 18 000 FC » en RD Congo. Le code ISO (XOF, XAF, GNF, CDF) reste interne, pour SasPay.
+  - **Changer de pays** : possible tant que la boutique n'a aucun produit ; ensuite le pays et la monnaie sont figés (des prix saisis en FCFA ne doivent pas se lire en francs guinéens). Pour changer ensuite, la boutique nous contacte.
 
 ### Lot 8 : Forfaits prépayés et SasPay
 1. **Client SasPay** dans `frontend/src/lib/server/payments/saspay.ts` (`PaymentProvider.charge` via une session de checkout, plus `verifyPayment(paymentId)`).
