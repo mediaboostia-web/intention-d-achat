@@ -73,3 +73,50 @@ export function passActivated(
     dedupeKey: `pass-activated:${orderId}:${userId}`,
   };
 }
+
+/** Lot 8: a paid pass ends within 3 days (once per period and person). */
+export function passEndingSoon(
+  userId: string,
+  organizationId: string,
+  endsAt: Date,
+  now: Date,
+): CreateNotificationInput {
+  return {
+    userId,
+    type: 'tamani.pass',
+    title: 'Ton pass finit bientôt',
+    body: `Ton pass finit le ${formatDateFr(endsAt, now)}. Rachète-le pour garder tes réponses ouvertes.`,
+    data: { url: '/app/abonnement' },
+    dedupeKey: `pass-reminder:${organizationId}:${endsAt.toISOString()}:${userId}`,
+  };
+}
+
+/** Lot 8: the pass ended and its grace runs. */
+export function passInGrace(
+  userId: string,
+  organizationId: string,
+  endedAt: Date,
+  daysLeft: number,
+): CreateNotificationInput {
+  const days = `${daysLeft} jour${daysLeft > 1 ? 's' : ''}`;
+  return {
+    userId,
+    type: 'tamani.pass',
+    title: 'Ton pass est terminé',
+    body: `Ton pass est terminé. Il te reste ${days} pour le racheter.`,
+    data: { url: '/app/abonnement' },
+    dedupeKey: `pass-grace:${organizationId}:${endedAt.toISOString()}:${userId}`,
+  };
+}
+
+/** Lot 8: the free trial ended; new answers now wait for a pass. */
+export function trialEnded(userId: string, organizationId: string): CreateNotificationInput {
+  return {
+    userId,
+    type: 'tamani.pass',
+    title: 'Ton essai est terminé',
+    body: "Ton essai est terminé. Tes nouvelles réponses t'attendent : prends un pass pour les voir.",
+    data: { url: '/app/abonnement' },
+    dedupeKey: `trial-ended:${organizationId}:${userId}`,
+  };
+}
