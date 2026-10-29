@@ -113,7 +113,7 @@ Convention du kit : `id String @id @default(cuid())`, statuts en `String` (pas d
 
 **Lot 7, migration `9_sale_orders`** (renumérotée deux fois le 2026-10-25 : le lot 5 a pris le n° 7, le lot 5b le n° 8 ; les lots 6 et 6b ont pris `8b` et `8c`)
 - `SaleOrder { organizationId, respondentId, productId, campaignId String?, responseId String? @unique, buyerType, quantity Int, unitPrice Int, totalAmount Int, fulfillment String /* DELIVERY|PICKUP */, zoneId String?, status String @default("TO_CONFIRM") /* TO_CONFIRM|CONFIRMED|FULFILLED|CANCELLED */, paid Boolean @default(false), paidAt DateTime?, notes String?, confirmedAt DateTime?, fulfilledAt DateTime?, cancelledAt DateTime? }`, avec `@@index([organizationId, status])` et `@@index([respondentId])`.
-- **Lot 8, migration `9c_passes`** (2026-10-29) : on réutilise `Order` (existant) pour les achats de pass et de recharges : `provider = 'saspay'`, `organizationId`, `offer`, `activatedAt` (activation unique), `providerChargeId` = identifiant de la session de checkout, `paymentUrl` = son `checkout_url`, statuts `PENDING | PAID | FAILED | EXPIRED`. `Subscription` garde le pass en cours (`plan` parmi les `PlanId`, `periodStart`, `currentPeriodEnd`, `graceUntil`, `responsesIncluded`) ; `Response.countedAt` marque une réponse comptée dans un pass.
+- **Lot 8, migration `9c_passes`** (2026-10-29) : on réutilise `Order` (existant) pour les achats de pass : `provider = 'saspay'`, `organizationId`, `offer`, `activatedAt` (activation unique), `providerChargeId` = identifiant de la session de checkout, `paymentUrl` = son `checkout_url`, statuts `PENDING | PAID | FAILED | EXPIRED`. `Subscription` garde le pass en cours (`plan` parmi les `PlanId`, `periodStart`, `currentPeriodEnd`, `graceUntil`, `responsesIncluded`) ; `Response.countedAt` marque une réponse comptée dans un pass.
 
 ### Identité et composants (lot 2)
 Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction « Cahier du marché ».
@@ -191,7 +191,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 ### Modules serveur : `frontend/src/lib/server/tamani/`
 
 **Lot 3**
-- `errors.ts` : liste figée `TAMANI_ERRORS`, avec `SHOP_ALREADY_EXISTS`, `SHOP_NOT_FOUND`, `ZONE_NOT_FOUND`, `ZONE_ALREADY_EXISTS`, `PRODUCT_NOT_FOUND`, `PRODUCT_IN_USE`, `CAMPAIGN_NOT_FOUND`, `CAMPAIGN_CLOSED`, `CAMPAIGN_LIMIT_REACHED`, `INVALID_CAMPAIGN_TRANSITION`, `PLAN_FEATURE_LOCKED`, `INVALID_PHONE`, `INVALID_RESPONSE_TOKEN`, `RATE_LIMITED`, `ORDER_NOT_FOUND`, `ORDER_ALREADY_EXISTS`, `INVALID_ORDER_TRANSITION`, `CLIENT_NOT_FOUND`, `BILLING_NOT_CONFIGURED`, `PAYMENT_VERIFY_FAILED`, `PUSH_NOT_CONFIGURED` (lot 5) ; au lot 8 `PAYMENT_COUNTRY_UNAVAILABLE`, `TOPUP_NEEDS_PASS`, `OFFER_NOT_BUYABLE`, `PAYMENT_PROVIDER_UNAVAILABLE`, `PURCHASE_NOT_FOUND` et `ANSWERS_CLOSED`. Plus `tamaniError(code, status, message?) => NextResponse`, qui renvoie `{ error: code, message }`, et `isUniqueViolation(err, field?)` (P2002 sur ce champ).
+- `errors.ts` : liste figée `TAMANI_ERRORS`, avec `SHOP_ALREADY_EXISTS`, `SHOP_NOT_FOUND`, `ZONE_NOT_FOUND`, `ZONE_ALREADY_EXISTS`, `PRODUCT_NOT_FOUND`, `PRODUCT_IN_USE`, `CAMPAIGN_NOT_FOUND`, `CAMPAIGN_CLOSED`, `CAMPAIGN_LIMIT_REACHED`, `INVALID_CAMPAIGN_TRANSITION`, `PLAN_FEATURE_LOCKED`, `INVALID_PHONE`, `INVALID_RESPONSE_TOKEN`, `RATE_LIMITED`, `ORDER_NOT_FOUND`, `ORDER_ALREADY_EXISTS`, `INVALID_ORDER_TRANSITION`, `CLIENT_NOT_FOUND`, `BILLING_NOT_CONFIGURED`, `PAYMENT_VERIFY_FAILED`, `PUSH_NOT_CONFIGURED` (lot 5) ; au lot 8 `PAYMENT_COUNTRY_UNAVAILABLE`, `OFFER_NOT_BUYABLE`, `PAYMENT_PROVIDER_UNAVAILABLE`, `PURCHASE_NOT_FOUND` et `ANSWERS_CLOSED`. Plus `tamaniError(code, status, message?) => NextResponse`, qui renvoie `{ error: code, message }`, et `isUniqueViolation(err, field?)` (P2002 sur ce champ).
 - `http.ts` : `readJson(req)`, `jsonOk(data, status = 200)` (en-tête `x-request-id`) et `validationFailed(message?)` (400 `VALIDATION_FAILED`, code du kit).
 - `locks.ts` : `type Db = Prisma.TransactionClient` et `advisoryXactLock(tx, key)` (`pg_advisory_xact_lock(hashtext(key))`). Clés : `shop-create:<userId>`, `campaign-activate:<organizationId>`.
 - `inputs.ts` : schémas zod des corps (boutique, zone, produit, campagne, lien) et `checkProductRules`.
@@ -371,7 +371,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 | 7 | Commandes et clients | Conversion d'une réponse en commande, commandes manuelles, statuts, livraisons par quartier, filtre « a commandé », note et anonymisation des clients, fiabilité et coefficients appris. | 3, 5, 6, 6b |
 | 7a | Passe UX/UI | Mode nuit ; sur ordinateur, barre latérale repliable, barre du haut (recherche, jour / nuit, cloche, profil) et accueil en pleine page avec les verdicts en cartes ; cartes ou liste sur Campagnes et Produits ; pop-up retouché (stock, fenêtre de fin, lien Tamani) ; menu du téléphone par le côté sur la page d'accueil (ajout du 2026-10-28). | 7 |
 | 7b | Pays et monnaies | Zone FCFA (UEMOA et CEMAC), Guinée et RD Congo : chaque boutique a la monnaie de son pays, écrite sous son nom local (FCFA, FG, FC) dans tous les prix, le message de partage, le pop-up et les commandes ; le pays se fige au premier produit ; anciens numéros béninois à 8 chiffres acceptés (ajout du 2026-10-27). | 3, 4 |
-| 8 | Forfaits prépayés et SasPay | Essai gratuit, cinq pass (Semaine, 14 jours, Mensuel, Confort, Confort Plus) et recharges payés en mode test SasPay : activation idempotente, réponses comptées par pass, en attente sans pass, rappels et grâce, plafond sans pass, grille de la page d'accueil. Bictorys retiré. | 3, 5, 6, 7, 7b |
+| 8 | Forfaits prépayés et SasPay | Essai gratuit, cinq pass (Semaine, 2 Semaines, Mois, Mois Plus, Mois Max) payés via SasPay : activation idempotente, réponses comptées par pass, en attente sans pass, rappels et grâce, plafond sans pass, grille de la page d'accueil. Bictorys retiré. | 3, 5, 6, 7, 7b |
 | 9 | Admin, accueil, légal, production | Admin Tamani, page d'accueil, CGU et confidentialité, mise en ligne sur Vercel avec SasPay en mode live. | tous |
 
 Les lots 2 et 3 peuvent être menés en parallèle, puis les lots 4 et 5.
@@ -639,16 +639,17 @@ Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08
 - **Grille** :
   - Essai gratuit : 3 jours, 50 réponses, 1 campagne ;
   - Pass Semaine : 3 900 FCFA, 150 réponses ;
-  - Pass 14 jours : 5 900 FCFA, 350 réponses ;
-  - Pass Mensuel : 9 900 FCFA, 1 000 réponses ;
-  - Pass Confort : 14 900 FCFA, 5 000 réponses ;
-  - Pass Confort Plus : 24 900 FCFA, 15 000 réponses ;
-  - Illimité : sur devis, par le support.
+  - Pass 2 Semaines : 5 900 FCFA, 350 réponses ;
+  - Pass Mois : 9 900 FCFA, 1 000 réponses ;
+  - Pass Mois Plus : 14 900 FCFA, 5 000 réponses ;
+  - Pass Mois Max : 24 900 FCFA, 15 000 réponses ;
+  - Pass Illimité : sur devis, par le support.
 
-  Le porteur a envisagé 100 puis 50 FCFA par réponse, puis a gardé cette grille.
+  Le porteur a envisagé 100 puis 50 FCFA par réponse, puis a gardé cette grille ; il a demandé des noms simples le même jour (Semaine, 2 Semaines, Mois, Mois Plus, Mois Max, sur le modèle des pass de crédit téléphone).
 - **Essai** : numéros et boutons WhatsApp visibles. Ni liens par groupe ni export ; la mention « Propulsé par Tamani » reste, avec son lien.
 - **Après l'essai** : plus de Gratuit permanent. Le lien marche et les nouvelles réponses attendent l'achat d'un pass.
-- **Recharges** gardées (+1 000 et +5 000) ; **Pass 12 mois** retiré.
+- **Pas de recharges** (second message du 2026-10-29) : les seuls prix sont les pass. Pour plus de réponses, on prend un autre pass ; il démarre tout de suite et garde les réponses non utilisées. **Pass 12 mois** retiré.
+- **Clé SasPay** : SasPay ne propose pas de clé de test à ce compte, on développe donc avec la clé live. Les tests automatiques ne joignent jamais SasPay (`fetch` simulé) et ne lisent pas la clé ; les lectures (tarifs, réseaux) et les sessions non payées ne déplacent pas d'argent ; un vrai paiement n'a lieu qu'avec l'accord explicite du porteur, sur le plus petit pass, payé par lui sur son propre compte marchand.
 - **Frais** absorbés par Tamani (`DEDUCTED`).
 - **Pays** : paiement dans la zone FCFA d'abord ; Guinée et RDC « Bientôt disponible ».
 - **Grâce** : 3 jours.
@@ -656,15 +657,14 @@ Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08
 
 **Rulings de conception (2026-10-29, à confirmer au fil du plan)**
 - **Le webhook est un signal.** Son corps ne porte ni la session ni nos métadonnées. Le rapprochement idempotent lit la session, puis `verify`, et il tourne depuis le retour, le webhook (`after()`) et `billing-verify`. L'outbox n'est pas utilisée, car son `dispatcher.ts` est protégé.
-- **Un pass acheté pendant un autre** démarre tout de suite et garde les réponses non utilisées.
 - **Sans pass et essai** : une seule campagne en cours.
 - **Les boutiques de développement existantes** restent « Sans pass ».
 
 **Tâches** (dans l'ordre du plan)
-1. Reconnaissance SasPay en mode test : vrais tarifs, couverture par pays, corps réels.
+1. Reconnaissance SasPay (clé live, sans paiement) : vrais tarifs, couverture par pays, corps réels.
 2. La grille pure et le garde-fou de marge (70 %).
 3. Migration `9c_passes`.
-4. Règles du pass : essai, report des réponses, recharges, 3 jours de grâce.
+4. Règles du pass : essai, report des réponses d'un pass à l'autre, 3 jours de grâce.
 5. Réponses comptées par pass, en attente, et plafond de 1 000 par mois sans pass.
 6. Client SasPay.
 7. Webhook signé.
@@ -674,7 +674,7 @@ Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08
 11. Compteur, page « Mon pass », page de retour et bandeaux dans l'espace grossiste.
 12. Grille de la page d'accueil.
 13. Documentation.
-14. Recette de bout en bout en mode test SasPay via ngrok.
+14. Recette de bout en bout via ngrok, avec un seul vrai paiement accepté par le porteur.
 
 ### Lot 9 : Admin, accueil, légal, production
 1. **API admin des boutiques** : liste, détail, et attribution manuelle d'un forfait (`logAdminAction`, action `shop.plan_grant`). Tests : audit enregistré, `requireSuperadmin`.

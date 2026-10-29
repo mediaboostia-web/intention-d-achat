@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal :** un grossiste démarre avec 3 jours d'essai, achète un pass ou une recharge en Mobile Money ou par carte via SasPay (mode test), le pass s'active une seule fois après vérification, les réponses en attente s'ouvrent, et la page d'accueil montre la grille du porteur.
+**Goal :** un grossiste démarre avec 3 jours d'essai, achète un pass en Mobile Money ou par carte via SasPay, le pass s'active une seule fois après vérification, les réponses en attente s'ouvrent, et la page d'accueil montre la grille du porteur.
 
-**Architecture :** la grille est une table pure (`lib/tamani/plans.ts`) lue par les écrans, les garde-fous de marge et le serveur. Le pass en cours vit dans `Subscription` (début, fin, grâce, réponses incluses) ; une réponse compte quand elle reçoit `Response.countedAt`. Un achat est un `Order` du kit (`provider = 'saspay'`) relié à une session de checkout SasPay ; le webhook signé n'est qu'un signal, et le rapprochement idempotent (`reconcileOrder`) vérifie la session puis le paiement avant d'activer, depuis la page de retour, le webhook et une tâche planifiée.
+**Architecture :** la grille est une table pure (`lib/tamani/plans.ts`) lue par les écrans, les garde-fous de marge et le serveur. Le pass en cours vit dans `Subscription` (début, fin, grâce, réponses incluses) ; une réponse compte quand elle reçoit `Response.countedAt`. Un achat de pass est un `Order` du kit (`provider = 'saspay'`) relié à une session de checkout SasPay ; le webhook signé n'est qu'un signal, et le rapprochement idempotent (`reconcileOrder`) vérifie la session puis le paiement avant d'activer, depuis la page de retour, le webhook et une tâche planifiée.
 
 **Tech Stack :** Next.js 16 (App Router), Prisma 5 / Neon, Vitest, l'API REST SasPay (`https://api.saspay.me/api/v1`), `createWebhookHandler` et `CircuitBreaker` du kit (protégés, utilisés sans modification), Tailwind 4 (jetons seulement).
 
@@ -15,15 +15,15 @@
 - **Grille** (porteur, 2026-10-29), en FCFA, même chiffre en XOF et en XAF :
   - Essai gratuit : 0, 3 jours, 50 réponses, 1 campagne en cours, sans liens par groupe ni export, avec « Propulsé par Tamani » ;
   - Pass Semaine : 3 900, 7 jours, 150 réponses ;
-  - Pass 14 jours : 5 900, 14 jours, 350 réponses ;
-  - Pass Mensuel : 9 900, 30 jours, 1 000 réponses ;
-  - Pass Confort : 14 900, 30 jours, 5 000 réponses ;
-  - Pass Confort Plus : 24 900, 30 jours, 15 000 réponses ;
-  - Illimité : sur devis, attribué à la main (lot 9) ;
-  - recharges : +1 000 réponses à 2 500 et +5 000 à 9 900, avec un pass payé actif, hors grâce ;
-  - pas de Pass 12 mois.
+  - Pass 2 Semaines : 5 900, 14 jours, 350 réponses ;
+  - Pass Mois : 9 900, 30 jours, 1 000 réponses ;
+  - Pass Mois Plus : 14 900, 30 jours, 5 000 réponses ;
+  - Pass Mois Max : 24 900, 30 jours, 15 000 réponses ;
+  - Pass Illimité : sur devis, attribué à la main (lot 9) ;
+  - pas de recharges ni de Pass 12 mois : les seuls prix sont les pass. Pour plus de réponses, on prend un autre pass, qui démarre tout de suite et garde les réponses non utilisées.
 - **Sans pass** (après l'essai, ou après un pass et sa grâce) : le lien marche, chaque nouvelle réponse est en attente, numéros masqués, 1 campagne en cours.
 - **Grâce** : 3 jours après la fin d'un pass payé, fonctions gardées ; l'essai n'a pas de grâce.
+- **Clé SasPay** (porteur, 2026-10-29) : SasPay ne propose pas de clé de test à ce compte, on développe donc avec la clé live. Les tests automatiques ne joignent jamais SasPay (`fetch` simulé) et ne lisent pas la clé ; les lectures (tarifs, réseaux) et les sessions non payées ne déplacent pas d'argent ; un vrai paiement n'a lieu qu'avec l'accord explicite du porteur, sur le plus petit pass, payé par lui sur son propre compte marchand.
 - **Frais** : `fee_charge_mode: "DEDUCTED"` (Tamani absorbe). **Pays** : paiement dans les 14 pays XOF et XAF seulement ; GN et CD voient « Bientôt disponible ».
 - **Marge** : chaque offre payante garde au moins 70 % avec 5 % de frais SasPay, 2 % de retrait et 0,25 FCFA par réponse (test pur, tâche 2).
 - **SasPay** (CLAUDE.md, « Intégration de l'API SasPay ») :
@@ -40,21 +40,21 @@
 - **Logs** : jamais un numéro, un prénom, un email ni la clé ; les identifiants seulement.
 - **Migration** : `9c_passes` (les dossiers se trient comme du texte).
 - **Mots à l'écran** : « pass », « réponses en attente », « Sans pass », « Essai gratuit ». Plus de « Gratuit », « Pro » ni « Business » dans l'espace grossiste.
-- **Recette** : un lot finit par une recette sur la vraie appli, téléphone et ordinateur, en mode test SasPay via ngrok.
+- **Recette** : un lot finit par une recette sur la vraie appli, téléphone et ordinateur, via ngrok, avec un seul vrai paiement accepté par le porteur.
 
 ## Review Focus
 
 1. **Trois rapprochements en même temps** (retour de paiement, signal du webhook, tâche planifiée) sur le même achat : le pass s'active une fois. → tâche 9, `reconcileOrder activates once when called twice concurrently`.
 2. **Un échec lu après un succès** (session relue `FAILED` ou `EXPIRED` après l'activation) : rien n'est rétrogradé. → tâche 9, `late failure never downgrades an activated order`.
 3. **Un paiement annoncé mais mal vérifié** : `PAID` côté session, mais `verify` qui ne dit pas `SUCCESS`, ou une autre monnaie, ou un autre `requested_amount`. Pas d'activation, l'achat reste en attente. → tâche 9, `refuses activation when verify is not SUCCESS or the amount differs`.
-4. **Réponses en attente à l'achat** : 87 en attente, un Pass Semaine (150) en ouvre 87, les plus anciennes d'abord, et 63 restent libres ; une recharge en ouvre d'autres. → tâche 5, `unlockPending opens the oldest up to the room left`.
+4. **Réponses en attente à l'achat** : 87 en attente, un Pass Semaine (150) en ouvre 87, les plus anciennes d'abord, et 63 restent libres ; un second pass en ouvre d'autres. → tâche 5, `unlockPending opens the oldest up to the room left`.
 5. **Achat payé après son expiration** : `order-expiration` a passé l'`Order` en `EXPIRED`, le paiement réussit ensuite, et `billing-verify` l'active quand même. → tâche 9, `an EXPIRED order paid late is still activated`.
 
 ---
 
-### Task 1 : Reconnaissance SasPay en mode test
+### Task 1 : Reconnaissance SasPay (clé live, sans paiement)
 
-Aucun code de production. Elle demande la clé `sk_test_` dans `frontend/.env.local` ; on vérifie seulement son préfixe et sa longueur.
+Aucun code de production. Elle lit la clé live de `frontend/.env.local` (pas de clé de test chez SasPay) ; on vérifie seulement son préfixe et sa longueur, et rien n'est payé.
 
 **Files :**
 - Create (scratchpad, hors dépôt) : `tools/saspay-recon.mjs`. Il lit la clé depuis `.env.local` et n'affiche jamais la clé, un email ni un numéro.
@@ -62,7 +62,7 @@ Aucun code de production. Elle demande la clé `sk_test_` dans `frontend/.env.lo
 
 - [ ] **Step 1 :** `GET /pricing/my-rates/` et `GET /networks/`. Noter, pour chacun des 14 pays XOF/XAF, les réseaux payin disponibles et leur tarif (pourcentage, fixe, plancher, plafond, `otp_required`).
 - [ ] **Step 2 :** `POST /checkout-sessions/` de 500 XOF (BJ), puis `GET /checkout-sessions/{id}/status/`. Comparer les deux corps à l'exemple de l'OpenAPI (corps à plat, sans enveloppe).
-- [ ] **Step 3 :** payer cette session sur la page de test, puis `GET /payments/{transaction_id}/verify/`. Noter `requested_amount`, `debited_amount`, `net_amount`, `currency` et `fee_charge_mode`.
+- [ ] **Step 3 :** ne pas payer la session : c'est du vrai argent. Les champs de `GET /payments/{transaction_id}/verify/` (`requested_amount`, `debited_amount`, `net_amount`, `currency`, `status`) se lisent sur l'exemple de l'OpenAPI. Ils seront confirmés au seul paiement réel de la tâche 14, accepté par le porteur ; d'ici là, ce point est marqué « non vérifié ».
 - [ ] **Step 4 :** recalculer la marge de chaque offre avec le pire tarif payin réel. Expected : toutes ≥ 70 %. Sinon, s'arrêter et montrer le chiffre au porteur, car c'est sa grille.
 - [ ] **Step 5 :** un pays sans réseau payin rejoint GN et CD dans « Bientôt disponible » (`PAYMENT_COUNTRIES`, tâche 2). Le noter en ruling.
 
@@ -74,28 +74,27 @@ Aucun code de production. Elle demande la clé `sk_test_` dans `frontend/.env.lo
 
 **Interfaces :**
 - Produces :
-  - `type PlanId = 'FREE' | 'TRIAL' | 'WEEK' | 'TWO_WEEKS' | 'MONTH' | 'COMFORT' | 'COMFORT_PLUS' | 'UNLIMITED'` (`FREE` = « Sans pass ») ;
+  - `type PlanId = 'FREE' | 'TRIAL' | 'WEEK' | 'TWO_WEEKS' | 'MONTH' | 'MONTH_PLUS' | 'MONTH_MAX' | 'UNLIMITED'` (`FREE` = « Sans pass ») ;
   - `interface PlanDefinition { id; label; priceXof: number | null; durationDays: number | null; includedResponses: number | null; maxActiveCampaigns: number | null; features: {…six booléens actuels…} }` ;
   - `PLANS: Record<PlanId, PlanDefinition>` ;
-  - `PASS_IDS = ['WEEK','TWO_WEEKS','MONTH','COMFORT','COMFORT_PLUS'] as const` (`type PassId`) ;
-  - `TOPUPS = { TOPUP_1000: { responses: 1000, priceXof: 2500 }, TOPUP_5000: { responses: 5000, priceXof: 9900 } }` (`type TopupId`) ;
-  - `type OfferId = PassId | TopupId`, `isOfferId(v): v is OfferId`, `offerPrice(id): number`, `offerResponses(id): number` ;
+  - `PASS_IDS = ['WEEK','TWO_WEEKS','MONTH','MONTH_PLUS','MONTH_MAX'] as const` (`type PassId`) ;
+  - `isPassId(v): v is PassId`, `passPrice(id): number`, `passResponses(id): number` (pas de recharges) ;
   - `MARGIN_ASSUMPTIONS = { saspayFee: 0.05, payoutFee: 0.02, costPerResponse: 0.25, floor: 0.7 }`, `marginOf(priceXof, responses): number` ;
   - `PAYMENT_CURRENCIES = ['XOF', 'XAF']`, `PAYMENT_COUNTRIES` (les 14 codes de `SHOP_COUNTRIES` en XOF ou XAF, moins ceux de la tâche 1), `isPaymentCountry(code)` ;
-  - labels : « Sans pass », « Essai gratuit », « Pass Semaine », « Pass 14 jours », « Pass Mensuel », « Pass Confort », « Pass Confort Plus », « Illimité ».
+  - labels : « Sans pass », « Essai gratuit », « Pass Semaine », « Pass 2 Semaines », « Pass Mois », « Pass Mois Plus », « Pass Mois Max », « Pass Illimité ».
 
 - [ ] **Step 1 : tests qui échouent** (`plans.test.ts`) :
   - `the porteur's grid` : prix, durées et réponses exactes des Global Constraints, `PLANS.UNLIMITED.priceXof === null` ;
   - `trial opens everything but source links and export` : `TRIAL.features` = `estimate`, `respondentContacts`, `reliability`, `poweredByBadge` à `true`, `sourceLinks` et `csvExport` à `false`, et `maxActiveCampaigns === 1` ;
   - `no pass masks numbers and keeps one campaign` : `FREE.features.respondentContacts === false` et `FREE.maxActiveCampaigns === 1` ;
-  - `every paid offer keeps 70 % margin` : pour chaque `PASS_IDS` et `TOPUPS`, `marginOf(...) >= 0.7`. Plus `marginOf(24900, 15000)` ≈ 0.779 au millième, et `marginOf(3900, 150)` ≈ 0.920 ;
+  - `every paid offer keeps 70 % margin` : pour chaque `PASS_IDS`, `marginOf(...) >= 0.7`. Plus `marginOf(24900, 15000)` ≈ 0.779 au millième, et `marginOf(3900, 150)` ≈ 0.920 ;
   - `payment opens in FCFA countries only` : `isPaymentCountry('BJ')`, `('GA')` vrais ; `('GN')`, `('CD')` faux.
 - [ ] **Step 2 :** `pnpm --filter frontend exec vitest run src/lib/tamani/plans.test.ts`. Expected : FAIL.
 - [ ] **Step 3 :** écrire `plans.ts`. Adapter les lecteurs listés :
   - la page d'accueil garde une grille simple tirée de `PLANS`, que la tâche 12 remplace ;
-  - les tests remplacent `'PRO'` par `'MONTH'` et `'BUSINESS'` par `'COMFORT_PLUS'`.
+  - les tests remplacent `'PRO'` par `'MONTH'` et `'BUSINESS'` par `'MONTH_MAX'`.
 - [ ] **Step 4 :** `pnpm typecheck && pnpm test`. Expected : PASS.
-- [ ] **Step 5 :** commit `feat(plans): the porteur's passes, top-ups and margin guard`.
+- [ ] **Step 5 :** commit `feat(plans): the porteur's passes and margin guard`.
 
 ### Task 3 : Migration `9c_passes`
 
@@ -125,29 +124,28 @@ Aucun code de production. Elle demande la clé `sk_test_` dans `frontend/.env.lo
 - Modify : les appels à `effectivePlan` (même signature d'entrée).
 
 **Interfaces :**
-- Consumes : `PLANS`, `PassId`, `TopupId`, `OfferId` (tâche 2).
+- Consumes : `PLANS`, `PassId` (tâche 2).
 - Produces :
   - `GRACE_DAYS = 3` ;
   - `interface PassState { plan: PlanId; periodStart: Date | null; currentPeriodEnd: Date | null; graceUntil: Date | null; responsesIncluded: number }` ;
   - `effectivePlan(sub, now): { plan: PlanId; inGrace: boolean; endsAt: Date | null }` : `FREE` sans ligne, plan inconnu ou dates absentes (fail closed) ; `TRIAL` jusqu'à `currentPeriodEnd`, sans grâce ;
   - `trialPass(now): PassState` (50 réponses, 3 jours) ;
-  - `applyPurchase(current: PassState | null, offer: OfferId, used: number, now): PassState | 'NEEDS_PASS'`.
+  - `applyPurchase(current: PassState | null, pass: PassId, used: number, now): PassState`.
     - Un pass démarre à `now`, pour `durationDays`, avec `graceUntil = fin + 3 j`.
     - Il reprend `max(0, responsesIncluded − used)` d'un pass encore en cours ou en grâce, essai compris.
-    - Une recharge demande un pass payé en cours, hors grâce (sinon `'NEEDS_PASS'`) : elle ajoute ses réponses et garde les dates.
 
 - [ ] **Step 1 : tests qui échouent** (`subscription.test.ts`) :
   - `trial has no grace` ;
   - `a week pass ends after 7 days then 3 days of grace` ;
-  - `a pass bought during another keeps the unused answers` (MONTH 1 000, 400 utilisées, puis COMFORT : 5 600 incluses, `periodStart = now`) ;
+  - `a pass bought during another keeps the unused answers` (MONTH 1 000, 400 utilisées, puis MONTH_PLUS : 5 600 incluses, `periodStart = now`) ;
   - `a pass bought after no pass starts fresh` ;
-  - `a top-up needs an active paid pass` (`FREE`, `TRIAL` et en grâce → `'NEEDS_PASS'`) ;
-  - `a top-up adds answers and keeps the dates` ;
+  - `a pass bought during the trial keeps the trial's unused answers` ;
+  - `a pass bought during grace keeps the unused answers` ;
   - `an unknown plan reads FREE`.
 - [ ] **Step 2 : test qui échoue** (route `POST /api/shops`) : une boutique créée a `plan = 'TRIAL'`, avec 50 réponses et une fin à 3 jours.
 - [ ] **Step 3 :** lancer les deux fichiers. Expected : FAIL.
 - [ ] **Step 4 :** implémenter. `toShop` envoie `plan: { id, inGrace, endsAt }`. `currentPeriodEnd` devient `endsAt` côté client, et `shop-context.ts` suit.
-- [ ] **Step 5 :** `pnpm typecheck && pnpm test`. Expected : PASS. Commit `feat(billing): pass rules — trial, carry-over, top-ups, 3 days of grace`.
+- [ ] **Step 5 :** `pnpm typecheck && pnpm test`. Expected : PASS. Commit `feat(billing): pass rules — trial, carry-over, 3 days of grace`.
 
 ### Task 5 : Réponses comptées par pass, en attente et plafond
 
@@ -168,7 +166,7 @@ Aucun code de production. Elle demande la clé `sk_test_` dans `frontend/.env.lo
 
 - [ ] **Step 1 : tests qui échouent** (`quota.test.ts`) :
   - `no pass locks every new completion` ;
-  - `a pass counts answers from its start, recharges included` ;
+  - `a pass counts answers from its start, carried-over answers included` ;
   - `unlockPending opens the oldest up to the room left` (Review Focus 4 : 87 en attente, 150 incluses → 87 ouvertes, place restante 63) ;
   - `answersClosed at 1 000 recorded this month, never on a paid pass` ;
   - `the quota lock is taken before counting`.
@@ -264,9 +262,9 @@ Aucun code de production. Elle demande la clé `sk_test_` dans `frontend/.env.lo
 **Interfaces :**
 - Consumes : `getSaspay` (tâche 6), `applyPurchase` / `effectivePlan` (tâche 4), `unlockPending` / `passUsage` (tâche 5), `advisoryXactLock`.
 - Produces :
-  - nouveaux codes : `PAYMENT_COUNTRY_UNAVAILABLE` (409), `TOPUP_NEEDS_PASS` (409), `OFFER_NOT_BUYABLE` (400), `PAYMENT_PROVIDER_UNAVAILABLE` (503), `PURCHASE_NOT_FOUND` (404), `ANSWERS_CLOSED` (409, tâche 5) ; `BILLING_NOT_CONFIGURED` (503) existe déjà ;
+  - nouveaux codes : `PAYMENT_COUNTRY_UNAVAILABLE` (409), `OFFER_NOT_BUYABLE` (400), `PAYMENT_PROVIDER_UNAVAILABLE` (503), `PURCHASE_NOT_FOUND` (404), `ANSWERS_CLOSED` (409, tâche 5) ; `BILLING_NOT_CONFIGURED` (503) existe déjà ;
   - `startCheckout(db, saspay, { organizationId, userId, offer, now, appUrl }): Promise<{ orderId: string; checkoutUrl: string }>` :
-    - refuse un pays hors `PAYMENT_COUNTRIES` et une recharge sans pass payé actif ;
+    - refuse un pays hors `PAYMENT_COUNTRIES` ;
     - réutilise un `Order` `PENDING` non expiré de la même boutique et de la même offre qui a déjà un `paymentUrl` (double tap) ;
     - sinon crée l'`Order` (`provider 'saspay'`, `amount = offerPrice`, `currency = shop.currency`, `organizationId`, `offer`, `userId`, `expiresAt = now + 24 h`), ouvre la session hors transaction (`return_url = ${appUrl}/app/abonnement/retour?achat=<orderId>`, `metadata { orderId, organizationId, offer }`, email et nom du compte), puis écrit `providerChargeId` et `paymentUrl` ;
   - `activateFromPayment(tx, orderId, now): Promise<'ACTIVATED' | 'ALREADY_DONE'>`, dans une transaction avec `advisoryXactLock(tx, billingLock(orgId))` :
@@ -291,7 +289,6 @@ Aucun code de production. Elle demande la clé `sk_test_` dans `frontend/.env.lo
   - `an EXPIRED order paid late is still activated` (5) ;
   - `startCheckout reuses the pending session on a double tap` ;
   - `startCheckout refuses GN and CD` ;
-  - `a top-up without an active pass is refused` ;
   - `activation unlocks pending answers` ;
   - `a 429 stops the batch`.
 - [ ] **Step 2 : tests qui échouent** (routes, `shop-fixtures`) :
@@ -346,16 +343,16 @@ Aucun code de production. Elle demande la clé `sk_test_` dans `frontend/.env.lo
 - Consumes : `GET /api/shops/[orgId]/billing`, `POST …/billing/checkout`, `GET …/billing/orders/[orderId]` (tâche 9) ; `useShop().usage` (tâche 5).
 - Produces :
   - `billing-view.ts` : `meterTone(used, included): 'ok' | 'warning' | 'full'` (≥ 80 % → `warning`, ≥ 100 % → `full`), `meterLine(usage, now)` (« 1 240 / 3 000 réponses · pass jusqu'au 12 novembre », ou « Sans pass · 87 réponses en attente »), `offerCards(currency)` (les 5 pass, Confort marqué `bestValue`), `returnState(purchase)` (`'checking' | 'active' | 'failed'`) ;
-  - `PassMeter({ usage, currency, canBuy })` : barre, ton d'alerte, bouton « Recharger » (pass payé actif) ou « Prendre un pass » ;
+  - `PassMeter({ usage, currency, canBuy })` : barre, ton d'alerte, bouton « Prendre un pass », qui devient « Prendre un autre pass » quand un pass est en cours ;
   - `OfferCard({ name, price, currency, durationLabel, responsesLabel, forWho, badge?, action })`.
 
 - [ ] **Step 1 : tests qui échouent** (`billing-view.test.ts`, HTML statique des vues) :
   - `meterTone at 79, 80 and 100 %` ;
   - `meterLine without pass shows the pending count` ;
-  - `the subscription page lists five passes, the best value badge on Confort` ;
+  - `the subscription page lists five passes, the best value badge on Mois Max` ;
   - `the subscription page shows the per-campaign detail` ;
   - `home shows the pass meter on phone and desktop` ;
-  - `top-ups only with an active paid pass` ;
+  - `no top-up anywhere: a full meter offers another pass` ;
   - `a GN shop sees « Bientôt disponible » and no buy button` ;
   - `a MEMBER sees why they cannot buy` ;
   - `the grace banner and the pending banner` ;
@@ -380,15 +377,15 @@ Aucun code de production. Elle demande la clé `sk_test_` dans `frontend/.env.lo
 - Produces : `pricingOffers(): Array<{ id; name; price: string; durationLabel; responsesLabel; forWho; badge? }>` (essai, 5 pass, Illimité), avec les lignes « pour qui » :
   - Essai : « Pour voir Tamani marcher sur un produit » ;
   - Semaine : « Pour un arrivage à écouler vite » ;
-  - 14 jours : « Pour deux semaines de ventes » ;
-  - Mensuel : « Pour vendre tout le mois » ;
-  - Confort : « Pour un groupe actif » ;
-  - Confort Plus : « Pour les grands groupes » ;
+  - 2 Semaines : « Pour deux semaines de ventes » ;
+  - Mois : « Pour vendre tout le mois » ;
+  - Mois Plus : « Pour un groupe actif » ;
+  - Mois Max : « Pour les grands groupes » ;
   - Illimité : « Pour les très grandes communautés ».
 
 - [ ] **Step 1 : tests qui échouent** :
   - `seven cards in the porteur's order` ;
-  - `Confort carries « Le meilleur prix par réponse »` ;
+  - `Mois Max carries « Le meilleur prix par réponse »` ;
   - `Illimité reads « Sur devis » and hides its button while whatsappContact is null` ;
   - `the line under the cards` (« Mobile Money ou carte · Pas de renouvellement automatique · Campagnes illimitées ») ;
   - `JSON-LD lists the five passes in XOF` ;
@@ -414,7 +411,7 @@ Aucun code de production. Elle demande la clé `sk_test_` dans `frontend/.env.lo
 - [ ] **Step 2 :** feuille de route : « Lot 8 » → « Fait », avec les rulings du ledger.
 - [ ] **Step 3 :** `pnpm format && pnpm lint && pnpm typecheck && pnpm test && pnpm build`. Expected : PASS. Commit `docs(billing): passes and SasPay`.
 
-### Task 14 : Recette de bout en bout (SasPay test, ngrok)
+### Task 14 : Recette de bout en bout (ngrok, un vrai paiement accepté)
 
 **Files :**
 - Create (scratchpad) : `tools/recette-8-data.mjs` (compte jetable, création et suppression) et `tools/recette-8.mjs` (CDP, 390 et 1280 px).
@@ -431,10 +428,9 @@ Aucun code de production. Elle demande la clé `sk_test_` dans `frontend/.env.lo
   4. passage de l'essai à la fin (date reculée en base, compte jetable) ;
   5. 2 réponses en attente ;
   6. « Choisir » le Pass Semaine ;
-  7. paiement sur la page de test SasPay ;
+  7. paiement réel sur la page SasPay, par le porteur et seulement avec son accord (3 900 FCFA vers son propre compte marchand) ;
   8. la page de retour dit « actif » ;
   9. le compteur indique « 2 / 150 », les 2 réponses sont ouvertes ;
-  10. recharge +1 000 ;
-  11. « 2 / 1 150 ».
+  10. le report d'un pass à l'autre est couvert par les tests de la tâche 4 ; un second vrai paiement n'a lieu que si le porteur le demande.
 - [ ] **Step 4 :** une boutique GN voit « Bientôt disponible » ; un `MEMBER` ne peut pas acheter ; la grille de la page d'accueil défile sans débordement à 390 px.
 - [ ] **Step 5 :** relire `GET /pricing/my-rates/` et confirmer la marge de la tâche 1. Envoyer au porteur le lien et l'accès.

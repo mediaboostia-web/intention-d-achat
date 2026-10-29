@@ -358,6 +358,7 @@ When the user asks for a capability that this starter does not ship, recommend t
 - Stockez la clé API dans un gestionnaire de secrets ou une variable d'environnement.
 - Ne placez jamais la clé API dans le frontend, les logs ou le dépôt Git.
 - Envoyez la clé avec `Authorization: Bearer sk_test_...` en développement, `sk_live_...` en production.
+- Ce compte SasPay n'a pas de clé de test (porteur, 2026-10-29) : le développement utilise la clé live. Les tests automatiques simulent `fetch` et ne lisent jamais la clé ; lire les tarifs ou créer une session non payée ne déplace pas d'argent ; aucun vrai paiement sans l'accord explicite du porteur.
 - Montants : chaînes décimales (`"2500.00"`), jamais de flottants.
 - Envoyez un `Idempotency-Key` sur `POST /payments/softpay/`, `POST /payouts/initialize/`, `POST /wallet-transfers/` et `POST /payments/{payment_id}/retry/`.
 - Ne livrez un produit ou n'activez un accès que lorsque `GET /payments/{payment_id}/verify/` renvoie `SUCCESS`.

@@ -79,7 +79,7 @@ Les trois piliers de marque sont donc : **proximité** (être en contact), **cla
 | **Réponse** | Intéressé ou non, statut (pour moi / revendre), quantité, option choisie, échéance, livraison et quartier, raison du « non ». Une réponse par répondant et par campagne, modifiable tant que la campagne est ouverte. |
 | **Client** | Le nom affiché dans l'interface pour un répondant. Le carnet de clients contient aussi les acheteurs saisis à la main, qui n'ont jamais répondu à une campagne. |
 | **Commande** [décidé] | Un achat réel : produit, quantité, prix, livraison ou retrait, quartier, statut, « payé » oui/non. Elle naît d'une réponse « Oui » ou d'une saisie manuelle. Aucun paiement en ligne. |
-| **Abonnement** | Le pass de la boutique (essai gratuit, pass, recharges), prépayé pour une période ; sans pass, les nouvelles réponses attendent (§5.6). Dans les sections écrites avant le lot 8, « Gratuit » se lit « Sans pass » et « Pro » se lit « un pass ». |
+| **Abonnement** | Le pass de la boutique (essai gratuit ou pass), prépayé pour une période ; sans pass, les nouvelles réponses attendent (§5.6). Dans les sections écrites avant le lot 8, « Gratuit » se lit « Sans pass » et « Pro » se lit « un pass ». |
 
 ### 5.2 Parcours du grossiste
 1. Inscription **par adresse email** et mot de passe [décidé], puis vérification de l'email par code. La connexion par numéro de téléphone est écartée. « Continuer avec Google » reste proposé, puisqu'il repose aussi sur une adresse email et que le kit l'intègre déjà [choix].
@@ -247,9 +247,9 @@ Pourquoi (observations du porteur dans les communautés du Bénin, du Togo et du
 - des crédits comptés par campagne seraient réutilisés à vie en modifiant la même campagne ;
 - le mot « crédit » est flou pour un grossiste ; « réponse » ne l'est pas.
 
-**Grille du porteur (2026-10-29)** : « ne pas freiner l'achat, mais permettre à tous d'acheter ». Les prix sont en FCFA, le même chiffre en XOF et en XAF (les deux francs CFA sont à parité).
+**Grille du porteur (2026-10-29)** : « ne pas freiner l'achat, mais permettre à tous d'acheter ». Les prix sont en FCFA, le même chiffre en XOF et en XAF (les deux francs CFA sont à parité). Les noms ont été simplifiés le même jour, à la demande du porteur, sur le modèle des pass de crédit téléphone.
 
-| | **Essai gratuit** | **Pass Semaine** | **Pass 14 jours** | **Pass Mensuel** | **Pass Confort** | **Pass Confort Plus** | **Illimité** |
+| | **Essai gratuit** | **Pass Semaine** | **Pass 2 Semaines** | **Pass Mois** | **Pass Mois Plus** | **Pass Mois Max** | **Pass Illimité** |
 |---|---|---|---|---|---|---|---|
 | Prix | 0 | 3 900 | 5 900 | 9 900 | 14 900 | 24 900 | sur devis |
 | Durée | 3 jours | 7 jours | 14 jours | 30 jours | 30 jours | 30 jours | 30 jours |
@@ -266,23 +266,23 @@ Pourquoi (observations du porteur dans les communautés du Bénin, du Togo et du
 
 - **Essai gratuit** [décidé, 2026-10-29] : il démarre à la création de la boutique, pour 3 jours ou 50 réponses, la première limite atteinte. Il ouvre tout sauf les liens par groupe et l'export, et le pop-up garde la mention « Propulsé par Tamani » avec son lien.
 - **Sans pass** [décidé, 2026-10-29] : il n'y a plus de Gratuit permanent. Après l'essai, ou après un pass et sa grâce, le lien continue de marcher, mais chaque nouvelle réponse est gardée **en attente** jusqu'à l'achat d'un pass. Les statistiques des réponses déjà ouvertes, les commandes et le carnet de clients restent accessibles, numéros masqués et boutons WhatsApp verrouillés (« Prends un pass pour contacter Awa »). Une seule campagne en cours [choix : la même limite que l'essai].
-- **Recharges** : +1 000 réponses (2 500 FCFA) ou +5 000 (9 900 FCFA), payées quand le pass est épuisé avant sa fin. Elles valent jusqu'à la fin du pass en cours et ajoutent des réponses, pas des fonctions : il faut un pass actif, hors grâce.
+- **Plus de réponses** [décidé, 2026-10-29] : pas de recharges, les seuls prix sont les pass. Un grossiste qui manque de réponses prend un autre pass : il démarre tout de suite et garde les réponses non utilisées du pass en cours.
 - **Pass 12 mois** : retiré au lancement (porteur, 2026-10-29).
-- **Illimité** : sur devis, par le support. Son prix couvre au moins 1,1 FCFA par réponse attendue, pour garder la marge de 70 % (par exemple 55 000 FCFA pour 50 000 réponses par mois). Il s'attribue à la main depuis l'admin (lot 9, `shop.plan_grant`).
-- **Toutes les campagnes partagent les réponses du pass** : les campagnes sont illimitées, mais chaque réponse, quelle que soit sa campagne, compte dans le même total. Un **compteur** le montre partout, téléphone compris (demande du porteur, 2026-10-27) : réponses utilisées sur le total, date de fin du pass, détail par campagne, alerte à 80 % et à 100 %, bouton de recharge.
-- **Période** : les réponses d'un pass se comptent de son début à la fin de sa grâce. Un pass acheté pendant un autre pass démarre tout de suite et garde les réponses non utilisées du pass en cours [choix : rien de ce qui est payé ne se perd].
+- **Pass Illimité** : sur devis, par le support. Son prix couvre au moins 1,1 FCFA par réponse attendue, pour garder la marge de 70 % (par exemple 55 000 FCFA pour 50 000 réponses par mois). Il s'attribue à la main depuis l'admin (lot 9, `shop.plan_grant`).
+- **Toutes les campagnes partagent les réponses du pass** : les campagnes sont illimitées, mais chaque réponse, quelle que soit sa campagne, compte dans le même total. Un **compteur** le montre partout, téléphone compris (demande du porteur, 2026-10-27) : réponses utilisées sur le total, date de fin du pass, détail par campagne, alerte à 80 % et à 100 %, bouton pour prendre un pass.
+- **Période** : les réponses d'un pass se comptent de son début à la fin de sa grâce. Un pass acheté pendant un autre pass démarre tout de suite et garde les réponses non utilisées du pass en cours [décidé, 2026-10-29 : rien de ce qui est payé ne se perd].
 - **Pas de renouvellement automatique** : rappel 3 jours avant la fin, puis 3 jours de grâce (le pass garde ses fonctions, avec un bandeau), puis « Sans pass ». Les campagnes continuent ; les numéros se masquent à nouveau.
-- **Au-delà des réponses incluses, on ne perd jamais une réponse** [choix] : elle est enregistrée mais **en attente** (« 87 réponses en attente »). Elle s'ouvre dès que le grossiste prend un pass ou une recharge, les plus anciennes d'abord. Le répondant, lui, ne voit jamais de blocage.
-- **Plafond sans pass** [décidé, 2026-10-27] : au-delà d'environ 1 000 réponses enregistrées dans le mois calendaire (en attente comprises), la fiche du produit reste visible mais affiche « Réponses fermées pour ce mois ». Elle ne demande plus ni quantité ni numéro. Tamani compte seulement les visites, et le grossiste voit combien de personnes ont voulu répondre. C'est honnête envers le répondant, et un grand groupe sans pass ne nous coûte pas d'argent (règle des 70 % de marge). Un pass payé n'atteint jamais ce plafond : il a ses recharges.
-- **Marge** (calcul du 2026-10-29) : frais SasPay de 5 % au pire cas (carte), 2 % pour retirer l'argent, 0,25 FCFA de serveur par réponse (le double de l'estimation). Toutes les offres gardent de 77,9 % (Confort Plus) à 92 % (Semaine) ; le Confort Plus reste au-dessus de 70 % tant qu'une réponse coûte moins de 0,38 FCFA. À revérifier avec les vrais tarifs (`GET /pricing/my-rates/`) et le coût mesuré.
-- **Ce qui coûte à chaque envoi** (WhatsApp officiel, IA, plus tard) se paie de la même façon, en recharges, chacune avec sa marge de 70 %.
+- **Au-delà des réponses incluses, on ne perd jamais une réponse** [choix] : elle est enregistrée mais **en attente** (« 87 réponses en attente »). Elle s'ouvre dès que le grossiste prend un pass, les plus anciennes d'abord. Le répondant, lui, ne voit jamais de blocage.
+- **Plafond sans pass** [décidé, 2026-10-27] : au-delà d'environ 1 000 réponses enregistrées dans le mois calendaire (en attente comprises), la fiche du produit reste visible mais affiche « Réponses fermées pour ce mois ». Elle ne demande plus ni quantité ni numéro. Tamani compte seulement les visites, et le grossiste voit combien de personnes ont voulu répondre. C'est honnête envers le répondant, et un grand groupe sans pass ne nous coûte pas d'argent (règle des 70 % de marge). Un pass payé n'atteint jamais ce plafond : un autre pass ajoute des réponses.
+- **Marge** (calcul du 2026-10-29) : frais SasPay de 5 % au pire cas (carte), 2 % pour retirer l'argent, 0,25 FCFA de serveur par réponse (le double de l'estimation). Toutes les offres gardent de 77,9 % (Mois Max) à 92 % (Semaine) ; le Mois Max reste au-dessus de 70 % tant qu'une réponse coûte moins de 0,38 FCFA. À revérifier avec les vrais tarifs (`GET /pricing/my-rates/`) et le coût mesuré.
+- **Ce qui coûte à chaque envoi** (WhatsApp officiel, IA, plus tard) se paiera de la même façon, prépayé, avec sa marge de 70 %.
 - La mention « Propulsé par Tamani » renvoie vers la page d'accueil avec `?ref=<slug-boutique>` pour mesurer le bouche-à-oreille.
 - **Verdict offert** [décidé, 2026-10-27] : sans pass, la première campagne qui atteint 20 réponses comptées reçoit son verdict complet, une fois pour toutes. Depuis l'essai (qui a le verdict), il ne joue que pour une boutique dont l'essai n'a pas atteint 20 réponses.
-- **Page d'accueil** (porteur, 2026-10-29) : la grille se lit comme une rangée de cartes qu'on fait glisser sur téléphone (quatre visibles avec des flèches sur ordinateur). Chaque carte montre le nom, le prix, « durée · réponses », une ligne « pour qui » et « Choisir » ; le Confort porte « Le meilleur prix par réponse » ; l'Illimité a « Contacter le support ». Une ligne dessous : « Mobile Money ou carte · Pas de renouvellement automatique · Campagnes illimitées ».
+- **Page d'accueil** (porteur, 2026-10-29) : la grille se lit comme une rangée de cartes qu'on fait glisser sur téléphone (quatre visibles avec des flèches sur ordinateur). Chaque carte montre le nom, le prix, « durée · réponses », une ligne « pour qui » et « Choisir » ; le Pass Mois Max porte « Le meilleur prix par réponse » (1,7 FCFA) ; le Pass Illimité a « Contacter le support ». Une ligne dessous : « Mobile Money ou carte · Pas de renouvellement automatique · Campagnes illimitées ».
 
 ### 5.7 Paiement : SasPay [décidé]
 - SasPay est une API REST unique pour le mobile money et la carte, en Afrique de l'Ouest et du Centre. Elle propose une page de paiement hébergée (*checkout session*) et des webhooks signés.
-- **Pas de prélèvement récurrent** côté SasPay : chaque pass et chaque recharge se paie d'avance.
+- **Pas de prélèvement récurrent** côté SasPay : chaque pass se paie d'avance.
   - J-3 avant la fin d'un pass : rappel par email et notification dans l'app, avec un lien vers l'achat.
   - À la fin : **3 jours de grâce** avec un bandeau d'avertissement (porteur, 2026-10-27).
   - Ensuite : « Sans pass ». Les données sont conservées et les nouvelles réponses attendent.
@@ -376,13 +376,13 @@ Toutes respectent les invariants du kit : `export const runtime = 'nodejs'` et `
 - Le compteur « X intéressés » se charge à l'ouverture et se met à jour après la réponse. Pas de temps réel en v1. Si on en veut plus tard, le kit recommande Ably.
 
 ### 6.7 Intégration SasPay
-- Base `https://api.saspay.me/api/v1`, `Authorization: Bearer sk_test_…` en développement ou `sk_live_…` en production, **appels uniquement côté serveur**.
+- Base `https://api.saspay.me/api/v1`, `Authorization: Bearer sk_test_…` en développement ou `sk_live_…` en production, **appels uniquement côté serveur**. SasPay ne propose pas de clé de test à ce compte (porteur, 2026-10-29) : on développe avec la clé live, les tests automatiques ne la lisent jamais, et un vrai paiement n'a lieu qu'avec l'accord du porteur.
 - Nouvelles variables d'environnement : `SASPAY_API_KEY` et `SASPAY_WEBHOOK_SECRET`. On les ajoute à `.env.example` et au schéma `env.ts` comme fournisseur facultatif : si elles sont absentes, la facturation répond 503, sur le modèle des autres fournisseurs du kit.
 - **Paiement** : session de checkout hébergée (`POST /checkout-sessions/` ; champs obligatoires : `amount`, `currency`, `customer_email`, `customer_name` ; on envoie aussi `country`, `return_url`, `metadata` et `fee_charge_mode: DEDUCTED`). Les montants partent en **chaînes décimales** (`"9900.00"`), convertis depuis l'entier FCFA à la frontière. L'OpenAPI ne prévoit pas d'`Idempotency-Key` sur cette route : un double appel crée seulement une deuxième session non payée. On crée donc une session par `Order` et on réutilise son `checkout_url` enregistré.
 - **Lien entre un paiement et notre `Order`** (lu dans l'OpenAPI, 2026-10-29) : le corps du webhook (`{ event, data: { id, reference, status, amount, … } }`) ne porte ni l'identifiant de la session ni nos métadonnées. Le webhook est donc un **signal** :
   1. le checkout crée un `Order` `PENDING` qui garde l'identifiant de la session (`providerChargeId`) et son `checkout_url` ;
   2. le webhook vérifié enregistre l'événement (`WebhookLog`, dédoublonnage) et réveille le rapprochement après sa réponse, jamais dans sa transaction (plafond de 2 s de Neon) ;
-  3. le rapprochement lit `GET /checkout-sessions/{id}/status/`. Sur `PAID`, il vérifie `GET /payments/{transaction_id}/verify/` et n'active le pass ou la recharge que sur `SUCCESS`, une seule fois (`Order.activatedAt`), puis ouvre les réponses en attente ;
+  3. le rapprochement lit `GET /checkout-sessions/{id}/status/`. Sur `PAID`, il vérifie `GET /payments/{transaction_id}/verify/` et n'active le pass que sur `SUCCESS`, une seule fois (`Order.activatedAt`), puis ouvre les réponses en attente ;
   4. le rapprochement est idempotent. Il tourne depuis la page de retour, depuis le signal du webhook et depuis la tâche planifiée `billing-verify`, le filet de sécurité : rien n'est perdu si l'un des trois manque.
 - **Webhook** : on vérifie `X-Webhook-Signature`, un HMAC-SHA256 en hexadécimal de `${X-Webhook-Timestamp}.${corps brut}`. On rejette si l'horodatage s'écarte de plus de 300 s. Événements : `transaction.success` → `paid`, `transaction.failed` ou `transaction.cancelled` → `failed`. Le webhook se configure **uniquement depuis le tableau de bord SasPay**.
 - **Erreurs** : `401` (clé refusée, sans nouvel essai), `403`, `404`, `409`, `422` et `429` (on espace les appels) ont chacun un comportement défini ; le `CircuitBreaker` du kit protège les appels.
@@ -415,7 +415,7 @@ Toutes respectent les invariants du kit : `export const runtime = 'nodejs'` et `
 6. **Pop-up** : `/c/[code]`, routes publiques, mémoire de l'appareil, protections, budget de performance.
 7. **Tableau de bord** : statistiques, quantité recommandée, liste des répondants, relance WhatsApp, export CSV, vue d'ensemble.
 8. **Commandes et clients** : conversion d'une réponse en commande, commandes manuelles, statuts, vue « à livrer par quartier », carnet et fiche client, fiabilité, coefficients appris.
-9. **Forfaits prépayés et SasPay** : essai gratuit, passes, recharges, réponses en attente et plafond sans pass, checkout, webhook, vérification, rappels, grâce, grille de la page d'accueil.
+9. **Forfaits prépayés et SasPay** : essai gratuit, pass, réponses en attente et plafond sans pass, checkout, webhook, vérification, rappels, grâce, grille de la page d'accueil.
 10. **Admin Tamani, page d'accueil, pages légales.**
 11. **Mise en production** : Vercel, domaine, tâches planifiées, Sentry, compte SasPay en mode live.
 
