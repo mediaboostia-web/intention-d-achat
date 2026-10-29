@@ -67,7 +67,7 @@
 Les cinq situations, implicites dans la spec, qui toucheraient le plus un vrai utilisateur. Chacune est épinglée par un test dans le lot qui possède le code.
 1. **Le même numéro répond depuis deux téléphones.** La réponse existante est mise à jour (unicité `campaignId + respondentId`) et comptée une seule fois. → Lot 5, `upsertResponse merges a second device into the existing respondent response`.
 2. **Le lien circule après la fin de la campagne** (`endsAt` dépassé, `CLOSED`, produit archivé). Le pop-up affiche « Cette campagne est terminée », rien n'est écrit, et l'API renvoie `409 CAMPAIGN_CLOSED`. → Lot 5, `rejects writes when campaign effective status is CLOSED`.
-3. **Le quota est dépassé en cours de mois.** Le répondant voit un succès normal. La réponse est enregistrée `locked: true`. Le passage au forfait supérieur déverrouille les plus anciennes jusqu'à la nouvelle limite. → Lot 5, `locks completion when monthly quota reached` ; lot 8, `unlockCurrentMonth unlocks oldest first up to new limit`.
+3. **Le quota est dépassé en cours de mois.** Le répondant voit un succès normal. La réponse est enregistrée `locked: true`. Le passage au forfait supérieur déverrouille les plus anciennes jusqu'à la nouvelle limite. → Lot 5, `locks completion when monthly quota reached` ; lot 8, `unlockPending opens the oldest up to the room left`.
 4. **Le même numéro saisi de trois façons** (`77 123 45 67`, `+221771234567`, `00221771234567`) donne **un seul** client. → Lot 3, `normalizePhone returns the same E.164 for local, +, and 00 forms`.
 5. **Un webhook SasPay rejoué ou reçu dans le désordre** (succès en double, échec après un succès). L'abonnement est prolongé une seule fois et n'est jamais rétrogradé par un échec tardif. → Lot 8, `activation is idempotent per order` et `late failed event does not downgrade a PAID order`.
 
@@ -113,7 +113,7 @@ Convention du kit : `id String @id @default(cuid())`, statuts en `String` (pas d
 
 **Lot 7, migration `9_sale_orders`** (renumérotée deux fois le 2026-10-25 : le lot 5 a pris le n° 7, le lot 5b le n° 8 ; les lots 6 et 6b ont pris `8b` et `8c`)
 - `SaleOrder { organizationId, respondentId, productId, campaignId String?, responseId String? @unique, buyerType, quantity Int, unitPrice Int, totalAmount Int, fulfillment String /* DELIVERY|PICKUP */, zoneId String?, status String @default("TO_CONFIRM") /* TO_CONFIRM|CONFIRMED|FULFILLED|CANCELLED */, paid Boolean @default(false), paidAt DateTime?, notes String?, confirmedAt DateTime?, fulfilledAt DateTime?, cancelledAt DateTime? }`, avec `@@index([organizationId, status])` et `@@index([respondentId])`.
-- **Lot 8** : on réutilise `Order` (existant) pour les paiements d'abonnement : `provider = 'saspay'`, `metadata = { organizationId, plan, months }`, statuts `PENDING | AWAITING_VERIFICATION | PAID | FAILED | EXPIRED`.
+- **Lot 8, migration `9c_passes`** (2026-10-29) : on réutilise `Order` (existant) pour les achats de pass et de recharges : `provider = 'saspay'`, `organizationId`, `offer`, `activatedAt` (activation unique), `providerChargeId` = identifiant de la session de checkout, `paymentUrl` = son `checkout_url`, statuts `PENDING | PAID | FAILED | EXPIRED`. `Subscription` garde le pass en cours (`plan` parmi les `PlanId`, `periodStart`, `currentPeriodEnd`, `graceUntil`, `responsesIncluded`) ; `Response.countedAt` marque une réponse comptée dans un pass.
 
 ### Identité et composants (lot 2)
 Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction « Cahier du marché ».
@@ -191,7 +191,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 ### Modules serveur : `frontend/src/lib/server/tamani/`
 
 **Lot 3**
-- `errors.ts` : liste figée `TAMANI_ERRORS`, avec `SHOP_ALREADY_EXISTS`, `SHOP_NOT_FOUND`, `ZONE_NOT_FOUND`, `ZONE_ALREADY_EXISTS`, `PRODUCT_NOT_FOUND`, `PRODUCT_IN_USE`, `CAMPAIGN_NOT_FOUND`, `CAMPAIGN_CLOSED`, `CAMPAIGN_LIMIT_REACHED`, `INVALID_CAMPAIGN_TRANSITION`, `PLAN_FEATURE_LOCKED`, `INVALID_PHONE`, `INVALID_RESPONSE_TOKEN`, `RATE_LIMITED`, `ORDER_NOT_FOUND`, `ORDER_ALREADY_EXISTS`, `INVALID_ORDER_TRANSITION`, `CLIENT_NOT_FOUND`, `BILLING_NOT_CONFIGURED`, `PAYMENT_VERIFY_FAILED`, `PUSH_NOT_CONFIGURED` (lot 5). Plus `tamaniError(code, status, message?) => NextResponse`, qui renvoie `{ error: code, message }`, et `isUniqueViolation(err, field?)` (P2002 sur ce champ).
+- `errors.ts` : liste figée `TAMANI_ERRORS`, avec `SHOP_ALREADY_EXISTS`, `SHOP_NOT_FOUND`, `ZONE_NOT_FOUND`, `ZONE_ALREADY_EXISTS`, `PRODUCT_NOT_FOUND`, `PRODUCT_IN_USE`, `CAMPAIGN_NOT_FOUND`, `CAMPAIGN_CLOSED`, `CAMPAIGN_LIMIT_REACHED`, `INVALID_CAMPAIGN_TRANSITION`, `PLAN_FEATURE_LOCKED`, `INVALID_PHONE`, `INVALID_RESPONSE_TOKEN`, `RATE_LIMITED`, `ORDER_NOT_FOUND`, `ORDER_ALREADY_EXISTS`, `INVALID_ORDER_TRANSITION`, `CLIENT_NOT_FOUND`, `BILLING_NOT_CONFIGURED`, `PAYMENT_VERIFY_FAILED`, `PUSH_NOT_CONFIGURED` (lot 5) ; au lot 8 `PAYMENT_COUNTRY_UNAVAILABLE`, `TOPUP_NEEDS_PASS`, `OFFER_NOT_BUYABLE`, `PAYMENT_PROVIDER_UNAVAILABLE`, `PURCHASE_NOT_FOUND` et `ANSWERS_CLOSED`. Plus `tamaniError(code, status, message?) => NextResponse`, qui renvoie `{ error: code, message }`, et `isUniqueViolation(err, field?)` (P2002 sur ce champ).
 - `http.ts` : `readJson(req)`, `jsonOk(data, status = 200)` (en-tête `x-request-id`) et `validationFailed(message?)` (400 `VALIDATION_FAILED`, code du kit).
 - `locks.ts` : `type Db = Prisma.TransactionClient` et `advisoryXactLock(tx, key)` (`pg_advisory_xact_lock(hashtext(key))`). Clés : `shop-create:<userId>`, `campaign-activate:<organizationId>`.
 - `inputs.ts` : schémas zod des corps (boutique, zone, produit, campagne, lien) et `checkProductRules`.
@@ -293,7 +293,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 - `shop.ts` : `shopPlan(db, organizationId, now): Promise<PlanDefinition>`.
 
 **Lot 8**
-- `billing.ts` : `activateFromPayment(tx, orderId, now): Promise<'ACTIVATED' | 'ALREADY_DONE' | 'NOT_PAID'>`.
+- `billing.ts` : `startCheckout`, `reconcileOrder(db, saspay, orderId, now): Promise<'ACTIVATED' | 'ALREADY_DONE' | 'PENDING' | 'FAILED'>`, `activateFromPayment(tx, orderId, now): Promise<'ACTIVATED' | 'ALREADY_DONE'>` et `reconcilePendingOrders` ; `subscription.ts` : `effectivePlan`, `trialPass`, `applyPurchase` ; `quota.ts` : `passUsage`, `unlockPending`, `answersClosed`. Détail : [plan du lot 8](2026-10-29-tamani-08-forfaits-saspay.md).
 
 ### Routes
 - **Lot 3, boutique** :
@@ -340,7 +340,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
   - `GET /api/shops/[orgId]/clients` avec le filtre `commande=oui|non` en plus ;
   - `PATCH …/clients/[respondentId]` `{ notes }` (rôle `MEMBER`, 1 000 caractères, vide → `null`) → `{ client: { notes } }` ;
   - `DELETE …/clients/[respondentId]` (anonymisation, rôle `ADMIN` minimum) → `200 { anonymized: true }` (du JSON, comme les autres suppressions, car `api()` lit chaque succès en JSON), journalisée avec les seuls identifiants.
-- **Lot 8, facturation** : `POST /api/billing/checkout`, `GET /api/billing/return`, `GET /api/billing/subscription` et `POST /api/webhooks/saspay`.
+- **Lot 8, facturation** : `POST /api/shops/[orgId]/billing/checkout` (`ADMIN`), `GET /api/shops/[orgId]/billing` et `GET /api/shops/[orgId]/billing/orders/[orderId]` (`MEMBER`), et `POST /api/webhooks/saspay` (signal du rapprochement).
 - **Lot 8, tâches planifiées** : `GET /api/cron/billing-verify` (`*/1`) et `GET /api/cron/subscription-renewals` (`0 8 * * *`). `vercel.json` en compte alors **8**.
 - **Lot 9, admin** : `GET /api/admin/shops`, `GET /api/admin/shops/[orgId]` et `POST /api/admin/shops/[orgId]/plan` (avec audit).
 
@@ -371,7 +371,7 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
 | 7 | Commandes et clients | Conversion d'une réponse en commande, commandes manuelles, statuts, livraisons par quartier, filtre « a commandé », note et anonymisation des clients, fiabilité et coefficients appris. | 3, 5, 6, 6b |
 | 7a | Passe UX/UI | Mode nuit ; sur ordinateur, barre latérale repliable, barre du haut (recherche, jour / nuit, cloche, profil) et accueil en pleine page avec les verdicts en cartes ; cartes ou liste sur Campagnes et Produits ; pop-up retouché (stock, fenêtre de fin, lien Tamani) ; menu du téléphone par le côté sur la page d'accueil (ajout du 2026-10-28). | 7 |
 | 7b | Pays et monnaies | Zone FCFA (UEMOA et CEMAC), Guinée et RD Congo : chaque boutique a la monnaie de son pays, écrite sous son nom local (FCFA, FG, FC) dans tous les prix, le message de partage, le pop-up et les commandes ; le pays se fige au premier produit ; anciens numéros béninois à 8 chiffres acceptés (ajout du 2026-10-27). | 3, 4 |
-| 8 | Forfaits prépayés et SasPay | Passes (Semaine, Mois, Grossiste) et recharges payés en mode test SasPay : activation idempotente, réponses comptées par pass, rappels et grâce, plafond du Gratuit. Bictorys retiré. | 3, 5, 6, 7, 7b |
+| 8 | Forfaits prépayés et SasPay | Essai gratuit, cinq pass (Semaine, 14 jours, Mensuel, Confort, Confort Plus) et recharges payés en mode test SasPay : activation idempotente, réponses comptées par pass, en attente sans pass, rappels et grâce, plafond sans pass, grille de la page d'accueil. Bictorys retiré. | 3, 5, 6, 7, 7b |
 | 9 | Admin, accueil, légal, production | Admin Tamani, page d'accueil, CGU et confidentialité, mise en ligne sur Vercel avec SasPay en mode live. | tous |
 
 Les lots 2 et 3 peuvent être menés en parallèle, puis les lots 4 et 5.
@@ -633,38 +633,48 @@ Le porteur veut couvrir toute l'Afrique francophone. Aujourd'hui tout est en FCF
   - **Reporté au lot 8** : la couverture SasPay par pays et la marge de 70 % par monnaie. L'export n'a pas de colonne d'argent : rien à changer.
 
 ### Lot 8 : Forfaits prépayés et SasPay
-1. **Client SasPay** dans `frontend/src/lib/server/payments/saspay.ts` (`PaymentProvider.charge` via une session de checkout, plus `verifyPayment(paymentId)`).
-   - `toSaspayAmount(9900) === '9900.00'`.
-   - `Idempotency-Key` = `Order.idempotencyKey`, avec le `CircuitBreaker` existant.
-   - **D'abord** lire `https://docs.saspay.me/api-reference/openapi.json` pour savoir comment relier une session de checkout au webhook (spec §6.7).
-   - Tests avec un `fetch` simulé.
-2. **`webhook/saspay.ts` (`WebhookProvider`)**.
-   - Signature HMAC-SHA256 hexadécimale de `${X-Webhook-Timestamp}.${corps brut}`, avec une tolérance de 300 s et une comparaison à temps constant.
-   - `transaction.success` → `paid` ; `transaction.failed` et `transaction.cancelled` → `failed`.
-   - Tests : signature valide, signature fausse, horodatage trop vieux, correspondance des événements.
-3. **Remplacement de Bictorys** (PRUNING.md adapté).
-   - On **garde** : `provider.ts`, `circuit-breaker.ts`, `webhook/handler.ts`, `WebhookLog`, `Order`, `order-expiration` et `webhook-log-purge`.
-   - On supprime : `payments/bictorys.ts`, `commission.ts`, `webhook/bictorys.ts` et ses tests, `app/api/webhooks/bictorys`, `app/api/orders`, `app/api/pay-redirect` et `test-utils/bictorys-mock.ts`.
-   - On réécrit `provider-singleton.ts` pour SasPay.
-   - On met à jour : `.env.example`, `env.ts`, `features.json`, la documentation, et on étend le test `pruned-surfaces`.
-4. **Routes de facturation.**
-   - `checkout` crée un `Order` en `PENDING` pour un pass ou une recharge, au montant de l'offre, ouvre la session SasPay et renvoie `{ checkoutUrl }`.
-   - Le webhook passe la commande en `AWAITING_VERIFICATION` et ajoute à l'outbox les événements des types existants.
-   - `billing-verify` (tâche planifiée) et `return` appellent `verifyPayment`, puis `activateFromPayment`, qui prolonge le pass ou ajoute la recharge, puis ouvre les réponses en attente.
-   - Tests : Review Focus 3 et 5.
-5. **`subscription-renewals`** (aucun renouvellement automatique : un pass se rachète) : rappel à J-3 (`EmailJob` et `Notification`, avec un `dedupeKey` par période), début de grâce, puis retour au FREE. Mettre à jour `vercel.json` et le garde-fou `vercel-json-shape` (8 tâches planifiées).
-6. **Interface** : le **compteur de réponses** (demande du porteur, 2026-10-27) sur l'accueil et dans le menu, téléphone compris (aujourd'hui il n'est que dans la barre latérale, à partir de `lg`) : « 1 240 / 3 000 réponses, pass jusqu'au 12 novembre », le détail par campagne, une alerte à 80 % et à 100 %, et le bouton de recharge ; `/app/abonnement` (pass en cours, achat d'un pass ou d'une recharge, pass 12 mois), `/tarifs`, bandeau « N réponses en attente », bandeau de grâce. Recette de bout en bout en mode test SasPay.
-7. **Passes et recharges** (décision du porteur, 2026-10-27 ; spec §5.6).
-   - `PLANS` gagne la durée de chaque offre et le Pass Semaine ; les recharges sont des offres à part, réservées à un pass actif.
-   - Le pass enregistre son début, sa fin et ses réponses incluses ; chaque recharge ajoute des réponses jusqu'à la fin du pass. Le modèle exact se décide dans le plan du lot 8.
-   - `quota.ts` compte les réponses sur la période du pass ; le Gratuit garde le mois calendaire.
-   - Le Grand compte attend le coût réel par réponse mesuré chez un grand grossiste pilote ; avant lui, réduire les appels au serveur par réponse (aujourd'hui un par étape du pop-up).
-8. **Garde-fous de marge** (règle « Marge » ci-dessus).
-   - Lire les vrais tarifs par réseau avec `GET /pricing/my-rates/` avant de figer les prix.
-   - Un test pur qui échoue si un forfait payant, à quota plein, passe sous 70 % de marge (frais SasPay au pire cas, coût par réponse, frais de retrait).
-   - Gratuit : plafond de réponses enregistrées par boutique et par mois (1 000 proposé). Au-delà, **décidé par le porteur le 2026-10-27** : la fiche du produit reste visible et affiche « Réponses fermées pour ce mois », sans demander ni quantité ni numéro ; seules les visites sont comptées, et le grossiste voit combien de personnes ont voulu répondre.
-   - Au-delà du quota, une notification groupée par jour (« N nouvelles réponses en attente ») au lieu d'une par réponse ; purge des notifications de plus de 90 jours.
-   - Alertes et plafonds de dépense chez chaque fournisseur ; photo du pop-up allégée.
+Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08-forfaits-saspay.md) (14 tâches). Spec §5.6, §5.7 et §6.7, réécrits le 2026-10-29.
+
+**Décisions du porteur (2026-10-29)**
+- **Grille** :
+  - Essai gratuit : 3 jours, 50 réponses, 1 campagne ;
+  - Pass Semaine : 3 900 FCFA, 150 réponses ;
+  - Pass 14 jours : 5 900 FCFA, 350 réponses ;
+  - Pass Mensuel : 9 900 FCFA, 1 000 réponses ;
+  - Pass Confort : 14 900 FCFA, 5 000 réponses ;
+  - Pass Confort Plus : 24 900 FCFA, 15 000 réponses ;
+  - Illimité : sur devis, par le support.
+
+  Le porteur a envisagé 100 puis 50 FCFA par réponse, puis a gardé cette grille.
+- **Essai** : numéros et boutons WhatsApp visibles. Ni liens par groupe ni export ; la mention « Propulsé par Tamani » reste, avec son lien.
+- **Après l'essai** : plus de Gratuit permanent. Le lien marche et les nouvelles réponses attendent l'achat d'un pass.
+- **Recharges** gardées (+1 000 et +5 000) ; **Pass 12 mois** retiré.
+- **Frais** absorbés par Tamani (`DEDUCTED`).
+- **Pays** : paiement dans la zone FCFA d'abord ; Guinée et RDC « Bientôt disponible ».
+- **Grâce** : 3 jours.
+- **Page d'accueil** : la grille se fait glisser, propre et simple.
+
+**Rulings de conception (2026-10-29, à confirmer au fil du plan)**
+- **Le webhook est un signal.** Son corps ne porte ni la session ni nos métadonnées. Le rapprochement idempotent lit la session, puis `verify`, et il tourne depuis le retour, le webhook (`after()`) et `billing-verify`. L'outbox n'est pas utilisée, car son `dispatcher.ts` est protégé.
+- **Un pass acheté pendant un autre** démarre tout de suite et garde les réponses non utilisées.
+- **Sans pass et essai** : une seule campagne en cours.
+- **Les boutiques de développement existantes** restent « Sans pass ».
+
+**Tâches** (dans l'ordre du plan)
+1. Reconnaissance SasPay en mode test : vrais tarifs, couverture par pays, corps réels.
+2. La grille pure et le garde-fou de marge (70 %).
+3. Migration `9c_passes`.
+4. Règles du pass : essai, report des réponses, recharges, 3 jours de grâce.
+5. Réponses comptées par pass, en attente, et plafond de 1 000 par mois sans pass.
+6. Client SasPay.
+7. Webhook signé.
+8. Retrait de Bictorys.
+9. Achat, rapprochement et activation, avec la tâche planifiée `billing-verify`.
+10. Rappels J-3, grâce et fin d'essai, avec `subscription-renewals` ; 8 tâches planifiées.
+11. Compteur, page « Mon pass », page de retour et bandeaux dans l'espace grossiste.
+12. Grille de la page d'accueil.
+13. Documentation.
+14. Recette de bout en bout en mode test SasPay via ngrok.
 
 ### Lot 9 : Admin, accueil, légal, production
 1. **API admin des boutiques** : liste, détail, et attribution manuelle d'un forfait (`logAdminAction`, action `shop.plan_grant`). Tests : audit enregistré, `requireSuperadmin`.
