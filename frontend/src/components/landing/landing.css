@@ -263,14 +263,17 @@ html:has(.lp) {
   text-decoration: none;
   white-space: nowrap;
 }
-.lp-nav__login {
+/* The bar's sign-in and sign-up are for wide screens: a phone finds them in the drawer (lot 7a). */
+.lp-nav__login,
+.lp-nav__cta {
   display: none;
+}
+.lp-nav__login {
   padding-inline: 12px;
   color: var(--color-ink);
 }
 .lp-nav__links a:hover,
-.lp-nav__login:hover,
-.lp-nav__menu:hover {
+.lp-nav__login:hover {
   color: var(--color-ink);
   background: var(--lp-wash);
 }
@@ -280,53 +283,49 @@ html:has(.lp) {
   gap: 6px;
   margin-left: auto;
 }
-.lp-nav__cta-short {
-  display: none;
-}
-@media (max-width: 419px) {
-  .lp-nav__cta-long {
-    display: none;
-  }
-  .lp-nav__cta-short {
-    display: inline;
-  }
-}
+/* The phone's menu button: sign-painter yellow, pressed like a stamp. */
 .lp-nav__menu {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border: 2.5px solid var(--color-ink);
+  border-radius: 14px;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  box-shadow: 3px 3px 0 var(--color-ink);
   cursor: pointer;
+  transition:
+    translate 0.15s var(--lp-ease),
+    box-shadow 0.15s var(--lp-ease);
 }
-.lp-nav__drop {
-  display: grid;
-  gap: 2px;
-  max-width: 1180px;
-  margin: 8px auto 0;
-  padding: 8px;
-  border: 1.5px solid rgb(16 32 74 / 0.14);
-  border-radius: 18px;
-  background: rgb(255 255 255 / 0.97);
-  box-shadow: 0 16px 36px -14px rgb(16 32 74 / 0.36);
-  pointer-events: auto;
+.lp-nav__menu:active {
+  translate: 2px 2px;
+  box-shadow: 1px 1px 0 var(--color-ink);
 }
-.lp-nav__drop[hidden] {
-  display: none;
-}
-.lp-nav__drop a {
-  padding: 14px 12px;
-  border-radius: 12px;
-  font-size: 17px;
-  font-weight: 700;
-  text-decoration: none;
-}
-.lp-nav__drop a:hover {
-  background: var(--lp-wash);
-}
-@media (min-width: 640px) {
-  .lp-nav__login {
-    display: inline-flex;
+/* Below 1000px no band behind the logo and the menu at the top of the page;
+   when the bar comes back on the way up, a light paper backing keeps it legible. */
+@media (max-width: 999px) {
+  .lp-nav__bar {
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+    transition:
+      background-color 0.25s,
+      border-color 0.25s,
+      box-shadow 0.25s,
+      padding 0.25s;
+  }
+  .lp-nav[data-scrolled='true'] .lp-nav__bar {
+    padding: 0 8px 0 12px;
+    border-color: rgb(16 32 74 / 0.12);
+    background: rgb(253 253 248 / 0.9);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 26px -16px rgb(16 32 74 / 0.35);
   }
 }
 @media (min-width: 1000px) {
@@ -338,8 +337,11 @@ html:has(.lp) {
   .lp-nav__end {
     margin-left: 8px;
   }
-  .lp-nav__menu,
-  .lp-nav__drop {
+  .lp-nav__login,
+  .lp-nav__cta {
+    display: inline-flex;
+  }
+  .lp-nav__menu {
     display: none !important;
   }
 }
@@ -353,6 +355,139 @@ html:has(.lp) {
   }
   .lp-nav__end {
     margin-left: auto;
+  }
+}
+
+/* ---------- The phone's menu: a drawer from the right (lot 7a) ---------- */
+.lp-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+.lp-drawer[data-open='true'] {
+  pointer-events: auto;
+}
+.lp-drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: rgb(16 32 74 / 0.45);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.28s var(--lp-ease);
+}
+.lp-drawer[data-open='true'] .lp-drawer__backdrop {
+  opacity: 1;
+}
+.lp-drawer__panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(316px, 86vw);
+  padding: 16px 16px max(20px, env(safe-area-inset-bottom));
+  overflow-y: auto;
+  border-left: 2.5px solid var(--color-ink);
+  background-color: var(--color-bg);
+  background-image:
+    linear-gradient(var(--color-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size: 18px 18px;
+  box-shadow: -18px 0 40px -20px rgb(16 32 74 / 0.45);
+  translate: 100% 0;
+  visibility: hidden;
+  transition:
+    translate 0.32s var(--lp-ease),
+    visibility 0s linear 0.32s;
+}
+.lp-drawer[data-open='true'] .lp-drawer__panel {
+  translate: 0 0;
+  visibility: visible;
+  transition:
+    translate 0.32s var(--lp-ease),
+    visibility 0s;
+}
+.lp-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.lp-drawer__close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.lp-drawer__close:hover {
+  background: var(--lp-wash);
+}
+.lp-drawer__links {
+  display: grid;
+  gap: 4px;
+  margin-top: 28px;
+}
+.lp-drawer__links a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 12px;
+  border-radius: 14px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.lp-drawer__links a:hover {
+  background: var(--lp-wash);
+}
+/* The links come in one after the other (--i), the sign-up last. */
+.lp-drawer__links a,
+.lp-drawer__end {
+  opacity: 0;
+  translate: 18px 0;
+  transition: opacity 0.12s;
+}
+.lp-drawer[data-open='true'] .lp-drawer__links a,
+.lp-drawer[data-open='true'] .lp-drawer__end {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 0.3s var(--lp-ease),
+    translate 0.3s var(--lp-ease);
+  transition-delay: calc(120ms + var(--i, 0) * 60ms);
+}
+.lp-drawer__end {
+  display: grid;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 28px;
+  text-align: center;
+}
+.lp-drawer__end p {
+  font-size: 15px;
+  color: var(--color-ink-soft);
+}
+.lp-drawer__end p a {
+  font-weight: 700;
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+@media (min-width: 1000px) {
+  .lp-drawer {
+    display: none;
   }
 }
 

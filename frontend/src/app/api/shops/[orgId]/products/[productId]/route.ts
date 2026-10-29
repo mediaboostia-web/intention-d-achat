@@ -2,8 +2,8 @@
 //
 // DELETE (ADMIN) never breaks a campaign: a product with an active
 // campaign is refused (409 PRODUCT_IN_USE), a product with past campaigns
-// is archived (its share links then read "campagne terminée"), and only a
-// product that was never tested is really deleted.
+// or with orders is archived (its share links then read "campagne
+// terminée"), and only a product never tested nor ordered is really deleted.
 export const runtime = 'nodejs';
 
 import 'server-only';
@@ -47,7 +47,12 @@ export const DELETE = shopHandler<Params>('ADMIN', async (_req, { params }) => {
   const active = await prisma.campaign.count({ where: { ...scope, ...activeCampaignWhere(now) } });
   if (active > 0) return tamaniError('PRODUCT_IN_USE', 409);
 
-  if ((await prisma.campaign.count({ where: scope })) > 0) {
+  // Past campaigns or orders (lot 7, SaleOrder.product is Restrict): archived, never deleted.
+  const [campaigns, orders] = await Promise.all([
+    prisma.campaign.count({ where: scope }),
+    prisma.saleOrder.count({ where: scope }),
+  ]);
+  if (campaigns > 0 || orders > 0) {
     const product = await prisma.product.update({
       where: { id: existing.id },
       data: { archivedAt: now },

@@ -256,21 +256,69 @@ describe('PopupView', () => {
     expect(bare).toContain('max-h-[calc(100dvh-6.5rem)]');
   });
 
-  it('thanks the respondent by name and offers to edit', () => {
-    const t = text(<PopupView campaign={campaign} state={at('thanks', { remembered: awa })} />);
-    expect(t).toContain('Merci Awa ! Diallo Import te préviendra.');
-    expect(t).toContain('Modifier ma réponse');
+  const saidYes = at('thanks', {
+    remembered: awa,
+    answers: {
+      ...EMPTY_ANSWERS,
+      interested: true,
+      buyerType: 'CONSUMER',
+      quantity: 3,
+      timing: 'ON_ARRIVAL',
+      wantsDelivery: false,
+    },
+  });
+  const saidNo = at('thanks', {
+    remembered: awa,
+    answers: { ...EMPTY_ANSWERS, interested: false, notInterestedReason: 'TOO_EXPENSIVE' },
+  });
+  const buttons = (out: string) =>
+    [...out.matchAll(/<button [^>]*>(.*?)<\/button>/g)].map((m) => m[1]);
+
+  it('after a yes, a dialog says the order is recorded and the shop will confirm', () => {
+    const out = html(<PopupView campaign={campaign} state={saidYes} />);
+    const dialog = out.match(/<div [^>]*role="dialog"[^>]*>/)?.[0] ?? '';
+    expect(dialog).toContain('aria-modal="true"');
+    expect(dialog).toContain('aria-labelledby="popup-thanks-title"');
+    const t = text(<PopupView campaign={campaign} state={saidYes} />);
+    expect(t).toContain("C'est noté, Awa !");
+    expect(t).toContain('Ta commande de 3 pièces de Marmites inox 5 L est bien enregistrée.');
+    expect(t).toContain('Diallo Import va te contacter sur WhatsApp pour la confirmer.');
+    expect(t).toContain('Tu passes récupérer.');
+    expect(buttons(out)).toEqual(expect.arrayContaining(['Fermer', 'Modifier ma réponse']));
+    // The sheet behind is out of reach while the dialog is open.
+    expect(out).toMatch(/<div [^>]*inert=""/);
+  });
+
+  it('after a no, the dialog thanks for the opinion and offers to change one’s mind', () => {
+    const out = html(<PopupView campaign={campaign} state={saidNo} />);
+    const t = text(<PopupView campaign={campaign} state={saidNo} />);
+    expect(t).toContain('Merci pour ton avis !');
+    expect(t).toContain('Diallo Import en tient compte pour ses prochains arrivages.');
+    expect(buttons(out)).toEqual(
+      expect.arrayContaining(['Fermer', 'En fait, ça m&#x27;intéresse']),
+    );
+    expect(t).not.toContain('Modifier ma réponse');
+  });
+
+  it('keeps the end dialog compact on a short screen and breaks a long first name', () => {
+    const long = { ...awa, firstName: 'A'.repeat(40) };
+    const out = html(<PopupView campaign={campaign} state={{ ...saidYes, remembered: long }} />);
+    const title = out.match(/<h2 [^>]*id="popup-thanks-title"[^>]*>/)?.[0] ?? '';
+    expect(title).toContain('break-words');
+    expect(title).toContain('[@media(max-height:640px)]:text-2xl');
+    expect(out).toMatch(/class="[^"]*\[@media\(max-height:640px\)\]:size-12/);
+    expect(out).toMatch(/id="popup-thanks-body" class="[^"]*break-words/);
   });
 
   it('offers to close the page once the answer is sent', () => {
-    const thanks = at('thanks', { remembered: awa });
-    expect(text(<PopupView campaign={campaign} state={thanks} />)).toContain('Fermer la page');
     // When the browser keeps the page open, say so instead of a dead button.
-    const t = text(<PopupView campaign={campaign} state={thanks} left />);
-    expect(t).toContain("C'est noté. Tu peux fermer cette page.");
-    expect(t).not.toContain('Fermer la page');
-    expect(text(<PopupView campaign={campaign} state={at('contact')} />)).not.toContain(
-      'Fermer la page',
+    const out = html(<PopupView campaign={campaign} state={saidYes} left />);
+    expect(text(<PopupView campaign={campaign} state={saidYes} left />)).toContain(
+      "C'est noté. Tu peux fermer cette page.",
+    );
+    expect(buttons(out)).not.toContain('Fermer');
+    expect(html(<PopupView campaign={campaign} state={at('contact')} />)).not.toContain(
+      'role="dialog"',
     );
   });
 
@@ -286,10 +334,12 @@ describe('PopupView', () => {
     );
   });
 
-  it('links Propulsé par Tamani to /?ref={slug} on the free plan', () => {
-    expect(html(<PopupView campaign={campaign} state={start} />)).toContain(
-      'href="/?ref=diallo-import"',
-    );
+  it('links Propulsé par Tamani to the app, in a new tab, on the free plan', () => {
+    const out = html(<PopupView campaign={campaign} state={start} homeUrl="https://tamani.app" />);
+    const link = (out.match(/<a [^>]*>/g) ?? []).find((a) => a.includes('?ref=diallo-import'));
+    expect(link).toContain('href="https://tamani.app/?ref=diallo-import"');
+    expect(link).toContain('target="_blank"');
+    expect(link).toContain('rel="noopener"');
     const paid = { ...campaign, poweredByBadge: false };
     expect(text(<PopupView campaign={paid} state={start} />)).not.toContain('Propulsé par Tamani');
   });
@@ -303,11 +353,24 @@ describe('PopupView', () => {
     );
   });
 
-  it('shows the stock only when the campaign shows it', () => {
-    expect(
-      text(<PopupView campaign={{ ...campaign, stockQuantity: 200 }} state={start} />),
-    ).toContain('Plus que 200 pièces');
-    expect(text(<PopupView campaign={campaign} state={start} />)).not.toContain('Plus que');
+  it('shows the stock only when the campaign shows it, as « N en stock »', () => {
+    const stocked = { ...campaign, stockQuantity: 200 };
+    expect(text(<PopupView campaign={stocked} state={start} />)).toContain('200 pièces en stock');
+    expect(text(<PopupView campaign={stocked} state={start} />)).not.toContain('Plus que');
+    expect(html(<PopupView campaign={stocked} state={start} />)).toContain('data-picto="cartons"');
+    expect(text(<PopupView campaign={campaign} state={start} />)).not.toContain('en stock');
+  });
+
+  it('draws the availability with its own picture: the stall now, the calendar later', () => {
+    expect(html(<PopupView campaign={campaign} state={start} />)).toContain(
+      'data-picto="calendar"',
+    );
+    const now = {
+      ...campaign,
+      availability: 'IN_STOCK' as const,
+      availabilityText: 'Disponible maintenant',
+    };
+    expect(html(<PopupView campaign={now} state={start} />)).toContain('data-picto="stall"');
   });
 
   it('serves the photo at w_600', () => {

@@ -18,13 +18,11 @@ export function PageHeader({
     <header
       className={cn(
         'flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-6',
-        // Leaves room for the shell's bell and avatar on the title line.
-        'lg:pr-[var(--shell-tools,0px)]',
         className,
       )}
     >
       <div className="min-w-0">
-        <h1 className="font-hand text-3xl leading-tight font-bold text-primary sm:text-4xl">
+        <h1 className="font-hand text-3xl leading-tight font-bold break-words text-primary sm:text-4xl">
           {frenchSpacing(title)}
         </h1>
         {note && <p className="mt-1 text-sm text-ink-muted">{note}</p>}

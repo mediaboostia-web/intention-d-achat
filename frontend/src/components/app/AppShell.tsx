@@ -1,23 +1,26 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Avatar, BottomNav, Logo, SideNav } from '@/components/ui';
+import { BottomNav, SideNav } from '@/components/ui';
+import { shellWidth } from '@/lib/tamani/nav';
 import { PLANS } from '@/lib/tamani/plans';
-import { NotificationBell } from './NotificationBell';
+import { cn } from '@/lib/utils';
+import { GlobalSearch } from './GlobalSearch';
 import { PushPrompt } from './PushPrompt';
 import { useShop } from './shop-context';
+import { TopBar } from './TopBar';
 
 /**
- * The shop space: sidebar from 1024px, bottom bar below, the page in
- * between. On a phone the top row carries the shop, the bell and the
- * avatar; on a desktop the bell and the avatar sit on the page's title line.
- * The avatar opens the profile. PushPrompt asks a phone for notifications.
+ * The shop space: the foldable sidebar from 1024px, the bottom bar below,
+ * the top bar and the page in between. The home and the lists take the
+ * page's width, the rest keeps a reading column. PushPrompt asks a phone
+ * for notifications.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { shop, usage, me } = useShop();
+  const { shop, usage } = useShop();
+  const wide = shellWidth(pathname) === 'wide';
   return (
     <div className="min-h-dvh bg-paper lg:flex">
       <a
@@ -33,21 +36,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         upgrade={shop.plan.id === 'FREE'}
       />
       <div className="relative min-w-0 flex-1">
-        <header className="mx-auto flex w-full max-w-3xl items-center gap-2 px-4 pt-4 sm:px-6 lg:p-0">
-          <Logo variant="mark" size={26} className="lg:hidden" />
-          <span className="truncate font-hand text-lg font-bold text-primary lg:hidden">
-            {shop.name}
-          </span>
-          <div className="ml-auto flex items-center gap-2 lg:absolute lg:top-6 lg:right-6 lg:z-10">
-            <NotificationBell />
-            <Link href="/app/profil" aria-label="Ton profil" className="rounded-full">
-              <Avatar name={me.name ?? shop.name} src={shop.logoUrl} size="sm" />
-            </Link>
-          </div>
-        </header>
+        <TopBar search={<GlobalSearch />} />
         <main
           id="contenu"
-          className="mx-auto w-full max-w-3xl px-4 pt-6 pb-36 sm:px-6 lg:pt-8 lg:pb-12 lg:[--shell-tools:7rem]"
+          className={cn(
+            'mx-auto w-full px-4 pt-6 pb-36 sm:px-6 lg:pt-8 lg:pb-12',
+            wide ? 'max-w-[1360px] lg:px-8' : 'max-w-3xl',
+          )}
         >
           {children}
         </main>

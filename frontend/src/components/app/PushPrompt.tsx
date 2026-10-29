@@ -126,7 +126,7 @@ export function PushPrompt() {
         e.preventDefault();
         if (!busy) later();
       }}
-      className="m-0 mt-auto w-full max-w-none bg-transparent p-0 backdrop:bg-ink/40"
+      className="m-0 mt-auto w-full max-w-none bg-transparent p-0 backdrop:bg-deep/40 night:backdrop:bg-deep/70"
     >
       <BottomSheet
         label="Notifications"

@@ -23,6 +23,8 @@
   --color-neutral-verdict: #596071;
   --color-whatsapp: #25d366;
   --color-whatsapp-ink: #073b1f;
+  --color-deep: #10204a;
+  --color-deep-ink: #ffffff;
 
   /* Type scale (px): 12 14 16 18 21 24 32 40 48 60. */
   --text-xs: 0.75rem;
@@ -56,6 +58,8 @@
   --shadow-sheet: 0 -12px 34px rgb(16 32 74 / 0.28);
 
   --animate-sheet-up: sheet-up 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fade-in: fade-in 200ms ease-out both;
+  --animate-dialog-in: dialog-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 
   @keyframes sheet-up {
     from {
@@ -65,7 +69,48 @@
       transform: none;
     }
   }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
+    }
+  }
 }
+
+/* "Carnet de nuit" (lot 7a), the shop space's night theme: navy paper, the
+   ink turns to chalk. Only the colours that change are redefined; nightColors
+   in tokens.ts is the tested source. The shop shell sets data-theme on <html>
+   (ShellPrefsScript before the first paint, ThemeToggle afterwards). */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg: #0c1430;
+  --color-surface: #131f45;
+  --color-grid: #18264b;
+  --color-margin: #6e3a52;
+  --color-ink: #eef1fa;
+  --color-ink-soft: #c6cde2;
+  --color-ink-muted: #9ea8c4;
+  --color-primary: #93b2ff;
+  --color-primary-ink: #0c1430;
+  --color-success: #5fd39a;
+  --color-warning: #f4a867;
+  --color-danger: #ff8f85;
+  --color-neutral-verdict: #9ea8c4;
+  --color-deep: #070d24;
+  --color-deep-ink: #eef1fa;
+  --shadow-press: 4px 4px 0 var(--color-deep);
+}
+
+/* Shell states set on <html>: night: and collapsed: (the folded sidebar). */
+@custom-variant night (&:where([data-theme='dark'] *));
+@custom-variant collapsed (&:where([data-sidebar='collapsed'] *));
 
 /* next/font exposes each family as a CSS variable on <html> (app/layout.tsx). */
 @theme inline {
@@ -97,17 +142,28 @@
   background-size: 18px 18px;
 }
 
-/* The notebook's cover: the same squares, faint on ink (the desktop sidebar). */
+/* The notebook's cover: the same squares, faint on deep ink (the desktop sidebar). */
 @utility bg-cover {
-  background-color: var(--color-ink);
+  background-color: var(--color-deep);
   background-image:
-    linear-gradient(color-mix(in srgb, var(--color-surface) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(color-mix(in srgb, var(--color-deep-ink) 7%, transparent) 1px, transparent 1px),
     linear-gradient(
       90deg,
-      color-mix(in srgb, var(--color-surface) 7%, transparent) 1px,
+      color-mix(in srgb, var(--color-deep-ink) 7%, transparent) 1px,
       transparent 1px
     );
   background-size: 18px 18px;
+}
+
+/* The cover's spiral binding: rings down the sidebar's right edge (decoration). */
+@utility spiral {
+  background: radial-gradient(
+      circle at 50% 50%,
+      transparent 3px,
+      color-mix(in srgb, var(--color-deep-ink) 45%, transparent) 3.5px 5px,
+      transparent 5.5px
+    )
+    0 0 / 14px 26px repeat-y;
 }
 
 /* The ink outline of cards, buttons and fields. */
@@ -117,6 +173,7 @@
 
 /* Yellow highlighter — reserved for money. */
 @utility highlight {
+  color: var(--color-accent-ink);
   background: linear-gradient(
     100deg,
     transparent 0.6%,
@@ -146,6 +203,11 @@
 @utility stamp {
   filter: url(#tm-ink);
   mix-blend-mode: multiply;
+}
+
+/* Multiplied ink vanishes on navy paper: at night the stamp is printed plain. */
+[data-theme='dark'] .stamp {
+  mix-blend-mode: normal;
 }
 
 /* Hand-drawn pen wobble for outlines. */

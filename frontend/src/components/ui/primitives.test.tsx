@@ -107,8 +107,8 @@ describe('Input and PhoneInput render text-base (16px)', () => {
 });
 
 describe('Card and Badge', () => {
-  it('Card ink tone inverts the colors', () => {
-    expect(html(<Card tone="ink">x</Card>)).toContain('bg-ink');
+  it('Card ink tone is the notebook cover, dark by day and by night', () => {
+    expect(html(<Card tone="ink">x</Card>)).toContain('bg-deep text-deep-ink');
   });
 
   it('Badge takes its tone color', () => {
@@ -129,5 +129,7 @@ describe('Logo', () => {
   it('inverse lockup paints the wordmark white', () => {
     expect(html(<Logo tone="inverse" />)).toContain('fill="#FFFFFF"');
     expect(html(<Logo />)).not.toContain('fill="#FFFFFF"');
+    // The wordmark follows the theme's primary (night mode) through a class.
+    expect(html(<Logo />)).toContain('class="fill-primary"');
   });
 });

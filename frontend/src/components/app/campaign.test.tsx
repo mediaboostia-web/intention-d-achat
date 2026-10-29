@@ -1,12 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
-import { CampaignCard } from '@/components/ui';
+import type { ComponentProps } from 'react';
+import { CampaignCard, Tabs } from '@/components/ui';
 import { html, text } from '@/components/ui/test-html';
 import { ApiError } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import { campaignActions, type CampaignStatus } from '@/lib/tamani/campaign-actions';
 import type { ShopCampaign, ShopLink } from '@/lib/tamani/campaign-view';
 import { initialWizardState, wizardReducer, type WizardState } from '@/lib/tamani/campaign-wizard';
+import type { OrderRow } from '@/lib/tamani/orders-view';
 import type { ShopProduct } from '@/lib/tamani/product-form';
+import { campaignTabs } from '@/lib/tamani/results-view';
 
 vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigation')).navigation);
 
@@ -15,6 +18,8 @@ const { SourceLinks } = await import('./SourceLinks');
 const { CampaignActions } = await import('./CampaignActions');
 const { CampaignWizard } = await import('./CampaignWizard');
 const { CampaignEditForm } = await import('./CampaignEditForm');
+const { CampaignOrdersView, CampaignOrdersTab, campaignOrdersPath } =
+  await import('./CampaignOrders');
 
 const now = new Date('2026-10-24T10:00:00Z');
 const URL_C = 'http://localhost:3001/c/Ab3dE7x';
@@ -287,5 +292,130 @@ describe('campaign list page', () => {
     expect(nav).toMatch(
       /<a [^>]*aria-current="true"[^>]*href="\/app\/campagnes\?statut=DRAFT&amp;q=riz"|href="\/app\/campagnes\?statut=DRAFT&amp;q=riz"[^>]*aria-current="true"/,
     );
+  });
+});
+
+const order: OrderRow = {
+  id: 'o1',
+  status: 'CONFIRMED',
+  paid: true,
+  paidAt: '2026-10-27T15:00:00.000Z',
+  createdAt: '2026-10-27T09:00:00.000Z',
+  quantity: 3,
+  unitPrice: 17500,
+  totalAmount: 52500,
+  fulfillment: 'DELIVERY',
+  zoneId: 'z1',
+  zoneName: 'Médina',
+  productId: 'p1',
+  productName: 'Riz parfumé',
+  unitLabel: 'sac',
+  campaignId: 'c1',
+  campaignTitle: 'Riz de novembre',
+  responseId: 'resp1',
+  buyerType: 'RESELLER',
+  notes: null,
+  client: { id: 'r1', firstName: 'Awa', phone: '+221 77 123 45 12', phoneE164: '+221771234512' },
+};
+
+type OrdersProps = ComponentProps<typeof CampaignOrdersView>;
+const ordersProps = (over: Partial<OrdersProps> = {}): OrdersProps => ({
+  campaignId: 'c1',
+  unitLabel: 'sac',
+  summary: { confirmed: 3, fulfilled: 1, toConfirm: 2, stockLeft: 26 },
+  rows: [order],
+  hasMore: false,
+  loading: false,
+  error: null,
+  onMore: () => {},
+  onRetry: () => {},
+  ...over,
+});
+
+describe('CampaignOrders', () => {
+  it('sits in the tab bar after Intéressés, at ?onglet=commandes', () => {
+    const out = html(
+      <Tabs label="Campagne" items={campaignTabs('/app/campagnes/c1', 'orders', 'ACTIVE')} />,
+    );
+    expect(out).toMatch(/href="\/app\/campagnes\/c1\?onglet=commandes"[^>]*>Commandes</);
+    expect(out.indexOf('Intéressés')).toBeLessThan(out.indexOf('Commandes'));
+    expect(out.indexOf('Commandes')).toBeLessThan(out.indexOf('Partager'));
+    expect(out).toMatch(/aria-current="page"[^>]*>Commandes</);
+  });
+
+  it('shows the stock left with its calculation, then the quantities and the orders', () => {
+    const el = <CampaignOrdersView {...ordersProps()} />;
+    const t = text(el);
+    const out = html(el);
+    expect(t).toContain('Stock restant : 26 sacs');
+    expect(t).toContain('30 en stock − 4 en commandes confirmées ou livrées');
+    expect(t).toMatch(/Confirmées 3 sacs Livrées 1 sac À confirmer 2 sacs/);
+    expect(t.indexOf('Stock restant')).toBeLessThan(t.indexOf('Confirmées'));
+    expect(t.indexOf('À confirmer')).toBeLessThan(t.indexOf('Awa'));
+    expect(out).toContain('href="/app/commandes/o1"');
+    expect(t).toContain('3 sacs de Riz parfumé');
+    expect(t).toContain('52 500 FCFA');
+    // The stock left is the screen's one bold figure.
+    expect(out).toMatch(/font-sign[^>]*>26</);
+  });
+
+  it('shows no stock left for a campaign without a stock', () => {
+    const el = (
+      <CampaignOrdersView
+        {...ordersProps({ summary: { confirmed: 3, fulfilled: 1, toConfirm: 2, stockLeft: null } })}
+      />
+    );
+    expect(text(el)).not.toContain('Stock restant');
+    expect(text(el)).toContain('Confirmées 3 sacs');
+  });
+
+  it('never shows a stock below zero and says by how much the orders go past it', () => {
+    const el = (
+      <CampaignOrdersView
+        {...ordersProps({ summary: { confirmed: 10, fulfilled: 4, toConfirm: 0, stockLeft: -4 } })}
+      />
+    );
+    expect(text(el)).toContain('Stock restant : 0 sac');
+    expect(text(el)).toContain('Les commandes confirmées dépassent ton stock de 4 sacs.');
+  });
+
+  it('without an order, leads to the interested people and keeps the stock', () => {
+    const el = (
+      <CampaignOrdersView
+        {...ordersProps({
+          rows: [],
+          summary: { confirmed: 0, fulfilled: 0, toConfirm: 0, stockLeft: 30 },
+        })}
+      />
+    );
+    const t = text(el);
+    expect(t).toContain('Stock restant : 30 sacs');
+    expect(t).toContain('Pas encore de commande pour cette campagne');
+    expect(html(el)).toContain('href="/app/campagnes/c1?onglet=interesses"');
+    expect(t).not.toContain('À confirmer');
+  });
+
+  it('offers « Voir plus » only when more orders follow, and all of them on the orders page', () => {
+    expect(text(<CampaignOrdersView {...ordersProps({ hasMore: true })} />)).toContain('Voir plus');
+    const out = html(<CampaignOrdersView {...ordersProps()} />);
+    expect(out).not.toContain('Voir plus');
+    expect(out).toContain('href="/app/commandes?campagne=c1"');
+  });
+
+  it('says what went wrong with a retry', () => {
+    const t = text(<CampaignOrdersView {...ordersProps({ error: 'Oups.' })} />);
+    expect(t).toContain('Oups.');
+    expect(t).toContain('Réessayer');
+  });
+
+  it('loads the campaign orders page by page', () => {
+    expect(campaignOrdersPath('org_1', 'c1', null)).toBe('/api/shops/org_1/campaigns/c1/orders');
+    expect(campaignOrdersPath('org_1', 'c1', 'abc')).toBe(
+      '/api/shops/org_1/campaigns/c1/orders?cursor=abc',
+    );
+    // Until the first page arrives, a placeholder.
+    const out = html(<CampaignOrdersTab shopId="org_1" campaignId="c1" unitLabel="sac" />);
+    expect(out).toContain('role="status"');
+    expect(out).toContain('Chargement des commandes');
   });
 });

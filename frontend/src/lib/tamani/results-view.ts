@@ -7,6 +7,7 @@ import {
   type BuyerType,
   type NotInterestedReason,
 } from './labels';
+import type { OrderRow } from './orders-view';
 import { TIMING_LABELS, type Availability, type Timing } from './timing';
 import {
   DEFAULT_MIN_RESPONSES,
@@ -118,6 +119,8 @@ export interface InterestedRow {
   country: string | null;
   sourceLabel: string | null;
   completedAt: string;
+  /** The order made from this answer (lot 7), null until « Transformer en commande ». */
+  orderId: string | null;
 }
 
 export interface InterestedPage {
@@ -217,19 +220,36 @@ export function toServeLine(interested: number, announced: number, unitLabel: st
 /** 0.45 → "4,5": how many buy out of 10 who say yes. */
 const outOfTen = (coef: number) => String(Math.round(coef * 100) / 10).replace('.', ',');
 
+/** Where a coefficient that was not learned comes from, after « celui des usagers ». */
+const SETTING_ORIGIN: Readonly<Record<'DEFAULT' | 'SHOP', string>> = {
+  DEFAULT: 'est la valeur de départ',
+  SHOP: 'vient de tes réglages',
+};
+
 export function coefNote(coefs: Coefficients): string {
   const base = `Sur 10 revendeurs qui disent oui, ${outOfTen(coefs.reseller)} achètent vraiment ; sur 10 usagers, ${outOfTen(coefs.consumer)}.`;
-  const defaults = coefs.source.consumer === 'DEFAULT' && coefs.source.reseller === 'DEFAULT';
-  return defaults
+  const { consumer, reseller } = coefs.source;
+  if (consumer === 'LEARNED' && reseller === 'LEARNED') {
+    return `${base} Ces chiffres sont appris de tes commandes.`;
+  }
+  if (reseller === 'LEARNED' && consumer !== 'LEARNED') {
+    return `${base} Le chiffre des revendeurs est appris de tes commandes ; celui des usagers ${SETTING_ORIGIN[consumer]}.`;
+  }
+  if (consumer === 'LEARNED' && reseller !== 'LEARNED') {
+    return `${base} Le chiffre des usagers est appris de tes commandes ; celui des revendeurs ${SETTING_ORIGIN[reseller]}.`;
+  }
+  return consumer === 'DEFAULT' && reseller === 'DEFAULT'
     ? `${base} Ce sont les valeurs de départ, tu peux les régler dans Réglages.`
     : `${base} Ce sont tes réglages.`;
 }
 
-export type CampaignTab = 'results' | 'interested' | 'share' | 'edit';
+export type CampaignTab = 'results' | 'interested' | 'orders' | 'share' | 'edit';
 
+// The keys' order is the tab bar's: Commandes follows Intéressés, whom it turns into orders.
 const TAB_PARAM: Readonly<Record<CampaignTab, string>> = {
   results: 'resultats',
   interested: 'interesses',
+  orders: 'commandes',
   share: 'partager',
   edit: 'modifier',
 };
@@ -237,6 +257,7 @@ const TAB_PARAM: Readonly<Record<CampaignTab, string>> = {
 const TAB_LABEL: Readonly<Record<CampaignTab, string>> = {
   results: 'Résultats',
   interested: 'Intéressés',
+  orders: 'Commandes',
   share: 'Partager',
   edit: 'Modifier',
 };
@@ -264,6 +285,57 @@ export function campaignTabs(
     href: id === 'results' && status !== 'DRAFT' ? base : `${base}?onglet=${TAB_PARAM[id]}`,
     active: id === active,
   }));
+}
+
+/**
+ * A campaign's orders against its stock (GET …/campaigns/[campaignId]/orders,
+ * lot 7): quantities, not order counts. stockLeft is stockQuantity minus the
+ * confirmed and delivered quantities, null without a stock; it may go below
+ * zero, since it is a display and never blocks an order.
+ */
+export interface CampaignOrderSummary {
+  confirmed: number;
+  fulfilled: number;
+  toConfirm: number;
+  stockLeft: number | null;
+}
+
+export interface CampaignOrdersPage {
+  items: OrderRow[];
+  nextCursor: string | null;
+  summary: CampaignOrderSummary;
+}
+
+/** « Stock restant », never below 0 on screen, with the calculation it comes from. */
+export function stockLeftDisplay(
+  s: Pick<CampaignOrderSummary, 'confirmed' | 'fulfilled'> & { stockLeft: number },
+  unitLabel: string,
+): { figure: string; unit: string; calc: string; over: string | null } {
+  const ordered = s.confirmed + s.fulfilled;
+  const left = Math.max(0, s.stockLeft);
+  const past = -s.stockLeft;
+  return {
+    figure: String(left),
+    unit: pluralizeUnit(unitLabel, left),
+    calc: `${s.stockLeft + ordered} en stock − ${ordered} en commandes confirmées ou livrées`,
+    over:
+      past > 0
+        ? `Les commandes confirmées dépassent ton stock de ${past} ${pluralizeUnit(unitLabel, past)}.`
+        : null,
+  };
+}
+
+/** "Confirmées · 3 sacs", "Livrées", "À confirmer": the quantities of the campaign's orders. */
+export function orderQuantityRows(
+  s: CampaignOrderSummary,
+  unitLabel: string,
+): Array<{ id: 'confirmed' | 'fulfilled' | 'toConfirm'; label: string; value: string }> {
+  const amount = (n: number) => `${n} ${pluralizeUnit(unitLabel, n)}`;
+  return [
+    { id: 'confirmed', label: 'Confirmées', value: amount(s.confirmed) },
+    { id: 'fulfilled', label: 'Livrées', value: amount(s.fulfilled) },
+    { id: 'toConfirm', label: 'À confirmer', value: amount(s.toConfirm) },
+  ];
 }
 
 /** ARRIVED once the product is in; otherwise the campaign's availability. */

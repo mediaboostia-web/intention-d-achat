@@ -1,7 +1,10 @@
 // The shop's client book (porteur's feedback §3 bis, advanced from lot 7).
-// A client shows only once one of their answers counts: completed, not over
-// the monthly quota and not suspicious. A client whose answers are all
-// locked stays hidden until the upgrade, like the answers themselves.
+// A client shows once one of their answers counts (completed, not over the
+// monthly quota, not suspicious) or once they have an order: a manual order
+// adds its client to the book (spec §5.5.1). A client whose answers are all
+// locked, and who never ordered, stays hidden until the upgrade, like the
+// answers themselves. An anonymized client (spec §6.9) never shows; their
+// answers and orders keep counting, without an identity.
 // Without the plan's respondentContacts (Free), no full number leaves here.
 import 'server-only';
 import type { Prisma } from '@prisma/client';
@@ -23,6 +26,8 @@ import type { Cursor } from '@/lib/server/notifications/cursor';
 import { buildPage } from '@/lib/server/pagination/paginate';
 import type { Db } from './locks';
 import { displayPhone, maskPhone } from './phone';
+import { clientReliability, learnableCampaignIds } from './reliability';
+import { ORDER_SELECT, toOrderRow } from './serializers';
 
 /** An answer that counts: completed, within the quota, not suspicious. */
 const COUNTED = {
@@ -31,12 +36,23 @@ const COUNTED = {
   suspicious: false,
 } satisfies Prisma.ResponseWhereInput;
 
-/** Respondents the shop may see: not anonymized, with at least one counted answer. */
+/** « A commandé »: at least one order that is not cancelled. */
+const LIVE_ORDER = { status: { not: 'CANCELLED' } } satisfies Prisma.SaleOrderWhereInput;
+
+/** The newest orders a client card carries; the total spent counts them all. */
+const CARD_ORDERS = 100;
+
+/**
+ * Respondents the shop may see: not anonymized, with at least one counted
+ * answer or at least one order (any status: a cancelled manual order still
+ * put its client in the book). The list, its counts, the card, the exports
+ * and the home page all start from here.
+ */
 export function visibleClientWhere(organizationId: string) {
   return {
     organizationId,
     anonymizedAt: null,
-    responses: { some: COUNTED },
+    OR: [{ responses: { some: COUNTED } }, { orders: { some: {} } }],
   } satisfies Prisma.RespondentWhereInput;
 }
 
@@ -48,7 +64,7 @@ export interface ClientFilters extends Partial<Omit<ClientFilterState, 'type' | 
   kind: ClientKind;
 }
 
-/** ?type, ?reponse, ?campagne, ?quartier, ?periode, ?pays and ?q; null when one is unknown (400). */
+/** ?type, ?reponse, ?campagne, ?quartier, ?periode, ?pays, ?commande and ?q; null when one is unknown (400). */
 export function parseClientFilters(params: URLSearchParams): ClientFilters | null {
   const state = parseClientSearch(params);
   return state ? clientFiltersOf(state) : null;
@@ -94,12 +110,15 @@ export function clientFilterWhere(
   // The country is the number's dial code, read here: the number itself never leaves.
   const prefix = filters.country ? dialPrefixFor(filters.country) : null;
   if (prefix) and.push({ phoneE164: { startsWith: prefix } });
-  if (filters.q) and.push(searchWhere(filters.q, canSeeContacts));
+  // Like the country, « a commandé » is about the client, not one answer.
+  if (filters.ordered === true) and.push({ orders: { some: LIVE_ORDER } });
+  if (filters.ordered === false) and.push({ orders: { none: LIVE_ORDER } });
+  if (filters.q) and.push(clientSearchWhere(filters.q, canSeeContacts));
   return and;
 }
 
 /** Digits search the numbers only on a plan that shows them: no guessing a masked one. */
-function searchWhere(q: string, canSeeContacts: boolean): Prisma.RespondentWhereInput {
+export function clientSearchWhere(q: string, canSeeContacts: boolean): Prisma.RespondentWhereInput {
   const digits = q.replace(/\D/g, '');
   if (canSeeContacts && digits.length >= 3) return { phoneE164: { contains: digits } };
   return { firstName: { contains: q, mode: 'insensitive' } };
@@ -207,19 +226,25 @@ export async function listClients(
   };
 }
 
-/** One client and every counted answer, newest first; null when hidden or elsewhere. */
+/**
+ * One client: every counted answer and the newest orders, newest first, the
+ * total of the fulfilled orders, the note and, on a plan with `reliability`,
+ * how often their yes became a purchase. Null when hidden or elsewhere.
+ */
 export async function getClient(
   db: Db,
   organizationId: string,
   respondentId: string,
-  opts: { canSeeContacts: boolean },
+  opts: { canSeeContacts: boolean; reliability: boolean; now?: Date },
 ): Promise<ClientDetail | null> {
+  const now = opts.now ?? new Date();
   const r = await db.respondent.findFirst({
     where: { id: respondentId, ...visibleClientWhere(organizationId) },
     select: {
       id: true,
       firstName: true,
       phoneE164: true,
+      notes: true,
       firstSeenAt: true,
       lastSeenAt: true,
       responses: {
@@ -232,14 +257,51 @@ export async function getClient(
           timing: true,
           wantsDelivery: true,
           zone: { select: { name: true } },
+          order: { select: { status: true } },
           campaign: {
-            select: { title: true, product: { select: { name: true, unitLabel: true } } },
+            select: {
+              title: true,
+              status: true,
+              endsAt: true,
+              product: { select: { name: true, unitLabel: true } },
+            },
           },
         },
       },
     },
   });
   if (!r) return null;
+  const own = { organizationId, respondentId: r.id };
+  const [orders, spent] = await Promise.all([
+    db.saleOrder.findMany({
+      where: own,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: CARD_ORDERS,
+      select: ORDER_SELECT,
+    }),
+    db.saleOrder.aggregate({
+      where: { ...own, status: 'FULFILLED' },
+      _sum: { totalAmount: true },
+    }),
+  ]);
+  // Only the campaigns the shop followed up in orders say whether a yes buys.
+  const learnable = opts.reliability
+    ? await learnableCampaignIds(
+        db,
+        organizationId,
+        [...new Set(r.responses.map((x) => x.campaignId))],
+        now,
+      )
+    : null;
+  const reliability = learnable
+    ? clientReliability(
+        r.responses.map((x) => ({
+          interested: x.interested === true,
+          campaignFinished: learnable.has(x.campaignId),
+          fulfilled: x.order?.status === 'FULFILLED',
+        })),
+      )
+    : null;
   const interests = r.responses.map(
     (x): ClientInterest => ({
       responseId: x.id,
@@ -256,5 +318,54 @@ export async function getClient(
     ...toRow(r, opts.canSeeContacts),
     firstSeenAt: r.firstSeenAt.toISOString(),
     interests,
+    notes: r.notes,
+    orders: orders.map((o) => toOrderRow(o, opts.canSeeContacts)),
+    totalSpent: spent._sum.totalAmount ?? 0,
+    reliability,
   };
+}
+
+/** The wholesaler's note on a client the shop sees; null when hidden, anonymized or elsewhere. */
+export async function updateClientNotes(
+  db: Db,
+  organizationId: string,
+  respondentId: string,
+  notes: string | null,
+): Promise<{ notes: string | null } | null> {
+  const { count } = await db.respondent.updateMany({
+    where: { id: respondentId, ...visibleClientWhere(organizationId) },
+    data: { notes },
+  });
+  return count === 0 ? null : { notes };
+}
+
+/**
+ * Deletes a client's identity on request (spec §6.9), in the caller's
+ * transaction: first name, number and note go, and so do the notes of their
+ * orders (a « Lieu : X » or a free note may name the person). The answers
+ * and the orders stay, still counted, without an identity. False when the
+ * client is of another shop or already anonymized.
+ */
+export async function anonymizeClient(
+  tx: Db,
+  organizationId: string,
+  respondentId: string,
+  now: Date,
+): Promise<boolean> {
+  const { count } = await tx.respondent.updateMany({
+    where: { id: respondentId, organizationId, anonymizedAt: null },
+    data: { firstName: null, phoneE164: null, notes: null, anonymizedAt: now },
+  });
+  if (count === 0) return false;
+  await tx.saleOrder.updateMany({
+    where: { organizationId, respondentId },
+    data: { notes: null },
+  });
+  // A place typed after « Autre endroit » may name the person ("chez Awa"):
+  // it becomes those very words, so the stats still count it elsewhere.
+  await tx.response.updateMany({
+    where: { organizationId, respondentId, deliveryPlace: { not: null } },
+    data: { deliveryPlace: 'Autre endroit' },
+  });
+  return true;
 }

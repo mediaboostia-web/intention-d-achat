@@ -123,4 +123,4 @@ Les quantités affichées sont arrondies à la dizaine à partir de 30 (211 donn
 - Cible tactile ≥ 48 px, et 64 px pour les choix du pop-up.
 - Focus visible : anneau `primary` de 3 px.
 - Le pop-up anime **seulement en CSS**, sans `motion`, `framer-motion` ni `gsap` (garde-fou `no-motion-in-popup.test.ts`). Toute animation s'arrête sous `prefers-reduced-motion`.
-- Thème clair uniquement en v1.
+- Deux thèmes depuis le lot 7a (demande du porteur, 2026-10-28) : le **jour** reste la référence ; le **« carnet de nuit »** (papier bleu nuit, carreaux à peine visibles, l'encre devient de la craie) n'existe que dans l'espace grossiste, au choix de chacun. La page d'accueil, la connexion et le pop-up des clients restent en jour. Les jetons de nuit sont `nightColors` dans `tokens.ts`, avec les mêmes paires de contraste testées.

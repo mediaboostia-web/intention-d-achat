@@ -240,12 +240,26 @@ describe('BottomNav and SideNav', () => {
     expect(text(side('/app', false))).not.toContain('Passer au Pro');
   });
 
+  it('folds to its icons, each link keeping its name as a tooltip and for screen readers', () => {
+    const out = html(side('/app'));
+    expect(out).toMatch(/^<nav[^>]*class="[^"]*collapsed:w-\[84px\]/);
+    expect(out).toMatch(/^<nav[^>]*id="menu-lateral"/);
+    const links = out.match(/<a [^>]*>/g) ?? [];
+    for (const label of ['Accueil', 'Campagnes', 'Commandes', 'Clients', 'Produits', 'Réglages']) {
+      expect(
+        links.some((t) => t.includes(`title="${label}"`)),
+        label,
+      ).toBe(true);
+    }
+    expect(out).toMatch(/<span class="[^"]*collapsed:sr-only[^"]*">Campagnes<\/span>/);
+  });
+
   it('the open tab is yellow and the others lighten on hover', () => {
     const out = html(side('/app/campagnes'));
     const open = anchor(out, '/app/campagnes');
     expect(open).toContain('aria-current="page"');
     expect(open).toContain('bg-accent');
-    expect(anchor(out, '/app/produits')).toContain('hover:bg-surface/10');
+    expect(anchor(out, '/app/produits')).toContain('hover:bg-deep-ink/10');
   });
 });
 

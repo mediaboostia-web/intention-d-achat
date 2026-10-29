@@ -238,6 +238,7 @@ describe('/api/shops/[orgId]/products/[productId]', () => {
 
     it('hard-deletes a product without campaigns', async () => {
       prismaMock.campaign.count.mockResolvedValueOnce(0).mockResolvedValueOnce(0);
+      prismaMock.saleOrder.count.mockResolvedValue(0);
       prismaMock.product.deleteMany.mockResolvedValue({ count: 1 });
       const res = await del();
       expect(res.status).toBe(200);
@@ -256,6 +257,19 @@ describe('/api/shops/[orgId]/products/[productId]', () => {
       expect(prismaMock.product.update).toHaveBeenCalledWith({
         where: { id: 'prod_1' },
         data: { archivedAt: expect.any(Date) },
+      });
+      expect(prismaMock.product.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('archives a product that has orders, even without campaigns (lot 7)', async () => {
+      prismaMock.campaign.count.mockResolvedValueOnce(0).mockResolvedValueOnce(0);
+      prismaMock.saleOrder.count.mockResolvedValue(1);
+      prismaMock.product.update.mockResolvedValue(product({ archivedAt: new Date() }) as never);
+      const res = await del();
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ archived: true, product: { id: 'prod_1' } });
+      expect(prismaMock.saleOrder.count).toHaveBeenCalledWith({
+        where: { organizationId: 'org_1', productId: 'prod_1' },
       });
       expect(prismaMock.product.deleteMany).not.toHaveBeenCalled();
     });

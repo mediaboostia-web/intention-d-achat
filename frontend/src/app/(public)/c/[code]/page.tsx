@@ -19,5 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PopupPage({ params }: Props) {
   const campaign = await loadCampaign((await params).code);
   if (!campaign) notFound();
-  return <PopupSheet campaign={campaign} />;
+  return (
+    <PopupSheet campaign={campaign} homeUrl={process.env.APP_URL ?? 'http://localhost:3000'} />
+  );
 }

@@ -105,7 +105,7 @@ describe('AppShell', () => {
     expect(out.match(/data-push-prompt/g)).toHaveLength(1);
   });
 
-  it('desktop tools sit on the title line', () => {
+  it('the desktop top bar carries the fold button, the theme, the bell and the profile', () => {
     mockNextNavigation({ pathname: '/app' });
     const out = html(
       <ShopTestProvider>
@@ -115,8 +115,49 @@ describe('AppShell', () => {
       </ShopTestProvider>,
     );
     const header = out.match(/<header[^>]*>.*?<\/header>/s)?.[0] ?? '';
-    expect(header).toMatch(/class="[^"]*lg:absolute[^"]*"[^>]*>.*aria-label="Notifications"/s);
-    expect(out).toMatch(/<main[^>]*class="[^"]*lg:\[--shell-tools:7rem\]/);
+    const fold = (header.match(/<button [^>]*>/g) ?? []).find((t) =>
+      t.includes('aria-label="Menu latéral"'),
+    );
+    expect(fold).toContain('aria-expanded="true"');
+    expect(fold).toContain('aria-controls="menu-lateral"');
+    expect(header).toContain('aria-label="Mode nuit"');
+    expect(header).toContain('aria-label="Notifications"');
+    expect(header).toContain('href="/app/profil"');
+    expect(header).toContain('role="combobox"');
+    expect(header.match(/^<header[^>]*>/)?.[0]).toContain('lg:sticky');
+    // One bell for every width: the count is polled once.
+    expect(out.match(/aria-label="Notifications"/g)).toHaveLength(1);
+  });
+
+  it('shows the first name next to the avatar from 1024px', () => {
+    mockNextNavigation({ pathname: '/app' });
+    const out = html(
+      <ShopTestProvider>
+        <AppShell>
+          <p>Page</p>
+        </AppShell>
+      </ShopTestProvider>,
+    );
+    const header = out.match(/<header[^>]*>.*?<\/header>/s)?.[0] ?? '';
+    expect(header).toMatch(/<span class="hidden [^"]*lg:block[^"]*"><span[^>]*>Fatou</);
+  });
+
+  it('the home and the lists take the whole width, the forms keep their column', () => {
+    const mainOf = (pathname: string) => {
+      mockNextNavigation({ pathname });
+      const out = html(
+        <ShopTestProvider>
+          <AppShell>
+            <p>Page</p>
+          </AppShell>
+        </ShopTestProvider>,
+      );
+      return out.match(/<main[^>]*>/)?.[0] ?? '';
+    };
+    expect(mainOf('/app')).toContain('max-w-[1360px]');
+    expect(mainOf('/app/campagnes')).toContain('max-w-[1360px]');
+    expect(mainOf('/app/reglages')).toContain('max-w-3xl');
+    expect(mainOf('/app/campagnes/c1')).toContain('max-w-3xl');
   });
 });
 

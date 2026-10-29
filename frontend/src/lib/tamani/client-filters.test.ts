@@ -16,7 +16,7 @@ describe('parseClientSearch', () => {
   it('reads every filter of the address', () => {
     expect(
       parse(
-        'type=revendeurs&reponse=oui&campagne=c1&quartier=autre&periode=2026-10&pays=BJ&q=%20Awa%20',
+        'type=revendeurs&reponse=oui&campagne=c1&quartier=autre&periode=2026-10&pays=BJ&commande=oui&q=%20Awa%20',
       ),
     ).toEqual({
       type: 'RESELLER',
@@ -25,6 +25,7 @@ describe('parseClientSearch', () => {
       zone: 'OTHER',
       period: '2026-10',
       country: 'BJ',
+      ordered: true,
       q: 'Awa',
     });
     expect(parse('')).toEqual(NO_CLIENT_FILTERS);
@@ -33,12 +34,15 @@ describe('parseClientSearch', () => {
       period: '3-mois',
       answer: 'no',
     });
+    expect(parse('commande=non')).toEqual({ ...NO_CLIENT_FILTERS, ordered: false });
   });
 
   it('refuses a value it does not know', () => {
     for (const qs of [
       'type=toString',
       'reponse=peut-etre',
+      'commande=peut-etre',
+      'commande=',
       'periode=2026-13',
       'periode=hier',
       'pays=ZZ',
@@ -52,8 +56,9 @@ describe('parseClientSearch', () => {
 
 describe('clientFilterSearch', () => {
   it('writes the filters back in a stable order, without the empty ones', () => {
-    const state = parse('pays=BJ&q=Awa&type=usagers&reponse=oui')!;
-    expect(clientFilterSearch(state)).toBe('type=usagers&reponse=oui&pays=BJ&q=Awa');
+    const state = parse('commande=non&pays=BJ&q=Awa&type=usagers&reponse=oui')!;
+    expect(clientFilterSearch(state)).toBe('type=usagers&reponse=oui&pays=BJ&commande=non&q=Awa');
+    expect(clientFilterSearch({ ...NO_CLIENT_FILTERS, ordered: true })).toBe('commande=oui');
     expect(clientFilterSearch(NO_CLIENT_FILTERS)).toBe('');
   });
 });
@@ -106,5 +111,15 @@ describe('filterChips', () => {
     ]);
     expect(chips[1]!.href).toBe('/app/clients?type=revendeurs&quartier=autre&pays=FR&q=Awa');
     expect(filterChips(NO_CLIENT_FILTERS, { campaigns: new Map(), zones: new Map() })).toEqual([]);
+  });
+
+  it('names the has-ordered filter both ways', () => {
+    const names = { campaigns: new Map<string, string>(), zones: new Map<string, string>() };
+    const yes = filterChips(parse('commande=oui&pays=SN')!, names);
+    expect(yes.map((c) => c.label)).toEqual(['Sénégal', 'A commandé']);
+    expect(yes[1]).toEqual({ key: 'ordered', label: 'A commandé', href: '/app/clients?pays=SN' });
+    expect(filterChips(parse('commande=non')!, names)).toEqual([
+      { key: 'ordered', label: 'Pas encore commandé', href: '/app/clients' },
+    ]);
   });
 });

@@ -60,3 +60,8 @@ export function effectiveStatusWhere(status: CampaignStatus, now: Date): Prisma.
       return { status };
   }
 }
+
+/** Campaigns whose effective status is CLOSED or ARRIVED: the where of isFinished. */
+export function finishedCampaignWhere(now: Date): Prisma.CampaignWhereInput {
+  return { OR: [effectiveStatusWhere('CLOSED', now), effectiveStatusWhere('ARRIVED', now)] };
+}

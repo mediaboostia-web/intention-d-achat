@@ -1,9 +1,9 @@
 'use client';
 
 // The client book's filters on screen (lot 6b, retours §5): a « Filtrer »
-// sheet with one choice per filter, and the active ones as chips under the
-// search, each with its cross, then « Tout effacer ». The address holds them
-// (lib/tamani/client-filters.ts).
+// sheet with one choice per filter (since lot 7, « A commandé » too), and the
+// active ones as chips under the search, each with its cross, then « Tout
+// effacer ». The address holds them (lib/tamani/client-filters.ts).
 import Link from 'next/link';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button, Select } from '@/components/ui';
@@ -130,6 +130,17 @@ export function ClientFilterForm({
           ...choices.countries.map((c) => ({ value: c.code, label: c.label })),
         ]}
       />
+      <Select
+        id="filter-ordered"
+        label="Commandes"
+        value={draft.ordered === null ? '' : draft.ordered ? 'yes' : 'no'}
+        onChange={(e) => set({ ordered: e.target.value === '' ? null : e.target.value === 'yes' })}
+        options={[
+          { value: '', label: 'Tous les clients' },
+          { value: 'yes', label: 'A commandé' },
+          { value: 'no', label: 'Pas encore commandé' },
+        ]}
+      />
       <div className="flex flex-wrap gap-3">
         <Button type="submit">Voir les clients</Button>
         <Button type="button" variant="ghost" onClick={onCancel}>
@@ -177,7 +188,7 @@ export function ClientFilterSheet({
         ref={dialog}
         onClose={() => setOpen(false)}
         aria-label="Filtrer les clients"
-        className="m-0 mt-auto max-h-[90dvh] w-full max-w-none rounded-t-sheet bg-paper p-5 shadow-sheet backdrop:bg-ink/40 lg:m-auto lg:max-w-md lg:rounded-card"
+        className="m-0 mt-auto max-h-[90dvh] w-full max-w-none rounded-t-sheet bg-paper p-5 shadow-sheet backdrop:bg-deep/40 night:backdrop:bg-deep/70 lg:m-auto lg:max-w-md lg:rounded-card"
       >
         {open && (
           <ClientFilterForm

@@ -4,6 +4,7 @@ import {
   canTransitionCampaign,
   effectiveStatus,
   effectiveStatusWhere,
+  finishedCampaignWhere,
   isAcceptingResponses,
   isFinished,
   type CampaignStatus,
@@ -85,5 +86,11 @@ describe('where fragments', () => {
     });
     expect(effectiveStatusWhere('DRAFT', now)).toEqual({ status: 'DRAFT' });
     expect(effectiveStatusWhere('ARRIVED', now)).toEqual({ status: 'ARRIVED' });
+  });
+
+  it('finishedCampaignWhere mirrors isFinished: CLOSED, expired or ARRIVED', () => {
+    expect(finishedCampaignWhere(now)).toEqual({
+      OR: [effectiveStatusWhere('CLOSED', now), effectiveStatusWhere('ARRIVED', now)],
+    });
   });
 });

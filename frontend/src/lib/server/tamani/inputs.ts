@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { isSupportedCountry } from 'libphonenumber-js/min';
 import { checkProductRules } from '@/lib/tamani/product-rules';
 import { BUYER_TYPES, NOT_INTERESTED_REASONS } from '@/lib/tamani/labels';
+import { ORDER_STATUSES } from '@/lib/tamani/orders-view';
 import { isPhoneCountry } from '@/lib/tamani/phone-countries';
 import { DEFAULT_SHARE_TEMPLATE } from '@/lib/tamani/share-message';
 import { TIMING_OPTIONS, type Timing } from '@/lib/tamani/timing';
@@ -142,6 +143,50 @@ export const CampaignPatch = CampaignFields.partial()
   .refine(nonEmpty, 'Nothing to update');
 
 export const LinkCreate = z.object({ label: z.string().trim().min(1).max(60) });
+
+// ── Orders (lot 7) ──────────────────────────────────────────────────────
+const entityId = z.string().min(1).max(40);
+const orderQuantity = z.number().int().min(1).max(100_000);
+
+/** « Nouvelle commande »: the client by first name and number, added to the book if new. */
+export const OrderCreate = z.object({
+  productId: entityId,
+  firstName: z.string().trim().min(1).max(40),
+  phone: rawPhone,
+  quantity: orderQuantity,
+  buyerType: z.enum(BUYER_TYPES),
+  fulfillment: z.enum(['DELIVERY', 'PICKUP']),
+  zoneId: entityId.nullable().default(null),
+  campaignId: entityId.nullable().default(null),
+});
+
+/** A status move, « payé », the price and quantity (before confirmation) or the note (blank clears it). */
+export const OrderPatch = z
+  .object({
+    status: z.enum(ORDER_STATUSES).optional(),
+    paid: z.boolean().optional(),
+    unitPrice: z.number().int().min(0).max(100_000_000).optional(),
+    quantity: orderQuantity.optional(),
+    notes: z
+      .string()
+      .trim()
+      .max(500)
+      .nullable()
+      .transform((s) => (s ? s : null))
+      .optional(),
+  })
+  .refine(nonEmpty, 'Nothing to update');
+
+// ── Clients (lot 7) ─────────────────────────────────────────────────────
+/** The wholesaler's free note on a client: 1 000 characters after the trim, blank clears it. */
+export const ClientNotesPatch = z.object({
+  notes: z
+    .string()
+    .trim()
+    .max(1000)
+    .nullable()
+    .transform((s) => (s ? s : null)),
+});
 
 // ── Public popup (lot 5) ────────────────────────────────────────────────
 // One step of a respondent's answer: every field is optional, the server

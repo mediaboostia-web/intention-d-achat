@@ -11,16 +11,19 @@ import type {
   Product,
   Subscription,
 } from '@prisma/client';
+import type { BuyerType } from '@/lib/tamani/labels';
+import type { Fulfillment, OrderRow, OrderStatus } from '@/lib/tamani/orders-view';
 import {
   formatAvailability,
   formatPriceLine,
   renderShareMessage,
 } from '@/lib/tamani/share-message';
 import { effectiveStatus } from './campaign-status';
+import { displayPhone, maskPhone } from './phone';
 import { effectivePlan } from './subscription';
 
 /** Product.photos is Json: keep the strings, drop anything else. */
-function photoUrls(photos: Prisma.JsonValue): string[] {
+export function photoUrls(photos: Prisma.JsonValue): string[] {
   return Array.isArray(photos) ? photos.filter((p): p is string => typeof p === 'string') : [];
 }
 
@@ -135,5 +138,70 @@ export function toCampaign(c: Campaign & { product: Product; links: CampaignLink
       disponibilite: formatAvailability({ availability, availableAt: c.availableAt }, now),
       lien: defaultLink?.url ?? '',
     }),
+  };
+}
+
+/**
+ * What an order sends (lot 7). The product's current price is never read:
+ * an order keeps the price frozen when it was made.
+ */
+export const ORDER_SELECT = {
+  id: true,
+  status: true,
+  paid: true,
+  paidAt: true,
+  createdAt: true,
+  quantity: true,
+  unitPrice: true,
+  totalAmount: true,
+  fulfillment: true,
+  zoneId: true,
+  productId: true,
+  campaignId: true,
+  responseId: true,
+  buyerType: true,
+  notes: true,
+  zone: { select: { name: true } },
+  product: { select: { name: true, unitLabel: true } },
+  campaign: { select: { title: true } },
+  respondent: { select: { id: true, firstName: true, phoneE164: true, anonymizedAt: true } },
+} satisfies Prisma.SaleOrderSelect;
+
+export type OrderSelectRow = Prisma.SaleOrderGetPayload<{ select: typeof ORDER_SELECT }>;
+
+/**
+ * An order as the shop sees it. Without the plan's contacts (Free) the
+ * number is masked and its E.164 form stays here; an anonymized client
+ * keeps their orders, without a name or a number.
+ */
+export function toOrderRow(o: OrderSelectRow, canSeeContacts: boolean): OrderRow {
+  const who = o.respondent.anonymizedAt ? null : o.respondent;
+  const phone = who?.phoneE164 ?? null;
+  return {
+    id: o.id,
+    status: o.status as OrderStatus,
+    paid: o.paid,
+    paidAt: o.paidAt?.toISOString() ?? null,
+    createdAt: o.createdAt.toISOString(),
+    quantity: o.quantity,
+    unitPrice: o.unitPrice,
+    totalAmount: o.totalAmount,
+    fulfillment: (o.fulfillment === 'PICKUP' ? 'PICKUP' : 'DELIVERY') satisfies Fulfillment,
+    zoneId: o.zoneId,
+    zoneName: o.zone?.name ?? null,
+    productId: o.productId,
+    productName: o.product.name,
+    unitLabel: o.product.unitLabel,
+    campaignId: o.campaignId,
+    campaignTitle: o.campaign?.title ?? null,
+    responseId: o.responseId,
+    buyerType: (o.buyerType === 'RESELLER' ? 'RESELLER' : 'CONSUMER') satisfies BuyerType,
+    notes: o.notes,
+    client: {
+      id: o.respondent.id,
+      firstName: who?.firstName ?? null,
+      phone: phone === null ? null : canSeeContacts ? displayPhone(phone) : maskPhone(phone),
+      phoneE164: canSeeContacts ? phone : null,
+    },
   };
 }

@@ -28,3 +28,10 @@ export function isNavActive(href: string, pathname: string): boolean {
   if (href === '/app') return pathname === '/app';
   return pathname === href || pathname.startsWith(`${href}/`);
 }
+
+const WIDE = new Set(['/app', '/app/campagnes', '/app/produits', '/app/clients', '/app/commandes']);
+
+/** The home and the four lists take the page's width; cards, forms and settings keep a reading column. */
+export function shellWidth(pathname: string): 'wide' | 'narrow' {
+  return WIDE.has(pathname) ? 'wide' : 'narrow';
+}

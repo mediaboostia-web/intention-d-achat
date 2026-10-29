@@ -29,7 +29,13 @@ export type IconName =
   | 'chevron-right'
   | 'menu'
   | 'tag'
-  | 'logout';
+  | 'logout'
+  | 'moon'
+  | 'sun'
+  | 'sidebar'
+  | 'grid'
+  | 'rows'
+  | 'heart';
 
 // Drawn with the pen: one 2px round stroke in currentColor, no fill, so an
 // icon takes the colour of the text next to it.
@@ -195,6 +201,37 @@ const SHAPES: Record<IconName, ReactNode> = {
       <path d="M3.5 12.6V4.5a1 1 0 0 1 1-1h8.1l7.9 7.9a1.4 1.4 0 0 1 0 2l-6.1 6.1a1.4 1.4 0 0 1-2 0z" />
       <circle cx="8.5" cy="8.5" r="1.5" />
     </>
+  ),
+  moon: <path d="M19.5 14.6A7.6 7.6 0 0 1 9.4 4.5a7.6 7.6 0 1 0 10.1 10.1Z" />,
+  sun: (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2.8v2.1M12 19.1v2.1M4.9 4.9l1.5 1.5M17.6 17.6l1.5 1.5M2.8 12h2.1M19.1 12h2.1M4.9 19.1l1.5-1.5M17.6 6.4l1.5-1.5" />
+    </>
+  ),
+  sidebar: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+      <path d="M9.5 4.5v15" />
+    </>
+  ),
+  grid: (
+    <>
+      <rect x="4" y="4" width="7" height="7" rx="1.5" />
+      <rect x="13" y="4" width="7" height="7" rx="1.5" />
+      <rect x="4" y="13" width="7" height="7" rx="1.5" />
+      <rect x="13" y="13" width="7" height="7" rx="1.5" />
+    </>
+  ),
+  rows: (
+    <>
+      <rect x="4" y="4.5" width="4.5" height="4.5" rx="1" />
+      <rect x="4" y="15" width="4.5" height="4.5" rx="1" />
+      <path d="M11.5 6.75H20M11.5 17.25H20" />
+    </>
+  ),
+  heart: (
+    <path d="M12 20s-7.5-4.5-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.5 12 20 12 20Z" />
   ),
   logout: (
     <path d="M14 4.5H6.5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1H14M10.5 12h10M17 8.5l3.5 3.5-3.5 3.5" />
