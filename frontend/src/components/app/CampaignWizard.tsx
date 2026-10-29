@@ -58,6 +58,7 @@ export function CampaignWizard({
   initial,
   onSubmit,
   now: fixedNow,
+  currency,
 }: {
   products: readonly ShopProduct[];
   /** null while the zones load. */
@@ -66,6 +67,8 @@ export function CampaignWizard({
   /** Sends the campaign; resolves to an error message, or null once sent. */
   onSubmit: (state: WizardState, status: 'DRAFT' | 'ACTIVE') => Promise<string | null>;
   now?: Date;
+  /** The shop's currency (lot 7b). */
+  currency: string;
 }) {
   const [s, dispatch] = useReducer(wizardReducer, initial);
   const [sending, setSending] = useState<'DRAFT' | 'ACTIVE' | null>(null);
@@ -134,7 +137,7 @@ export function CampaignWizard({
                   )}
                   <span className="flex min-w-0 flex-col">
                     <span className="break-words">{p.name}</span>
-                    <span className="text-sm font-normal">{formatPriceLine(p)}</span>
+                    <span className="text-sm font-normal">{formatPriceLine(p, currency)}</span>
                   </span>
                 </ChoiceButton>
               </li>
@@ -295,6 +298,7 @@ export function CampaignWizard({
                     product,
                     { availability: s.availability, availableAt: wizardAvailableAt(s) },
                     now,
+                    currency,
                   )
                 : s.shareTemplate
             }

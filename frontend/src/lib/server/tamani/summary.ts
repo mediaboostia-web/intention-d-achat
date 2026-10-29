@@ -8,6 +8,7 @@ import { visibleClientWhere } from './clients';
 import { buildHomeBulletin } from './home-bulletin';
 import type { Db } from './locks';
 import { toCampaign } from './serializers';
+import { shopCurrency } from './shop';
 
 const DAY_MS = 86_400_000;
 const ACTIVITY_SIZE = 8;
@@ -155,7 +156,7 @@ export async function buildShopSummary(
     .sort((a, b) => a.at.localeCompare(b.at))
     .slice(0, UPCOMING_SIZE);
 
-  const shared = share ? toCampaign(share, now) : null;
+  const shared = share ? toCampaign(share, now, await shopCurrency(db, organizationId)) : null;
   return {
     week: {
       completed,

@@ -65,6 +65,7 @@ const counts: Record<OrderStatus, number> = {
 type ListProps = ComponentProps<typeof OrderListView>;
 const listProps = (over: Partial<ListProps> = {}): ListProps => ({
   filters: NO_ORDER_FILTERS,
+  currency: 'XOF',
   rows: [pro, paid],
   counts,
   groups: [],
@@ -100,6 +101,9 @@ describe('OrderListView', () => {
     expect(t).toContain('+221 77 123 45 12');
     expect(t).toContain('3 sacs de Riz parfumé');
     expect(t).toContain('52 500 FCFA');
+    const gn = text(<OrderListView {...listProps({ currency: 'GNF' })} />);
+    expect(gn).toContain('52 500 FG');
+    expect(gn).not.toContain('FCFA');
     expect(t).toContain('À confirmer');
     expect(t).toContain('Livrée');
     expect(t).toContain('Client sans prénom');
@@ -221,6 +225,7 @@ type DetailProps = ComponentProps<typeof OrderDetailView>;
 const detailProps = (order: OrderRow, over: Partial<DetailProps> = {}): DetailProps => ({
   order,
   shopName: 'Diallo Import',
+  currency: 'XOF',
   now,
   busy: false,
   error: null,
@@ -240,6 +245,10 @@ describe('OrderDetailView', () => {
     expect(out).toContain('id="order-unit-price"');
     expect(out).toContain('id="order-quantity"');
     expect(text(<OrderDetailView {...detailProps(pro)} />)).toContain('52 500 FCFA');
+    const cd = text(<OrderDetailView {...detailProps(pro, { currency: 'CDF' })} />);
+    expect(cd).toContain('52 500 FC');
+    expect(cd).toContain("Prix à l'unité (FC)");
+    expect(cd).not.toContain('FCFA');
   });
 
   it('a confirmed order is delivered, or picked up, and its price is frozen', () => {
@@ -331,12 +340,16 @@ describe('OrderForm', () => {
     { id: 'c2', title: 'Marmites', productId: 'p2' },
   ];
   const zones = [{ id: 'z1', name: 'Médina' }];
-  const form = (initial: Partial<ComponentProps<typeof OrderForm>['initial']> = {}) => (
+  const form = (
+    initial: Partial<ComponentProps<typeof OrderForm>['initial']> = {},
+    currency = 'XOF',
+  ) => (
     <OrderForm
       products={products}
       campaigns={campaigns}
       zones={zones}
       country="SN"
+      currency={currency}
       initial={{ productId: 'p1', buyerType: 'RESELLER', quantity: '12', ...initial }}
       error={null}
       onSubmit={async () => true}
@@ -346,6 +359,7 @@ describe('OrderForm', () => {
   it('shows the wholesale price for a reseller of 12 pieces', () => {
     const t = text(form());
     expect(t).toContain('Prix de gros : 6 000 FCFA × 12 = 72 000 FCFA');
+    expect(text(form({}, 'GNF'))).toContain('Prix de gros : 6 000 FG × 12 = 72 000 FG');
     expect(text(form({ quantity: '11' }))).toContain(
       "Prix à l'unité : 7 500 FCFA × 11 = 82 500 FCFA",
     );

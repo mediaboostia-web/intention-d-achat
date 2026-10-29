@@ -83,11 +83,12 @@ export function previewMessage(
   },
   availability: { availability: Availability; availableAt: Date | null },
   now: Date,
+  currency: string,
   link: string = PREVIEW_LINK,
 ): string {
   return renderShareMessage(template, {
     produit: product.name,
-    prix: formatPriceLine(product),
+    prix: formatPriceLine(product, currency),
     disponibilite: formatAvailability(availability, now),
     lien: link,
   });

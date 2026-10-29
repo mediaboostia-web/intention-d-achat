@@ -67,7 +67,12 @@ describe('orderWhatsappMessage', () => {
     totalAmount: 37500,
     fulfillment: 'DELIVERY' as const,
     zoneName: 'Médina',
+    currency: 'XOF',
   };
+
+  it('writes the total in the shop currency (lot 7b)', () => {
+    expect(orderWhatsappMessage({ ...base, currency: 'CDF' })).toContain('Total : 37 500 FC.');
+  });
 
   it('confirms the order with its total and where it goes', () => {
     expect(orderWhatsappMessage(base)).toBe(

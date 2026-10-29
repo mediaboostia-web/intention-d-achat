@@ -1,6 +1,6 @@
 // The ready-made WhatsApp message of a campaign (spec §5.2) and the price
 // and availability lines it is built from.
-import { formatPrice } from '@/lib/utils';
+import { formatMoney } from './currency';
 import type { Availability } from './timing';
 
 export const DEFAULT_SHARE_TEMPLATE =
@@ -19,20 +19,21 @@ export function renderShareMessage(template: string, vars: ShareMessageVars): st
   return template.replace(/\{([^{}\s]+)\}/g, (match, key: string) => values[key] ?? match);
 }
 
-/** 7500 → "7 500 FCFA". */
-export function formatXof(amount: number): string {
-  return formatPrice(amount, 'FCFA');
-}
-
-/** "7 500 FCFA (gros : 6 000 FCFA dès 12)", or the unit price alone. */
-export function formatPriceLine(p: {
-  unitPrice: number;
-  wholesalePrice: number | null;
-  wholesaleMinQty: number | null;
-}): string {
-  const unit = formatXof(p.unitPrice);
+/**
+ * "7 500 FCFA (gros : 6 000 FCFA dès 12)", or the unit price alone, in the
+ * shop's currency (lot 7b: "65 000 FG" in Guinea).
+ */
+export function formatPriceLine(
+  p: {
+    unitPrice: number;
+    wholesalePrice: number | null;
+    wholesaleMinQty: number | null;
+  },
+  currency: string,
+): string {
+  const unit = formatMoney(p.unitPrice, currency);
   if (p.wholesalePrice === null || p.wholesaleMinQty === null) return unit;
-  return `${unit} (gros : ${formatXof(p.wholesalePrice)} dès ${p.wholesaleMinQty})`;
+  return `${unit} (gros : ${formatMoney(p.wholesalePrice, currency)} dès ${p.wholesaleMinQty})`;
 }
 
 const DAY_MS = 86_400_000;

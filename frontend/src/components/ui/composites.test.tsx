@@ -113,18 +113,32 @@ describe('VerdictCard', () => {
 
 describe('MoneyCard', () => {
   it('highlights the avoided dead stock and lists the expected profit', () => {
-    const el = <MoneyCard avoidedDeadStock={850500} expectedProfit={444000} reference={400} />;
+    const el = (
+      <MoneyCard currency="XOF" avoidedDeadStock={850500} expectedProfit={444000} reference={400} />
+    );
     const t = text(el);
     expect(t).toContain('850 500');
     expect(t).toContain('de stock qui aurait dormi au dépôt si tu commandais 400.');
     expect(t).toContain('Bénéfice attendu');
     expect(t).toContain('~444 000 FCFA');
+    const gn = text(
+      <MoneyCard
+        currency="GNF"
+        avoidedDeadStock={850500}
+        expectedProfit={444000}
+        reference={400}
+      />,
+    );
+    expect(gn).toContain('850 500 FG');
+    expect(gn).toContain('~444 000 FG');
+    expect(gn).not.toContain('FCFA');
     expect(html(el)).toContain('highlight');
   });
 
   it('invites to add a cost price when there is none', () => {
     const el = (
       <MoneyCard
+        currency="XOF"
         avoidedDeadStock={null}
         expectedProfit={null}
         addCostPriceHref="/app/produits/p1"

@@ -112,6 +112,7 @@ export default function ProductPage() {
         initial={productToForm(product)}
         submitLabel="Enregistrer le produit"
         units={units}
+        currency={shop.currency}
         error={error}
         onSubmit={save}
       />

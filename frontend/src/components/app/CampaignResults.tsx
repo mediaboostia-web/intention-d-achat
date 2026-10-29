@@ -135,11 +135,14 @@ export function CampaignResults({
   campaignId,
   productId,
   unitLabel,
+  currency,
 }: {
   body: CampaignStatsBody;
   campaignId: string;
   productId: string;
   unitLabel: string;
+  /** The shop's currency (lot 7b). */
+  currency: string;
 }) {
   const { stats, access, offerOpen } = body;
   const base = `/app/campagnes/${campaignId}`;
@@ -250,6 +253,7 @@ export function CampaignResults({
       avoidedDeadStock={result.money.avoidedDeadStock}
       expectedProfit={result.money.expectedProfit}
       addCostPriceHref={`/app/produits/${productId}`}
+      currency={currency}
       {...(stats.reference === null || inStock ? {} : { reference: stats.reference })}
     />
   );
@@ -417,11 +421,13 @@ export function CampaignResultsTab({
   campaignId,
   productId,
   unitLabel,
+  currency,
 }: {
   shopId: string;
   campaignId: string;
   productId: string;
   unitLabel: string;
+  currency: string;
 }) {
   const [body, setBody] = useState<CampaignStatsBody | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -470,6 +476,7 @@ export function CampaignResultsTab({
       campaignId={campaignId}
       productId={productId}
       unitLabel={unitLabel}
+      currency={currency}
     />
   );
 }

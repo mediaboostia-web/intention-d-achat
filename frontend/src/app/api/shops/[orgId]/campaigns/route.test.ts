@@ -475,3 +475,22 @@ describe('/api/shops/[orgId]/campaigns/[campaignId]/links', () => {
     });
   });
 });
+
+describe('campaign share message in the shop currency (lot 7b)', () => {
+  it('a Guinean shop reads its share message in FG, on creation and on reading', async () => {
+    prismaMock.organization.findUnique.mockResolvedValue({ currency: 'GNF' } as never);
+    const created = await create(valid);
+    expect(created.status).toBe(201);
+    const made = (await created.json()) as { campaign: { shareMessage: string } };
+    expect(made.campaign.shareMessage).toContain('7 500 FG');
+
+    prismaMock.campaign.findFirst.mockResolvedValue(campaign() as never);
+    const res = await GET_ONE(apiRequest('/api/shops/org_1/campaigns/camp_1'), one);
+    const read = (await res.json()) as { campaign: { shareMessage: string } };
+    expect(read.campaign.shareMessage).toContain('7 500 FG');
+    expect(read.campaign.shareMessage).not.toContain('FCFA');
+    expect(prismaMock.organization.findUnique.mock.calls.at(-1)![0]).toMatchObject({
+      where: { id: 'org_1' },
+    });
+  });
+});

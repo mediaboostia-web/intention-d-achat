@@ -123,7 +123,7 @@ describe('campaign serializers', () => {
 
   it('toCampaign renders the share message with the default link', () => {
     vi.stubEnv('APP_URL', 'https://tamani.app');
-    const c = toCampaign(campaign, now);
+    const c = toCampaign(campaign, now, 'XOF');
     expect(c.defaultLink).toMatchObject({ code: 'k3P9xQa', url: 'https://tamani.app/c/k3P9xQa' });
     expect(c.shareMessage).toBe(
       '🔔 Nouveau : *Marmites inox 5 L* à 7 500 FCFA (gros : 6 000 FCFA dès 12). Arrivage dans 10 jours. 👉 https://tamani.app/c/k3P9xQa',
@@ -131,9 +131,16 @@ describe('campaign serializers', () => {
     expect(c.product).not.toHaveProperty('costPrice');
   });
 
+  it('toCampaign writes a Guinean shop price in FG, never FCFA (lot 7b)', () => {
+    vi.stubEnv('APP_URL', 'https://tamani.app');
+    const c = toCampaign(campaign, now, 'GNF');
+    expect(c.shareMessage).toContain('7 500 FG (gros : 6 000 FG dès 12)');
+    expect(c.shareMessage).not.toContain('FCFA');
+  });
+
   it('toCampaign reports the effective status', () => {
     const expired = { ...campaign, endsAt: new Date('2026-10-23T10:00:00Z') };
-    expect(toCampaign(expired, now).status).toBe('CLOSED');
+    expect(toCampaign(expired, now, 'XOF').status).toBe('CLOSED');
   });
 });
 

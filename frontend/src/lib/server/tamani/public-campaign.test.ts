@@ -129,6 +129,7 @@ describe('getPublicCampaign', () => {
         description: null,
         dialCode: '+221',
         country: 'SN',
+        currency: 'XOF',
       },
       interestedCount: 64,
       stockQuantity: 200,
@@ -211,5 +212,12 @@ describe('getPublicCampaign', () => {
     prismaMock.deliveryZone.findMany.mockClear();
     expect((await getPublicCampaign(prismaMock, 'Ab3dE7x', now))?.zones).toEqual([]);
     expect(prismaMock.deliveryZone.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe('getPublicCampaign currency (lot 7b)', () => {
+  it('sends the shop currency, so the popup writes FG for a Guinean shop', async () => {
+    given(fixture({ org: { country: 'GN', currency: 'GNF' } }));
+    expect((await getPublicCampaign(prismaMock, 'Ab3dE7x', now))?.shop.currency).toBe('GNF');
   });
 });

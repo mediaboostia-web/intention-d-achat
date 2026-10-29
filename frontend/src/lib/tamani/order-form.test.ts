@@ -52,10 +52,10 @@ describe('orderPricePreview', () => {
   });
 
   it('writes the calculation', () => {
-    expect(orderPriceText(orderPricePreview(riz, 'RESELLER', '12')!)).toBe(
+    expect(orderPriceText(orderPricePreview(riz, 'RESELLER', '12')!, 'XOF')).toBe(
       'Prix de gros : 6 000 FCFA × 12 = 72 000 FCFA',
     );
-    expect(orderPriceText(orderPricePreview(riz, 'CONSUMER', '3')!)).toBe(
+    expect(orderPriceText(orderPricePreview(riz, 'CONSUMER', '3')!, 'XOF')).toBe(
       "Prix à l'unité : 7 500 FCFA × 3 = 22 500 FCFA",
     );
   });
@@ -157,5 +157,13 @@ describe('submitOnce', () => {
       ),
     ).rejects.toThrow('network');
     expect(again).toEqual([true, false]);
+  });
+});
+
+describe('orderPriceText in the shop currency (lot 7b)', () => {
+  it('writes the unit price and the total in FG', () => {
+    expect(orderPriceText(orderPricePreview(riz, 'CONSUMER', '2')!, 'GNF')).toBe(
+      "Prix à l'unité : 7 500 FG × 2 = 15 000 FG",
+    );
   });
 });

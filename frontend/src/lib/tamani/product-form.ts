@@ -1,6 +1,7 @@
 // The product form keeps what the wholesaler typed (strings); this turns
 // it into the API body, or into one message per field to fix.
 import { formatPrice } from '@/lib/utils';
+import { currencyLabel } from './currency';
 import { parseCount, parseAmount } from './fcfa-input';
 import { productRuleViolation } from './product-rules';
 
@@ -70,16 +71,18 @@ export function productToForm(p: ShopProduct): ProductFormValues {
   };
 }
 
-const PRICE_HINT = 'Écris le prix en FCFA, sans virgule, par exemple 7 500.';
+const priceHint = (currency: string) =>
+  `Écris le prix en ${currencyLabel(currency)}, sans virgule, par exemple 7 500.`;
 
 export function productFormToBody(
   v: ProductFormValues,
+  currency: string,
 ): { ok: true; body: ProductBody } | { ok: false; errors: ProductFormErrors } {
   const errors: ProductFormErrors = {};
   const optionalPrice = (raw: string, field: keyof ProductFormValues) => {
     if (raw.trim() === '') return null;
     const n = parseAmount(raw);
-    if (n === null) errors[field] = PRICE_HINT;
+    if (n === null) errors[field] = priceHint(currency);
     return n;
   };
 
@@ -88,7 +91,7 @@ export function productFormToBody(
   else if (name.length > 80) errors.name = '80 caractères au plus.';
 
   const unitPrice = parseAmount(v.unitPrice);
-  if (unitPrice === null) errors.unitPrice = PRICE_HINT;
+  if (unitPrice === null) errors.unitPrice = priceHint(currency);
   const wholesalePrice = optionalPrice(v.wholesalePrice, 'wholesalePrice');
   const costPrice = optionalPrice(v.costPrice, 'costPrice');
 

@@ -24,6 +24,7 @@ import {
 } from '@/lib/tamani/orders-view';
 import { frenchSpacing } from '@/lib/tamani/typography';
 import { waChatLink } from '@/lib/tamani/wa';
+import { currencyLabel, formatMoney } from '@/lib/tamani/currency';
 import { formatPrice } from '@/lib/utils';
 import { clientName } from './ClientList';
 import { OrderStatusBadge, PaidMark } from './OrderList';
@@ -40,10 +41,12 @@ const NOTE_MAX = 500;
 /** Price and quantity, before confirmation only (the server refuses them after). */
 function PriceEditor({
   order,
+  currency,
   busy,
   onSave,
 }: {
   order: OrderRow;
+  currency: string;
   busy: boolean;
   onSave: (patch: OrderPatch) => Promise<void>;
 }) {
@@ -61,7 +64,9 @@ function PriceEditor({
     e.preventDefault();
     if (unitPrice === null || qty === null) {
       setErrors({
-        ...(unitPrice === null && { price: 'Écris un prix en FCFA, sans virgule.' }),
+        ...(unitPrice === null && {
+          price: `Écris un prix en ${currencyLabel(currency)}, sans virgule.`,
+        }),
         ...(qty === null && { quantity: 'Écris une quantité entre 1 et 100 000.' }),
       });
       return;
@@ -89,7 +94,7 @@ function PriceEditor({
       <div className="grid gap-4 sm:grid-cols-2">
         <Input
           id="order-unit-price"
-          label="Prix à l'unité (FCFA)"
+          label={`Prix à l'unité (${currencyLabel(currency)})`}
           inputMode="numeric"
           value={price}
           error={errors.price}
@@ -107,7 +112,7 @@ function PriceEditor({
       {changed && unitPrice !== null && qty !== null && (
         <p className="font-hand text-lg text-ink-muted">
           {frenchSpacing(
-            `Nouveau total : ${qty} × ${formatPrice(unitPrice, 'FCFA')} = ${formatPrice(unitPrice * qty, 'FCFA')}`,
+            `Nouveau total : ${qty} × ${formatMoney(unitPrice, currency)} = ${formatMoney(unitPrice * qty, currency)}`,
           )}
         </p>
       )}
@@ -156,6 +161,7 @@ function NoteEditor({
 export function OrderDetailView({
   order,
   shopName,
+  currency,
   now,
   busy,
   error,
@@ -168,6 +174,8 @@ export function OrderDetailView({
 }: {
   order: OrderRow;
   shopName: string;
+  /** The shop's currency (lot 7b). */
+  currency: string;
   now: Date;
   busy: boolean;
   error: string | null;
@@ -197,6 +205,7 @@ export function OrderDetailView({
           totalAmount: order.totalAmount,
           fulfillment: order.fulfillment,
           zoneName: order.zoneName,
+          currency,
         })
       : undefined;
 
@@ -231,11 +240,11 @@ export function OrderDetailView({
 
       <div className="mt-6">
         <p className="font-sign text-4xl leading-tight text-ink">
-          {formatPrice(order.totalAmount, 'FCFA')}
+          {formatMoney(order.totalAmount, currency)}
         </p>
         <p className="mt-1 text-ink-soft">{productQuantity(order)}</p>
         <p className="font-hand text-lg text-ink-muted">
-          {order.quantity} × {formatPrice(order.unitPrice, 'FCFA')}
+          {order.quantity} × {formatMoney(order.unitPrice, currency)}
         </p>
       </div>
 
@@ -341,6 +350,7 @@ export function OrderDetailView({
         <PriceEditor
           key={`${order.unitPrice}:${order.quantity}`}
           order={order}
+          currency={currency}
           busy={busy}
           onSave={onSave}
         />
@@ -413,6 +423,7 @@ export function OrderScreen({ id }: { id: string }) {
     <OrderDetailView
       order={order}
       shopName={shop.name}
+      currency={shop.currency}
       now={new Date()}
       busy={busy}
       error={error}

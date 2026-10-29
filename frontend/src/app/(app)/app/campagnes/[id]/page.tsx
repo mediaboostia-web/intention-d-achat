@@ -125,8 +125,8 @@ function CampaignDetail() {
         title={campaign.title}
         note={
           campaign.title === campaign.product.name
-            ? formatPriceLine(campaign.product)
-            : `${campaign.product.name}, ${formatPriceLine(campaign.product)}`
+            ? formatPriceLine(campaign.product, shop.currency)
+            : `${campaign.product.name}, ${formatPriceLine(campaign.product, shop.currency)}`
         }
         action={<CampaignStatusBadge status={campaign.status} />}
       />
@@ -157,6 +157,7 @@ function CampaignDetail() {
             campaignId={campaign.id}
             productId={campaign.productId}
             unitLabel={campaign.product.unitLabel}
+            currency={shop.currency}
           />
         ) : tab === 'interested' ? (
           <InterestedTab
@@ -179,9 +180,16 @@ function CampaignDetail() {
             shopId={shop.id}
             campaignId={campaign.id}
             unitLabel={campaign.product.unitLabel}
+            currency={shop.currency}
           />
         ) : tab === 'edit' ? (
-          <CampaignEditForm key={campaign.id} campaign={campaign} error={saveError} onSave={save} />
+          <CampaignEditForm
+            key={campaign.id}
+            campaign={campaign}
+            currency={shop.currency}
+            error={saveError}
+            onSave={save}
+          />
         ) : campaign.status === 'ACTIVE' && campaign.defaultLink ? (
           <div className="flex flex-col gap-10">
             <ShareCard message={campaign.shareMessage} url={campaign.defaultLink.url} />

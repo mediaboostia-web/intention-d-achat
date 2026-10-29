@@ -24,6 +24,7 @@ import { jsonOk, readJson, validationFailed } from '@/lib/server/tamani/http';
 import { CampaignCreate, SEARCH_MAX } from '@/lib/server/tamani/inputs';
 import { shopHandler } from '@/lib/server/tamani/route';
 import { toCampaign } from '@/lib/server/tamani/serializers';
+import { shopCurrency } from '@/lib/server/tamani/shop';
 import { withUniqueCode } from '@/lib/server/tamani/short-code';
 
 const STATUSES: readonly CampaignStatus[] = ['ACTIVE', 'DRAFT', 'CLOSED', 'ARRIVED'];
@@ -60,7 +61,7 @@ export const GET = shopHandler('MEMBER', async (req, { params }) => {
         ],
       }
     : {};
-  const [rows, counts] = await Promise.all([
+  const [rows, counts, currency] = await Promise.all([
     prisma.campaign.findMany({
       where: {
         organizationId: params.orgId,
@@ -76,10 +77,11 @@ export const GET = shopHandler('MEMBER', async (req, { params }) => {
       include: { product: true, links: { where: { isDefault: true } } },
     }),
     cursor ? null : countByStatus(params.orgId, now),
+    shopCurrency(prisma, params.orgId),
   ]);
   const page = buildPage(rows, limit);
   return jsonOk({
-    items: page.items.map((c) => toCampaign(c, now)),
+    items: page.items.map((c) => toCampaign(c, now, currency)),
     nextCursor: page.nextCursor,
     counts,
   });
@@ -123,7 +125,10 @@ export const POST = shopHandler('MEMBER', async (req, { params }) => {
         });
       }),
     );
-    return jsonOk({ campaign: toCampaign(campaign, now) }, 201);
+    return jsonOk(
+      { campaign: toCampaign(campaign, now, await shopCurrency(prisma, params.orgId)) },
+      201,
+    );
   } catch (err) {
     if (err instanceof CampaignLimitReached) return tamaniError('CAMPAIGN_LIMIT_REACHED', 409);
     throw err;

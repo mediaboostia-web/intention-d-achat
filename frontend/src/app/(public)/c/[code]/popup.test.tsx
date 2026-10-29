@@ -38,6 +38,7 @@ const campaign: PublicCampaign = {
     description: null,
     dialCode: '+221',
     country: 'SN',
+    currency: 'XOF',
   },
   poweredByBadge: true,
 };
@@ -153,6 +154,8 @@ describe('PopupView', () => {
     const t = text(<PopupView campaign={campaign} state={start} />);
     expect(t).toContain('Marmites inox 5 L');
     expect(t).toContain('7 500 FCFA pour 1 pièce');
+    const gn = { ...campaign, shop: { ...campaign.shop, currency: 'GNF' } };
+    expect(text(<PopupView campaign={gn} state={start} />)).toContain('7 500 FG pour 1 pièce');
     expect(t).toContain('Arrivage dans 10 jours');
     expect(t).toContain("Ça t'intéresse ?");
     expect(html(<PopupView campaign={campaign} state={start} />)).toContain('aria-pressed');
@@ -218,6 +221,10 @@ describe('PopupView', () => {
     });
     const t = text(<PopupView campaign={campaign} state={reseller} />);
     expect(t).toContain('Prix de gros : 6 000 FCFA dès 12');
+    const gn = { ...campaign, shop: { ...campaign.shop, currency: 'GNF' } };
+    const gnText = text(<PopupView campaign={gn} state={reseller} />);
+    expect(gnText).toContain('Prix de gros : 6 000 FG dès 12');
+    expect(gnText).not.toContain('FCFA');
     for (const n of ['6', '12', '24', '50']) expect(t).toContain(n);
   });
 

@@ -1,7 +1,7 @@
 // An order typed by hand on /app/commandes/nouvelle (lot 7, spec §5.5.1):
 // the values as typed, the body POST /orders takes, and the price the
 // server will freeze, previewed with the same rule (orderUnitPrice).
-import { formatPrice } from '@/lib/utils';
+import { formatMoney } from './currency';
 import { parseCount } from './fcfa-input';
 import type { BuyerType } from './labels';
 import { orderUnitPrice, type Fulfillment } from './orders-view';
@@ -90,10 +90,10 @@ export function orderPricePreview(
   };
 }
 
-/** "Prix de gros : 6 000 FCFA × 12 = 72 000 FCFA". */
-export function orderPriceText(p: OrderPricePreview): string {
+/** "Prix de gros : 6 000 FCFA × 12 = 72 000 FCFA", in the shop's currency. */
+export function orderPriceText(p: OrderPricePreview, currency: string): string {
   const kind = p.wholesale ? 'Prix de gros' : "Prix à l'unité";
-  return `${kind} : ${formatPrice(p.unitPrice, 'FCFA')} × ${p.quantity} = ${formatPrice(p.total, 'FCFA')}`;
+  return `${kind} : ${formatMoney(p.unitPrice, currency)} × ${p.quantity} = ${formatMoney(p.total, currency)}`;
 }
 
 /** The body of POST /orders, or what to fix first. The number itself is checked by the server. */

@@ -39,7 +39,7 @@ import {
 } from '@/lib/tamani/popup-machine';
 import { leavePage } from '@/lib/tamani/leave-page';
 import { poweredByHref, stockLine, thanksCopy } from '@/lib/tamani/popup-copy';
-import { formatXof } from '@/lib/tamani/share-message';
+import { formatMoney } from '@/lib/tamani/currency';
 import { TIMING_LABELS } from '@/lib/tamani/timing';
 import { phoneCountryChoices } from '@/lib/tamani/phone-countries';
 import { pluralizeUnit } from '@/lib/tamani/verdict-display';
@@ -105,7 +105,7 @@ function ProductHeader({ c, count }: { c: PublicCampaign; count: number | null }
     <>
       <p className="text-lg leading-tight font-bold">{product.name}</p>
       <p className="mt-0.5 font-sign text-2xl leading-tight">
-        {formatXof(product.unitPrice)}{' '}
+        {formatMoney(product.unitPrice, c.shop.currency)}{' '}
         <span className="font-sans text-sm text-ink-muted">pour 1 {product.unitLabel}</span>
       </p>
       <p className="mt-3 flex items-center gap-2 font-bold text-ink">
@@ -143,7 +143,8 @@ function QuantityStep({ c, answers, onAction }: StepProps) {
         product.wholesalePrice !== null &&
         product.wholesaleMinQty !== null && (
           <p className="-mt-1 mb-3 font-bold text-ink-soft">
-            Prix de gros : {formatXof(product.wholesalePrice)} dès {product.wholesaleMinQty}
+            Prix de gros : {formatMoney(product.wholesalePrice, c.shop.currency)} dès{' '}
+            {product.wholesaleMinQty}
           </p>
         )}
       {product.options.length > 0 && (

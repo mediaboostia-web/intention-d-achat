@@ -1,7 +1,7 @@
 // What the home page shows that is not shared with other screens: its
 // illustrations, the platforms of the marquee, the networks of the orbit and
 // the running example.
-import { formatXof } from '@/lib/tamani/share-message';
+import { formatMoney } from '@/lib/tamani/currency';
 import type { PlatformSlug } from './platform-paths';
 
 /** The porteur's ChatGPT illustrations, as public/accueil/<name>.webp (pnpm landing:images). */
@@ -136,7 +136,7 @@ export const EXAMPLE = {
   ordered: 300,
   unsold: UNSOLD,
   advised: 120,
-  cartonPriceText: unbroken(formatXof(CARTON_PRICE)),
+  cartonPriceText: unbroken(formatMoney(CARTON_PRICE, 'XOF')),
   /** "1 900 000 FCFA" */
-  blocked: unbroken(formatXof(UNSOLD * CARTON_PRICE)),
+  blocked: unbroken(formatMoney(UNSOLD * CARTON_PRICE, 'XOF')),
 } as const;

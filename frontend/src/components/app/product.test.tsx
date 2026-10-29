@@ -40,15 +40,26 @@ const tag = (out: string, id: string) =>
   '';
 
 const form = (props: Partial<Parameters<typeof ProductForm>[0]> = {}) => (
-  <ProductForm submitLabel="Ajouter le produit" onSubmit={async () => {}} {...props} />
+  <ProductForm
+    submitLabel="Ajouter le produit"
+    currency="XOF"
+    onSubmit={async () => {}}
+    {...props}
+  />
 );
 
 describe('ProductCard', () => {
   it('ProductCard shows the price line and an Archivé badge', () => {
-    const card = <ProductCard product={product} layout="list" href="/app/produits/p1" />;
+    const card = (
+      <ProductCard currency="XOF" product={product} layout="list" href="/app/produits/p1" />
+    );
     const t = text(card);
     expect(t).toContain('Marmites inox 5 L');
     expect(t).toContain('7 500 FCFA (gros : 6 000 FCFA dès 12)');
+    const gn = text(
+      <ProductCard currency="GNF" product={product} layout="list" href="/app/produits/p1" />,
+    );
+    expect(gn).toContain('7 500 FG (gros : 6 000 FG dès 12)');
     expect(t).toContain('pièce');
     expect(t).toContain('Archivé');
     const out = html(card);
@@ -56,9 +67,9 @@ describe('ProductCard', () => {
       'src="https://res.cloudinary.com/demo/image/upload/c_fill,g_auto,w_128,h_128,f_auto,q_auto/v1/tamani/m1.jpg"',
     );
     expect(out).toContain('href="/app/produits/p1"');
-    expect(text(<ProductCard product={{ ...product, archivedAt: null }} />)).not.toContain(
-      'Archivé',
-    );
+    expect(
+      text(<ProductCard currency="XOF" product={{ ...product, archivedAt: null }} />),
+    ).not.toContain('Archivé');
   });
 });
 
@@ -149,6 +160,22 @@ describe('ProductForm', () => {
       }),
     );
     expect(t).toContain('Sur WhatsApp : 7 500 FCFA (gros : 6 000 FCFA dès 12)');
+    const gn = text(
+      form({
+        currency: 'GNF',
+        initial: {
+          ...emptyProductForm,
+          unitPrice: '7.500',
+          wholesalePrice: '6000',
+          wholesaleMinQty: '12',
+        },
+      }),
+    );
+    expect(gn).toContain('Sur WhatsApp : 7 500 FG (gros : 6 000 FG dès 12)');
+    expect(gn).toContain("Prix à l'unité (FG)");
+    expect(gn).toContain('Prix de gros (FG)');
+    expect(gn).toContain("Prix d'achat (FG)");
+    expect(gn).not.toContain('FCFA');
   });
 });
 
@@ -228,8 +255,13 @@ describe('product pages', () => {
       <ProductsPage key="list" />,
       <NewProductPage key="new" />,
       <ProductPage key="edit" />,
-      <ProductCard key="card" product={product} />,
-      <ProductForm key="form" submitLabel="Ajouter le produit" onSubmit={async () => {}} />,
+      <ProductCard currency="XOF" key="card" product={product} />,
+      <ProductForm
+        key="form"
+        submitLabel="Ajouter le produit"
+        currency="XOF"
+        onSubmit={async () => {}}
+      />,
     ];
     for (const page of pages) {
       expect(html(<ShopTestProvider>{page}</ShopTestProvider>)).not.toMatch(palette);

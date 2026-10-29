@@ -24,7 +24,7 @@ describe('thumbnails', () => {
       photos: [UPLOADED],
       archivedAt: null,
     };
-    expect(src(html(<ProductCard product={product} layout="list" />))).toBe(SMALL);
+    expect(src(html(<ProductCard currency="XOF" product={product} layout="list" />))).toBe(SMALL);
   });
 
   it('a campaign line asks for a small square of its photo', () => {

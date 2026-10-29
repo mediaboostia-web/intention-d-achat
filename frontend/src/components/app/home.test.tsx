@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { html, text } from '@/components/ui/test-html';
 import type { ShopSummary } from '@/lib/tamani/home-view';
 import { mockNextNavigation } from '@/test-utils/next-navigation';
-import { ShopTestProvider } from '@/test-utils/shop-context';
+import { ShopTestProvider, TEST_SHOP } from '@/test-utils/shop-context';
 
 vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigation')).navigation);
 // A phone that could receive notifications: the home page still asks nothing (§7).
@@ -227,6 +227,13 @@ describe('HomeView', () => {
     expect(t).toContain('Argent protégé ce mois-ci');
     expect(t).toContain('150 000 FCFA');
     expect(out).toMatch(/highlight[^>]*>150 000 FCFA/);
+    const gn = text(
+      <ShopTestProvider shop={{ ...TEST_SHOP, currency: 'GNF' }}>
+        <HomeView summary={{ ...SUMMARY, moneyProtectedThisMonth: 150_000 }} />
+      </ShopTestProvider>,
+    );
+    expect(gn).toContain('150 000 FG');
+    expect(gn).not.toContain('FCFA');
     expect(render(SUMMARY).t).not.toContain('Argent protégé');
   });
 

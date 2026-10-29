@@ -28,6 +28,15 @@ export async function shopHasProducts(db: Db, organizationId: string): Promise<b
   return (await db.product.findFirst({ where: { organizationId }, select: { id: true } })) !== null;
 }
 
+/** The shop's currency (lot 7b), XOF when the shop cannot be read. */
+export async function shopCurrency(db: Db, organizationId: string): Promise<string> {
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { currency: true },
+  });
+  return org?.currency ?? 'XOF';
+}
+
 /** Taken by a country change and by every product creation of the shop. */
 export const shopCountryLock = (organizationId: string) => `shop-country:${organizationId}`;
 

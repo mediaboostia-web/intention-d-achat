@@ -24,15 +24,18 @@ export function ProductCard({
   product,
   href,
   layout = 'card',
+  currency,
   className,
 }: {
   product: ProductCardData;
   href?: string | undefined;
   layout?: ListLayout;
+  /** The shop's currency (lot 7b). */
+  currency: string;
   className?: string | undefined;
 }) {
   const first = product.photos[0];
-  const price = formatPriceLine(product);
+  const price = formatPriceLine(product, currency);
   const archived = product.archivedAt ? <Badge tone="neutral">Archivé</Badge> : null;
   if (layout === 'list') {
     return (

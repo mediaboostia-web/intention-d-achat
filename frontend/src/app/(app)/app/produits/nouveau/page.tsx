@@ -62,6 +62,7 @@ function NewProduct() {
         submitLabel="Ajouter le produit"
         submittingLabel="Ajout…"
         units={units}
+        currency={shop.currency}
         error={error}
         onSubmit={create}
       />

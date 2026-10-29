@@ -52,6 +52,7 @@ export function OrderForm({
   campaigns,
   zones,
   country,
+  currency,
   initial,
   error,
   onSubmit,
@@ -62,6 +63,8 @@ export function OrderForm({
   zones: ReadonlyArray<{ id: string; name: string }>;
   /** The shop's country: its dial code is shown before the number. */
   country: string;
+  /** The shop's currency (lot 7b). */
+  currency: string;
   initial?: Partial<OrderFormValues>;
   error: string | null;
   /** True once the order is made (the page then moves on), false on a failure. */
@@ -185,7 +188,7 @@ export function OrderForm({
         {preview && (
           <div aria-live="polite">
             <p className="font-hand text-xl text-primary">
-              {frenchSpacing(orderPriceText(preview))}
+              {frenchSpacing(orderPriceText(preview, currency))}
             </p>
             {preview.wholesaleFrom !== null && product && (
               <p className="text-sm text-ink-soft">

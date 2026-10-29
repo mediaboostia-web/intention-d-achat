@@ -10,7 +10,7 @@ const campaign = {
     unitPrice: 7500,
     photos: ['https://res.cloudinary.com/demo/image/upload/v1/m.jpg'],
   },
-  shop: { name: 'Diallo Import' },
+  shop: { name: 'Diallo Import', currency: 'XOF' },
 } as unknown as PublicCampaign;
 
 describe('popupMetadata', () => {
@@ -53,5 +53,12 @@ describe('popupMetadata', () => {
     expect(m.title).toBe('Lien introuvable · Tamani');
     expect(m.robots).toMatchObject({ index: false, follow: false });
     expect(m.openGraph).toBeUndefined();
+  });
+});
+
+describe('popupMetadata in the shop currency (lot 7b)', () => {
+  it('previews a Guinean price in FG', () => {
+    const gn = { ...campaign, shop: { ...campaign.shop, currency: 'GNF' } };
+    expect(popupMetadata(gn, 'https://tamani.app').title).toBe('Marmites inox 5 L · 7 500 FG');
   });
 });

@@ -3,9 +3,9 @@ import {
   DEFAULT_SHARE_TEMPLATE,
   formatAvailability,
   formatPriceLine,
-  formatXof,
   renderShareMessage,
 } from './share-message';
+import { formatMoney } from './currency';
 
 const now = new Date('2026-10-24T10:00:00Z');
 const DAY = 86_400_000;
@@ -16,22 +16,22 @@ const vars = {
   lien: 'https://tamani.app/c/k3P9xQa',
 };
 
-describe('formatXof / formatPriceLine', () => {
+describe('formatPriceLine', () => {
   it('groups thousands with a space', () => {
-    expect(formatXof(7500)).toBe('7 500 FCFA');
-    expect(formatXof(250)).toBe('250 FCFA');
+    expect(formatMoney(7500, 'XOF')).toBe('7 500 FCFA');
+    expect(formatMoney(250, 'XOF')).toBe('250 FCFA');
   });
 
   it('adds the wholesale price and its minimum', () => {
-    expect(formatPriceLine({ unitPrice: 7500, wholesalePrice: 6000, wholesaleMinQty: 12 })).toBe(
-      '7 500 FCFA (gros : 6 000 FCFA dès 12)',
-    );
+    expect(
+      formatPriceLine({ unitPrice: 7500, wholesalePrice: 6000, wholesaleMinQty: 12 }, 'XOF'),
+    ).toBe('7 500 FCFA (gros : 6 000 FCFA dès 12)');
   });
 
   it('shows the unit price alone without a wholesale price', () => {
-    expect(formatPriceLine({ unitPrice: 7500, wholesalePrice: null, wholesaleMinQty: null })).toBe(
-      '7 500 FCFA',
-    );
+    expect(
+      formatPriceLine({ unitPrice: 7500, wholesalePrice: null, wholesaleMinQty: null }, 'XOF'),
+    ).toBe('7 500 FCFA');
   });
 });
 
@@ -76,5 +76,16 @@ describe('renderShareMessage', () => {
     expect(renderShareMessage('{disponibilité} / {disponibilite}', vars)).toBe(
       'Arrivage dans 10 jours / Arrivage dans 10 jours',
     );
+  });
+});
+
+describe('formatPriceLine in the shop currency (lot 7b)', () => {
+  it('writes the local name of the currency', () => {
+    expect(
+      formatPriceLine({ unitPrice: 65000, wholesalePrice: 60000, wholesaleMinQty: 10 }, 'GNF'),
+    ).toBe('65 000 FG (gros : 60 000 FG dès 10)');
+    expect(
+      formatPriceLine({ unitPrice: 18000, wholesalePrice: null, wholesaleMinQty: null }, 'CDF'),
+    ).toBe('18 000 FC');
   });
 });
