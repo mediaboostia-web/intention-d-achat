@@ -97,15 +97,19 @@ describe('Textarea and Select', () => {
     ).toContain('Mali');
   });
 
-  it('a disabled Select looks fixed: muted, no arrow (lot 7b, the locked country)', () => {
+  it('a disabled Select looks fixed: light frame, a lock, no arrow (lot 7b, the locked country)', () => {
+    const ARROW = 'm6 9 6 6 6-6';
     const open = html(<Select id="p" label="Pays" options={[{ value: 'GN', label: 'Guinée' }]} />);
     const fixed = html(
       <Select id="p" label="Pays" disabled options={[{ value: 'GN', label: 'Guinée' }]} />,
     );
-    expect(open).toContain('<svg');
-    expect(fixed).not.toContain('<svg');
+    expect(open).toContain(ARROW);
+    expect(open).toMatch(/<select[^>]*class="[^"]*frame/);
+    expect(fixed).not.toContain(ARROW);
+    expect(fixed).toContain('<svg');
     expect(fixed).toMatch(/<select[^>]*disabled/);
-    expect(fixed).toMatch(/<select[^>]*class="[^"]*bg-bg[^"]*text-ink-soft/);
+    expect(fixed).not.toMatch(/<select[^>]*class="[^"]*\bframe\b/);
+    expect(fixed).toMatch(/<select[^>]*class="[^"]*border-ink-muted[^"]*bg-grid[^"]*text-ink-soft/);
     expect(fixed).toMatch(/<select[^>]*class="[^"]*cursor-not-allowed/);
   });
 });
