@@ -254,25 +254,39 @@ export async function reconcileOrder(
       if (outcome === 'ACTIVATED') await notifyActivation(db, order.id, now);
       return outcome;
     }
-    // A failed attempt: the hosted page may still take another network.
-    if (payment.status === 'FAILED') return 'FAILED';
+    if (payment.status === 'FAILED') {
+      // A failed attempt on an open session: the hosted page may still take
+      // another network. Once the session can no longer be paid, it is closed.
+      if (session.status === 'EXPIRED' || session.status === 'CANCELLED')
+        await closeOrder(db, order.id);
+      return 'FAILED';
+    }
     return 'PENDING';
   }
-  if (session.status === 'CANCELLED') {
-    // Never touches an activated purchase, nor one already closed.
-    await db.order.updateMany({
-      where: { id: order.id, status: 'PENDING', activatedAt: null },
-      data: { status: 'FAILED' },
-    });
+  if (session.status === 'CANCELLED' || session.status === 'EXPIRED') {
+    await closeOrder(db, order.id);
     return 'FAILED';
   }
   return 'PENDING';
 }
 
 /**
- * The unfinished SasPay purchases of the last 48 hours, oldest first, one
- * after the other. A 429 or an open breaker stops the batch until the next
- * run. Returns how many passes were activated.
+ * A purchase that can no longer be paid leaves the batch. Never touches an
+ * activated purchase, nor one already closed; the return page can still
+ * reconcile it.
+ */
+async function closeOrder(db: PrismaClient, orderId: string): Promise<void> {
+  await db.order.updateMany({
+    where: { id: orderId, status: { in: ['PENDING', 'EXPIRED'] }, activatedAt: null },
+    data: { status: 'FAILED' },
+  });
+}
+
+/**
+ * The unfinished SasPay purchases of the last 48 hours, newest first (a
+ * fresh payment never waits behind abandoned ones), one after the other. A
+ * 429, a refused key or an open breaker stops the batch until the next run.
+ * Returns how many passes were activated.
  */
 export async function reconcilePendingOrders(
   db: PrismaClient,
@@ -288,7 +302,7 @@ export async function reconcilePendingOrders(
       providerChargeId: { not: null },
       createdAt: { gte: new Date(now.getTime() - RECONCILE_WINDOW_MS) },
     },
-    orderBy: { createdAt: 'asc' },
+    orderBy: { createdAt: 'desc' },
     take: limit,
     select: { id: true },
   });
@@ -298,7 +312,7 @@ export async function reconcilePendingOrders(
       if ((await reconcileOrder(db, saspay, id, now)) === 'ACTIVATED') activated += 1;
     } catch (err) {
       if (err instanceof CircuitOpenError) break;
-      if (err instanceof SaspayError && err.status === 429) break;
+      if (err instanceof SaspayError && [401, 403, 429].includes(err.status)) break;
       log.warn('saspay reconciliation failed', {
         orderId: id,
         ...(err instanceof SaspayError ? { status: err.status, code: err.code } : {}),

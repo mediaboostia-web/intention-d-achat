@@ -3,8 +3,8 @@
 // /app/abonnement and its return page (lot 8). BillingView and ReturnView
 // are drawn from their props (the tests render them as static HTML);
 // BillingScreen and ReturnScreen load. « Choisir » opens SasPay's hosted
-// checkout; the return page asks where the purchase stands every 3 s for
-// 2 minutes, then offers « Vérifier encore ». Nothing here trusts the
+// checkout; the return page asks where the purchase stands for 2 minutes
+// (pollDelay: every 3 s, then every 10 s), then offers « Vérifier encore ». Nothing here trusts the
 // redirect: the server verifies the payment before the pass opens.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -16,6 +16,7 @@ import {
   BEST_VALUE_LABEL,
   PASS_FEATURES,
   offerCards,
+  pollDelay,
   purchaseStatusLabel,
   returnState,
   unlimitedCard,
@@ -29,7 +30,6 @@ import { PLANS, isPassId, isPaymentCountry, type PassId } from '@/lib/tamani/pla
 import type { OrgRole } from './shop-context';
 import { useShop } from './shop-context';
 
-const POLL_MS = 3_000;
 const POLL_FOR_MS = 120_000;
 
 export function BillingView({
@@ -348,8 +348,9 @@ export function ReturnScreen() {
         if (live) setFailedToLoad(true);
       }
       if (!live) return;
-      if (Date.now() - started >= POLL_FOR_MS) setTimedOut(true);
-      else timer = setTimeout(() => void tick(), POLL_MS);
+      const elapsed = Date.now() - started;
+      if (elapsed >= POLL_FOR_MS) setTimedOut(true);
+      else timer = setTimeout(() => void tick(), pollDelay(elapsed));
     };
     void tick();
     return () => {

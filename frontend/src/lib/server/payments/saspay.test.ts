@@ -227,6 +227,47 @@ describe('verifyPayment', () => {
   });
 });
 
+describe('verifyPayment, flat body', () => {
+  it('also reads the flat body of the OpenAPI example (no data envelope)', async () => {
+    const { saspay } = client(
+      reply(200, {
+        message: 'Payment transaction fetched successfully',
+        id: 'pay_9',
+        requested_amount: '3900.00',
+        fee_charge_mode: 'ADD_ON',
+        debited_amount: '4037.00',
+        net_amount: '3900.00',
+        currency: 'XOF',
+        status: 'SUCCESS',
+      }),
+    );
+    expect(await saspay.verifyPayment('pay_9')).toEqual({
+      status: 'SUCCESS',
+      requestedAmount: '3900.00',
+      currency: 'XOF',
+    });
+  });
+
+  it('an envelope without data is still an unexpected body', async () => {
+    const { saspay } = client(reply(200, { success: true, data: null, code: 200 }));
+    expect(await failure(saspay.verifyPayment('pay_9'))).toMatchObject({ code: 'unexpected_body' });
+  });
+});
+
+describe('circuit breaker and 429', () => {
+  it('a 429 never opens the breaker shared by every shop', async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(reply(429, {}));
+    const breaker = new CircuitBreaker({ name: 'saspay-429', failureThreshold: 1 });
+    const saspay = createSaspayClient({ apiKey: KEY, baseUrl: BASE, fetchImpl, breaker });
+    for (let i = 0; i < 3; i++) {
+      expect(await failure(saspay.verifyPayment('p'))).toMatchObject({
+        status: 429,
+        retryable: true,
+      });
+    }
+  });
+});
+
 describe('getSaspay', () => {
   it('getSaspay is null without SASPAY_API_KEY', () => {
     vi.stubEnv('SASPAY_API_KEY', '');

@@ -131,6 +131,26 @@ describe('saspayWebhookProvider.parsePayload and extractIds', () => {
     expect(c.externalId).not.toBe(a.externalId);
   });
 
+  it('keeps only what the signal needs: never the payer in WebhookLog', () => {
+    const body = {
+      event: 'transaction.success',
+      data: {
+        id: 'pay_9',
+        status: 'SUCCESS',
+        customer: { phone: '+22997000000', email: 'awa@example.com', first_name: 'Awa' },
+        recipient: { msisdn: '22997000000' },
+        amount: '3900.00',
+      },
+    };
+    const payload = saspayWebhookProvider.parsePayload(Buffer.from(JSON.stringify(body)));
+    expect(payload).toEqual({
+      event: 'transaction.success',
+      data: { id: 'pay_9', status: 'SUCCESS' },
+      digest: expect.stringMatching(/^[0-9a-f]{32}$/),
+    });
+    expect(JSON.stringify(payload)).not.toMatch(/2299700|awa|Awa/);
+  });
+
   it('refuses a body that is not an event', () => {
     expect(() => saspayWebhookProvider.parsePayload(Buffer.from('not json'))).toThrow();
     expect(() => saspayWebhookProvider.parsePayload(Buffer.from('{"data":{}}'))).toThrow();
@@ -138,6 +158,7 @@ describe('saspayWebhookProvider.parsePayload and extractIds', () => {
     expect(saspayWebhookProvider.parsePayload(Buffer.from('{"event":"webhook.test"}'))).toEqual({
       event: 'webhook.test',
       data: {},
+      digest: expect.stringMatching(/^[0-9a-f]{32}$/),
     });
   });
 });

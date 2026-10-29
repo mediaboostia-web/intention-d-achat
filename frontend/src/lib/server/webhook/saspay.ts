@@ -11,9 +11,15 @@ import type { ParsedIds, WebhookProvider } from './handler';
 
 const MAX_SKEW_S = 300;
 
+/**
+ * What WebhookLog keeps of an event: the route only needs a signal, so the
+ * payer's number, name and email never reach the database. `digest` (of the
+ * whole data) dedups an event that has no id.
+ */
 export interface SaspayWebhookPayload {
   event: string;
-  data: { id?: string; status?: string } & Record<string, unknown>;
+  data: { id?: string; status?: string };
+  digest: string;
 }
 
 const KINDS: Record<string, ParsedIds['kind']> = {
@@ -58,16 +64,20 @@ export const saspayWebhookProvider: WebhookProvider<SaspayWebhookPayload> = {
     }
     const { event, data } = parsed as { event?: unknown; data?: unknown };
     if (typeof event !== 'string' || event === '') throw new Error('event missing');
-    const fields = typeof data === 'object' && data !== null && !Array.isArray(data) ? data : {};
-    return { event, data: fields as SaspayWebhookPayload['data'] };
+    const fields = (
+      typeof data === 'object' && data !== null && !Array.isArray(data) ? data : {}
+    ) as Record<string, unknown>;
+    const kept: SaspayWebhookPayload['data'] = {};
+    if (typeof fields.id === 'string') kept.id = fields.id;
+    if (typeof fields.status === 'string') kept.status = fields.status;
+    const digest = createHash('sha256').update(JSON.stringify(fields)).digest('hex').slice(0, 32);
+    return { event, data: kept, digest };
   },
 
-  extractIds({ event, data }) {
+  extractIds({ event, data, digest }) {
     // Without an id, an identical redelivery still dedups on its content.
     const externalId =
-      typeof data.id === 'string' && data.id !== ''
-        ? data.id
-        : `${event}:${createHash('sha256').update(JSON.stringify(data)).digest('hex').slice(0, 32)}`;
+      typeof data.id === 'string' && data.id !== '' ? data.id : `${event}:${digest}`;
     return { externalId, eventType: event, kind: KINDS[event] ?? 'other' };
   },
 };

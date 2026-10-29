@@ -89,6 +89,22 @@ describe('applyPurchase', () => {
     });
   });
 
+  it('a shorter pass bought during a longer one never cuts the paid days', () => {
+    const now = d('2026-10-27');
+    expect(applyPurchase(month, 'WEEK', 100, now)).toEqual({
+      plan: 'WEEK',
+      periodStart: now,
+      currentPeriodEnd: d('2026-11-24'),
+      graceUntil: d('2026-11-27'),
+      responsesIncluded: 150 + 900,
+    });
+  });
+
+  it('a pass bought during the grace starts its own days', () => {
+    const now = d('2026-11-25');
+    expect(applyPurchase(month, 'WEEK', 1000, now).currentPeriodEnd).toEqual(d('2026-12-02'));
+  });
+
   it('a pass bought after no pass starts fresh', () => {
     const now = d('2026-12-01');
     expect(applyPurchase(month, 'MONTH', 200, now).responsesIncluded).toBe(1000);

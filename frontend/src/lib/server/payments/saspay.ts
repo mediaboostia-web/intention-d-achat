@@ -110,19 +110,33 @@ export function createSaspayClient(opts: {
         where,
       );
     }
-    const data = isObject(parsed) && isObject(parsed.data) ? parsed.data : null;
+    // Replies are enveloped { success, data, code }; the OpenAPI examples of
+    // verify and status are flat, so a body without the envelope is read as is.
+    const data = !isObject(parsed)
+      ? null
+      : isObject(parsed.data)
+        ? parsed.data
+        : 'data' in parsed || 'success' in parsed
+          ? null
+          : parsed;
     if (!data) throw new SaspayError(502, 'unexpected_body', true, where);
     return data;
   }
 
-  /** A 4xx is SasPay answering: it must not open the breaker, only failures to answer do. */
+  /**
+   * A 4xx is SasPay answering: it must not open the breaker, only failures to
+   * answer do. A 429 is retryable but passes too: one busy shop's polling must
+   * not block every shop's checkout.
+   */
   async function request(method: 'GET' | 'POST', path: string, body?: Json): Promise<Json> {
     if (!opts.breaker) return call(method, path, body);
     const out = await opts.breaker.execute(async () => {
       try {
         return { data: await call(method, path, body) };
       } catch (err) {
-        if (err instanceof SaspayError && !err.retryable) return { error: err };
+        if (err instanceof SaspayError && (!err.retryable || err.status === 429)) {
+          return { error: err };
+        }
         throw err;
       }
     });

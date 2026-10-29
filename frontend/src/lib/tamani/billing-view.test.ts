@@ -8,6 +8,7 @@ import {
   meterTone,
   offerCards,
   pendingLine,
+  pollDelay,
   purchaseStatusLabel,
   returnState,
 } from './billing-view';
@@ -98,6 +99,15 @@ describe('PASS_FEATURES', () => {
     expect(TRIAL_LIMITS).toBe(
       "L'essai ouvre tout, sauf les liens par groupe et l'export pour Excel.",
     );
+  });
+});
+
+describe('pollDelay', () => {
+  it('asks every 3 s for 30 s, then every 10 s (SasPay allows 300 calls a minute per account)', () => {
+    expect(pollDelay(0)).toBe(3_000);
+    expect(pollDelay(29_999)).toBe(3_000);
+    expect(pollDelay(30_000)).toBe(10_000);
+    expect(pollDelay(110_000)).toBe(10_000);
   });
 });
 

@@ -152,6 +152,15 @@ export function unlimitedCard() {
   };
 }
 
+/**
+ * The return page's wait before asking again: every 3 s while a payment
+ * usually lands, then every 10 s. Each ask is two SasPay calls, and the
+ * account has 300 a minute for every shop.
+ */
+export function pollDelay(elapsedMs: number): number {
+  return elapsedMs < 30_000 ? 3_000 : 10_000;
+}
+
 export type ReturnState = 'checking' | 'active' | 'failed';
 
 /**

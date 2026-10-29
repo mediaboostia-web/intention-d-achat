@@ -151,7 +151,38 @@ describe('reconcileOrder', () => {
     });
     expect(await reconcileOrder(db, saspay, 'ord_1', NOW)).toBe('FAILED');
     expect(prismaMock.order.updateMany).toHaveBeenCalledWith({
-      where: { id: 'ord_1', status: 'PENDING', activatedAt: null },
+      where: { id: 'ord_1', status: { in: ['PENDING', 'EXPIRED'] }, activatedAt: null },
+      data: { status: 'FAILED' },
+    });
+  });
+
+  it('a session expired unpaid closes the purchase, so it leaves the batch', async () => {
+    saspay.checkoutSessionStatus.mockResolvedValue({
+      status: 'EXPIRED',
+      transactionId: null,
+      transactionStatus: null,
+    });
+    expect(await reconcileOrder(db, saspay, 'ord_1', NOW)).toBe('FAILED');
+    expect(prismaMock.order.updateMany).toHaveBeenCalledWith({
+      where: { id: 'ord_1', status: { in: ['PENDING', 'EXPIRED'] }, activatedAt: null },
+      data: { status: 'FAILED' },
+    });
+  });
+
+  it('a failed payment on a session that can no longer be paid closes the purchase', async () => {
+    saspay.checkoutSessionStatus.mockResolvedValue({
+      status: 'EXPIRED',
+      transactionId: 'pay_9',
+      transactionStatus: 'FAILED',
+    });
+    saspay.verifyPayment.mockResolvedValue({
+      status: 'FAILED',
+      requestedAmount: '9900.00',
+      currency: 'XOF',
+    });
+    expect(await reconcileOrder(db, saspay, 'ord_1', NOW)).toBe('FAILED');
+    expect(prismaMock.order.updateMany).toHaveBeenCalledWith({
+      where: { id: 'ord_1', status: { in: ['PENDING', 'EXPIRED'] }, activatedAt: null },
       data: { status: 'FAILED' },
     });
   });
@@ -236,7 +267,8 @@ describe('reconcilePendingOrders', () => {
         providerChargeId: { not: null },
         createdAt: { gte: new Date('2026-10-27T10:00:00Z') },
       },
-      orderBy: { createdAt: 'asc' },
+      // The newest first: a fresh payment never waits behind abandoned ones.
+      orderBy: { createdAt: 'desc' },
       take: 10,
       select: { id: true },
     });
@@ -253,6 +285,18 @@ describe('reconcilePendingOrders', () => {
     );
     expect(await reconcilePendingOrders(db, saspay, NOW)).toBe(0);
     expect(saspay.checkoutSessionStatus).toHaveBeenCalledTimes(1);
+  });
+
+  it('a refused key stops the batch (no retry on 401 or 403)', async () => {
+    for (const status of [401, 403]) {
+      saspay = fakeSaspay();
+      prismaMock.order.findMany.mockResolvedValue([{ id: 'ord_1' }, { id: 'ord_2' }] as never);
+      saspay.checkoutSessionStatus.mockRejectedValue(
+        new SaspayError(status, 'unauthorized', false, 'GET /checkout-sessions/:id/status/'),
+      );
+      expect(await reconcilePendingOrders(db, saspay, NOW)).toBe(0);
+      expect(saspay.checkoutSessionStatus).toHaveBeenCalledTimes(1);
+    }
   });
 
   it('counts the activations and goes on past another error', async () => {

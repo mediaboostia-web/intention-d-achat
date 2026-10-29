@@ -58,7 +58,8 @@ export function trialPass(now: Date): PassState {
 
 /**
  * A pass starts now. It keeps the answers the pass in force has not used,
- * trial and grace included: nothing paid for is lost (spec §5.6).
+ * trial and grace included, and never ends before the pass in force: nothing
+ * paid for is lost (spec §5.6).
  */
 export function applyPurchase(
   current: PassState | null,
@@ -68,7 +69,9 @@ export function applyPurchase(
 ): PassState {
   const inForce = current !== null && effectivePlan(current, now).plan !== 'FREE';
   const carried = inForce ? Math.max(0, current.responsesIncluded - used) : 0;
-  const currentPeriodEnd = addDays(now, PLANS[pass].durationDays ?? 0);
+  const ownEnd = addDays(now, PLANS[pass].durationDays ?? 0);
+  const runningEnd = inForce ? current.currentPeriodEnd : null;
+  const currentPeriodEnd = runningEnd && runningEnd > ownEnd ? runningEnd : ownEnd;
   return {
     plan: pass,
     periodStart: now,

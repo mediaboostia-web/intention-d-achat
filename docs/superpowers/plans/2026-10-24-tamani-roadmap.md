@@ -675,8 +675,10 @@ Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08
 - **Bictorys** :
   - trois fichiers protégés du kit le citent encore en commentaire ;
   - le modèle `paymentReceived` et ses deux types d'outbox restent sans émetteur, car `dispatcher.ts` est protégé.
-- **Échec de paiement** : seule une session `CANCELLED` fait échouer l'achat. Un paiement `FAILED` laisse la commande ouverte, car la page hébergée peut repasser par un autre réseau. Une commande `EXPIRED` que SasPay dit payée s'active quand même.
-- **Contrôle du montant** : il est numérique (`"9900.00"` et `"9900"` valent 9 900).
+- **Échec de paiement** : une session qui ne peut plus être payée (`CANCELLED`, ou `EXPIRED` sans paiement réussi) ferme l'achat, pour qu'il ne retarde pas les autres. Un paiement `FAILED` sur une session encore ouverte laisse la commande ouverte, car la page hébergée peut repasser par un autre réseau. Une commande `EXPIRED` que SasPay dit payée s'active quand même. La tâche planifiée prend les achats les plus récents d'abord (revue finale du lot).
+- **Contrôle du montant** : il est numérique (`"9900.00"` et `"9900"` valent 9 900), sur `requested_amount` : avec les frais au client, `debited_amount` est plus grand.
+- **Pass acheté pendant un autre** : il démarre tout de suite, garde les réponses non utilisées et ne finit jamais avant le pass en cours (revue finale du lot : « rien de ce qui est payé ne se perd »).
+- **Webhook** : `WebhookLog` ne garde que l'événement, l'identifiant, le statut et une empreinte, jamais le numéro ni le nom du payeur.
 - **Activation** :
   - elle prend le verrou de facturation, puis celui du quota ;
   - sa transaction a 10 s pour démarrer et 30 s pour finir.
