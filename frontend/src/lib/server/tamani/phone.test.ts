@@ -58,6 +58,11 @@ describe('normalizePhone, lot 7b countries', () => {
     }
   });
 
+  it('never pads a truncated new number: old Benin numbers never started with 0', () => {
+    expect(normalizePhone('01 97 12 34', 'BJ')).toBeNull();
+    expect(normalizePhone('+229 01 97 12 34', 'SN')).toBeNull();
+  });
+
   it('leaves 8 digits alone outside Benin', () => {
     expect(normalizePhone('63 01 23 45', 'TD')).toBe('+23563012345');
     expect(normalizePhone('97 12 34 56', 'SN')).toBeNull();

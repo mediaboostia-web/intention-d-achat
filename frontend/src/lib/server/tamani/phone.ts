@@ -9,13 +9,14 @@ import {
 
 /**
  * Benin moved to 10 digits in November 2024: an old 8-digit number keeps
- * working with « 01 » in front ("97 12 34 56" → "01 97 12 34 56").
+ * working with « 01 » in front ("97 12 34 56" → "01 97 12 34 56"). Old
+ * numbers never started with 0: "01 97 12 34" is a new one cut short, refused.
  */
 function beninTenDigits(input: string, defaultCountry: CountryCode): string {
   const compact = input.replace(/[\s.\-()]/g, '');
-  const international = /^\+229(\d{8})$/.exec(compact);
+  const international = /^\+229([1-9]\d{7})$/.exec(compact);
   if (international) return `+22901${international[1]}`;
-  if (defaultCountry === 'BJ' && /^\d{8}$/.test(compact)) return `01${compact}`;
+  if (defaultCountry === 'BJ' && /^[1-9]\d{7}$/.test(compact)) return `01${compact}`;
   return input;
 }
 
