@@ -7,9 +7,21 @@ import {
   type CountryCode,
 } from 'libphonenumber-js/min';
 
+/**
+ * Benin moved to 10 digits in November 2024: an old 8-digit number keeps
+ * working with « 01 » in front ("97 12 34 56" → "01 97 12 34 56").
+ */
+function beninTenDigits(input: string, defaultCountry: CountryCode): string {
+  const compact = input.replace(/[\s.\-()]/g, '');
+  const international = /^\+229(\d{8})$/.exec(compact);
+  if (international) return `+22901${international[1]}`;
+  if (defaultCountry === 'BJ' && /^\d{8}$/.test(compact)) return `01${compact}`;
+  return input;
+}
+
 /** E.164 ("+221771234567"), or null when the input is not a valid number. Never throws. */
 export function normalizePhone(raw: string, defaultCountry: CountryCode): string | null {
-  const input = raw.trim().replace(/^00/, '+');
+  const input = beninTenDigits(raw.trim().replace(/^00/, '+'), defaultCountry);
   if (!input) return null;
   const phone = parsePhoneNumberFromString(input, defaultCountry);
   return phone?.isValid() ? phone.number : null;
