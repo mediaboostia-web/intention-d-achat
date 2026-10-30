@@ -3,6 +3,7 @@ import { Logo } from '@/components/ui';
 import { WORDMARK_PATH, WORDMARK_VIEWBOX } from '@/lib/design/logo-paths';
 import { colors } from '@/lib/design/tokens';
 import {
+  LANDING_CONTACT_EMAIL,
   LANDING_LINKS,
   LANDING_SLOGAN,
   type LandingLinkName,
@@ -34,6 +35,7 @@ export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks 
     ...(links.whatsappContact
       ? [{ href: links.whatsappContact, label: 'Écrire sur WhatsApp' }]
       : []),
+    { href: `mailto:${LANDING_CONTACT_EMAIL}`, label: LANDING_CONTACT_EMAIL },
   ];
 
   return (

@@ -119,8 +119,16 @@ describe('applyPurchase', () => {
     expect(next.periodStart).toEqual(d('2026-10-30'));
   });
 
-  it('a pass bought during grace keeps the unused answers', () => {
+  // Porteur, 2026-10-30: once a pass's time is up, its unused answers are
+  // gone; the new pass starts from zero (the pending answers then open).
+  it('a pass bought once the time is up starts from zero, grace included', () => {
     const now = d('2026-11-25');
+    expect(applyPurchase(month, 'WEEK', 900, now).responsesIncluded).toBe(150);
+    expect(applyPurchase(month, 'WEEK', 1200, now).responsesIncluded).toBe(150);
+  });
+
+  it('a pass bought while the pass still runs keeps its unused answers', () => {
+    const now = d('2026-11-20');
     expect(applyPurchase(month, 'WEEK', 900, now).responsesIncluded).toBe(250);
     // Answers over the count never take answers off the new pass.
     expect(applyPurchase(month, 'WEEK', 1200, now).responsesIncluded).toBe(150);

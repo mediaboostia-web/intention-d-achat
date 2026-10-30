@@ -1,6 +1,5 @@
 // Tamani UI kit — "Cahier du marché" (docs/brand/tamani-brand.md).
 // Server components without state; client pages compose them.
-export { AuthIllustration } from './AuthIllustration';
 export { Avatar } from './Avatar';
 export { Badge } from './Badge';
 export { BottomSheet } from './BottomSheet';

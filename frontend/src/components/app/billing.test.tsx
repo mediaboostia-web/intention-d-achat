@@ -1,8 +1,8 @@
 // The pass in the shop space (lot 8): its page, the return page, the banners.
 import { describe, expect, it, vi } from 'vitest';
 import { html, text } from '@/components/ui/test-html';
-import { PassMeter } from '@/components/ui';
-import { PASS_FEATURES, type BillingData } from '@/lib/tamani/billing-view';
+import { OfferCard, PassMeter } from '@/components/ui';
+import { planFeatures, type BillingData } from '@/lib/tamani/billing-view';
 
 vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigation')).navigation);
 
@@ -89,10 +89,14 @@ describe('BillingView', () => {
     expect(cards[0]).toContain('Pass Mois Max</h3>');
   });
 
-  it('the pass page lists what every pass includes', () => {
-    const t = text(view());
-    expect(t).toContain('Dans chaque pass');
-    for (const f of PASS_FEATURES) expect(t).toContain(f);
+  // Porteur, 2026-10-30: the benefits sit on each card.
+  it('each pass card lists what it opens', () => {
+    const out = html(view());
+    expect(text(view())).not.toContain('Dans chaque pass');
+    const lines = planFeatures('WEEK').length;
+    // Five passes and the Illimité.
+    expect(out.match(/data-included="true"/g)).toHaveLength(6 * lines);
+    expect(out).not.toContain('data-included="false"');
   });
 
   it('the subscription page shows the per-campaign detail', () => {
@@ -187,6 +191,42 @@ describe('ReturnView', () => {
     expect(failed).toContain('Réessayer');
     const slow = html(<ReturnView state="checking" offer="MONTH" timedOut onRetry={() => {}} />);
     expect(buttons(slow).some((b) => b?.includes('Vérifier encore'))).toBe(true);
+  });
+});
+
+describe('OfferCard', () => {
+  it('ticks what the pass opens and greys out, in words, what it leaves out', () => {
+    const out = html(
+      <OfferCard
+        name="Essai gratuit"
+        price="Gratuit"
+        durationLabel="3 jours"
+        responsesLabel="50 réponses"
+        forWho="Pour voir"
+        features={planFeatures('TRIAL')}
+        action={null}
+      />,
+    );
+    const items = out.match(/<li [^>]*>[\s\S]*?<\/li>/g) ?? [];
+    expect(items).toHaveLength(planFeatures('TRIAL').length);
+    const off = items.filter((i) => i.includes('data-included="false"'));
+    expect(off).toHaveLength(3);
+    for (const i of off) {
+      expect(i).toContain('text-ink-muted');
+      expect(i).toContain('Pas compris');
+    }
+    expect(
+      text(
+        <OfferCard
+          name="x"
+          price="y"
+          durationLabel="z"
+          responsesLabel="w"
+          forWho="v"
+          action={null}
+        />,
+      ),
+    ).not.toContain('Pas compris');
   });
 });
 

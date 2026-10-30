@@ -25,6 +25,10 @@ const NAMES = [
   'avant',
   'apres',
   'communaute',
+  'menu-support',
+  'menu-groupe',
+  'connexion',
+  'inscription',
 ] as const;
 const MAX_WIDTH = 1600;
 const QUALITY = 78;

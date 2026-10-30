@@ -3,8 +3,13 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { html, text } from '@/components/ui/test-html';
 import { WORDMARK_PATH, WORDMARK_VIEWBOX } from '@/lib/design/logo-paths';
-import { LANDING_FAQ, LANDING_LINKS } from '@/lib/tamani/landing';
-import { PASS_FEATURES, TRIAL_LIMITS } from '@/lib/tamani/billing-view';
+import {
+  LANDING_CONTACT_EMAIL,
+  LANDING_FAQ,
+  LANDING_LINKS,
+  type LandingLinks,
+} from '@/lib/tamani/landing';
+import { planFeatures } from '@/lib/tamani/billing-view';
 import { BeforeAfter } from './BeforeAfter';
 import { Community } from './Community';
 import { ORBIT_NETWORKS } from './content';
@@ -19,8 +24,14 @@ import { Problem } from './Problem';
 import { Solution } from './Solution';
 import { Steps } from './Steps';
 
-const NO_LINKS = LANDING_LINKS;
-const ALL_LINKS = {
+const NO_LINKS: LandingLinks = {
+  whatsappContact: null,
+  community: null,
+  facebook: null,
+  instagram: null,
+  tiktok: null,
+};
+const ALL_LINKS: LandingLinks = {
   whatsappContact: 'https://wa.me/221770000000',
   community: 'https://chat.whatsapp.com/abc',
   facebook: 'https://facebook.com/tamani',
@@ -123,6 +134,8 @@ describe('LandingNav', () => {
       '#avant-apres',
       '#tarifs',
       '#questions',
+      LANDING_LINKS.whatsappContact,
+      LANDING_LINKS.community,
       '/signup',
       '/login',
     ]);
@@ -130,6 +143,35 @@ describe('LandingNav', () => {
     expect(text(<LandingNav />)).toContain('Déjà un compte ? Se connecter');
     // The links come in one after the other.
     expect(drawer.match(/style="--i:\d"/g)).toHaveLength(5);
+  });
+
+  it('the drawer offers the support and the WhatsApp group, each only once given', () => {
+    const drawer = (links: LandingLinks) => {
+      const out = html(<LandingNav links={links} />);
+      return out.slice(out.indexOf('id="lp-menu"'));
+    };
+    const full = drawer(ALL_LINKS);
+    expect(full).toContain('Écrire au support');
+    expect(full).toContain('href="https://wa.me/221770000000"');
+    expect(full).toContain('Rejoindre le groupe');
+    expect(full).toContain('href="https://chat.whatsapp.com/abc"');
+    // Each card carries its drawing; the title says it all, so the drawing is decorative.
+    const cards = full.match(/<li>[\s\S]*?<\/li>/g) ?? [];
+    expect(cards).toHaveLength(2);
+    expect(cards[0]).toMatch(/<img [^>]*alt=""[^>]*%2Faccueil%2Fmenu-support\.webp/);
+    expect(cards[1]).toMatch(/<img [^>]*alt=""[^>]*%2Faccueil%2Fmenu-groupe\.webp/);
+    const none = drawer(NO_LINKS);
+    expect(none).not.toContain('Écrire au support');
+    expect(none).not.toContain('Rejoindre le groupe');
+  });
+
+  it("the porteur's support number and group are set", () => {
+    expect(LANDING_LINKS.whatsappContact).toBe('https://wa.me/2290195831126');
+    expect(LANDING_LINKS.community).toBe('https://chat.whatsapp.com/I7fReiTTlvO8WAyAjLVEu5');
+    expect(LANDING_CONTACT_EMAIL).toBe('hullysdesire@gmail.com');
+    expect(html(<LandingFooter links={NO_LINKS} />)).toContain(
+      'href="mailto:hullysdesire@gmail.com"',
+    );
   });
 
   it('hides the bar buttons below 1000px and stops the drawer under reduced motion', () => {
@@ -150,6 +192,24 @@ describe('Hero', () => {
     expect(out).toMatch(
       /<a [^>]*href="\/signup"[^>]*id="lp-hero-cta"|<a [^>]*id="lp-hero-cta"[^>]*href="\/signup"/,
     );
+  });
+
+  // Porteur, 2026-10-30: simple and clear, no jargon.
+  it('says in plain words what Tamani does', () => {
+    expect(text(<Hero />)).toContain(
+      "Avant d'acheter ton stock, demande à tes clients. Tu envoies un lien sur WhatsApp, ils répondent en moins de 30 secondes, et tu sais combien commander.",
+    );
+  });
+
+  // Porteur, 2026-10-30: the three checks wrapped 2 + 1 on a phone; no column
+  // either. Two checks stay, on one row.
+  it('keeps two checks on one row', () => {
+    const items = html(<Hero />).match(/<ul class="lp-hero__checks">[\s\S]*?<\/ul>/)?.[0] ?? '';
+    expect(items.match(/<li>/g)).toHaveLength(2);
+    expect(text(<Hero />)).not.toContain('Prêt en 3 minutes');
+    const css = readFileSync(path.resolve(__dirname, 'landing.css'), 'utf8');
+    expect(css).toMatch(/\.lp-hero__checks\s*\{[^}]*display:\s*flex;[^}]*\}/);
+    expect(css).not.toMatch(/\.lp-hero__checks\s*\{[^}]*grid-template-columns/);
   });
 
   it('stamps the running example on the illustration', () => {
@@ -225,12 +285,13 @@ describe('BeforeAfter', () => {
 });
 
 describe('Pricing', () => {
-  // The rail's cards only: « Dans chaque pass » below them is an h3 too.
+  // The rail's cards only, not the table below them.
   const rail = (out: string) =>
-    out.slice(out.indexOf('lp-rail__track'), out.indexOf('lp-included'));
+    out.slice(out.indexOf('lp-rail__track'), out.indexOf('lp-rail__note'));
   const cards = (out: string) =>
     rail(out)
-      .split('<li')
+      // A card is a bare <li>; its feature lines carry attributes.
+      .split('<li>')
       .filter((c) => c.includes('</h3>'));
   const names = (out: string) => [...rail(out).matchAll(/<h3[^>]*>(.*?)<\/h3>/g)].map((m) => m[1]);
 
@@ -264,7 +325,7 @@ describe('Pricing', () => {
   });
 
   it('Illimité reads « Sur devis » and hides its button while whatsappContact is null', () => {
-    const last = (links: typeof NO_LINKS) => cards(html(<Pricing links={links} />)).at(-1) ?? '';
+    const last = (links: LandingLinks) => cards(html(<Pricing links={links} />)).at(-1) ?? '';
     expect(last(NO_LINKS)).toContain('Sur devis');
     expect(last(NO_LINKS)).not.toContain('Contacter le support');
     expect(last(NO_LINKS)).not.toContain('href=');
@@ -272,13 +333,23 @@ describe('Pricing', () => {
     expect(last(ALL_LINKS)).toContain('href="https://wa.me/221770000000"');
   });
 
-  it('lists what every pass includes, and what the trial leaves out', () => {
+  // Porteur, 2026-10-30: the benefits sit on each card.
+  it('each card lists what it opens; the trial greys out what it leaves out', () => {
     const out = html(<Pricing />);
-    const t = text(<Pricing />);
-    expect(t).toContain('Dans chaque pass');
-    for (const f of PASS_FEATURES) expect(t).toContain(f);
-    expect(out.match(/<li class="lp-included__item"/g)).toHaveLength(PASS_FEATURES.length);
-    expect(t).toContain(TRIAL_LIMITS);
+    expect(text(<Pricing />)).not.toContain('Dans chaque pass');
+    const all = cards(out);
+    expect(all).toHaveLength(7);
+    const lines = planFeatures('WEEK').length;
+    for (const card of all) {
+      expect(card.match(/data-included="/g)).toHaveLength(lines);
+    }
+    const [trial, ...rest] = all;
+    expect(trial?.match(/data-included="false"/g)).toHaveLength(3);
+    expect(trial).toContain('1 campagne à la fois');
+    for (const card of rest) {
+      expect(card).not.toContain('data-included="false"');
+      expect(card).toContain('Campagnes illimitées');
+    }
   });
 
   it('the line under the cards', () => {

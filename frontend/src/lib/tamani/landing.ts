@@ -4,7 +4,14 @@
 // Pure and shared with the browser.
 import type { Metadata } from 'next';
 import { formatPrice } from '@/lib/utils';
-import { BEST_VALUE_LABEL, FOR_WHO, offerCards, unlimitedCard } from './billing-view';
+import {
+  BEST_VALUE_LABEL,
+  FOR_WHO,
+  offerCards,
+  planFeatures,
+  unlimitedCard,
+  type CardFeature,
+} from './billing-view';
 import { PASS_IDS, PLANS, type PlanId } from './plans';
 
 export const LANDING_TITLE = 'Tamani : demande à ta communauté WhatsApp avant de commander';
@@ -25,12 +32,15 @@ export type LandingLinkName = 'whatsappContact' | 'community' | 'facebook' | 'in
 export type LandingLinks = Readonly<Record<LandingLinkName, string | null>>;
 
 export const LANDING_LINKS: LandingLinks = {
-  whatsappContact: null,
-  community: null,
+  whatsappContact: 'https://wa.me/2290195831126',
+  community: 'https://chat.whatsapp.com/I7fReiTTlvO8WAyAjLVEu5',
   facebook: null,
   instagram: null,
   tiktok: null,
 };
+
+/** Tamani's contact address, shown in the footer (porteur, 2026-10-30). */
+export const LANDING_CONTACT_EMAIL = 'hullysdesire@gmail.com';
 
 export interface LandingVideo {
   src: string;
@@ -89,6 +99,8 @@ export interface PricingOffer {
   responsesLabel: string;
   forWho: string;
   badge?: string;
+  /** What the card lists (porteur, 2026-10-30), greyed out where the plan leaves it out. */
+  features: CardFeature[];
 }
 
 /** The home page grid: the trial, the five passes (prices in FCFA), the Illimité on quote. */
@@ -101,12 +113,14 @@ export function pricingOffers(): PricingOffer[] {
       durationLabel: `${TRIAL.durationDays} jours`,
       responsesLabel: `${formatPrice(TRIAL.includedResponses ?? 0)} réponses`,
       forWho: FOR_WHO.TRIAL,
+      features: planFeatures('TRIAL'),
     },
     ...offerCards('XOF').map(({ bestValue, ...card }) => ({
       ...card,
       ...(bestValue && { badge: BEST_VALUE_LABEL }),
+      features: planFeatures(card.id),
     })),
-    { id: 'UNLIMITED', ...unlimitedCard() },
+    { id: 'UNLIMITED', ...unlimitedCard(), features: planFeatures('UNLIMITED') },
   ];
 }
 

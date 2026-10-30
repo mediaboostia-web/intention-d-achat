@@ -115,20 +115,44 @@ describe('Google first', () => {
 });
 
 describe('layout', () => {
-  it('the desktop panel carries the sentence and the drawing', () => {
-    mockNextNavigation({ pathname: '/login' });
+  const panelOf = (pathname: string) => {
+    mockNextNavigation({ pathname });
     const out = html(
       <AuthLayout>
         <p>page</p>
       </AuthLayout>,
     );
-    const panel = out.match(/<aside [^>]*>[\s\S]*?<\/aside>/)?.[0] ?? '';
+    return { out, panel: out.match(/<aside [^>]*>[\s\S]*?<\/aside>/)?.[0] ?? '' };
+  };
+
+  it('the desktop panel stays in view, on computers only', () => {
+    const { out, panel } = panelOf('/login');
     const classes = panel.match(/^<aside [^>]*class="([^"]*)"/)?.[1]?.split(' ') ?? [];
-    expect(classes).toEqual(expect.arrayContaining(['hidden', 'lg:flex', 'bg-primary']));
-    expect(panel).toContain('Avant de commander, demande à ta communauté.');
-    expect(panel).toMatch(/<svg [^>]*data-illustration="auth"[^>]*aria-hidden="true"/);
+    expect(classes).toEqual(
+      expect.arrayContaining(['hidden', 'lg:flex', 'lg:sticky', 'lg:top-0', 'lg:h-dvh']),
+    );
     expect(out).toMatch(/class="[^"]*lg:grid-cols-2/);
     expect(out).toContain('<p>page</p>');
+  });
+
+  // Porteur, 2026-10-30: each page speaks to the visitor, with its own drawing.
+  it('signing in says the clients may have answered, with the morning drawing', () => {
+    for (const pathname of ['/login', '/forgot-password', '/reset-password', '/auth/error']) {
+      const { panel } = panelOf(pathname);
+      expect(panel, pathname).toContain('Tes clients ont peut-être déjà répondu.');
+      expect(panel, pathname).toMatch(/<img [^>]*alt=""[^>]*%2Faccueil%2Fconnexion\.webp/);
+    }
+  });
+
+  it('signing up says to ask the community first, with the trial, and its drawing', () => {
+    for (const pathname of ['/signup', '/verify-email']) {
+      const { panel } = panelOf(pathname);
+      expect(panel, pathname).toContain('Avant de commander, demande à ta communauté.');
+      expect(panel.replaceAll('&#x27;', "'"), pathname).toContain(
+        "3 jours d'essai gratuit, sans carte bancaire.",
+      );
+      expect(panel, pathname).toMatch(/<img [^>]*alt=""[^>]*%2Faccueil%2Finscription\.webp/);
+    }
   });
 });
 

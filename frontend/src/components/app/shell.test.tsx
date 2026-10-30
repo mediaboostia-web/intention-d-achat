@@ -305,7 +305,7 @@ describe('shop pages', () => {
     expect(pro).toContain("Pass Mois jusqu'au 24 novembre");
   });
 
-  it('plus is one list, an icon on each line, Aide hidden without a link', () => {
+  it("plus is one list, an icon on each line, Aide on Tamani's WhatsApp", () => {
     mockNextNavigation({ pathname: '/app/plus' });
     const page = (
       <ShopTestProvider>
@@ -321,6 +321,7 @@ describe('shop pages', () => {
       'Réglages de la boutique',
       'Notifications',
       'Profil',
+      'Aide',
       'Se déconnecter',
     ];
     expect(labels).toHaveLength(order.length);
@@ -336,8 +337,7 @@ describe('shop pages', () => {
     ]) {
       expect(out, href).toContain(`href="${href}"`);
     }
-    expect(text(page)).not.toContain('Aide');
-    expect(out).not.toContain('wa.me');
+    expect(out).toContain('href="https://wa.me/2290195831126"');
   });
 
   it('plus shows Aide once the WhatsApp contact is given', () => {

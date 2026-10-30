@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Button, Icon, Logo } from '@/components/ui';
-import { navStep } from '@/lib/tamani/landing';
+import { LANDING_LINKS, navStep, type LandingLinks } from '@/lib/tamani/landing';
+import { Illustration } from './Illustration';
+import { PlatformLogo } from './PlatformLogo';
 
 const SECTIONS = [
   { href: '#comment-ca-marche', label: 'Comment ça marche' },
@@ -18,9 +20,32 @@ const SECTIONS = [
  * scroll up; it stays while its phone menu is open or the keyboard is in it.
  * On a phone (lot 7a) the bar keeps only the logo and the yellow menu button,
  * straight on the paper; the menu is a drawer from the right that ends on
- * « Commencer gratuitement », then « Se connecter ».
+ * « Commencer gratuitement », then « Se connecter ». Above them, two drawn
+ * cards open the support and the WhatsApp group (porteur, 2026-10-30).
  */
-export function LandingNav() {
+export function LandingNav({ links = LANDING_LINKS }: { links?: LandingLinks }) {
+  const help = [
+    ...(links.whatsappContact
+      ? [
+          {
+            href: links.whatsappContact,
+            image: 'menu-support' as const,
+            title: 'Écrire au support',
+            line: 'Une vraie personne te répond sur WhatsApp.',
+          },
+        ]
+      : []),
+    ...(links.community
+      ? [
+          {
+            href: links.community,
+            image: 'menu-groupe' as const,
+            title: 'Rejoindre le groupe',
+            line: 'Les astuces des grossistes qui utilisent Tamani.',
+          },
+        ]
+      : []),
+  ];
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -189,6 +214,24 @@ export function LandingNav() {
               </a>
             ))}
           </nav>
+          {help.length > 0 && (
+            <ul className="lp-drawer__help">
+              {help.map((h) => (
+                <li key={h.title}>
+                  <a href={h.href} target="_blank" rel="noopener" onClick={() => setOpen(false)}>
+                    <Illustration name={h.image} alt="" sizes="320px" />
+                    <span>
+                      <b>
+                        <PlatformLogo slug="whatsapp" />
+                        {h.title}
+                      </b>
+                      {h.line}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="lp-drawer__end" style={{ '--i': SECTIONS.length } as CSSProperties}>
             <Button href="/signup" size="lg" className="w-full">
               Commencer gratuitement

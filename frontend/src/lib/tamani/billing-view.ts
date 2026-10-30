@@ -90,26 +90,39 @@ export const FOR_WHO: Readonly<Record<'TRIAL' | PassId | 'UNLIMITED', string>> =
   UNLIMITED: 'Pour les très grandes communautés.',
 };
 
-/**
- * What every pass holds, listed once under the cards (home page and « Mon
- * pass ») so a visitor sees the value; the passes differ only in length and
- * answers.
- */
-export const PASS_FEATURES: readonly string[] = [
-  'Un lien à partager sur WhatsApp, Telegram ou Facebook',
-  'Tes clients répondent en moins de 30 secondes, sans appli',
-  'La quantité à commander, avec le calcul affiché',
-  "Le verdict et l'argent évité avant de commander",
-  'Les numéros des intéressés et un bouton WhatsApp',
-  'Les commandes et les livraisons par quartier',
-  'Le carnet de clients et leur fiabilité',
-  'Un lien par groupe pour savoir qui répond où',
-  "L'export pour Excel des réponses et des clients",
-  'Une alerte sur ton téléphone à chaque réponse',
-  'Campagnes illimitées, sans « Propulsé par Tamani »',
-];
+/** One line of a card: what the plan opens, or (greyed out) leaves out. */
+export interface CardFeature {
+  label: string;
+  included: boolean;
+}
 
-export const TRIAL_LIMITS = "L'essai ouvre tout, sauf les liens par groupe et l'export pour Excel.";
+/**
+ * What a card lists (porteur, 2026-10-30: the benefits sit on each card, so a
+ * visitor sees the value). The lines are the same on every card, read from
+ * `PLANS`, so a card never promises what its plan does not open; the passes
+ * differ only in length and answers.
+ */
+export function planFeatures(id: 'TRIAL' | 'UNLIMITED' | PassId): CardFeature[] {
+  const { maxActiveCampaigns, features } = PLANS[id];
+  return [
+    {
+      label:
+        maxActiveCampaigns === null
+          ? 'Campagnes illimitées'
+          : `${maxActiveCampaigns} campagne${maxActiveCampaigns > 1 ? 's' : ''} à la fois`,
+      included: true,
+    },
+    { label: 'Tes clients répondent en moins de 30 secondes', included: true },
+    { label: 'La quantité à commander et le verdict', included: features.estimate },
+    { label: 'Les numéros des intéressés et WhatsApp', included: features.respondentContacts },
+    { label: 'Les commandes et les livraisons par quartier', included: true },
+    { label: 'La fiabilité de chaque client', included: features.reliability },
+    { label: 'Une alerte à chaque réponse', included: true },
+    { label: 'Un lien par groupe', included: features.sourceLinks },
+    { label: "L'export pour Excel", included: features.csvExport },
+    { label: 'Sans « Propulsé par Tamani »', included: !features.poweredByBadge },
+  ];
+}
 
 /** The lowest price per answer of the grid (porteur, 2026-10-29). */
 export const BEST_VALUE: PassId = 'MONTH_MAX';
