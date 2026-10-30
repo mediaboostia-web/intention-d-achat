@@ -194,6 +194,13 @@ describe('Hero', () => {
     );
   });
 
+  // Porteur, 2026-10-30: simple and clear, no jargon.
+  it('says in plain words what Tamani does', () => {
+    expect(text(<Hero />)).toContain(
+      "Avant d'acheter ton stock, demande à tes clients. Tu envoies un lien sur WhatsApp, ils répondent en moins de 30 secondes, et tu sais combien commander.",
+    );
+  });
+
   it('stamps the running example on the illustration', () => {
     expect(text(<Hero />)).toContain('Commande ≈120 cartons');
   });

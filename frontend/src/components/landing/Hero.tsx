@@ -50,8 +50,8 @@ export function Hero() {
               </span>
             </h1>
             <p className="lp-hero__sub">
-              Partage un lien sur WhatsApp. Tes clients répondent en moins de 30&nbsp;secondes.
-              Tamani te dit combien commander.
+              Avant d&apos;acheter ton stock, demande à tes clients. Tu envoies un lien sur
+              WhatsApp, ils répondent en moins de 30 secondes, et tu sais combien commander.
             </p>
             <div className="lp-hero__ctas lp-btn-row">
               <Button href="/signup" size="lg" id="lp-hero-cta">
