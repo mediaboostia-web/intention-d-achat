@@ -201,6 +201,17 @@ describe('Hero', () => {
     );
   });
 
+  // Porteur, 2026-10-30: the three checks wrapped 2 + 1 on a phone; no column
+  // either. Two checks stay, on one row.
+  it('keeps two checks on one row', () => {
+    const items = html(<Hero />).match(/<ul class="lp-hero__checks">[\s\S]*?<\/ul>/)?.[0] ?? '';
+    expect(items.match(/<li>/g)).toHaveLength(2);
+    expect(text(<Hero />)).not.toContain('Prêt en 3 minutes');
+    const css = readFileSync(path.resolve(__dirname, 'landing.css'), 'utf8');
+    expect(css).toMatch(/\.lp-hero__checks\s*\{[^}]*display:\s*flex;[^}]*\}/);
+    expect(css).not.toMatch(/\.lp-hero__checks\s*\{[^}]*grid-template-columns/);
+  });
+
   it('stamps the running example on the illustration', () => {
     expect(text(<Hero />)).toContain('Commande ≈120 cartons');
   });
