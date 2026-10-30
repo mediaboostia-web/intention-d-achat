@@ -10,6 +10,7 @@ import {
   pickWeighted,
   pricingOffers,
 } from './landing';
+import { planFeatures } from './billing-view';
 import { PLANS } from './plans';
 
 describe('pricingOffers reads PLANS', () => {
@@ -31,6 +32,7 @@ describe('pricingOffers reads PLANS', () => {
       durationLabel: '3 jours',
       responsesLabel: '50 réponses',
       forWho: 'Pour voir Tamani marcher sur un produit.',
+      features: planFeatures('TRIAL'),
     });
     expect(offers[5]).toEqual({
       id: 'MONTH_MAX',
@@ -40,9 +42,14 @@ describe('pricingOffers reads PLANS', () => {
       responsesLabel: '5 000 réponses',
       forWho: 'Pour les grands groupes.',
       badge: 'Le meilleur prix par réponse',
+      features: planFeatures('MONTH_MAX'),
     });
     expect(offers.filter((o) => o.badge).map((o) => o.id)).toEqual(['MONTH_MAX']);
-    expect(offers[6]).toMatchObject({ name: 'Pass Illimité', price: 'Sur devis' });
+    expect(offers[6]).toMatchObject({
+      name: 'Pass Illimité',
+      price: 'Sur devis',
+      features: planFeatures('UNLIMITED'),
+    });
   });
 });
 

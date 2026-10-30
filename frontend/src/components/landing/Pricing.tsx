@@ -1,5 +1,4 @@
 import { Button, Icon, OfferCard } from '@/components/ui';
-import { PASS_FEATURES, TRIAL_LIMITS } from '@/lib/tamani/billing-view';
 import { LANDING_LINKS, pricingOffers, type LandingLinks } from '@/lib/tamani/landing';
 import { PLANS } from '@/lib/tamani/plans';
 import { formatPrice } from '@/lib/utils';
@@ -40,7 +39,8 @@ function CellValue({ value }: { value: Cell }) {
 
 /**
  * 7. Pricing (porteur, 2026-10-29): the trial, the five passes and the
- * Illimité as a rail of cards, the line under them, every detail on demand.
+ * Illimité as a rail of cards, each listing what it opens (2026-10-30), the
+ * line under them, every detail on demand.
  * The Illimité's button waits for Tamani's WhatsApp number.
  */
 export function Pricing({ links = LANDING_LINKS }: { links?: LandingLinks }) {
@@ -91,23 +91,12 @@ export function Pricing({ links = LANDING_LINKS }: { links?: LandingLinks }) {
                 responsesLabel={o.responsesLabel}
                 forWho={o.forWho}
                 badge={o.badge}
+                features={o.features}
                 action={actionFor(o.id)}
               />
             </li>
           ))}
         </OfferRail>
-        <div className="lp-included">
-          <h3 className="lp-included__title">Dans chaque pass</h3>
-          <ul>
-            {PASS_FEATURES.map((f) => (
-              <li key={f} className="lp-included__item">
-                <Icon name="check" />
-                {f}
-              </li>
-            ))}
-          </ul>
-          <p className="lp-included__trial">{TRIAL_LIMITS}</p>
-        </div>
         <p className="lp-rail__note">
           Mobile Money ou carte · Pas de renouvellement automatique · Campagnes illimitées
         </p>

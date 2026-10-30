@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
   FOR_WHO,
-  PASS_FEATURES,
-  TRIAL_LIMITS,
   graceDaysLeft,
   meterLine,
   meterTone,
   offerCards,
   pendingLine,
+  planFeatures,
   pollDelay,
   purchaseStatusLabel,
   returnState,
 } from './billing-view';
+import { PASS_IDS } from './plans';
 
 const now = new Date('2026-10-29T10:00:00Z');
 const usage = (over: object = {}) => ({
@@ -91,14 +91,37 @@ describe('offerCards', () => {
   });
 });
 
-describe('PASS_FEATURES', () => {
-  it('says what a visitor gets, in short lines', () => {
-    expect(PASS_FEATURES.length).toBeGreaterThanOrEqual(8);
-    for (const f of PASS_FEATURES) expect(f.length).toBeLessThanOrEqual(70);
-    expect(PASS_FEATURES.join(' ')).toMatch(/Campagnes illimitées/);
-    expect(TRIAL_LIMITS).toBe(
-      "L'essai ouvre tout, sauf les liens par groupe et l'export pour Excel.",
-    );
+// Porteur, 2026-10-30: the benefits sit on each card.
+describe('planFeatures', () => {
+  it('a pass lists everything it opens, in short lines, the same on every pass', () => {
+    const week = planFeatures('WEEK');
+    expect(week.map((f) => f.label)).toEqual([
+      'Campagnes illimitées',
+      'Tes clients répondent en moins de 30 secondes',
+      'La quantité à commander et le verdict',
+      'Les numéros des intéressés et WhatsApp',
+      'Les commandes et les livraisons par quartier',
+      'La fiabilité de chaque client',
+      'Une alerte à chaque réponse',
+      'Un lien par groupe',
+      "L'export pour Excel",
+      'Sans « Propulsé par Tamani »',
+    ]);
+    expect(week.every((f) => f.included)).toBe(true);
+    for (const f of week) expect(f.label.length).toBeLessThanOrEqual(48);
+    for (const id of PASS_IDS) expect(planFeatures(id)).toEqual(week);
+    expect(planFeatures('UNLIMITED')).toEqual(week);
+  });
+
+  it('the trial keeps the same lines and greys out what it leaves out, read from PLANS', () => {
+    const trial = planFeatures('TRIAL');
+    expect(trial).toHaveLength(planFeatures('WEEK').length);
+    expect(trial[0]).toEqual({ label: '1 campagne à la fois', included: true });
+    expect(trial.filter((f) => !f.included).map((f) => f.label)).toEqual([
+      'Un lien par groupe',
+      "L'export pour Excel",
+      'Sans « Propulsé par Tamani »',
+    ]);
   });
 });
 

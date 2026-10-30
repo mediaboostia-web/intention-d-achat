@@ -467,6 +467,60 @@ html:has(.lp) {
     translate 0.3s var(--lp-ease);
   transition-delay: calc(120ms + var(--i, 0) * 60ms);
 }
+.lp-drawer__help {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+.lp-drawer__help li {
+  display: grid;
+}
+.lp-drawer__help a {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.lp-drawer__help a:hover b {
+  text-decoration: underline;
+}
+.lp-drawer__help img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* A band across the card: the drawings keep a white margin below them. */
+  aspect-ratio: 2.2 / 1;
+  object-fit: cover;
+  object-position: center 20%;
+  border-bottom: 2px solid var(--color-ink);
+}
+.lp-drawer__help span {
+  display: grid;
+  gap: 2px;
+  padding: 8px 12px 10px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--color-ink-soft);
+}
+.lp-drawer__help b {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  color: var(--color-ink);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.lp-drawer__help svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--color-success);
+}
 .lp-drawer__end {
   display: grid;
   gap: 12px;
@@ -1421,47 +1475,6 @@ html:has(.lp) {
 .lp-rail__track > li {
   min-width: 0;
   scroll-snap-align: start;
-}
-.lp-included {
-  margin-top: 28px;
-  padding: 22px 20px;
-  border: 2.5px solid var(--color-ink);
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
-  text-align: left;
-}
-.lp-included__title {
-  font: 700 26px / 1.1 var(--lp-hand);
-  color: var(--color-primary);
-}
-.lp-included ul {
-  display: grid;
-  gap: 10px;
-  margin-top: 14px;
-}
-.lp-included__item {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  line-height: 1.4;
-}
-.lp-included__item svg {
-  flex: none;
-  width: 20px;
-  height: 20px;
-  margin-top: 1px;
-  color: var(--color-success);
-}
-.lp-included__trial {
-  margin-top: 14px;
-  font-size: 15px;
-  color: var(--color-ink-soft);
-}
-@media (min-width: 640px) {
-  .lp-included ul {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 28px;
-  }
 }
 .lp-rail__note {
   margin-top: 14px;

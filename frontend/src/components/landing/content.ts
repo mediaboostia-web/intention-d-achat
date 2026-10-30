@@ -15,6 +15,10 @@ export const LANDING_IMAGES = {
   avant: { width: 1536, height: 1024 },
   apres: { width: 1536, height: 1024 },
   communaute: { width: 1536, height: 1024 },
+  'menu-support': { width: 1536, height: 1024 },
+  'menu-groupe': { width: 1536, height: 1024 },
+  connexion: { width: 1024, height: 1536 },
+  inscription: { width: 1024, height: 1536 },
 } as const;
 
 export type LandingImageName = keyof typeof LANDING_IMAGES;

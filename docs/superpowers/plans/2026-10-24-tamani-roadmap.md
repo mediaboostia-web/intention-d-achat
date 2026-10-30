@@ -650,7 +650,7 @@ Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08
   Le porteur a envisagé 100 puis 50 FCFA par réponse, puis a gardé cette grille ; il a demandé des noms simples le même jour (Semaine, 2 Semaines, Mois, Mois Plus, Mois Max, sur le modèle des pass de crédit téléphone).
 - **Essai** : numéros et boutons WhatsApp visibles. Ni liens par groupe ni export ; la mention « Propulsé par Tamani » reste, avec son lien.
 - **Après l'essai** : plus de Gratuit permanent. Le lien marche et les nouvelles réponses attendent l'achat d'un pass.
-- **Pas de recharges** (second message du 2026-10-29) : les seuls prix sont les pass. Pour plus de réponses, on prend un autre pass ; il démarre tout de suite et garde les réponses non utilisées. **Pass 12 mois** retiré.
+- **Pas de recharges** (second message du 2026-10-29) : les seuls prix sont les pass. Pour plus de réponses, on prend un autre pass ; il démarre tout de suite et garde les réponses non utilisées tant que le pass en cours n'est pas fini. **Pass 12 mois** retiré.
 - **Clé SasPay** : SasPay ne propose pas de clé de test à ce compte, on développe donc avec la clé live. Les tests automatiques ne joignent jamais SasPay (`fetch` simulé) et ne lisent pas la clé ; les lectures (tarifs, réseaux) et les sessions non payées ne déplacent pas d'argent ; un vrai paiement n'a lieu qu'avec l'accord explicite du porteur, sur le plus petit pass, payé par lui sur son propre compte marchand.
 - **Frais** payés par le client, en plus du prix (`ADD_ON`, porteur, 2026-10-29 au soir). Le mode `DEDUCTED` d'abord choisi était de toute façon ignoré par SasPay, faute de l'option « Autoriser le choix du mode de frais par l'API » sur le compte.
 - **Pays** : paiement dans la zone FCFA d'abord. Le relevé SasPay du 2026-10-29 donne 10 pays encaissés (SN, CI, ML, BF, TG, BJ, NE, CM, GA, CG) ; GW, TD, CF, GQ, GN et CD affichent « Bientôt disponible ».
@@ -678,6 +678,10 @@ Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08
 - **Échec de paiement** : une session qui ne peut plus être payée (`CANCELLED`, ou `EXPIRED` sans paiement réussi) ferme l'achat, pour qu'il ne retarde pas les autres. Un paiement `FAILED` sur une session encore ouverte laisse la commande ouverte, car la page hébergée peut repasser par un autre réseau. Une commande `EXPIRED` que SasPay dit payée s'active quand même. La tâche planifiée prend les achats les plus récents d'abord (revue finale du lot).
 - **Contrôle du montant** : il est numérique (`"9900.00"` et `"9900"` valent 9 900), sur `requested_amount` : avec les frais au client, `debited_amount` est plus grand.
 - **Pass acheté pendant un autre** : il démarre tout de suite, garde les réponses non utilisées et ne finit jamais avant le pass en cours (revue finale du lot : « rien de ce qui est payé ne se perd »).
+- **Pass acheté après la fin** (porteur, 2026-10-30) : une fois le temps écoulé, grâce comprise, les réponses non utilisées sont perdues ; le nouveau pass repart de zéro et les réponses en attente se débloquent. Pas de plafond aux réponses en attente.
+- **Cartes des pass** (porteur, 2026-10-30) : les avantages sont sur chaque carte (`planFeatures`, lu dans `PLANS`) ; la carte de l'essai grise ce qu'elle n'ouvre pas. La liste séparée « Dans chaque pass » disparaît.
+- **Liens** (porteur, 2026-10-30) : support WhatsApp +229 01 95 83 11 26, le groupe WhatsApp, l'e-mail hullysdesire@gmail.com dans le pied de page. Sur téléphone, le menu les ouvre par deux cartes dessinées.
+- **Connexion et inscription sur ordinateur** (porteur, 2026-10-30) : un panneau blanc qui parle à la personne, avec un dessin par page.
 - **Webhook** : `WebhookLog` ne garde que l'événement, l'identifiant, le statut et une empreinte, jamais le numéro ni le nom du payeur.
 - **Activation** :
   - elle prend le verrou de facturation, puis celui du quota ;
