@@ -35,10 +35,10 @@ describe('shopPlan', () => {
       where: { organizationId: 'org_1' },
     });
     prismaMock.subscription.findUnique.mockResolvedValue({
-      plan: 'PRO',
+      plan: 'MONTH',
       currentPeriodEnd: new Date('2026-11-25T00:00:00Z'),
       graceUntil: null,
     } as never);
-    expect(await shopPlan(prismaMock, 'org_1', now)).toBe(PLANS.PRO);
+    expect(await shopPlan(prismaMock, 'org_1', now)).toBe(PLANS.MONTH);
   });
 });

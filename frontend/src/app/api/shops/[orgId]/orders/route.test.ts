@@ -21,7 +21,7 @@ const groupBy = () => prismaMock.saleOrder.groupBy as unknown as Mock;
 
 const now = new Date();
 const pro = {
-  plan: 'PRO',
+  plan: 'MONTH',
   currentPeriodEnd: new Date(now.getTime() + 20 * 86_400_000),
   graceUntil: new Date(now.getTime() + 25 * 86_400_000),
 };

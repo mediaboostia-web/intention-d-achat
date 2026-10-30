@@ -6,7 +6,7 @@
 // "email queue not configured" warning; email-queue-drain returns a no-op
 // `{ ok: true, processed: 0 }` response.
 //
-// Pattern mirrors payments/provider-singleton.ts (lazy + cached + reset hook).
+// Pattern: lazy + cached + reset hook, like getSaspay() in payments/saspay.ts.
 //
 // DEVIATION (from plan §Task 4): the plan suggested inlining `new Resend()`
 // because of unknown Mailer factory shape. The codebase already exports

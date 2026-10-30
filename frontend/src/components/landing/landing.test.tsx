@@ -4,7 +4,7 @@ import path from 'node:path';
 import { html, text } from '@/components/ui/test-html';
 import { WORDMARK_PATH, WORDMARK_VIEWBOX } from '@/lib/design/logo-paths';
 import { LANDING_FAQ, LANDING_LINKS } from '@/lib/tamani/landing';
-import { PLANS } from '@/lib/tamani/plans';
+import { PASS_FEATURES, TRIAL_LIMITS } from '@/lib/tamani/billing-view';
 import { BeforeAfter } from './BeforeAfter';
 import { Community } from './Community';
 import { ORBIT_NETWORKS } from './content';
@@ -162,6 +162,13 @@ describe('Hero', () => {
     expect(out).toMatch(/<ul aria-hidden="true">/);
     expect(text(<Hero />).match(/Telegram/g)).toHaveLength(2);
   });
+
+  it('promises the 3-day trial, not a free plan', () => {
+    const t = text(<Hero />) + text(<Community links={NO_LINKS} />);
+    expect(t).toContain("3 jours d'essai gratuit");
+    expect(t).not.toContain('Gratuit pour commencer');
+    expect(t).not.toContain('compte gratuit');
+  });
 });
 
 describe('Film', () => {
@@ -218,12 +225,79 @@ describe('BeforeAfter', () => {
 });
 
 describe('Pricing', () => {
-  it('shows the PLANS prices and the month/year switch', () => {
+  // The rail's cards only: « Dans chaque pass » below them is an h3 too.
+  const rail = (out: string) =>
+    out.slice(out.indexOf('lp-rail__track'), out.indexOf('lp-included'));
+  const cards = (out: string) =>
+    rail(out)
+      .split('<li')
+      .filter((c) => c.includes('</h3>'));
+  const names = (out: string) => [...rail(out).matchAll(/<h3[^>]*>(.*?)<\/h3>/g)].map((m) => m[1]);
+
+  it("seven cards in the porteur's order", () => {
+    expect(names(html(<Pricing />))).toEqual([
+      'Essai gratuit',
+      'Pass Semaine',
+      'Pass 2 Semaines',
+      'Pass Mois',
+      'Pass Mois Plus',
+      'Pass Mois Max',
+      'Pass Illimité',
+    ]);
     const t = text(<Pricing />);
-    expect(t).toContain('9 900');
-    expect(t).toContain('24 900');
-    expect(t).toContain(`${PLANS.FREE.monthlyResponses} réponses par mois`);
-    expect(html(<Pricing />)).toMatch(/<button[^>]*aria-pressed="true"[^>]*>Au mois</);
+    expect(t).toContain('3 900 FCFA');
+    expect(t).toContain('24 900 FCFA');
+    expect(t).toContain('30 jours · 5 000 réponses');
+    expect(t).toContain('30 jours · 2 500 réponses');
+    expect(t).toContain('Pour un arrivage à écouler vite.');
+    const out = html(<Pricing />);
+    expect(out.match(/href="\/signup"/g)).toHaveLength(6);
+    expect(cards(out)[0]).toContain('Essayer gratuitement');
+  });
+
+  it('Mois Max carries « Le meilleur prix par réponse »', () => {
+    const badged = cards(html(<Pricing />)).filter((c) =>
+      c.includes('Le meilleur prix par réponse'),
+    );
+    expect(badged).toHaveLength(1);
+    expect(badged[0]).toContain('Pass Mois Max</h3>');
+  });
+
+  it('Illimité reads « Sur devis » and hides its button while whatsappContact is null', () => {
+    const last = (links: typeof NO_LINKS) => cards(html(<Pricing links={links} />)).at(-1) ?? '';
+    expect(last(NO_LINKS)).toContain('Sur devis');
+    expect(last(NO_LINKS)).not.toContain('Contacter le support');
+    expect(last(NO_LINKS)).not.toContain('href=');
+    expect(last(ALL_LINKS)).toContain('Contacter le support');
+    expect(last(ALL_LINKS)).toContain('href="https://wa.me/221770000000"');
+  });
+
+  it('lists what every pass includes, and what the trial leaves out', () => {
+    const out = html(<Pricing />);
+    const t = text(<Pricing />);
+    expect(t).toContain('Dans chaque pass');
+    for (const f of PASS_FEATURES) expect(t).toContain(f);
+    expect(out.match(/<li class="lp-included__item"/g)).toHaveLength(PASS_FEATURES.length);
+    expect(t).toContain(TRIAL_LIMITS);
+  });
+
+  it('the line under the cards', () => {
+    expect(text(<Pricing />)).toContain(
+      'Mobile Money ou carte · Pas de renouvellement automatique · Campagnes illimitées',
+    );
+  });
+
+  it('no 12-month toggle', () => {
+    const out = html(<Pricing />);
+    expect(out).not.toContain('aria-pressed');
+    expect(text(<Pricing />)).not.toMatch(/12 mois|Au mois|\bPro\b/);
+  });
+
+  it('the rail scrolls in CSS; its arrows name what they move', () => {
+    const out = html(<Pricing />);
+    expect(out).toContain('class="lp-rail__track"');
+    expect(out).toMatch(/<button[^>]*aria-label="Pass précédents"/);
+    expect(out).toMatch(/<button[^>]*aria-label="Pass suivants"/);
   });
 });
 

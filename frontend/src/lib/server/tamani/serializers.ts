@@ -36,7 +36,7 @@ export function toShop(
   now: Date,
   countryLocked = false,
 ) {
-  const { plan, inGrace } = effectivePlan(sub, now);
+  const { plan, inGrace, endsAt } = effectivePlan(sub, now);
   return {
     id: org.id,
     slug: org.slug,
@@ -49,11 +49,7 @@ export function toShop(
     description: org.description,
     coefConsumer: org.coefConsumer,
     coefReseller: org.coefReseller,
-    plan: {
-      id: plan,
-      inGrace,
-      currentPeriodEnd: plan === 'FREE' ? null : (sub?.currentPeriodEnd?.toISOString() ?? null),
-    },
+    plan: { id: plan, inGrace, endsAt: endsAt?.toISOString() ?? null },
   };
 }
 

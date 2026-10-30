@@ -214,7 +214,7 @@ describe('HomeView', () => {
     });
     expect(t).toContain('Tes campagnes');
     expect(t).toContain('~120 sacs');
-    expect(t).toContain('Verdict avec Pro');
+    expect(t).toContain('Verdict avec un pass');
     expect(t).toContain('6 à servir');
     expect(t).toContain('Stock suffisant');
     expect(out).toMatch(/text-success[^>]*>Commande/);
@@ -381,5 +381,35 @@ describe('HomeView fixes after the review (lot 7a)', () => {
     expect(desk).toBeLessThan(rows);
     expect(out).toMatch(/<section aria-labelledby="m-money-title" class="[^"]*lg:hidden/);
     expect(out).toMatch(/<section aria-labelledby="d-money-title" class="[^"]*hidden lg:block/);
+  });
+});
+
+describe('HomeView pass meter (lot 8)', () => {
+  it('home shows the pass meter on phone and desktop', () => {
+    mockNextNavigation({ pathname: '/app' });
+    const el = (
+      <ShopTestProvider
+        shop={{
+          ...TEST_SHOP,
+          plan: { id: 'MONTH', inGrace: false, endsAt: '2026-11-12T10:00:00.000Z' },
+        }}
+        usage={{
+          used: 420,
+          included: 1000,
+          endsAt: '2026-11-12T10:00:00.000Z',
+          inGrace: false,
+          pending: 0,
+        }}
+      >
+        <HomeView summary={SUMMARY} />
+      </ShopTestProvider>
+    );
+    const out = html(el);
+    // One meter, at every width: no phone-only or desktop-only class on it.
+    expect(out.match(/role="meter"/g)).toHaveLength(1);
+    const meter = out.slice(out.lastIndexOf('<section', out.indexOf('role="meter"')));
+    expect(meter.slice(0, 200)).not.toMatch(/lg:hidden|hidden lg:block/);
+    expect(text(el)).toContain('420 / 1 000 réponses');
+    expect(text(el)).toContain('Prendre un autre pass');
   });
 });

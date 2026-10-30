@@ -40,12 +40,10 @@ describe('responseNotificationText', () => {
     expect(responseNotificationText(no).body).toBe("Une personne n'est pas intéressée.");
   });
 
-  it('a locked response notifies without its content', () => {
+  it('a pending response notifies without its content', () => {
     const { title, body } = responseNotificationText({ ...text, locked: true });
     expect(title).toBe('Nouvelle réponse · Marmites inox 5 L');
-    expect(body).toBe(
-      "Une nouvelle réponse t'attend. Ton forfait du mois est plein : passe à Pro pour la voir.",
-    );
+    expect(body).toBe("Une nouvelle réponse t'attend. Prends un pass pour la voir.");
   });
 });
 

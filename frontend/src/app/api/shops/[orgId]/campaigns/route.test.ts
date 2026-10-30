@@ -82,7 +82,7 @@ function campaign(overrides: Record<string, unknown> = {}) {
 }
 
 const activePro = {
-  plan: 'PRO',
+  plan: 'MONTH',
   currentPeriodEnd: new Date(Date.now() + 30 * DAY),
   graceUntil: new Date(Date.now() + 35 * DAY),
 };

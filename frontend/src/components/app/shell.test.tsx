@@ -287,7 +287,7 @@ describe('shop pages', () => {
         <PlusPage />
       </ShopTestProvider>,
     );
-    expect(free).toContain('Gratuit');
+    expect(free).toContain('Sans pass');
     expect(free).toContain('Se déconnecter');
     // « Ton compte » moved to Profil (feedback 2, §8).
     expect(free).not.toContain('awa@example.com');
@@ -296,13 +296,13 @@ describe('shop pages', () => {
       <ShopTestProvider
         shop={{
           ...TEST_SHOP,
-          plan: { id: 'PRO', inGrace: false, currentPeriodEnd: '2026-11-24T12:00:00.000Z' },
+          plan: { id: 'MONTH', inGrace: false, endsAt: '2026-11-24T12:00:00.000Z' },
         }}
       >
         <PlusPage />
       </ShopTestProvider>,
     );
-    expect(pro).toContain("Pro jusqu'au 24 novembre");
+    expect(pro).toContain("Pass Mois jusqu'au 24 novembre");
   });
 
   it('plus is one list, an icon on each line, Aide hidden without a link', () => {
@@ -317,7 +317,7 @@ describe('shop pages', () => {
     const labels = items.map((li) => text(<div dangerouslySetInnerHTML={{ __html: li }} />));
     const order = [
       'Produits',
-      'Forfait',
+      'Mon pass',
       'Réglages de la boutique',
       'Notifications',
       'Profil',
@@ -329,13 +329,13 @@ describe('shop pages', () => {
     expect(out.match(/<ul/g)).toHaveLength(1);
     for (const href of [
       '/app/produits',
+      '/app/abonnement',
       '/app/reglages',
       '/app/reglages#notifications',
       '/app/profil',
     ]) {
       expect(out, href).toContain(`href="${href}"`);
     }
-    expect(items[1]).toContain('id="forfait"');
     expect(text(page)).not.toContain('Aide');
     expect(out).not.toContain('wa.me');
   });

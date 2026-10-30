@@ -17,7 +17,7 @@ export { Sentry };
  * return a sanitized message for the response body. Use inside catch:
  *
  *   } catch (err) {
- *     captureRouteError(err, { route: 'POST /api/orders' });
+ *     captureRouteError(err, { route: 'POST /api/shops/[orgId]/billing/checkout' });
  *     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
  *   }
  */

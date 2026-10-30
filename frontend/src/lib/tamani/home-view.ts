@@ -190,7 +190,7 @@ export function onboardingSteps(s: {
 
 export interface CampaignVerdictLine {
   title: string;
-  /** The stamp word, coloured by the tone: "Commande", "On attend", "Verdict avec Pro". */
+  /** The stamp word, coloured by the tone: "Commande", "On attend", "Verdict avec un pass". */
   word: string;
   /** "~120 sacs", "12/20"; null when the verdict is hidden. */
   figure: string | null;
@@ -230,7 +230,7 @@ export function campaignVerdictLine(item: CampaignBulletinItem): CampaignVerdict
   if (item.verdict === null) {
     return {
       title: item.title,
-      word: 'Verdict avec Pro',
+      word: 'Verdict avec un pass',
       figure: null,
       tone: 'neutral',
       locked: true,
@@ -301,7 +301,7 @@ export function todoLine(item: TodoItem): TodoLine {
 /**
  * The calculation a verdict tile writes by hand (lot 7a): realistic demand
  * against the planned quantity, the answers still to come while the verdict
- * waits, or the people to serve against the stock. null behind the Pro lock.
+ * waits, or the people to serve against the stock. null behind the pass lock.
  */
 export function verdictCalc(item: CampaignBulletinItem): string | null {
   if (item.availability === 'IN_STOCK') {

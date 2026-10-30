@@ -1,6 +1,6 @@
 // POST /api/shops — create the caller's shop (one per account in v1).
 //
-// The Organization, its OWNER membership and the FREE Subscription are
+// The Organization, its OWNER membership and the trial Subscription are
 // created in one transaction. A transaction-scoped advisory lock on the
 // user, then a membership re-check inside it, make a double tap on
 // "Créer ma boutique" create a single shop (409 SHOP_ALREADY_EXISTS for
@@ -22,6 +22,7 @@ import { advisoryXactLock } from '@/lib/server/tamani/locks';
 import { normalizePhone, shopCountry } from '@/lib/server/tamani/phone';
 import { toShop } from '@/lib/server/tamani/serializers';
 import { getShopForUser } from '@/lib/server/tamani/shop';
+import { trialPass } from '@/lib/server/tamani/subscription';
 
 class ShopAlreadyExists extends Error {}
 
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             currency: currencyForCountry(country),
             logoUrl: logoUrl ?? null,
             members: { create: { userId, role: 'OWNER' } },
-            subscription: { create: { plan: 'FREE' } },
+            subscription: { create: trialPass(new Date()) },
           },
           include: { subscription: true },
         });

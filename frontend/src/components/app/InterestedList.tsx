@@ -111,11 +111,11 @@ function OrderAction({
   );
 }
 
-function ProAction({ label }: { label: string }) {
+function PassAction({ label }: { label: string }) {
   return (
-    <Button href="/app/plus#forfait" variant="secondary">
+    <Button href="/app/abonnement" variant="secondary">
       {label}
-      <Badge tone="accent">Pro</Badge>
+      <Badge tone="accent">Pass</Badge>
     </Button>
   );
 }
@@ -195,7 +195,7 @@ export function InterestedView({
             Copier les numéros
           </Button>
         ) : (
-          <ProAction label="Copier les numéros" />
+          <PassAction label="Copier les numéros" />
         )}
         <Button href={toExport} variant="secondary">
           Télécharger pour Excel
@@ -288,7 +288,7 @@ export function InterestedView({
                 ) : (
                   row.phone && (
                     <Link
-                      href="/app/plus#forfait"
+                      href="/app/abonnement"
                       aria-label={lockedContactText(row.firstName)}
                       title={lockedContactText(row.firstName)}
                       className="flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-grid bg-surface text-ink-muted hover:border-ink"

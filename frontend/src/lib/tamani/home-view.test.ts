@@ -174,10 +174,10 @@ describe('campaignVerdictLine', () => {
     });
   });
 
-  it('a hidden verdict points to Pro', () => {
+  it('a hidden verdict points to a pass', () => {
     expect(
       campaignVerdictLine(item({ verdict: null, realistic: null, reference: null })),
-    ).toMatchObject({ word: 'Verdict avec Pro', figure: null, tone: 'neutral', locked: true });
+    ).toMatchObject({ word: 'Verdict avec un pass', figure: null, tone: 'neutral', locked: true });
   });
 });
 

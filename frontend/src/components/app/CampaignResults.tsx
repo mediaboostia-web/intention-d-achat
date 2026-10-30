@@ -41,7 +41,7 @@ function Heading({ children }: { children: ReactNode }) {
 function OfferedNote() {
   return (
     <p className="mt-3 font-hand text-lg text-ink-soft">
-      Verdict offert pour ta première campagne. Avec Pro, tu l&apos;as sur toutes.
+      Verdict offert pour ta première campagne. Avec un pass, tu l&apos;as sur toutes.
     </p>
   );
 }
@@ -111,7 +111,7 @@ function InStockHead({
       ) : (
         locked(
           'Ton stock va-t-il suffire ?',
-          'Avec Pro, Tamani compare la demande réaliste à ton stock et te dit quand réassortir.',
+          'Avec un pass, Tamani compare la demande réaliste à ton stock et te dit quand réassortir.',
         )
       )}
       {result && access === 'OFFERED' && <OfferedNote />}
@@ -154,14 +154,13 @@ export function CampaignResults({
     <Notice
       tone="warning"
       action={
-        <Button href="/app/plus" variant="secondary">
-          Voir les forfaits
+        <Button href="/app/abonnement" variant="secondary">
+          Prendre un pass
         </Button>
       }
     >
       {stats.lockedCount} {plural(stats.lockedCount, 'réponse en attente', 'réponses en attente')}
-      &nbsp;: ton forfait du mois est plein. Elles s&apos;affichent dès que tu passes au forfait
-      supérieur.
+      &nbsp;: elles s&apos;ouvrent dès que tu prends un pass, les plus anciennes d&apos;abord.
     </Notice>
   );
 
@@ -257,12 +256,12 @@ export function CampaignResults({
       {...(stats.reference === null || inStock ? {} : { reference: stats.reference })}
     />
   );
-  /** What the plan hides, with the way to Pro. */
+  /** What the plan hides, with the way to a pass. */
   const locked = (title: string, pitch: string) => (
     <Card>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-hand text-2xl font-bold text-primary">{title}</h2>
-        <Badge tone="accent">Pro</Badge>
+        <Badge tone="accent">Pass</Badge>
       </div>
       <p className="mt-2 text-lg font-bold text-ink">
         {answers(stats.completed)}, {stats.announced} {units(stats.announced)} annoncées.
@@ -275,8 +274,8 @@ export function CampaignResults({
       ) : (
         <p className="mt-1 text-ink-soft">{pitch}</p>
       )}
-      <Button className="mt-4" href="/app/plus" variant={offerOpen ? 'secondary' : 'primary'}>
-        Passer au Pro
+      <Button className="mt-4" href="/app/abonnement" variant={offerOpen ? 'secondary' : 'primary'}>
+        Prendre un pass
       </Button>
     </Card>
   );
@@ -327,7 +326,7 @@ export function CampaignResults({
       ) : (
         locked(
           'Combien commander ?',
-          'Avec Pro, Tamani calcule la demande réaliste et te dit combien commander.',
+          'Avec un pass, Tamani calcule la demande réaliste et te dit combien commander.',
         )
       )}
 

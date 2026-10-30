@@ -40,10 +40,10 @@ const ICONS = [
   'logout',
 ] as const;
 
-const SHOP = { name: 'Diallo Import', logoUrl: null, planLabel: 'Gratuit' };
+const SHOP = { name: 'Diallo Import', logoUrl: null, planLabel: 'Essai gratuit' };
 const USAGE = { used: 42, limit: 150 };
-const side = (pathname: string, upgrade = true) => (
-  <SideNav pathname={pathname} shop={SHOP} usage={USAGE} upgrade={upgrade} />
+const side = (pathname: string, cta: string | null = 'Prendre un pass') => (
+  <SideNav pathname={pathname} shop={SHOP} usage={USAGE} cta={cta} />
 );
 
 describe('Textarea and Select', () => {
@@ -239,7 +239,7 @@ describe('BottomNav and SideNav', () => {
   it('SideNav reaches the plan and sign-out page from the desktop', () => {
     const nav = html(side('/app/plus'));
     expect(anchor(nav, '/app/plus')).toContain('aria-current="page"');
-    expect(text(side('/app'))).toContain('Compte et forfait');
+    expect(text(side('/app'))).toContain('Compte et pass');
   });
 
   it('the sidebar is the notebook cover', () => {
@@ -247,13 +247,14 @@ describe('BottomNav and SideNav', () => {
     expect(out).toMatch(/^<nav[^>]*class="[^"]*bg-cover/);
     const t = text(side('/app'));
     expect(t).toContain('Diallo Import');
-    expect(t).toContain('Gratuit');
-    expect(t).toContain('42 / 150 réponses ce mois');
+    expect(t).toContain('Essai gratuit');
+    expect(t).toContain('42 / 150 réponses du pass');
     expect(out).toMatch(/role="meter"/);
     expect(out).toContain('aria-valuenow="42"');
     expect(out).toContain('aria-valuemax="150"');
-    expect(t).toContain('Passer au Pro');
-    expect(text(side('/app', false))).not.toContain('Passer au Pro');
+    expect(t).toContain('Prendre un pass');
+    expect(anchor(out, '/app/abonnement')).not.toBe('');
+    expect(text(side('/app', null))).not.toContain('Prendre un pass');
   });
 
   it('folds to its icons, each link keeping its name as a tooltip and for screen readers', () => {

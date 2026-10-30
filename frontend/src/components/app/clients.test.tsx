@@ -64,8 +64,8 @@ describe('ClientList', () => {
   it('FREE rows lock the WhatsApp button', () => {
     const out = html(<ClientList rows={[free]} shopName="Diallo Import" now={now} />);
     expect(out).not.toContain('wa.me');
-    const lock = anchors(out).find((a) => a.includes('href="/app/plus#forfait"')) ?? '';
-    expect(lock).toContain('aria-label="Passe au Pro pour contacter Awa."');
+    const lock = anchors(out).find((a) => a.includes('href="/app/abonnement"')) ?? '';
+    expect(lock).toContain('aria-label="Prends un pass pour contacter Awa."');
     expect(text(<ClientList rows={[free]} shopName="Diallo Import" now={now} />)).toContain(
       '77 •• •• 33',
     );
@@ -177,7 +177,7 @@ describe('ClientDetailView', () => {
     expect(gn).toContain('Total acheté 37 500 FG');
     expect(gn).not.toContain('FCFA');
     expect(t).toContain('Awa a dit oui 5 fois, a acheté 4 fois · 80 %');
-    expect(t).not.toContain('Avec Pro');
+    expect(t).not.toContain('Avec un pass');
   });
 
   it('PRO card under 2 finished yes answers says when the rate comes', () => {
@@ -192,9 +192,9 @@ describe('ClientDetailView', () => {
     const free = { ...pro, reliability: null };
     const t = text(card(free));
     expect(t).toContain('Fiabilité');
-    expect(t).toContain('Avec Pro, tu vois si Awa achète vraiment après avoir dit oui.');
+    expect(t).toContain('Avec un pass, tu vois si Awa achète vraiment après avoir dit oui.');
     expect(t).not.toContain('a dit oui 5 fois');
-    expect(html(card(free))).toMatch(/Fiabilité<\/h2>.*?Pro.*?href="\/app\/plus#forfait"/s);
+    expect(html(card(free))).toMatch(/Fiabilité<\/h2>.*?Pass.*?href="\/app\/abonnement"/s);
     // Orders and the total bought are on every plan.
     expect(t).toContain('Total acheté 37 500 FCFA');
   });
@@ -296,8 +296,8 @@ describe('ClientDetailView', () => {
     const locked = { ...client, phone: '77 •• •• 33', phoneE164: null };
     const out = html(card(locked));
     expect(out).not.toContain('wa.me');
-    expect(text(card(locked))).toContain('Passe au Pro pour contacter Awa.');
-    expect(anchors(out).some((a) => a.includes('href="/app/plus#forfait"'))).toBe(true);
+    expect(text(card(locked))).toContain('Prends un pass pour contacter Awa.');
+    expect(anchors(out).some((a) => a.includes('href="/app/abonnement"'))).toBe(true);
   });
 });
 

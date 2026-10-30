@@ -12,7 +12,7 @@ const params = routeParams({ orgId: 'org_1' });
 const url = (qs: string) => `/api/shops/org_1/exports/file?${qs}`;
 const now = new Date();
 const pro = {
-  plan: 'PRO',
+  plan: 'MONTH',
   currentPeriodEnd: new Date(now.getTime() + 20 * 86_400_000),
   graceUntil: new Date(now.getTime() + 25 * 86_400_000),
 };

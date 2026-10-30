@@ -14,6 +14,7 @@ export const TAMANI_ERROR_CODES = [
   'PRODUCT_IN_USE',
   'CAMPAIGN_NOT_FOUND',
   'CAMPAIGN_CLOSED',
+  'ANSWERS_CLOSED',
   'CAMPAIGN_LIMIT_REACHED',
   'INVALID_CAMPAIGN_TRANSITION',
   'PLAN_FEATURE_LOCKED',
@@ -28,6 +29,10 @@ export const TAMANI_ERROR_CODES = [
   'RESPONSE_NOT_INTERESTED',
   'BILLING_NOT_CONFIGURED',
   'PAYMENT_VERIFY_FAILED',
+  'PAYMENT_COUNTRY_UNAVAILABLE',
+  'OFFER_NOT_BUYABLE',
+  'PAYMENT_PROVIDER_UNAVAILABLE',
+  'PURCHASE_NOT_FOUND',
   'PUSH_NOT_CONFIGURED',
 ] as const;
 
@@ -46,10 +51,11 @@ const MESSAGES: Record<string, string> = {
   PRODUCT_IN_USE: "Ce produit a une campagne en cours. Termine la campagne d'abord.",
   CAMPAIGN_NOT_FOUND: "Cette campagne n'existe plus. Recharge la liste.",
   CAMPAIGN_CLOSED: 'Cette campagne est terminée.',
+  ANSWERS_CLOSED: 'Les réponses sont fermées pour ce mois.',
   CAMPAIGN_LIMIT_REACHED:
-    'Tu as déjà 3 campagnes en cours, le maximum du forfait Gratuit. Termine-en une ou passe au Pro. Tu peux aussi enregistrer celle-ci en brouillon.',
+    "Sans pass ou pendant l'essai, une seule campagne peut être en cours. Termine-la ou prends un pass. Tu peux aussi enregistrer celle-ci en brouillon.",
   INVALID_CAMPAIGN_TRANSITION: 'Cette campagne ne peut pas passer à ce statut. Recharge la page.',
-  PLAN_FEATURE_LOCKED: 'Cette fonction vient avec le forfait Pro.',
+  PLAN_FEATURE_LOCKED: 'Cette fonction vient avec un pass.',
   INVALID_PHONE: "Ce numéro WhatsApp n'est pas valide. Vérifie l'indicatif et les chiffres.",
   INVALID_RESPONSE_TOKEN: 'Cette réponse ne peut plus être modifiée depuis ce téléphone.',
   RATE_LIMITED: 'Trop de tentatives. Attends quelques minutes et réessaie.',
@@ -61,6 +67,12 @@ const MESSAGES: Record<string, string> = {
   RESPONSE_NOT_INTERESTED: "Cette personne n'a pas dit oui : il n'y a pas de commande à créer.",
   BILLING_NOT_CONFIGURED: "Le paiement en ligne n'est pas encore ouvert.",
   PAYMENT_VERIFY_FAILED: "On n'a pas pu vérifier ton paiement. Réessaie dans un instant.",
+  PAYMENT_COUNTRY_UNAVAILABLE:
+    "Le paiement en ligne n'est pas encore disponible dans ton pays. Écris-nous pour prendre un pass.",
+  OFFER_NOT_BUYABLE: "Ce pass ne s'achète pas en ligne : écris-nous pour un devis.",
+  PAYMENT_PROVIDER_UNAVAILABLE:
+    'Le paiement est indisponible pour le moment. Réessaie dans quelques minutes.',
+  PURCHASE_NOT_FOUND: 'Cet achat est introuvable.',
   PUSH_NOT_CONFIGURED: 'Les notifications sur le téléphone ne sont pas encore disponibles.',
   // Kit: auth
   INVALID_CREDENTIALS: 'Email ou mot de passe incorrect.',

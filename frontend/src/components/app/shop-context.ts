@@ -19,15 +19,18 @@ export interface Shop {
   description: string | null;
   coefConsumer: number;
   coefReseller: number;
-  plan: { id: PlanId; inGrace: boolean; currentPeriodEnd: string | null };
+  plan: { id: PlanId; inGrace: boolean; endsAt: string | null };
 }
 
 export type OrgRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 
-/** This month's counted responses against the plan (the sidebar's quota). */
+/** The pass meter (lot 8): answers counted in the pass, answers it holds, answers waiting. */
 export interface ShopUsage {
-  responsesThisMonth: number;
-  monthlyLimit: number;
+  used: number;
+  included: number;
+  endsAt: string | null;
+  inGrace: boolean;
+  pending: number;
 }
 
 /** The signed-in person: the greeting's first name, the avatar's initials. */

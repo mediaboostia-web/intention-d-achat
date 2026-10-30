@@ -14,6 +14,7 @@ describe('TAMANI_ERRORS', () => {
         'PRODUCT_IN_USE',
         'CAMPAIGN_NOT_FOUND',
         'CAMPAIGN_CLOSED',
+        'ANSWERS_CLOSED',
         'CAMPAIGN_LIMIT_REACHED',
         'INVALID_CAMPAIGN_TRANSITION',
         'PLAN_FEATURE_LOCKED',
@@ -28,6 +29,10 @@ describe('TAMANI_ERRORS', () => {
         'RESPONSE_NOT_INTERESTED',
         'BILLING_NOT_CONFIGURED',
         'PAYMENT_VERIFY_FAILED',
+        'PAYMENT_COUNTRY_UNAVAILABLE',
+        'OFFER_NOT_BUYABLE',
+        'PAYMENT_PROVIDER_UNAVAILABLE',
+        'PURCHASE_NOT_FOUND',
         'PUSH_NOT_CONFIGURED',
       ].sort(),
     );

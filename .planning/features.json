@@ -5,16 +5,16 @@
   "version": "1.2.0",
   "starter": "izikit@v1.1",
   "features": {
-    "payments-bictorys": {
-      "description": "Bictorys mobile-money payments (orders + charge + circuit breaker)",
+    "payments-saspay": {
+      "description": "SasPay hosted checkout for the Tamani passes (pass purchases as Order rows, reconciliation, circuit breaker)",
       "prune_complexity": "with-care",
       "owns": {
-        "routes": ["api/orders", "api/pay-redirect"],
-        "libs": ["payments/", "orders/"],
+        "routes": ["api/shops/[orgId]/billing", "api/cron/billing-verify"],
+        "libs": ["payments/", "orders/", "tamani/billing.ts"],
         "models": ["Order"],
-        "envVars": ["BICTORYS_API_KEY", "BICTORYS_API_URL", "COMMISSION_RATE_BP"]
+        "envVars": ["SASPAY_API_KEY", "SASPAY_API_URL"]
       },
-      "cross_dependencies": ["notifications", "email-resend", "webhooks-bictorys"],
+      "cross_dependencies": ["notifications", "email-resend", "webhooks-saspay"],
       "surgical_edits": [
         {
           "file": "frontend/src/lib/server/outbox/dispatcher.ts",
@@ -36,16 +36,16 @@
         "frontend/src/lib/server/observability/vercel-json-shape.test.ts (remove order-expiration assertion)"
       ]
     },
-    "webhooks-bictorys": {
-      "description": "Bictorys webhook receiver with HMAC + replay window + outbox dispatch",
+    "webhooks-saspay": {
+      "description": "SasPay webhook receiver: HMAC of the raw body, 300 s window, WebhookLog dedup, wakes the reconciliation",
       "prune_complexity": "safe",
       "owns": {
-        "routes": ["api/webhooks/bictorys"],
+        "routes": ["api/webhooks/saspay"],
         "libs": ["webhook/"],
         "models": ["WebhookLog"],
-        "envVars": ["BICTORYS_WEBHOOK_SECRET", "BICTORYS_WEBHOOK_REPLAY_WINDOW_MS"]
+        "envVars": ["SASPAY_WEBHOOK_SECRET"]
       },
-      "cross_dependencies": ["payments-bictorys"],
+      "cross_dependencies": ["payments-saspay"],
       "surgical_edits": [],
       "cron_entries": ["webhook-log-purge"],
       "prisma_user_relations": [],

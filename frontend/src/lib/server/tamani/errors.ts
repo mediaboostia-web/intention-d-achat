@@ -15,6 +15,7 @@ export const TAMANI_ERRORS = [
   'PRODUCT_IN_USE',
   'CAMPAIGN_NOT_FOUND',
   'CAMPAIGN_CLOSED',
+  'ANSWERS_CLOSED',
   'CAMPAIGN_LIMIT_REACHED',
   'INVALID_CAMPAIGN_TRANSITION',
   'PLAN_FEATURE_LOCKED',
@@ -29,6 +30,10 @@ export const TAMANI_ERRORS = [
   'RESPONSE_NOT_INTERESTED',
   'BILLING_NOT_CONFIGURED',
   'PAYMENT_VERIFY_FAILED',
+  'PAYMENT_COUNTRY_UNAVAILABLE',
+  'OFFER_NOT_BUYABLE',
+  'PAYMENT_PROVIDER_UNAVAILABLE',
+  'PURCHASE_NOT_FOUND',
   'PUSH_NOT_CONFIGURED',
 ] as const;
 
@@ -44,6 +49,7 @@ const DEFAULT_MESSAGES: Record<TamaniErrorCode, string> = {
   PRODUCT_IN_USE: "Ce produit a une campagne en cours. Termine-la d'abord.",
   CAMPAIGN_NOT_FOUND: 'Cette campagne est introuvable.',
   CAMPAIGN_CLOSED: 'Cette campagne est terminée.',
+  ANSWERS_CLOSED: 'Les réponses sont fermées pour ce mois.',
   CAMPAIGN_LIMIT_REACHED: 'Tu as atteint le nombre de campagnes actives de ton forfait.',
   INVALID_CAMPAIGN_TRANSITION: 'Cette campagne ne peut pas passer à ce statut.',
   PLAN_FEATURE_LOCKED: "Cette fonction n'est pas comprise dans ton forfait.",
@@ -58,6 +64,10 @@ const DEFAULT_MESSAGES: Record<TamaniErrorCode, string> = {
   CLIENT_NOT_FOUND: 'Ce client est introuvable.',
   BILLING_NOT_CONFIGURED: "Le paiement n'est pas encore disponible.",
   PAYMENT_VERIFY_FAILED: "Le paiement n'a pas pu être vérifié.",
+  PAYMENT_COUNTRY_UNAVAILABLE: "Le paiement en ligne n'est pas encore disponible dans ce pays.",
+  OFFER_NOT_BUYABLE: "Ce pass ne s'achète pas en ligne.",
+  PAYMENT_PROVIDER_UNAVAILABLE: 'Le paiement est indisponible pour le moment.',
+  PURCHASE_NOT_FOUND: 'Cet achat est introuvable.',
   PUSH_NOT_CONFIGURED: 'Les notifications sur le téléphone ne sont pas encore disponibles.',
 };
 

@@ -95,7 +95,13 @@ export function ShopGate({ children }: { children: ReactNode }) {
       created: (shop, role, to) => {
         setLanding(to);
         // A new shop has no response yet; the reload brings the person's name.
-        const usage = { responsesThisMonth: 0, monthlyLimit: PLANS[shop.plan.id].monthlyResponses };
+        const usage = {
+          used: 0,
+          included: PLANS[shop.plan.id].includedResponses ?? 0,
+          endsAt: shop.plan.endsAt,
+          inGrace: false,
+          pending: 0,
+        };
         setLoaded({ status: 'ready', shop, role, usage, me: { firstName: null, name: null } });
         void reload();
       },

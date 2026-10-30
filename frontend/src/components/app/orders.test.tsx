@@ -291,12 +291,12 @@ describe('OrderDetailView', () => {
     expect(wa).toContain('target="_blank"');
   });
 
-  it('leads to Pro on Free instead of WhatsApp', () => {
+  it('leads to a pass without one instead of WhatsApp', () => {
     const el = <OrderDetailView {...detailProps({ ...free, status: 'CONFIRMED' })} />;
     const out = html(el);
     expect(out).not.toContain('wa.me');
-    expect(anchors(out).some((a) => a.includes('href="/app/plus#forfait"'))).toBe(true);
-    expect(text(el)).toContain('Pro');
+    expect(anchors(out).some((a) => a.includes('href="/app/abonnement"'))).toBe(true);
+    expect(text(el)).toContain('Pass');
     expect(text(el)).toContain('77 •• •• 12');
   });
 

@@ -11,3 +11,8 @@ export type Db = Prisma.TransactionClient;
 export async function advisoryXactLock(tx: Db, key: string): Promise<void> {
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))`;
 }
+
+/** Counting a shop's answers against its pass (lot 8): completions and unlocks queue here. */
+export function quotaLock(organizationId: string): string {
+  return `quota:${organizationId}`;
+}

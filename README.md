@@ -9,7 +9,7 @@ Tamani est un SaaS pour les grossistes africains. Ils partagent un lien sur What
 
 ## Base technique : le starter izi kit
 
-Tamani est construit sur le starter full-stack headless izi kit : Next.js 16 + Prisma 5 + Neon + Upstash + Cloudinary + Resend + Sentry (paiements Bictorys remplacés par SasPay au lot 8). Une seule app Next.js déployable — aucun backend séparé. Les providers tiers (Cloudinary, Resend, Bictorys, Google OAuth, Sentry, Upstash) sont gated par variables d'environnement et inertes sans leurs clés ; l'app boote et `/api/auth` fonctionne avec juste `DATABASE_URL`, `JWT_SECRET`, `ENCRYPTION_KEY` et `CRON_SECRET`. Le starter ne ship que de la logique — aucun composant UI, aucune page — chaque fork designe son propre UX.
+Tamani est construit sur le starter full-stack headless izi kit : Next.js 16 + Prisma 5 + Neon + Upstash + Cloudinary + Resend + Sentry (paiements SasPay depuis le lot 8). Une seule app Next.js déployable — aucun backend séparé. Les providers tiers (Cloudinary, Resend, SasPay, Google OAuth, Sentry, Upstash) sont gated par variables d'environnement et inertes sans leurs clés ; l'app boote et `/api/auth` fonctionne avec juste `DATABASE_URL`, `JWT_SECRET`, `ENCRYPTION_KEY` et `CRON_SECRET`. Le starter ne ship que de la logique — aucun composant UI, aucune page — chaque fork designe son propre UX.
 
 Voir [STATUS.md](STATUS.md) pour l'historique de migration.
 
@@ -53,7 +53,7 @@ Pour obtenir `DATABASE_URL` + `DIRECT_URL` : crée un projet gratuit sur https:/
 
 - **App :** Next.js 16 (App Router) + React 19 + TypeScript — full-stack via `app/api/<resource>/route.ts` + Server Actions ; tout dans une seule app
 - **Base de données :** Prisma 5 (Postgres / Neon serverless via URL `-pooler` + `DIRECT_URL` pour les migrations)
-- **Infra (toutes optionnelles, env-gated) :** Upstash Redis (rate-limit + leader election + outbox), Cloudinary (média / uploads), Resend (email), Bictorys (paiements mobile money), Google OAuth via `arctic`
+- **Infra (toutes optionnelles, env-gated) :** Upstash Redis (rate-limit + leader election + outbox), Cloudinary (média / uploads), Resend (email), SasPay (achat des pass : mobile money et carte, checkout hébergé), Google OAuth via `arctic`
 - **Auth :** cookie + CSRF + JWT (access 15min / refresh 7j / csrf 7j)
 - **Observabilité :** Sentry via `@sentry/nextjs` (`instrumentation.ts` + `sentry.{client,server,edge}.config.ts`) — no-op silencieux sans `SENTRY_DSN` ; `@vercel/otel` pour les traces distribuées
 - **Outils :** workspace pnpm (un seul package dans `frontend/`), Vitest, ESLint 9 flat config, Prettier, Node 20+
@@ -75,7 +75,7 @@ Groupes optionnels (set les vars pour activer ; absent = inerte) :
 |---|---|---|
 | Storage (Cloudinary) | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `CLOUDINARY_UPLOAD_PRESET?` | `/api/upload` renvoie 503 ; les URLs retournées sont des `secure_url` Cloudinary servies directement par leur CDN. **⚠️ Ces URLs sont publiques — quiconque a l'URL peut lire le fichier. OK pour avatars / posts publics ; pour KYC / factures, ajoute Cloudinary signed delivery ou un proxy auth.** |
 | Email (Resend) | `RESEND_API_KEY`, `EMAIL_FROM` | Les lignes en queue email s'accumulent mais ne partent jamais (drainage au cron suivant dès que la clé arrive) |
-| Paiements (Bictorys) | `BICTORYS_API_KEY`, `BICTORYS_PRIVATE_KEY`, `BICTORYS_WEBHOOK_SECRET`, `BICTORYS_MERCHANT_SECRET_CODE` | `/api/orders` et `/api/webhooks/bictorys` renvoient 404 ; circuit breaker reste CLOSED |
+| Paiements (SasPay) | `SASPAY_API_KEY`, `SASPAY_WEBHOOK_SECRET`, `SASPAY_API_URL?` | L'achat d'un pass et `/api/webhooks/saspay` renvoient 503 ; le reste de l'app marche (les boutiques restent sur leur pass ou « Sans pass ») |
 | Google OAuth | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | `/api/auth/oauth/google/*` renvoient 404 |
 | Sentry | `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE?`, ... | No-op silencieux (zéro coût perf) |
 | Upstash Redis | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Fallback rate-limit en mémoire avec `logger.warn` au boot — NE PAS lancer en prod sans Upstash |
@@ -113,11 +113,6 @@ Référence env complète avec toutes les flags : voir [`.env.example`](.env.exa
 | GET | `/api/notifications/count` | access |
 | GET/PATCH | `/api/notifications/prefs` | access (+CSRF sur PATCH) |
 
-### Orders — 1 route
-| Méthode | Path | Auth |
-|---|---|---|
-| POST | `/api/orders` | optionnelle |
-
 ### Uploads — 1 route
 | Méthode | Path | Auth |
 |---|---|---|
@@ -128,9 +123,18 @@ Les fichiers uploadés renvoient un `secure_url` Cloudinary servi directement pa
 ### Webhooks — 1 route
 | Méthode | Path | Auth |
 |---|---|---|
-| POST | `/api/webhooks/bictorys` | HMAC provider + replay window 60s |
+| POST | `/api/webhooks/saspay` | HMAC du corps brut (`X-Webhook-Signature`), fenêtre de 300 s ; signal du rapprochement |
 
-### Handlers cron — 5 routes (toutes `Authorization: Bearer ${CRON_SECRET}`)
+### Pass Tamani (`/api/shops/[orgId]/billing*`) — 3 routes
+| Méthode | Path | Auth |
+|---|---|---|
+| GET | `/billing` | membre de la boutique : pass en cours, réponses par campagne, achats |
+| POST | `/billing/checkout` | ADMIN ou OWNER + CSRF : ouvre le paiement SasPay, renvoie `checkoutUrl` |
+| GET | `/billing/orders/[orderId]` | membre : rapproche l'achat avec SasPay, puis renvoie où il en est |
+
+### Handlers cron — 8 routes (toutes `Authorization: Bearer ${CRON_SECRET}`, en `GET` ou `POST`)
+
+Sur Vercel Hobby, `vercel.json` ne peut lancer chaque tâche qu'une fois par jour. Les rythmes ci-dessous sont ceux dont le travail a besoin : `outbox-drain` et `email-queue-drain` (les codes d'inscription) toutes les minutes, `billing-verify` toutes les 5 minutes, appelés par cron-job.org avec le même en-tête `Authorization`.
 | Path | Schedule (`vercel.json`) |
 |---|---|
 | `/api/cron/outbox-drain` | toutes les minutes |
@@ -138,6 +142,9 @@ Les fichiers uploadés renvoient un `secure_url` Cloudinary servi directement pa
 | `/api/cron/verification-cleanup` | toutes les heures |
 | `/api/cron/order-expiration` | toutes les 5 min |
 | `/api/cron/webhook-log-purge` | quotidien |
+| `/api/cron/email-job-purge` | quotidien |
+| `/api/cron/billing-verify` | toutes les minutes (rapprochement des achats de pass) |
+| `/api/cron/subscription-renewals` | tous les jours à 8 h (rappel J-3, grâce, fin d'essai) |
 
 ### Admin (`/api/admin/*`) — 12 routes
 | Méthode | Path | Auth |
@@ -203,7 +210,7 @@ Les forks ouverts dans Claude Code récupèrent automatiquement plusieurs skills
 | [`setup-kit`](.claude/skills/setup-kit/SKILL.md) | « /setup-kit », « je débute », « qu'est-ce que je dois installer » | Audit Git / Node / pnpm / gh CLI / env vars / Claude Code surface, blocker explicite si l'user a téléchargé le ZIP au lieu de cloner, install paste-ready (UI palette ou CLI) des 2 plugins manquants, Neon en provider Postgres par défaut (alternatives Supabase/Railway/Render documentées mais surfacées seulement à la demande). Mode débutant non-négociable. |
 | [`banani-design-implementation`](.claude/skills/banani-design-implementation/SKILL.md) | « build this from Banani », « use the Banani MCP », « reproduce this screen » | Reproduction pixel-perfect 1:1 des écrans Banani sélectionnés via MCP (optionnel — Banani n'est pas requis). Lit `CLAUDE.md` pour la stack, planifie, tracke entre sessions. |
 | [`ui-ux-pro-max`](.claude/skills/ui-ux-pro-max/SKILL.md) | « design », « build », « improve », « review UI » + button/modal/navbar/dashboard/landing/SaaS/glassmorphism/etc. | Design intelligence searchable : 67 styles, 96 palettes, 57 paires de fonts, 99 guidelines UX, 25 types de charts sur 13 stacks (Next.js, React, Vue, SwiftUI, Flutter…). Intégration MCP shadcn/ui. |
-| [`izisaas-payments-handler`](.claude/skills/izisaas-payments-handler/SKILL.md) | « intégrer Stripe », « ajouter Moneroo », « swap Bictorys pour … », « webhook signature failure » | Reference complète pour 4 providers de paiement (Stripe worldwide cards + subscriptions, Moneroo / Bictorys / PayTech mobile money UEMOA). Couvre signature verification, idempotent fulfillment, lifecycle subscriptions, stockage credentials AES-256-GCM, gotchas spécifiques par provider. Surface seulement si le fork swap ou étend le default Bictorys. |
+| [`izisaas-payments-handler`](.claude/skills/izisaas-payments-handler/SKILL.md) | « intégrer Stripe », « ajouter Moneroo », « swap Bictorys pour … », « webhook signature failure » | Reference complète pour 4 providers de paiement (Stripe worldwide cards + subscriptions, Moneroo / Bictorys / PayTech mobile money UEMOA). Couvre signature verification, idempotent fulfillment, lifecycle subscriptions, stockage credentials AES-256-GCM, gotchas spécifiques par provider. Tamani encaisse avec SasPay (skill `saspay-integration`) ; celle-ci sert seulement pour ajouter un autre provider. |
 
 Les débutants peuvent donc passer de `gh repo clone` à un UI designé en un seul chat : décris l'écran → une skill prend le relais → les routes API sont déjà câblées.
 
@@ -214,7 +221,7 @@ izikit/
 ├── frontend/                    L'app Next.js 16 (full-stack)
 │   ├── prisma/                  schema.prisma + migrations
 │   ├── scripts/                 make-superadmin.ts, seed-dev.ts, smoke-auth.ts (via tsx)
-│   ├── vercel.json              schedules cron (5 entrées)
+│   ├── vercel.json              schedules cron (8 entrées)
 │   ├── .env.example             référence env
 │   └── src/
 │       ├── app/api/             route handlers
@@ -234,7 +241,7 @@ Décisions de scope du starter — copié ici pour rendre ce README self-contain
 | Feature | Raison |
 |---|---|
 | Composants UI / pages | Headless par design — chaque fork construit son propre UX |
-| Multi-provider paiements out-of-the-box | L'interface `PaymentProvider` permet le swap par projet ; défaut Bictorys only |
+| Multi-provider paiements out-of-the-box | L'interface `PaymentProvider` permet le swap par projet ; Tamani : SasPay seul (checkout hébergé) |
 | Worker process long-running | Décision Vercel-first — tout le background tourne en route handlers planifiés |
 | Migration Auth.js / NextAuth | JWT custom + cookies + CSRF gardés pour la parité template complète |
 | Runtime Edge / Cloudflare Workers | Toutes les routes sont `runtime='nodejs'` |

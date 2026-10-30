@@ -12,6 +12,7 @@ const campaign: PublicCampaign = {
   title: 'Marmites inox 5 L',
   status: 'ACTIVE',
   accepting: true,
+  answersClosed: false,
   availability: 'INCOMING',
   availabilityText: 'Arrivage dans 10 jours',
   timingOptions: ['ON_ARRIVAL', 'WEEK_AFTER', 'LATER'],
@@ -339,6 +340,16 @@ describe('PopupView', () => {
     expect(text(<PopupView campaign={draft} state={start} />)).toContain(
       "Cette campagne n'est pas encore ouverte.",
     );
+  });
+
+  it('says the answers are closed for the month and asks nothing', () => {
+    const full = { ...campaign, answersClosed: true };
+    const t = text(<PopupView campaign={full} state={start} />);
+    expect(t).toContain('Réponses fermées pour ce mois');
+    expect(t).toContain(campaign.product.name);
+    const out = html(<PopupView campaign={full} state={start} />);
+    expect(out).not.toContain('aria-pressed');
+    expect(out).not.toContain('type="tel"');
   });
 
   it('links Propulsé par Tamani to the app, in a new tab, on the free plan', () => {

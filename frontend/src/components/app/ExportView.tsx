@@ -332,9 +332,9 @@ export function ExportView({
             </Button>
           </>
         ) : (
-          <Button href="/app/plus#forfait" variant="secondary">
-            Passe au Pro pour télécharger
-            <Badge tone="accent">Pro</Badge>
+          <Button href="/app/abonnement" variant="secondary">
+            Prends un pass pour télécharger
+            <Badge tone="accent">Pass</Badge>
           </Button>
         )}
       </div>
@@ -349,7 +349,7 @@ function downloadMessage(err: unknown): string {
   if (!(err instanceof DownloadError)) return 'Le téléchargement a échoué. Réessaie.';
   if (err.status === 0) return 'Pas de connexion. Réessaie quand le réseau revient.';
   if (err.status === 401) return 'Ta session a expiré : reconnecte-toi.';
-  if (err.status === 403) return 'Cette fonction vient avec le forfait Pro.';
+  if (err.status === 403) return 'Cette fonction vient avec un pass.';
   return 'Le téléchargement a échoué. Réessaie.';
 }
 

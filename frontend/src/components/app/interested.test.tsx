@@ -127,21 +127,21 @@ describe('InterestedView', () => {
     expect(out).toContain('https://wa.me/221771234512?text=');
     expect(t).toContain('Copier les numéros');
     expect(t).toContain('Télécharger pour Excel');
-    expect(out).not.toContain('Passe au Pro');
+    expect(out).not.toContain('Prends un pass');
   });
 
-  it('a free shop keeps the number masked and the actions lead to Pro', () => {
+  it('a free shop keeps the number masked and the actions lead to a pass', () => {
     const el = (
       <InterestedView {...props({ rows: [freeAwa], contacts: false, exportable: false })} />
     );
     const out = html(el);
     expect(text(el)).toContain('+221 77 ••• •• 12');
-    expect(out).toContain('Passe au Pro pour contacter Awa');
+    expect(out).toContain('Prends un pass pour contacter Awa');
     expect(out).not.toContain('wa.me');
-    expect(out.match(/href="\/app\/plus/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(out.match(/href="\/app\/abonnement/g)?.length).toBeGreaterThanOrEqual(2);
     // The export page shows its preview on every plan.
     expect(out).toContain('href="/app/exporter?quoi=reponses&amp;reponse=oui&amp;campagne=c1"');
-    expect(text(el)).toContain('Pro');
+    expect(text(el)).toContain('Pass');
   });
 
   it('leads « Télécharger pour Excel » to the export page, with the campaign and the filter', () => {

@@ -1,65 +1,29 @@
-import { Icon, type IconName } from '@/components/ui';
+import { Button, Icon, OfferCard } from '@/components/ui';
+import { PASS_FEATURES, TRIAL_LIMITS } from '@/lib/tamani/billing-view';
+import { LANDING_LINKS, pricingOffers, type LandingLinks } from '@/lib/tamani/landing';
 import { PLANS } from '@/lib/tamani/plans';
 import { formatPrice } from '@/lib/utils';
-import { PricingTags } from './PricingTags';
-
-const PROMISES: readonly { icon: IconName; title: string; text: string }[] = [
-  {
-    icon: 'receipt',
-    title: "Rien n'est prélevé tout seul",
-    text: "Mobile money ou carte. Tu paies 1 mois ou 12 mois d'avance.",
-  },
-  {
-    icon: 'check',
-    title: 'Aucune réponse perdue',
-    text: "Au-delà de ton quota, elles t'attendent.",
-  },
-  {
-    icon: 'lock',
-    title: 'Tes données restent à toi',
-    text: 'Tes clients et leurs numéros ne sont partagés avec personne.',
-  },
-];
+import { OfferRail } from './OfferRail';
 
 type Cell = string | boolean;
-const { FREE, PRO, BUSINESS } = PLANS;
-const ROWS: readonly [string, Cell, Cell, Cell][] = [
-  ['Campagnes en cours', String(FREE.maxActiveCampaigns), 'Illimitées', 'Illimitées'],
+const { TRIAL, WEEK, MONTH_MAX } = PLANS;
+const RANGE = `${formatPrice(WEEK.includedResponses ?? 0)} à ${formatPrice(MONTH_MAX.includedResponses ?? 0)}`;
+const ROWS: readonly [string, Cell, Cell][] = [
+  ['Durée', `${TRIAL.durationDays} jours`, '7, 14 ou 30 jours'],
+  ['Réponses', formatPrice(TRIAL.includedResponses ?? 0), RANGE],
+  ['Campagnes en cours', String(TRIAL.maxActiveCampaigns), 'Illimitées'],
+  ['Réponses et totaux', true, true],
+  ['Quantité conseillée et verdict', TRIAL.features.estimate, WEEK.features.estimate],
   [
-    'Réponses par mois',
-    formatPrice(FREE.monthlyResponses),
-    formatPrice(PRO.monthlyResponses),
-    formatPrice(BUSINESS.monthlyResponses),
+    'Numéros des clients et WhatsApp',
+    TRIAL.features.respondentContacts,
+    WEEK.features.respondentContacts,
   ],
-  ['Réponses et totaux', true, true, true],
-  [
-    'Quantité conseillée et verdict',
-    FREE.features.estimate,
-    PRO.features.estimate,
-    BUSINESS.features.estimate,
-  ],
-  [
-    'Un lien par groupe',
-    FREE.features.sourceLinks,
-    PRO.features.sourceLinks,
-    BUSINESS.features.sourceLinks,
-  ],
-  ['Numéros des clients et WhatsApp', 'Masqués', true, true],
-  ['Commandes et livraisons par quartier', true, true, true],
-  [
-    'Fiabilité des clients',
-    FREE.features.reliability,
-    PRO.features.reliability,
-    BUSINESS.features.reliability,
-  ],
-  [
-    'Export pour Excel',
-    FREE.features.csvExport,
-    PRO.features.csvExport,
-    BUSINESS.features.csvExport,
-  ],
-  ['Mention « Propulsé par Tamani »', 'Oui', 'Non', 'Non'],
-  ["Membres d'équipe", String(FREE.seats), String(PRO.seats), `${BUSINESS.seats} (bientôt)`],
+  ['Un lien par groupe', TRIAL.features.sourceLinks, WEEK.features.sourceLinks],
+  ['Commandes et livraisons par quartier', true, true],
+  ['Fiabilité des clients', TRIAL.features.reliability, WEEK.features.reliability],
+  ['Export pour Excel', TRIAL.features.csvExport, WEEK.features.csvExport],
+  ['Mention « Propulsé par Tamani »', 'Oui', 'Non'],
 ];
 
 function CellValue({ value }: { value: Cell }) {
@@ -74,8 +38,39 @@ function CellValue({ value }: { value: Cell }) {
   return <>{value}</>;
 }
 
-/** 7. Pricing: price tags hanging from the stall, the guarantees, every detail on demand. */
-export function Pricing() {
+/**
+ * 7. Pricing (porteur, 2026-10-29): the trial, the five passes and the
+ * Illimité as a rail of cards, the line under them, every detail on demand.
+ * The Illimité's button waits for Tamani's WhatsApp number.
+ */
+export function Pricing({ links = LANDING_LINKS }: { links?: LandingLinks }) {
+  const help = links.whatsappContact;
+  const actionFor = (id: string) => {
+    if (id === 'TRIAL')
+      return (
+        <Button href="/signup" className="lp-press w-full">
+          Essayer gratuitement
+        </Button>
+      );
+    if (id === 'UNLIMITED')
+      return help ? (
+        <Button
+          href={help}
+          variant="secondary"
+          className="w-full"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Contacter le support
+        </Button>
+      ) : null;
+    return (
+      <Button href="/signup" variant="secondary" className="w-full">
+        Choisir
+      </Button>
+    );
+  };
+
   return (
     <section id="tarifs" className="lp-section" aria-labelledby="lp-price-title">
       <div className="lp-wrap lp-center">
@@ -83,21 +78,39 @@ export function Pricing() {
           Un prix plus petit qu&apos;un carton qui dort.
         </h2>
         <p className="lp-lead">
-          Commence gratuitement. Passe à Pro quand tu veux la quantité conseillée et les numéros de
-          tes clients.
+          Essaie 3 jours gratuitement. Prends ensuite un pass : tu paies des réponses, jamais des
+          campagnes.
         </p>
-        <PricingTags />
-        <ul className="lp-promise">
-          {PROMISES.map((p) => (
-            <li key={p.title}>
-              <Icon name={p.icon} />
-              <span>
-                <b>{p.title}</b>
-                {p.text}
-              </span>
+        <OfferRail label="Les pass Tamani">
+          {pricingOffers().map((o) => (
+            <li key={o.id}>
+              <OfferCard
+                name={o.name}
+                price={o.price}
+                durationLabel={o.durationLabel}
+                responsesLabel={o.responsesLabel}
+                forWho={o.forWho}
+                badge={o.badge}
+                action={actionFor(o.id)}
+              />
             </li>
           ))}
-        </ul>
+        </OfferRail>
+        <div className="lp-included">
+          <h3 className="lp-included__title">Dans chaque pass</h3>
+          <ul>
+            {PASS_FEATURES.map((f) => (
+              <li key={f} className="lp-included__item">
+                <Icon name="check" />
+                {f}
+              </li>
+            ))}
+          </ul>
+          <p className="lp-included__trial">{TRIAL_LIMITS}</p>
+        </div>
+        <p className="lp-rail__note">
+          Mobile Money ou carte · Pas de renouvellement automatique · Campagnes illimitées
+        </p>
         <details className="lp-compare">
           <summary>
             <Icon name="plus" />
@@ -108,9 +121,8 @@ export function Pricing() {
               <thead>
                 <tr>
                   <th scope="col">Ce que tu as</th>
-                  <th scope="col">{FREE.label}</th>
-                  <th scope="col">{PRO.label}</th>
-                  <th scope="col">{BUSINESS.label}</th>
+                  <th scope="col">{TRIAL.label}</th>
+                  <th scope="col">Avec un pass</th>
                 </tr>
               </thead>
               <tbody>

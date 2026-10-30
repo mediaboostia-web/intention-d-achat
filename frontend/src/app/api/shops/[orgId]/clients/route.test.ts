@@ -21,7 +21,7 @@ const shop = routeParams({ orgId: 'org_1' });
 const one = routeParams({ orgId: 'org_1', respondentId: 'r1' });
 const errorOf = async (res: Response) => ((await res.json()) as { error: string }).error;
 const pro = {
-  plan: 'PRO',
+  plan: 'MONTH',
   currentPeriodEnd: new Date(Date.now() + 30 * 86_400_000),
   graceUntil: null,
 };

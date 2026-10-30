@@ -42,19 +42,45 @@ beforeEach(async () => {
 });
 
 describe('GET /api/shops/me', () => {
-  it('sends the usage and the first name', async () => {
+  it('sends the pass meter and the first name', async () => {
     const res = await GET(apiRequest('/api/shops/me'));
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       shop: { id: string };
       role: string;
-      usage: { responsesThisMonth: number; monthlyLimit: number };
+      usage: {
+        used: number;
+        included: number;
+        endsAt: string | null;
+        inGrace: boolean;
+        pending: number;
+      };
       me: { firstName: string | null; name: string | null };
     };
     expect(body.shop.id).toBe('org_1');
     expect(body.role).toBe('OWNER');
-    expect(body.usage).toEqual({ responsesThisMonth: 42, monthlyLimit: 150 });
+    // Without a pass nothing counts; the 42 completed answers wait.
+    expect(body.usage).toEqual({ used: 0, included: 0, endsAt: null, inGrace: false, pending: 42 });
     expect(body.me).toEqual({ firstName: 'Fatou', name: 'Fatou Ndiaye' });
+  });
+
+  it('counts the answers of the pass in force', async () => {
+    prismaMock.subscription.findUnique.mockResolvedValue({
+      plan: 'WEEK',
+      periodStart: new Date(Date.now() - 86_400_000),
+      currentPeriodEnd: new Date('2099-01-08T00:00:00Z'),
+      graceUntil: new Date('2099-01-11T00:00:00Z'),
+      responsesIncluded: 150,
+    } as never);
+    prismaMock.response.count.mockResolvedValueOnce(12).mockResolvedValueOnce(0);
+    const body = (await (await GET(apiRequest('/api/shops/me'))).json()) as { usage: unknown };
+    expect(body.usage).toEqual({
+      used: 12,
+      included: 150,
+      endsAt: '2099-01-08T00:00:00.000Z',
+      inGrace: false,
+      pending: 0,
+    });
   });
 
   it('has no first name when the account has no name', async () => {

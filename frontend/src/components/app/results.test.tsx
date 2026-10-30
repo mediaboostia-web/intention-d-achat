@@ -97,20 +97,20 @@ describe('CampaignResults', () => {
 
   it('the offered verdict says so', () => {
     expect(text(render({ stats, access: 'OFFERED' }))).toContain(
-      "Verdict offert pour ta première campagne. Avec Pro, tu l'as sur toutes.",
+      "Verdict offert pour ta première campagne. Avec un pass, tu l'as sur toutes.",
     );
   });
 
-  it('a locked verdict gives the answers and the announced demand, and leads to Pro', () => {
+  it('a locked verdict gives the answers and the announced demand, and leads to a pass', () => {
     const el = render({ stats: { ...stats, result: null }, access: 'LOCKED' });
     const t = text(el);
     expect(t).toContain('Combien commander ?');
     expect(t).toContain('94 réponses');
     expect(t).toContain('350 pièces annoncées');
-    expect(t).toContain('Pro');
+    expect(t).toContain('Pass');
     expect(t).not.toContain('Prudence');
     expect(t).not.toContain('211');
-    expect(html(el)).toContain('href="/app/plus"');
+    expect(html(el)).toContain('href="/app/abonnement"');
   });
 
   it('a free shop whose offered verdict is still to give is told it is coming', () => {
@@ -154,7 +154,7 @@ describe('CampaignResults', () => {
 
   it('the pending notice keeps a non-breaking space before its colon', () => {
     expect(html(render({ stats: { ...stats, lockedCount: 3 }, access: 'PLAN' }))).toContain(
-      '3 réponses en attente : ton forfait',
+      '3 réponses en attente : elles s',
     );
   });
 
@@ -278,7 +278,7 @@ describe('CampaignResults for an in-stock campaign', () => {
     const t = text(render({ stats: inStock(), access: 'LOCKED' }));
     expect(t).toContain('À servir maintenant');
     expect(t).toContain('Ton stock va-t-il suffire ?');
-    expect(t).toContain('Pro');
+    expect(t).toContain('Pass');
     expect(t).not.toContain('Stock suffisant');
   });
 

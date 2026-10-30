@@ -90,3 +90,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   });
 }
+
+/** Vercel Cron calls GET; POST stays for manual runs and the external scheduler. */
+export const GET = POST;

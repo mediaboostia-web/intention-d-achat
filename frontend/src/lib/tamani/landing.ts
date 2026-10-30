@@ -4,11 +4,12 @@
 // Pure and shared with the browser.
 import type { Metadata } from 'next';
 import { formatPrice } from '@/lib/utils';
-import { PLANS, priceFor, type PlanId } from './plans';
+import { BEST_VALUE_LABEL, FOR_WHO, offerCards, unlimitedCard } from './billing-view';
+import { PASS_IDS, PLANS, type PlanId } from './plans';
 
 export const LANDING_TITLE = 'Tamani : demande à ta communauté WhatsApp avant de commander';
 export const LANDING_DESCRIPTION =
-  'Partage un lien sur WhatsApp, tes clients répondent en moins de 30 secondes et Tamani te dit combien commander. Pour grossistes et importateurs. Gratuit pour commencer.';
+  "Partage un lien sur WhatsApp, tes clients répondent en moins de 30 secondes et Tamani te dit combien commander. Pour grossistes et importateurs. 3 jours d'essai gratuit.";
 export const LANDING_SLOGAN = 'Ta communauté parle. Tu sais quoi acheter.';
 const SHARE_TITLE = "Tamani : sache combien commander avant d'acheter";
 const SHARE_DESCRIPTION =
@@ -40,7 +41,7 @@ export interface LandingVideo {
 /** The presentation video, once it exists (MP4 16:9, about 90 seconds). */
 export const LANDING_VIDEO: LandingVideo | null = null;
 
-const FREE = PLANS.FREE;
+const { TRIAL } = PLANS;
 
 export const LANDING_FAQ: readonly { question: string; answer: string }[] = [
   {
@@ -61,60 +62,52 @@ export const LANDING_FAQ: readonly { question: string; answer: string }[] = [
   {
     question: 'Comment Tamani calcule-t-il la quantité à commander ?',
     answer:
-      "Tout le monde n'achète pas ce qu'il annonce. Tamani applique donc un coefficient : 0,7 pour un revendeur, 0,5 pour un usager. Tu peux les changer, et avec Pro, Tamani les apprend de tes vraies ventes. Le calcul est toujours affiché.",
+      "Tout le monde n'achète pas ce qu'il annonce. Tamani applique donc un coefficient : 0,7 pour un revendeur, 0,5 pour un usager. Tu peux les changer, et avec un pass, Tamani les apprend de tes vraies ventes. Le calcul est toujours affiché.",
   },
   {
-    question: "Le forfait Gratuit, c'est pour combien de temps ?",
-    answer: `Pour toujours : ${FREE.maxActiveCampaigns} campagnes en cours et ${FREE.monthlyResponses} réponses par mois. Le verdict et la quantité conseillée sont dans Pro.`,
+    question: "L'essai gratuit, comment ça marche ?",
+    answer: `Ta boutique a ${TRIAL.durationDays} jours ou ${TRIAL.includedResponses} réponses, la première limite atteinte, pour une campagne, sans carte bancaire. Tu as le verdict et les numéros de tes clients. Ensuite, tes nouvelles réponses t'attendent : tu les ouvres en prenant un pass.`,
   },
   {
-    question: 'Que se passe-t-il si je dépasse mes réponses du mois ?',
+    question: 'Que se passe-t-il si je dépasse les réponses de mon pass ?',
     answer:
-      "Aucune réponse n'est perdue, et tes clients ne voient aucun blocage. Les réponses en plus sont gardées : tu les vois dès que tu passes au forfait du dessus.",
+      "Aucune réponse n'est perdue, et tes clients ne voient aucun blocage. Les réponses en plus sont gardées : tu les vois dès que tu prends un autre pass, qui garde aussi les réponses non utilisées.",
   },
   {
     question: 'Comment je paie ?',
     answer:
-      "Par mobile money ou par carte, pour 1 mois ou 12 mois d'avance. Rien n'est prélevé automatiquement : trois jours avant la fin, Tamani te prévient.",
+      "Par mobile money ou par carte, pour un pass de 7, 14 ou 30 jours payé d'avance. Rien n'est prélevé automatiquement : trois jours avant la fin, Tamani te prévient.",
   },
 ];
 
-export interface PricingTier {
+export interface PricingOffer {
   id: PlanId;
-  label: string;
-  /** The big figure: the monthly price, or a year's monthly share. */
+  name: string;
+  /** Written as the card shows it: « Gratuit », « 3 900 FCFA », « Sur devis ». */
   price: string;
-  unit: string;
-  /** The line under the price. */
-  per: string;
+  durationLabel: string;
+  responsesLabel: string;
+  forWho: string;
+  badge?: string;
 }
 
-const TIER_ORDER: readonly PlanId[] = ['FREE', 'PRO', 'BUSINESS'];
-
-/** The three price tags, paid by the month or for 12 months (a year costs ten months). */
-export function pricingTiers(months: 1 | 12): PricingTier[] {
-  return TIER_ORDER.map((id) => {
-    const label = PLANS[id].label;
-    if (id === 'FREE') return { id, label, price: '0', unit: 'FCFA', per: 'Pour toujours' };
-    const monthly = priceFor(id, 1);
-    if (months === 1) {
-      return {
-        id,
-        label,
-        price: formatPrice(monthly),
-        unit: 'FCFA par mois',
-        per: 'Sans engagement',
-      };
-    }
-    const year = priceFor(id, 12);
-    return {
-      id,
-      label,
-      price: formatPrice(Math.round(year / 12)),
-      unit: 'FCFA par mois',
-      per: `Payé ${formatPrice(year)} FCFA pour 12 mois, au lieu de ${formatPrice(monthly * 12)}.`,
-    };
-  });
+/** The home page grid: the trial, the five passes (prices in FCFA), the Illimité on quote. */
+export function pricingOffers(): PricingOffer[] {
+  return [
+    {
+      id: 'TRIAL',
+      name: TRIAL.label,
+      price: 'Gratuit',
+      durationLabel: `${TRIAL.durationDays} jours`,
+      responsesLabel: `${formatPrice(TRIAL.includedResponses ?? 0)} réponses`,
+      forWho: FOR_WHO.TRIAL,
+    },
+    ...offerCards('XOF').map(({ bestValue, ...card }) => ({
+      ...card,
+      ...(bestValue && { badge: BEST_VALUE_LABEL }),
+    })),
+    { id: 'UNLIMITED', ...unlimitedCard() },
+  ];
 }
 
 /** The bar stays put near the top of the page. */
@@ -189,20 +182,12 @@ export function landingJsonLd(appUrl: string): Record<string, unknown> {
         description:
           'Les grossistes et importateurs partagent un lien sur WhatsApp, Telegram ou Facebook. Leur communauté dit en moins de 30 secondes qui veut quoi et combien, et Tamani conseille la quantité à commander.',
         publisher: org,
-        offers: TIER_ORDER.map((id) => {
-          const price = String(PLANS[id].monthlyPriceXof);
-          const offer = { '@type': 'Offer', name: PLANS[id].label, price, priceCurrency: 'XOF' };
-          if (id === 'FREE') return offer;
-          return {
-            ...offer,
-            priceSpecification: {
-              '@type': 'UnitPriceSpecification',
-              price,
-              priceCurrency: 'XOF',
-              unitText: 'MONTH',
-            },
-          };
-        }),
+        offers: (['TRIAL', ...PASS_IDS] as const).map((id) => ({
+          '@type': 'Offer',
+          name: PLANS[id].label,
+          price: String(PLANS[id].priceXof ?? 0),
+          priceCurrency: 'XOF',
+        })),
       },
       {
         '@type': 'FAQPage',

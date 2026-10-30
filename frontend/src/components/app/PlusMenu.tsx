@@ -1,9 +1,9 @@
 'use client';
 
 // /app/plus (porteur's feedback 2, §8): one list, an icon on each line, of
-// what the phone's bottom bar has no room for. The plan line keeps the
-// #forfait anchor the upgrade links point at. Aide waits for Tamani's
-// WhatsApp contact (LANDING_LINKS): a null link hides the line.
+// what the phone's bottom bar has no room for. « Mon pass » opens the pass
+// page (lot 8). Aide waits for Tamani's WhatsApp contact (LANDING_LINKS):
+// a null link hides the line.
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import type { Shop } from '@/components/app/shop-context';
@@ -30,11 +30,11 @@ const LINKS: ReadonlyArray<{ href: string; icon: IconName; label: string; note: 
   { href: '/app/profil', icon: 'user', label: 'Profil', note: 'Ton nom, ton mot de passe' },
 ];
 
-/** « Gratuit », or « Pro jusqu'au 24 novembre 2026 » for a paid plan with an end date. */
+/** « Sans pass », or « Pass Mois jusqu'au 24 novembre 2026 » for a pass with an end date. */
 export function planSentence(plan: Shop['plan']): string {
   const { label } = PLANS[plan.id];
-  if (plan.id === 'FREE' || !plan.currentPeriodEnd) return label;
-  return `${label} jusqu'au ${formatDateFr(new Date(plan.currentPeriodEnd))}`;
+  if (plan.id === 'FREE' || !plan.endsAt) return label;
+  return `${label} jusqu'au ${formatDateFr(new Date(plan.endsAt))}`;
 }
 
 function RowBody({
@@ -84,21 +84,21 @@ export function PlusMenu({
           </RowBody>
         </Link>
       </li>
-      <li id="forfait" className="scroll-mt-6">
-        <div className={ROW}>
-          <RowBody icon="tag" label="Forfait">
+      <li>
+        <Link href="/app/abonnement" className={ROW}>
+          <RowBody icon="tag" label="Mon pass" arrow>
             <span className="font-bold text-ink-soft">{planSentence(plan)}</span>
             {limits.maxActiveCampaigns !== null &&
               note(
-                `${limits.maxActiveCampaigns} campagnes en cours au plus, ${limits.monthlyResponses} réponses par mois.`,
+                `${limits.maxActiveCampaigns} campagne en cours au plus, ${limits.includedResponses ?? 0} réponses.`,
               )}
             {plan.inGrace && (
               <span className="text-sm font-bold text-warning">
-                Paiement en attente&nbsp;: renouvelle ton forfait pour le garder.
+                Ton pass est terminé&nbsp;: rachète-le pour garder tes réponses ouvertes.
               </span>
             )}
           </RowBody>
-        </div>
+        </Link>
       </li>
       {LINKS.map((l) => (
         <li key={l.href}>

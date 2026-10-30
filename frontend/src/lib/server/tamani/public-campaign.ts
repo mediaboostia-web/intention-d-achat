@@ -9,6 +9,7 @@ import { TIMING_OPTIONS, type Availability, type Timing } from '@/lib/tamani/tim
 import { effectiveStatus, isAcceptingResponses, type CampaignStatus } from './campaign-status';
 import type { Db } from './locks';
 import { toPublicProduct } from './serializers';
+import { answersClosed } from './quota';
 import { SHORT_CODE_REGEX } from './short-code';
 import { effectivePlan } from './subscription';
 
@@ -19,6 +20,8 @@ export interface PublicCampaign {
   title: string;
   status: CampaignStatus;
   accepting: boolean;
+  /** No pass and the month's ceiling reached: the popup shows the product and asks nothing. */
+  answersClosed: boolean;
   availability: Availability;
   availabilityText: string;
   timingOptions: readonly Timing[];
@@ -75,6 +78,7 @@ export async function getPublicCampaign(
   const interestedCount = campaign.showLiveCounter
     ? await db.response.count({ where: interestedWhere(campaign.id) })
     : null;
+  const accepting = isAcceptingResponses(campaign, now) && product.archivedAt === null;
 
   return {
     code: link.code,
@@ -82,7 +86,8 @@ export async function getPublicCampaign(
     campaignId: campaign.id,
     title: campaign.title,
     status: effectiveStatus(campaign, now),
-    accepting: isAcceptingResponses(campaign, now) && product.archivedAt === null,
+    accepting,
+    answersClosed: accepting && (await answersClosed(db, org.id, now, org.subscription)),
     availability,
     availabilityText: formatAvailability({ availability, availableAt: campaign.availableAt }, now),
     timingOptions: TIMING_OPTIONS[availability],

@@ -1,7 +1,7 @@
 'use client';
 
 // A client's page: who they are, how to reach them (locked on Free), their
-// orders and the total bought, how often their yes became a purchase (Pro),
+// orders and the total bought, how often their yes became a purchase (with a pass),
 // the wholesaler's note and every answer they gave, each opening its
 // campaign. An ADMIN or the OWNER can delete the client's data on request
 // (spec §6.9). ClientScreen loads and saves; ClientDetailView draws from its
@@ -93,11 +93,11 @@ function ClientReliability({
       <Card as="section" className="mt-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className={SECTION_TITLE}>Fiabilité</h2>
-          <Badge tone="accent">Pro</Badge>
+          <Badge tone="accent">Pass</Badge>
         </div>
         <p className="mt-2 text-ink-soft">{lockedReliabilityText(firstName)}</p>
-        <Button className="mt-4" href="/app/plus#forfait" variant="secondary">
-          Voir le forfait Pro
+        <Button className="mt-4" href="/app/abonnement" variant="secondary">
+          Prendre un pass
         </Button>
       </Card>
     );
@@ -378,8 +378,8 @@ export function ClientDetailView({
           tone="info"
           className="mt-6"
           action={
-            <Button href="/app/plus#forfait" variant="secondary">
-              Voir le forfait Pro
+            <Button href="/app/abonnement" variant="secondary">
+              Prendre un pass
             </Button>
           }
         >

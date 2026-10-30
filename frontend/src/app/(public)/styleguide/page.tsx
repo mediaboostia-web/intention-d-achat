@@ -449,7 +449,7 @@ export default function StyleguidePage() {
         <Section title="Espace grossiste">
           <PageHeader
             title="Mes campagnes"
-            note="2 en cours sur 3 avec le forfait Gratuit"
+            note="1 en cours sur 1 pendant l'essai"
             action={<Button href="#">Créer une campagne</Button>}
           />
           <Tabs
@@ -491,14 +491,14 @@ export default function StyleguidePage() {
               <Notice tone="info">Brouillon enregistré. Tu peux le lancer quand tu veux.</Notice>
               <Notice
                 tone="warning"
-                title="3 campagnes en cours"
+                title="1 campagne en cours"
                 action={
                   <Button href="#" variant="secondary">
-                    Voir le forfait Pro
+                    Prendre un pass
                   </Button>
                 }
               >
-                C&apos;est le maximum du forfait Gratuit. Termine-en une ou passe au Pro.
+                C&apos;est le maximum sans pass. Termine-la ou prends un pass.
               </Notice>
               <Notice tone="danger">
                 Cette photo est trop lourde : 10 Mo au plus. Choisis-en une autre.
@@ -524,9 +524,9 @@ export default function StyleguidePage() {
             <div className="frame hidden overflow-hidden rounded-card lg:block [&>nav]:static [&>nav]:h-auto">
               <SideNav
                 pathname="/app/produits"
-                shop={{ name: 'Diallo Import', logoUrl: null, planLabel: 'Gratuit' }}
+                shop={{ name: 'Diallo Import', logoUrl: null, planLabel: 'Essai gratuit' }}
                 usage={{ used: 42, limit: 150 }}
-                upgrade
+                cta="Prendre un pass"
               />
             </div>
           </div>

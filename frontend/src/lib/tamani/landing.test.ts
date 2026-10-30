@@ -8,37 +8,41 @@ import {
   landingMetadata,
   navStep,
   pickWeighted,
-  pricingTiers,
+  pricingOffers,
 } from './landing';
 import { PLANS } from './plans';
 
-describe('pricingTiers reads PLANS', () => {
-  it('shows the monthly prices', () => {
-    const [free, pro, business] = pricingTiers(1);
-    expect(free).toEqual({
-      id: 'FREE',
-      label: 'Gratuit',
-      price: '0',
-      unit: 'FCFA',
-      per: 'Pour toujours',
+describe('pricingOffers reads PLANS', () => {
+  it("seven cards in the porteur's order, each with who it is for", () => {
+    const offers = pricingOffers();
+    expect(offers.map((o) => [o.id, o.forWho])).toEqual([
+      ['TRIAL', 'Pour voir Tamani marcher sur un produit.'],
+      ['WEEK', 'Pour un arrivage à écouler vite.'],
+      ['TWO_WEEKS', 'Pour deux semaines de ventes.'],
+      ['MONTH', 'Pour vendre tout le mois.'],
+      ['MONTH_PLUS', 'Pour un groupe actif.'],
+      ['MONTH_MAX', 'Pour les grands groupes.'],
+      ['UNLIMITED', 'Pour les très grandes communautés.'],
+    ]);
+    expect(offers[0]).toEqual({
+      id: 'TRIAL',
+      name: 'Essai gratuit',
+      price: 'Gratuit',
+      durationLabel: '3 jours',
+      responsesLabel: '50 réponses',
+      forWho: 'Pour voir Tamani marcher sur un produit.',
     });
-    expect(pro).toEqual({
-      id: 'PRO',
-      label: 'Pro',
-      price: '9 900',
-      unit: 'FCFA par mois',
-      per: 'Sans engagement',
+    expect(offers[5]).toEqual({
+      id: 'MONTH_MAX',
+      name: 'Pass Mois Max',
+      price: '24 900 FCFA',
+      durationLabel: '30 jours',
+      responsesLabel: '5 000 réponses',
+      forWho: 'Pour les grands groupes.',
+      badge: 'Le meilleur prix par réponse',
     });
-    expect(business?.price).toBe('24 900');
-  });
-
-  it('shows a year as its monthly share and what was paid', () => {
-    const [free, pro, business] = pricingTiers(12);
-    expect(free?.per).toBe('Pour toujours');
-    expect(pro?.price).toBe('8 250');
-    expect(pro?.per).toBe('Payé 99 000 FCFA pour 12 mois, au lieu de 118 800.');
-    expect(business?.price).toBe('20 750');
-    expect(business?.per).toBe('Payé 249 000 FCFA pour 12 mois, au lieu de 298 800.');
+    expect(offers.filter((o) => o.badge).map((o) => o.id)).toEqual(['MONTH_MAX']);
+    expect(offers[6]).toMatchObject({ name: 'Pass Illimité', price: 'Sur devis' });
   });
 });
 
@@ -96,16 +100,19 @@ describe('landingJsonLd', () => {
     expect(byType('WebSite')['@id']).toBe('https://tamani.app/#site');
   });
 
-  it('offers match PLANS', () => {
+  it('JSON-LD lists the five passes in XOF', () => {
     const offers = byType('SoftwareApplication')['offers'] as {
       name: string;
       price: string;
       priceCurrency: string;
     }[];
     expect(offers.map((o) => [o.name, o.price, o.priceCurrency])).toEqual([
-      [PLANS.FREE.label, '0', 'XOF'],
-      [PLANS.PRO.label, String(PLANS.PRO.monthlyPriceXof), 'XOF'],
-      [PLANS.BUSINESS.label, String(PLANS.BUSINESS.monthlyPriceXof), 'XOF'],
+      ['Essai gratuit', '0', 'XOF'],
+      ['Pass Semaine', '3900', 'XOF'],
+      ['Pass 2 Semaines', '5900', 'XOF'],
+      ['Pass Mois', '9900', 'XOF'],
+      ['Pass Mois Plus', '14900', 'XOF'],
+      ['Pass Mois Max', '24900', 'XOF'],
     ]);
   });
 
@@ -154,9 +161,16 @@ describe('landing copy', () => {
     expect(copy).not.toMatch(/[–—]/);
   });
 
-  it('takes the Free plan figures from PLANS', () => {
-    const free = LANDING_FAQ.find((q) => q.question.startsWith('Le forfait Gratuit'));
-    expect(free?.answer).toContain(`${PLANS.FREE.maxActiveCampaigns} campagnes en cours`);
-    expect(free?.answer).toContain(`${PLANS.FREE.monthlyResponses} réponses par mois`);
+  it('the FAQ answers how the free trial works', () => {
+    const trial = LANDING_FAQ.find((q) => q.question.startsWith("L'essai gratuit"));
+    expect(trial?.answer).toContain(`${PLANS.TRIAL.durationDays} jours`);
+    expect(trial?.answer).toContain(`${PLANS.TRIAL.includedResponses} réponses`);
+    expect(trial?.answer).toContain('sans carte bancaire');
+    expect(trial?.answer).toContain('la première limite atteinte');
+    expect(trial?.answer).toContain('en prenant un pass');
+  });
+
+  it('speaks of passes, never of Pro, Gratuit or 12 months', () => {
+    expect(copy).not.toMatch(/\bPro\b|forfait Gratuit|12 mois/);
   });
 });

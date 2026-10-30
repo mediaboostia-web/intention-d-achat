@@ -1,9 +1,9 @@
 /**
  * Provider-agnostic payments interface.
  *
- * Each provider (Bictorys, Stripe, Paddle…) implements `PaymentProvider`.
- * The orders/withdrawals routes consume the interface — never the concrete
- * adapter — so swapping providers is one wiring change in `index.ts`.
+ * A charge-style provider implements `PaymentProvider`. Tamani's passes go
+ * through SasPay's hosted checkout instead (`saspay.ts`, lot 8), which has
+ * no charge call; the interface stays for a future provider.
  *
  * Amounts are integer "smallest unit" of `currency`. For XOF (FCFA) that's
  * 1 = 1 FCFA (no decimals). For USD/EUR adapt to cents at the call site.

@@ -1,7 +1,7 @@
 'use client';
 
 // One link per source (a WhatsApp group, a status, a market) tells where
-// the interested people come from. A Pro feature: on the free plan the
+// the interested people come from. A pass feature: without one (or in the trial) the
 // section explains it instead of offering a form that would be refused.
 import { useState, type FormEvent } from 'react';
 import { Badge, Button, Icon, Input, Notice } from '@/components/ui';
@@ -56,18 +56,18 @@ export function SourceLinks({
           tone="info"
           className="mt-3"
           action={
-            <Button href="/app/plus" variant="secondary">
-              Voir mon forfait
+            <Button href="/app/abonnement" variant="secondary">
+              Prendre un pass
             </Button>
           }
         >
           <span className="flex items-center gap-2 font-bold">
             <Icon name="lock" className="size-5 text-primary" />
-            <Badge tone="accent">Pro</Badge>
+            <Badge tone="accent">Pass</Badge>
           </span>
           <span className="mt-2 block">
-            Les liens par source viennent avec le forfait Pro. Un lien par groupe WhatsApp te dit
-            d&apos;où viennent tes intéressés.
+            Les liens par source viennent avec un pass. Un lien par groupe WhatsApp te dit d&apos;où
+            viennent tes intéressés.
           </span>
         </Notice>
       ) : (

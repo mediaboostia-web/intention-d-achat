@@ -1,7 +1,7 @@
 // POST /api/shops and GET /api/shops/me (Tamani lot 3).
 import { prismaMock } from '@/test-utils/prisma-mock';
 import { mockNextCookies, __cookieStore } from '@/test-utils/mock-cookies';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { apiRequest, runTransactionsInline, signIn } from '@/test-utils/shop-fixtures';
 
 mockNextCookies();
@@ -44,8 +44,22 @@ beforeEach(async () => {
 });
 
 describe('POST /api/shops', () => {
-  it('creates the shop, its OWNER member and a FREE subscription in one transaction', async () => {
+  it('creates the shop, its OWNER member and a 3-day trial in one transaction', async () => {
+    const now = new Date('2026-10-29T08:00:00Z');
+    vi.useFakeTimers({ now, toFake: ['Date'] });
+    prismaMock.organization.create.mockResolvedValue(
+      shopRow({
+        subscription: {
+          plan: 'TRIAL',
+          periodStart: now,
+          currentPeriodEnd: new Date('2026-11-01T08:00:00Z'),
+          graceUntil: null,
+          responsesIncluded: 50,
+        },
+      }) as never,
+    );
     const res = await post();
+    vi.useRealTimers();
     expect(res.status).toBe(201);
     expect(res.headers.get('x-request-id')).toBeTruthy();
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
@@ -59,13 +73,27 @@ describe('POST /api/shops', () => {
           country: 'SN',
           currency: 'XOF',
           members: { create: { userId: 'user_1', role: 'OWNER' } },
-          subscription: { create: { plan: 'FREE' } },
+          subscription: {
+            create: {
+              plan: 'TRIAL',
+              periodStart: now,
+              currentPeriodEnd: new Date('2026-11-01T08:00:00Z'),
+              graceUntil: null,
+              responsesIncluded: 50,
+            },
+          },
         }),
       }),
     );
-    const json = (await res.json()) as { shop: { id: string; plan: { id: string } } };
+    const json = (await res.json()) as {
+      shop: { id: string; plan: { id: string; inGrace: boolean; endsAt: string | null } };
+    };
     expect(json.shop.id).toBe('org_1');
-    expect(json.shop.plan.id).toBe('FREE');
+    expect(json.shop.plan).toEqual({
+      id: 'TRIAL',
+      inGrace: false,
+      endsAt: '2026-11-01T08:00:00.000Z',
+    });
   });
 
   it('returns 409 SHOP_ALREADY_EXISTS when the user already has a shop', async () => {
