@@ -17,7 +17,7 @@ import { Faq } from './Faq';
 import { Film } from './Film';
 import { Hero } from './Hero';
 import { LandingFooter } from './LandingFooter';
-import { LandingNav } from './LandingNav';
+import { DrawerInstall, LandingNav } from './LandingNav';
 import { PLATFORM_PATHS } from './platform-paths';
 import { Pricing } from './Pricing';
 import { Problem } from './Problem';
@@ -163,6 +163,21 @@ describe('LandingNav', () => {
     const none = drawer(NO_LINKS);
     expect(none).not.toContain('Écrire au support');
     expect(none).not.toContain('Rejoindre le groupe');
+  });
+
+  // 2026-10-30: the menu offers to install Tamani where the browser can.
+  it('the drawer offers to install the app, or the iPhone steps, only where it helps', () => {
+    const prompt = html(<DrawerInstall state="prompt" onInstall={() => {}} />);
+    expect(prompt).toMatch(/<button[^>]*class="lp-drawer__install"/);
+    expect(text(<DrawerInstall state="prompt" onInstall={() => {}} />)).toContain(
+      "Installer l'application",
+    );
+    expect(text(<DrawerInstall state="ios" onInstall={() => {}} />)).toContain(
+      "Dans Safari : bouton Partager, puis « Sur l'écran d'accueil ».",
+    );
+    for (const state of ['hidden', 'installed', 'none'] as const) {
+      expect(html(<DrawerInstall state={state} onInstall={() => {}} />)).toBe('');
+    }
   });
 
   it("the porteur's support number and group are set", () => {

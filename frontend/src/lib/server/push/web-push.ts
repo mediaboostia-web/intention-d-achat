@@ -3,6 +3,7 @@
 // the other providers: without the three keys nothing is sent.
 import 'server-only';
 import webpush from 'web-push';
+import { log } from '@/lib/server/observability/log';
 
 export interface PushPayload {
   title: string;
@@ -15,40 +16,47 @@ export type PushResult = 'SENT' | 'GONE' | 'FAILED';
 
 const DAY_S = 86_400;
 
+/** A variable as typed, without the quotes a paste into Vercel can leave around it. */
+function env(name: 'VAPID_PUBLIC_KEY' | 'VAPID_PRIVATE_KEY' | 'VAPID_SUBJECT'): string {
+  return (process.env[name] ?? '').trim().replace(/^(['"])(.*)\1$/, '$2');
+}
+
 export function pushConfigured(): boolean {
-  return Boolean(
-    process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY && process.env.VAPID_SUBJECT,
-  );
+  return Boolean(env('VAPID_PUBLIC_KEY') && env('VAPID_PRIVATE_KEY') && env('VAPID_SUBJECT'));
 }
 
 export function vapidPublicKey(): string | null {
-  return pushConfigured() ? process.env.VAPID_PUBLIC_KEY! : null;
+  return pushConfigured() ? env('VAPID_PUBLIC_KEY') : null;
 }
 
-let keysSet = false;
-
-/** GONE: the push service forgot this browser (404/410); drop the subscription. */
+/**
+ * GONE: the push service forgot this browser (404/410); drop the subscription.
+ * A failure is logged with its status only: web-push's messages can carry the
+ * subject, an e-mail address.
+ */
 export async function sendPush(
   sub: { endpoint: string; p256dh: string; auth: string },
   payload: PushPayload,
 ): Promise<PushResult> {
-  if (!keysSet) {
-    webpush.setVapidDetails(
-      process.env.VAPID_SUBJECT!,
-      process.env.VAPID_PUBLIC_KEY!,
-      process.env.VAPID_PRIVATE_KEY!,
-    );
-    keysSet = true;
-  }
   try {
     await webpush.sendNotification(
       { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
       JSON.stringify(payload),
-      { TTL: DAY_S, urgency: 'high' },
+      {
+        TTL: DAY_S,
+        urgency: 'high',
+        vapidDetails: {
+          subject: env('VAPID_SUBJECT'),
+          publicKey: env('VAPID_PUBLIC_KEY'),
+          privateKey: env('VAPID_PRIVATE_KEY'),
+        },
+      },
     );
     return 'SENT';
   } catch (err) {
     const status = (err as { statusCode?: unknown }).statusCode;
-    return status === 404 || status === 410 ? 'GONE' : 'FAILED';
+    if (status === 404 || status === 410) return 'GONE';
+    log.warn('push not delivered', { status: typeof status === 'number' ? status : null });
+    return 'FAILED';
   }
 }

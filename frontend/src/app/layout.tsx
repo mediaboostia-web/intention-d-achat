@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Andika, Bowlby_One, Kalam } from 'next/font/google';
 import { InkFilters } from '@/components/ui/InkFilters';
+import { INSTALL_SCRIPT } from '@/lib/tamani/install';
 import { SHELL_PREFS_SCRIPT } from '@/lib/tamani/prefs';
 import './globals.css';
 
@@ -52,6 +53,8 @@ export default function RootLayout({
       <head>
         {/* The shop space's night and folded choices, before the first paint (only under /app). */}
         <script dangerouslySetInnerHTML={{ __html: SHELL_PREFS_SCRIPT }} />
+        {/* Keeps the browser's install prompt for Tamani's button; the service worker, off the popup. */}
+        <script dangerouslySetInnerHTML={{ __html: INSTALL_SCRIPT }} />
       </head>
       {/* Session providers live in (app)/ and (admin)/ layouts so public
           pages (incl. the /c/[code] popup) ship no session JS. */}

@@ -340,6 +340,29 @@ describe('shop pages', () => {
     expect(out).toContain('href="https://wa.me/2290195831126"');
   });
 
+  // 2026-10-30: installing Tamani, first in the list while it is possible.
+  it('plus offers to install the app, or the iPhone steps, and nothing once installed', () => {
+    const menu = (state: 'hidden' | 'installed' | 'prompt' | 'ios' | 'none') => (
+      <PlusMenu
+        plan={TEST_SHOP.plan}
+        help={null}
+        signingOut={false}
+        onSignOut={() => {}}
+        install={{ state, onInstall: () => {} }}
+      />
+    );
+    const prompt = text(menu('prompt'));
+    expect(prompt.indexOf("Installer l'application")).toBeLessThan(prompt.indexOf('Produits'));
+    expect(prompt).toContain("Tamani s'ouvre depuis ton écran d'accueil, comme une appli.");
+    expect(html(menu('prompt'))).toMatch(/<button[^>]*>[\s\S]*?Installer l&#x27;application/);
+    const ios = text(menu('ios'));
+    expect(ios).toContain('Installer sur iPhone');
+    expect(ios).toContain("Dans Safari : bouton Partager, puis « Sur l'écran d'accueil ».");
+    for (const state of ['hidden', 'installed', 'none'] as const) {
+      expect(text(menu(state))).not.toContain('Installer');
+    }
+  });
+
   it('plus shows Aide once the WhatsApp contact is given', () => {
     const help = 'https://wa.me/221770000000';
     const out = html(

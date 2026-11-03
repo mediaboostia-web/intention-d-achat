@@ -6,7 +6,7 @@ import { planFeatures, type BillingData } from '@/lib/tamani/billing-view';
 
 vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigation')).navigation);
 
-const { BillingView, ReturnView } = await import('./BillingView');
+const { BillingView, ReturnView, requestCheckout } = await import('./BillingView');
 const { ShellBanners } = await import('./ShellBanners');
 
 const NOW = new Date('2026-10-29T10:00:00Z');
@@ -241,5 +241,18 @@ describe('PassMeter', () => {
     );
     expect(text(<PassMeter usage={NO_PASS.pass} canBuy now={NOW} />)).toContain('Prendre un pass');
     expect(html(<PassMeter usage={DATA.pass} canBuy={false} now={NOW} />)).not.toContain('href=');
+  });
+});
+
+describe('requestCheckout', () => {
+  // The first deployment answered 400: the pass was encoded twice.
+  it('sends the pass once, as an object that api() encodes', async () => {
+    const call = vi.fn(async () => ({ orderId: 'o1', checkoutUrl: 'https://pay.example/s1' }));
+    const result = await requestCheckout('shop_1', 'WEEK', call as never);
+    expect(call).toHaveBeenCalledWith('/api/shops/shop_1/billing/checkout', {
+      method: 'POST',
+      body: { offer: 'WEEK' },
+    });
+    expect(result.checkoutUrl).toBe('https://pay.example/s1');
   });
 });

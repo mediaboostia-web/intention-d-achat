@@ -3,8 +3,10 @@
 // "Sois prévenu à chaque réponse" (porteur's feedback §2): the body of the
 // Notifications section in Réglages, which also says when they are on. The
 // home page no longer shows it: on a phone, PushPrompt asks instead (§7).
+import { useState } from 'react';
 import { Button, Card, Icon } from '@/components/ui';
-import type { PushCardState } from '@/lib/tamani/push-state';
+import { api, ApiError } from '@/lib/api';
+import { pushTestLine, type PushCardState, type PushTestResult } from '@/lib/tamani/push-state';
 import { cn } from '@/lib/utils';
 import { usePush } from './use-push';
 
@@ -28,6 +30,9 @@ export function PushCardView({
   busy = false,
   error = null,
   onEnable,
+  onTest,
+  testing = false,
+  testResult = null,
   className,
 }: {
   state: PushCardState;
@@ -35,6 +40,10 @@ export function PushCardView({
   busy?: boolean;
   error?: string | null;
   onEnable?: () => void;
+  /** Once on: sends one push to the account's own devices (2026-11-04). */
+  onTest?: () => void;
+  testing?: boolean;
+  testResult?: { tone: 'success' | 'danger'; text: string } | null;
   className?: string;
 }) {
   const settings = place === 'settings';
@@ -70,6 +79,22 @@ export function PushCardView({
         ) : (
           <p className={cn('text-ink-soft', state === 'on' ? 'pt-2.5' : 'mt-1')}>{COPY[state]}</p>
         )}
+        {state === 'on' && onTest && (
+          <Button variant="secondary" className="mt-3" disabled={testing} onClick={onTest}>
+            {testing ? 'Envoi…' : 'Tester la notification'}
+          </Button>
+        )}
+        {testResult && (
+          <p
+            role="status"
+            className={cn(
+              'mt-2 font-bold',
+              testResult.tone === 'success' ? 'text-success' : 'text-danger',
+            )}
+          >
+            {testResult.text}
+          </p>
+        )}
         {error && (
           <p role="alert" className="mt-2 font-bold text-danger">
             {error}
@@ -89,6 +114,27 @@ export function PushCardView({
 
 export function PushCard({ place = 'home', className }: { place?: Place; className?: string }) {
   const { state, ready, busy, error, enable } = usePush(place);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<ReturnType<typeof pushTestLine> | null>(null);
+
+  const test = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const r = await api<PushTestResult>('/api/push/test', { method: 'POST', body: {} });
+      setTestResult(pushTestLine(r));
+    } catch (err) {
+      setTestResult({
+        tone: 'danger',
+        text:
+          err instanceof ApiError && err.code === 'PUSH_NOT_CONFIGURED'
+            ? 'Les notifications ne sont pas encore réglées sur le serveur. Écris au support.'
+            : "Le test n'a pas pu partir. Vérifie ta connexion, puis réessaie.",
+      });
+    } finally {
+      setTesting(false);
+    }
+  };
   if (place === 'settings' && !ready) {
     return (
       <p role="status" className="text-ink-muted">
@@ -103,6 +149,7 @@ export function PushCard({ place = 'home', className }: { place?: Place; classNa
       busy={busy}
       error={error}
       onEnable={() => void enable()}
+      {...(place === 'settings' ? { onTest: () => void test(), testing, testResult } : {})}
       {...(className ? { className } : {})}
     />
   );

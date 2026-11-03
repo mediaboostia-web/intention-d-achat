@@ -187,6 +187,14 @@ export function BillingView({
   );
 }
 
+/** Opens SasPay's checkout for a pass. api() encodes the body itself. */
+export function requestCheckout(shopId: string, offer: PassId, call: typeof api = api) {
+  return call<{ orderId: string; checkoutUrl: string }>(`/api/shops/${shopId}/billing/checkout`, {
+    method: 'POST',
+    body: { offer },
+  });
+}
+
 export function BillingScreen() {
   const { shop, role } = useShop();
   const [data, setData] = useState<BillingData | null>(null);
@@ -208,10 +216,7 @@ export function BillingScreen() {
     setBusy(offer);
     setError(null);
     try {
-      const { checkoutUrl } = await api<{ orderId: string; checkoutUrl: string }>(
-        `/api/shops/${shop.id}/billing/checkout`,
-        { method: 'POST', body: JSON.stringify({ offer }) },
-      );
+      const { checkoutUrl } = await requestCheckout(shop.id, offer);
       window.location.assign(checkoutUrl);
     } catch (err) {
       setError(errorMessage(err));
