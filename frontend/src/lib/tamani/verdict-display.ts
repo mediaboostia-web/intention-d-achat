@@ -23,10 +23,13 @@ export function approxQuantity(n: number): number {
 }
 
 /** "sac de 25 kg" × 12 → "sacs de 25 kg". Words ending in s, x or z stay. */
+// Unit symbols never take an s (« 3 kg »).
+const SYMBOLS = /^(?:k?g|mg|t|[mck]?l|L|m|cm|mm)$/;
+
 export function pluralizeUnit(unitLabel: string, n: number): string {
   if (n < 2) return unitLabel;
   const [first = '', ...rest] = unitLabel.split(' ');
-  const plural = /[sxz]$/i.test(first) ? first : `${first}s`;
+  const plural = /[sxz]$/i.test(first) || SYMBOLS.test(first) ? first : `${first}s`;
   return [plural, ...rest].join(' ');
 }
 
