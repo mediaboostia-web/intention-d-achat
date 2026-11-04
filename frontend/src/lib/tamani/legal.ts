@@ -10,6 +10,8 @@ export const LEGAL_ENTITY = {
   city: 'Cotonou',
   country: 'Bénin',
   email: LANDING_CONTACT_EMAIL,
+  /** Porteur, 2026-11-04. */
+  publisher: 'Hullys Désiré',
 } as const;
 
 export const LEGAL_UPDATED = '4 novembre 2026';
@@ -64,6 +66,13 @@ export const LEGAL_PAGES: Record<LegalSlug, LegalPageContent> = {
           'Pas de renouvellement automatique : rien n’est prélevé sans que tu le décides.',
           'À la fin d’un pass, tu gardes ses fonctions pendant 3 jours de grâce. Les nouvelles réponses au-delà de ton pass sont gardées en attente et s’ouvrent quand tu prends un pass.',
           'Si tu prends un nouveau pass avant la fin du pass en cours, tu gardes les réponses non utilisées. Une fois le pass terminé (grâce comprise), ses réponses non utilisées sont perdues.',
+        ],
+      },
+      {
+        title: 'Remboursement',
+        body: [
+          "L'essai gratuit te laisse tester Tamani avant de payer : un pass acheté n'est pas remboursé.",
+          'Deux exceptions : un pass qui ne marche pas comme prévu à cause de nous, ou une erreur de paiement (tu as payé deux fois, ou un mauvais montant). Écris-nous dans ce cas : nous vérifions, puis nous te remboursons.',
         ],
       },
       {
@@ -208,6 +217,7 @@ export const LEGAL_PAGES: Record<LegalSlug, LegalPageContent> = {
         body: [
           `${LEGAL_ENTITY.name}, ${LEGAL_ENTITY.status}.`,
           `Siège : ${WHERE}.`,
+          `Responsable de la publication : ${LEGAL_ENTITY.publisher}.`,
           `Contact : ${email}.`,
         ],
       },

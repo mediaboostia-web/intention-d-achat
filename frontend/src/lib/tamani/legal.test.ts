@@ -34,6 +34,8 @@ describe('legal pages (porteur, 2026-11-04)', () => {
     expect(notice).toContain('Cotonou, Bénin');
     expect(notice).toContain('hullysdesire@gmail.com');
     expect(notice).toContain('Vercel');
+    // Porteur, 2026-11-04.
+    expect(notice).toContain('Responsable de la publication : Hullys Désiré.');
   });
 
   it('the terms say what a pass is: prepaid, never renewed on its own', () => {
@@ -41,6 +43,19 @@ describe('legal pages (porteur, 2026-11-04)', () => {
     expect(cgu).toContain('Pas de renouvellement automatique');
     expect(cgu).toContain('3 jours de grâce');
     expect(cgu).toContain("La décision d'acheter reste la tienne");
+  });
+
+  // Porteur, 2026-11-04: « ya déjà une version gratuite donc ya pas de
+  // remboursement sauf en cas de mauvaise condition du pass … ou en cas d'erreurs ».
+  it('the terms say a pass is not refunded, except when it fails or a payment is wrong', () => {
+    const refund = LEGAL_PAGES.cgu.sections.find((s) => s.title === 'Remboursement');
+    expect(refund).toBeDefined();
+    const text = refund!.body.join(' ');
+    expect(text).toContain("L'essai gratuit");
+    expect(text).toContain("n'est pas remboursé");
+    expect(text).toContain('ne marche pas comme prévu');
+    expect(text).toContain('payé deux fois');
+    expect(text).toContain('nous te remboursons');
   });
 
   it('privacy names every provider, the Benin law and the APDP', () => {

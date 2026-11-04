@@ -736,7 +736,7 @@ Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08
 Ordre demandé : « Le plus simple au plus difficile ».
 
 1. **Prénom à l'inscription** : facultatif côté API (anciens formulaires), demandé en premier par le formulaire.
-2. **Pages légales** : CGU, confidentialité, sécurité, mentions légales, au nom de Tamani (entreprise en cours d'immatriculation), Cotonou, Bénin. Restent à fournir : le nom du responsable de la publication, la politique de remboursement, et la décision de déclarer le traitement à l'APDP.
+2. **Pages légales** : CGU, confidentialité, sécurité, mentions légales, au nom de Tamani (entreprise en cours d'immatriculation), Cotonou, Bénin. Responsable de la publication : Hullys Désiré. Remboursement (porteur) : aucun, puisque l'essai gratuit permet de tester, sauf pour un pass qui ne marche pas à cause de Tamani ou une erreur de paiement. Reste à décider : la déclaration du traitement à l'APDP.
 3. **Unités** : le porteur parlait des unités (litre, pot, verre, boîte, paire, douzaine), pas de catégories de produits. Les puces gagnent pot, verre, boîte, paire, bidon, sachet, mètre ; l'unité libre existait déjà.
 4. **Supprimer une campagne** : effacée sans réponse ni commande, archivée sinon (fermée, retirée des listes, réponses et clients gardés). Réservé au propriétaire et aux administrateurs.
 5. **Skeleton loaders** partout dans l'espace boutique.
