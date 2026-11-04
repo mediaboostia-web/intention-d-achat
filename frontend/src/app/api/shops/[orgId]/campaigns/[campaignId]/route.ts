@@ -1,4 +1,4 @@
-// GET|PATCH /api/shops/[orgId]/campaigns/[campaignId].
+// GET|PATCH|DELETE /api/shops/[orgId]/campaigns/[campaignId].
 //
 // Status moves start from the effective status (CAMPAIGN_TRANSITIONS).
 // Anything that makes a campaign effectively ACTIVE again — reopening it,
@@ -10,6 +10,7 @@ import 'server-only';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/server/prisma';
 import { CampaignLimitReached, assertActivationAllowed } from '@/lib/server/tamani/campaign-limit';
+import { removeCampaign } from '@/lib/server/tamani/campaign-remove';
 import {
   canTransitionCampaign,
   effectiveStatus,
@@ -98,4 +99,12 @@ export const PATCH = shopHandler<Params>('MEMBER', async (req, { params }) => {
     if (err instanceof CampaignLimitReached) return tamaniError('CAMPAIGN_LIMIT_REACHED', 409);
     throw err;
   }
+});
+
+// ADMIN, like deleting a product. Deleted when nobody answered, else archived
+// (removeCampaign); JSON like every shop deletion, since api() reads JSON.
+export const DELETE = shopHandler<Params>('ADMIN', async (_req, { params }) => {
+  const result = await removeCampaign(prisma, params.orgId, params.campaignId, new Date());
+  if (!result) return tamaniError('CAMPAIGN_NOT_FOUND', 404);
+  return jsonOk(result);
 });

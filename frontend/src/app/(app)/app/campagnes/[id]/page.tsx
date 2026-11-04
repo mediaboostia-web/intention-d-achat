@@ -8,6 +8,7 @@ import { CampaignActions } from '@/components/app/CampaignActions';
 import { CampaignOrdersTab } from '@/components/app/CampaignOrders';
 import { CampaignResultsTab } from '@/components/app/CampaignResults';
 import { InterestedTab } from '@/components/app/InterestedList';
+import { CampaignDeletion } from '@/components/app/CampaignDeletion';
 import { CampaignEditForm, type CampaignPatchBody } from '@/components/app/CampaignEditForm';
 import { ShareCard } from '@/components/app/ShareCard';
 import { useShop } from '@/components/app/ShopProvider';
@@ -32,7 +33,7 @@ function CampaignDetail() {
   const { id } = useParams<{ id: string }>();
   const params = useSearchParams();
   const justSent = params.get('partager') === '1';
-  const { shop } = useShop();
+  const { shop, role } = useShop();
   const { toast } = useToast();
   const [campaign, setCampaign] = useState<ShopCampaign | null>(null);
   const [links, setLinks] = useState<ShopLink[]>([]);
@@ -183,13 +184,16 @@ function CampaignDetail() {
             currency={shop.currency}
           />
         ) : tab === 'edit' ? (
-          <CampaignEditForm
-            key={campaign.id}
-            campaign={campaign}
-            currency={shop.currency}
-            error={saveError}
-            onSave={save}
-          />
+          <>
+            <CampaignEditForm
+              key={campaign.id}
+              campaign={campaign}
+              currency={shop.currency}
+              error={saveError}
+              onSave={save}
+            />
+            {role !== 'MEMBER' && <CampaignDeletion shopId={shop.id} campaignId={campaign.id} />}
+          </>
         ) : campaign.status === 'ACTIVE' && campaign.defaultLink ? (
           <div className="flex flex-col gap-10">
             <ShareCard message={campaign.shareMessage} url={campaign.defaultLink.url} />

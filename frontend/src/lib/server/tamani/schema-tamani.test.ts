@@ -183,7 +183,8 @@ describe('Tamani core schema (lot 3)', () => {
     const names = readdirSync(resolve(PRISMA, 'migrations'))
       .filter((n) => !n.endsWith('.toml'))
       .sort();
-    expect(names.slice(-2)).toEqual(['9b_currency_by_country', '9c_passes']);
+    const at = names.indexOf('9b_currency_by_country');
+    expect(names.slice(at, at + 2)).toEqual(['9b_currency_by_country', '9c_passes']);
     const sql = readFileSync(resolve(PRISMA, 'migrations/9c_passes/migration.sql'), 'utf8');
     expect(sql).toMatch(/ALTER TABLE "Subscription" ADD COLUMN\s+"periodStart"/);
     expect(sql).toMatch(/"responsesIncluded" INTEGER NOT NULL DEFAULT 0/);
@@ -192,6 +193,20 @@ describe('Tamani core schema (lot 3)', () => {
       /UPDATE "Response" SET "countedAt" = "completedAt"\s+WHERE "completedAt" IS NOT NULL AND "locked" = false/,
     );
     expect(sql).toMatch(/ALTER TABLE "Order" ADD COLUMN\s+"organizationId"/);
+    expect(sql).not.toMatch(/\bDROP\b/);
+  });
+
+  it('archives a deleted campaign as migration 9d_campaign_archive (2026-11-04)', () => {
+    expect(field(modelBlock('Campaign'), 'archivedAt DateTime?')).toBe(true);
+    const names = readdirSync(resolve(PRISMA, 'migrations'))
+      .filter((n) => !n.endsWith('.toml'))
+      .sort();
+    expect(names.at(-1)).toBe('9d_campaign_archive');
+    const sql = readFileSync(
+      resolve(PRISMA, 'migrations/9d_campaign_archive/migration.sql'),
+      'utf8',
+    );
+    expect(sql).toMatch(/ALTER TABLE "Campaign" ADD COLUMN "archivedAt" TIMESTAMP\(3\);/);
     expect(sql).not.toMatch(/\bDROP\b/);
   });
 

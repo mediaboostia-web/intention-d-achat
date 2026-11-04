@@ -421,6 +421,9 @@ model Campaign {
   status          String         @default("DRAFT") // DRAFT | ACTIVE | CLOSED | ARRIVED
   closedAt        DateTime?
   arrivedAt       DateTime?
+  // Deleted by the shop while it had answers or orders: closed and out of the
+  // lists, its answers kept for the client book (2026-11-04).
+  archivedAt      DateTime?
   links           CampaignLink[]
   responses       Response[]
   orders          SaleOrder[]

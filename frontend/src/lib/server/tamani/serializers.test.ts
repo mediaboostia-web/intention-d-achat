@@ -100,6 +100,7 @@ describe('campaign serializers', () => {
     status: 'ACTIVE',
     closedAt: null,
     arrivedAt: null,
+    archivedAt: null,
     createdAt: now,
     updatedAt: now,
     links: [

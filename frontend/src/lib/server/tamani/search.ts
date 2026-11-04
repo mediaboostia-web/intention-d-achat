@@ -20,7 +20,7 @@ export async function searchShop(
   const contains = { contains: q, mode: 'insensitive' as const };
   const [campaigns, products, clients] = await Promise.all([
     db.campaign.findMany({
-      where: { organizationId, title: contains },
+      where: { organizationId, archivedAt: null, title: contains },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: SEARCH_TAKE,
       select: {

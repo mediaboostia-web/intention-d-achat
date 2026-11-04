@@ -31,9 +31,11 @@ const STATUSES: readonly CampaignStatus[] = ['ACTIVE', 'DRAFT', 'CLOSED', 'ARRIV
 
 async function countByStatus(organizationId: string, now: Date) {
   const [all, ...perStatus] = await Promise.all([
-    prisma.campaign.count({ where: { organizationId } }),
+    prisma.campaign.count({ where: { organizationId, archivedAt: null } }),
     ...STATUSES.map((s) =>
-      prisma.campaign.count({ where: { organizationId, ...effectiveStatusWhere(s, now) } }),
+      prisma.campaign.count({
+        where: { organizationId, archivedAt: null, ...effectiveStatusWhere(s, now) },
+      }),
     ),
   ]);
   return {
@@ -65,6 +67,7 @@ export const GET = shopHandler('MEMBER', async (req, { params }) => {
     prisma.campaign.findMany({
       where: {
         organizationId: params.orgId,
+        archivedAt: null,
         // AND, not a spread: the fragments may each carry an OR.
         AND: [
           status ? effectiveStatusWhere(status as CampaignStatus, now) : {},
