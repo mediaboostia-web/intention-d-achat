@@ -2,6 +2,7 @@
 // list's filters as the address writes them (?q=&forfait=&page=).
 import { ADMIN_HOME } from './admin-nav';
 import { isPlanId } from './plans';
+import { parseAmount } from './fcfa-input';
 
 export interface AdminShopRow {
   id: string;
@@ -81,4 +82,15 @@ export function shopsHref(query: Partial<ShopQuery>): string {
   if (query.page && query.page > 1) params.set('page', String(query.page));
   const search = params.toString();
   return `${ADMIN_HOME}/boutiques${search ? `?${search}` : ''}`;
+}
+
+const ZERO = /^\s*0+\s*(f\s*cfa|cfa|f)?\s*$/i;
+
+/**
+ * The amount received for a pass granted by hand: 0 is a gift, anything
+ * else reads like a price (spaces, « FCFA »). parseAmount alone refuses 0,
+ * since a product price never is.
+ */
+export function parseGrantAmount(raw: string): number | null {
+  return ZERO.test(raw) ? 0 : parseAmount(raw);
 }

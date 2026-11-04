@@ -6,6 +6,7 @@ import { Button, Input, Select } from '@/components/ui';
 import { ApiError, api } from '@/lib/api';
 import { dateLabel, planLabel } from '@/lib/tamani/admin-view';
 import { currencyLabel } from '@/lib/tamani/currency';
+import { parseGrantAmount } from '@/lib/tamani/admin-shops';
 import { parseAmount } from '@/lib/tamani/fcfa-input';
 import { PASS_IDS, PLANS } from '@/lib/tamani/plans';
 
@@ -36,7 +37,7 @@ export function GrantPassForm({ shopId }: { shopId: string }) {
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (busy.current) return;
-    const paid = parseAmount(amount);
+    const paid = parseGrantAmount(amount);
     if (paid === null) {
       setMessage({ ok: false, text: 'Indiquer le montant reçu, 0 pour un cadeau.' });
       return;
