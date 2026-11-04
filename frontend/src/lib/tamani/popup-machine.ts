@@ -81,6 +81,8 @@ export interface ResponseStepBody {
   firstName?: string;
   phone?: string;
   phoneCountry?: string;
+  /** « J'accepte que {boutique} me contacte » (2026-11-04). */
+  contactConsent?: boolean;
 }
 
 export function initialPopupState(ctx: {

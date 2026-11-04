@@ -217,10 +217,28 @@ describe('Tamani core schema (lot 3)', () => {
     const names = readdirSync(resolve(PRISMA, 'migrations'))
       .filter((n) => !n.endsWith('.toml'))
       .sort();
-    expect(names.at(-1)).toBe('9e_shop_profile');
+    expect(names.indexOf('9e_shop_profile')).toBe(names.indexOf('9d_campaign_archive') + 1);
     const sql = readFileSync(resolve(PRISMA, 'migrations/9e_shop_profile/migration.sql'), 'utf8');
     expect(sql).toMatch(/ADD COLUMN "businessType" TEXT,\s+ADD COLUMN "salesChannel" TEXT;/);
     expect(sql).not.toMatch(/\bDROP\b|NOT NULL/);
+  });
+
+  it('keeps the popup consent as migration 9f_contact_consent, the clients before it kept', () => {
+    expect(field(modelBlock('Respondent'), 'contactConsentAt DateTime?')).toBe(true);
+    const names = readdirSync(resolve(PRISMA, 'migrations'))
+      .filter((n) => !n.endsWith('.toml'))
+      .sort();
+    expect(names.at(-1)).toBe('9f_contact_consent');
+    const sql = readFileSync(
+      resolve(PRISMA, 'migrations/9f_contact_consent/migration.sql'),
+      'utf8',
+    );
+    expect(sql).toMatch(/ALTER TABLE "Respondent" ADD COLUMN "contactConsentAt" TIMESTAMP\(3\);/);
+    // Told before that their number goes to the shop: they keep it visible.
+    expect(sql).toMatch(
+      /UPDATE "Respondent" SET "contactConsentAt" = "firstSeenAt" WHERE "phoneE164" IS NOT NULL;/,
+    );
+    expect(sql).not.toMatch(/\bDROP\b/);
   });
 
   it('migration folders sort as text in the order they were written', () => {

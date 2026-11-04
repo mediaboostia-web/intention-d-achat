@@ -30,6 +30,7 @@ const row = {
   id: 'r1',
   firstName: 'Awa',
   phoneE164: '+221771112233',
+  contactConsentAt: new Date('2026-10-01T10:00:00Z'),
   notes: 'Paie en fin de mois',
   firstSeenAt: new Date('2026-10-01T10:00:00Z'),
   lastSeenAt: new Date('2026-10-25T10:00:00Z'),
@@ -55,7 +56,13 @@ const order = {
   zone: null,
   product: { name: 'Riz parfumé', unitLabel: 'sac' },
   campaign: null,
-  respondent: { id: 'r1', firstName: 'Awa', phoneE164: '+221771112233', anonymizedAt: null },
+  respondent: {
+    id: 'r1',
+    firstName: 'Awa',
+    phoneE164: '+221771112233',
+    anonymizedAt: null,
+    contactConsentAt: new Date('2026-10-20T10:00:00Z'),
+  },
 };
 
 const aggregate = () => prismaMock.saleOrder.aggregate as unknown as Mock;

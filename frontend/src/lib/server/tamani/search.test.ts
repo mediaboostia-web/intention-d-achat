@@ -68,7 +68,13 @@ describe('searchShop', () => {
       { id: 'p1', name: 'Riz 25 kg', archivedAt: null, photos: [] },
     ] as never);
     prismaMock.respondent.findMany.mockResolvedValue([
-      { id: 'r1', firstName: 'Awa', phoneE164: '+221771234567' },
+      {
+        id: 'r1',
+        firstName: 'Awa',
+        phoneE164: '+221771234567',
+        contactConsentAt: new Date('2026-10-20T10:00:00Z'),
+      },
+      { id: 'r2', firstName: 'Awa B.', phoneE164: '+221771234568', contactConsentAt: null },
     ] as never);
     const free = await searchShop(prismaMock, args('ri', false));
     expect(free.campaigns).toEqual([
@@ -80,8 +86,13 @@ describe('searchShop', () => {
       },
     ]);
     expect(free.products).toEqual([{ id: 'p1', name: 'Riz 25 kg', archived: false, photo: null }]);
-    expect(free.clients).toEqual([{ id: 'r1', firstName: 'Awa', phone: null }]);
+    expect(free.clients).toEqual([
+      { id: 'r1', firstName: 'Awa', phone: null },
+      { id: 'r2', firstName: 'Awa B.', phone: null },
+    ]);
     const pro = await searchShop(prismaMock, args('ri', true));
     expect(pro.clients[0]!.phone).toMatch(/77/);
+    // 2026-11-04: no number for a client who did not tick the box, even on a pass.
+    expect(pro.clients[1]!.phone).toBeNull();
   });
 });

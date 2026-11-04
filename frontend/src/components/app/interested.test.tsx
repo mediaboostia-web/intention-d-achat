@@ -17,6 +17,7 @@ const awa: InterestedRow = {
   firstName: 'Awa',
   phone: '+221 77 123 45 12',
   phoneE164: '+221771234512',
+  contactRefused: false,
   interested: true,
   reason: null,
   buyerType: 'RESELLER',
@@ -117,6 +118,16 @@ describe('interestedDetail', () => {
 });
 
 describe('InterestedView', () => {
+  it('a client who did not agree to be contacted: « Numéro non partagé », no lock', () => {
+    const refused = { ...awa, phone: null, phoneE164: null, contactRefused: true };
+    const out = html(<InterestedView {...props({ rows: [refused] })} />);
+    expect(out).not.toContain('wa.me');
+    expect(out).not.toContain('href="/app/abonnement"');
+    expect(text(<InterestedView {...props({ rows: [refused] })} />)).toContain(
+      'Numéro non partagé',
+    );
+  });
+
   it('a Pro shop gets a WhatsApp button per person and both actions', () => {
     const el = <InterestedView {...props()} />;
     const out = html(el);

@@ -6,8 +6,8 @@ import 'server-only';
 import type { SearchResults } from '@/lib/tamani/search-view';
 import { effectiveStatus } from './campaign-status';
 import { clientSearchWhere, visibleClientWhere } from './clients';
+import { shownPhone } from './contact';
 import type { Db } from './locks';
-import { displayPhone } from './phone';
 import { photoUrls } from './serializers';
 
 export const SEARCH_TAKE = 5;
@@ -42,7 +42,7 @@ export async function searchShop(
       where: { ...visibleClientWhere(organizationId), AND: [clientSearchWhere(q, canSeeContacts)] },
       orderBy: [{ lastSeenAt: 'desc' }, { id: 'desc' }],
       take: SEARCH_TAKE,
-      select: { id: true, firstName: true, phoneE164: true },
+      select: { id: true, firstName: true, phoneE164: true, contactConsentAt: true },
     }),
   ]);
   return {
@@ -61,7 +61,8 @@ export async function searchShop(
     clients: clients.map((c) => ({
       id: c.id,
       firstName: c.firstName,
-      phone: canSeeContacts && c.phoneE164 ? displayPhone(c.phoneE164) : null,
+      // In full or nothing: the search never shows a masked number.
+      phone: canSeeContacts ? shownPhone(c.phoneE164, true, c.contactConsentAt).phone : null,
     })),
   };
 }

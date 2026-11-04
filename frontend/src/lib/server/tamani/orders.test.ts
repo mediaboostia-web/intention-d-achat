@@ -233,7 +233,13 @@ describe('convertResponseToOrder', () => {
         zone: { name: 'Médina' },
         product: { name: 'Marmites inox 5 L', unitLabel: 'pièce' },
         campaign: { title: 'Marmites' },
-        respondent: { id: 'r1', firstName: 'Awa', phoneE164: '+221771234512', anonymizedAt: null },
+        respondent: {
+          id: 'r1',
+          firstName: 'Awa',
+          phoneE164: '+221771234512',
+          anonymizedAt: null,
+          contactConsentAt: null,
+        },
       },
       true,
     );

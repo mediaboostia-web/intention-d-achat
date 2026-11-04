@@ -30,7 +30,12 @@ const answer = {
   completedAt: new Date('2026-10-26T10:00:00Z'),
   zone: null,
   link: null,
-  respondent: { firstName: 'Awa', phoneE164: '+221771234512', anonymizedAt: null },
+  respondent: {
+    firstName: 'Awa',
+    phoneE164: '+221771234512',
+    anonymizedAt: null,
+    contactConsentAt: new Date('2026-10-20T10:00:00Z'),
+  },
   campaign: { product: { name: 'Riz' } },
 };
 

@@ -15,7 +15,11 @@ import { ApiError, api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import type { CampaignStatus } from '@/lib/tamani/campaign-actions';
 import type { Availability } from '@/lib/tamani/timing';
-import { clientWhatsappMessage, lockedContactText } from '@/lib/tamani/client-view';
+import {
+  CONTACT_REFUSED_LINE,
+  clientWhatsappMessage,
+  lockedContactText,
+} from '@/lib/tamani/client-view';
 import { DEFAULT_EXPORT, exportHref } from '@/lib/tamani/export-view';
 import { relativeTime } from '@/lib/tamani/relative-time';
 import {
@@ -258,6 +262,11 @@ export function InterestedView({
                     )}
                     {row.phone && (
                       <span className="ml-2 text-sm font-normal text-ink-muted">{row.phone}</span>
+                    )}
+                    {row.contactRefused && (
+                      <span className="ml-2 text-sm font-normal text-ink-muted">
+                        {CONTACT_REFUSED_LINE}
+                      </span>
                     )}
                   </p>
                   <p className="text-sm text-ink-soft">

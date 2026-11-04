@@ -22,7 +22,12 @@ const answer = (id: string, over: object = {}) => ({
   completedAt: at('2026-10-26T10:00:00Z'),
   zone: { name: 'Médina' },
   link: { label: 'Statut' },
-  respondent: { firstName: 'Awa', phoneE164: '+221771234512', anonymizedAt: null },
+  respondent: {
+    firstName: 'Awa',
+    phoneE164: '+221771234512',
+    anonymizedAt: null,
+    contactConsentAt: at('2026-10-26T10:00:00Z'),
+  },
   order: null,
   ...over,
 });
@@ -59,6 +64,7 @@ describe('listCampaignResponses', () => {
       firstName: 'Awa',
       phone: '+221 77 123 45 12',
       phoneE164: '+221771234512',
+      contactRefused: false,
       interested: true,
       reason: null,
       buyerType: 'RESELLER',
@@ -157,6 +163,33 @@ describe('listCampaignResponses', () => {
   });
 });
 
+describe('contact consent (2026-11-04)', () => {
+  it('a client who did not tick the box: no number, even on a pass, and the row says why', async () => {
+    prismaMock.response.findMany.mockResolvedValue([
+      answer('a1', {
+        respondent: {
+          firstName: 'Awa',
+          phoneE164: '+221771234512',
+          anonymizedAt: null,
+          contactConsentAt: null,
+        },
+      }),
+    ] as never);
+    prismaMock.response.count.mockResolvedValue(1);
+    const page = await listCampaignResponses(prismaMock, 'org_1', 'c1', 'yes', null, {
+      canSeeContacts: true,
+      limit: 20,
+    });
+    expect(page.items[0]).toMatchObject({
+      firstName: 'Awa',
+      phone: null,
+      phoneE164: null,
+      contactRefused: true,
+      country: 'SN',
+    });
+  });
+});
+
 describe('interestedNumbers', () => {
   it('lists each interested number once, international format', async () => {
     prismaMock.response.findMany.mockResolvedValue([
@@ -175,7 +208,11 @@ describe('interestedNumbers', () => {
           organizationId: 'org_1',
           ...counted,
           interested: true,
-          respondent: { anonymizedAt: null, phoneE164: { not: null } },
+          respondent: {
+            anonymizedAt: null,
+            phoneE164: { not: null },
+            contactConsentAt: { not: null },
+          },
         },
         take: 5000,
       }),

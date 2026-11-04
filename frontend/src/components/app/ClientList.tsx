@@ -7,6 +7,7 @@
 import Link from 'next/link';
 import { Avatar, Button, EmptyState, Icon } from '@/components/ui';
 import {
+  CONTACT_REFUSED_LINE,
   clientWhatsappMessage,
   lastInterestText,
   lockedContactText,
@@ -110,6 +111,9 @@ export function ClientList({
                 </span>
               )}
               {c.phone && <span className="block text-xs text-ink-muted">{c.phone}</span>}
+              {c.contactRefused && (
+                <span className="block text-xs text-ink-muted">{CONTACT_REFUSED_LINE}</span>
+              )}
             </span>
           </Link>
           <ContactButton client={c} shopName={shopName} />

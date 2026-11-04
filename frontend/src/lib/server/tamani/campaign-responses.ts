@@ -8,8 +8,9 @@ import type { InterestedPage, InterestedRow } from '@/lib/tamani/results-view';
 import type { Timing } from '@/lib/tamani/timing';
 import type { Cursor } from '@/lib/server/notifications/cursor';
 import { buildPage } from '@/lib/server/pagination/paginate';
+import { CONTACT_CONSENTED, shownPhone } from './contact';
 import type { Db } from './locks';
-import { displayPhone, maskPhone, phoneCountryOf } from './phone';
+import { displayPhone, phoneCountryOf } from './phone';
 
 export type ResponseFilter = 'yes' | 'no';
 
@@ -42,7 +43,9 @@ export const ROW_SELECT = {
   completedAt: true,
   zone: { select: { name: true } },
   link: { select: { label: true } },
-  respondent: { select: { firstName: true, phoneE164: true, anonymizedAt: true } },
+  respondent: {
+    select: { firstName: true, phoneE164: true, anonymizedAt: true, contactConsentAt: true },
+  },
   // The order made from this answer (one at most, lot 7): its row says « Commande créée ».
   order: { select: { id: true } },
 } satisfies Prisma.ResponseSelect;
@@ -56,8 +59,7 @@ export function toRow(r: ResponseRow, canSeeContacts: boolean): InterestedRow {
     id: r.id,
     respondentId: r.respondentId,
     firstName: who?.firstName ?? null,
-    phone: phone === null ? null : canSeeContacts ? displayPhone(phone) : maskPhone(phone),
-    phoneE164: canSeeContacts ? phone : null,
+    ...shownPhone(phone, canSeeContacts, who?.contactConsentAt ?? null),
     interested: r.interested === true,
     reason: (r.notInterestedReason as NotInterestedReason | null) ?? null,
     buyerType: (r.buyerType as BuyerType | null) ?? null,
@@ -131,7 +133,7 @@ export async function interestedNumbers(
       organizationId,
       ...COUNTED,
       interested: true,
-      respondent: { anonymizedAt: null, phoneE164: { not: null } },
+      respondent: { anonymizedAt: null, phoneE164: { not: null }, ...CONTACT_CONSENTED },
     },
     orderBy: [{ completedAt: 'desc' }, { id: 'desc' }],
     take: MAX_NUMBERS,

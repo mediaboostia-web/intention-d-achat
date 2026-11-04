@@ -204,8 +204,15 @@ export async function upsertResponse(
         firstName: input.firstName,
         firstSeenAt: now,
         lastSeenAt: now,
+        contactConsentAt: input.contactConsent === true ? now : null,
       },
-      update: { firstName: input.firstName, lastSeenAt: now },
+      // An unticked box leaves an earlier yes: the client takes it back by
+      // asking the shop or Tamani (/confidentialite), not by forgetting a tick.
+      update: {
+        firstName: input.firstName,
+        lastSeenAt: now,
+        ...(input.contactConsent === true && { contactConsentAt: now }),
+      },
     });
     // The same number already answered from another phone: that answer
     // takes this one's choices, and this row goes.

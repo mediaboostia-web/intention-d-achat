@@ -194,7 +194,13 @@ describe('toOrderRow', () => {
     zone: { name: 'Médina' },
     product: { name: 'Marmites inox 5 L', unitLabel: 'pièce' },
     campaign: { title: 'Marmites' },
-    respondent: { id: 'r1', firstName: 'Awa', phoneE164: '+221771234512', anonymizedAt: null },
+    respondent: {
+      id: 'r1',
+      firstName: 'Awa',
+      phoneE164: '+221771234512',
+      anonymizedAt: null,
+      contactConsentAt: new Date('2026-10-20T10:00:00Z'),
+    },
     ...over,
   });
 
@@ -224,6 +230,7 @@ describe('toOrderRow', () => {
         firstName: 'Awa',
         phone: '+221 77 123 45 12',
         phoneE164: '+221771234512',
+        contactRefused: false,
       },
     });
   });
@@ -234,15 +241,52 @@ describe('toOrderRow', () => {
       firstName: 'Awa',
       phone: '77 •• •• 12',
       phoneE164: null,
+      contactRefused: false,
+    });
+  });
+
+  it('a client who did not agree to be contacted: no number, even on a pass (2026-11-04)', () => {
+    const order = toOrderRow(
+      row({
+        respondent: {
+          id: 'r1',
+          firstName: 'Awa',
+          phoneE164: '+221771234512',
+          anonymizedAt: null,
+          contactConsentAt: null,
+        },
+      }),
+      true,
+    );
+    expect(order.client).toEqual({
+      id: 'r1',
+      firstName: 'Awa',
+      phone: null,
+      phoneE164: null,
+      contactRefused: true,
     });
   });
 
   it('an anonymized client keeps the order, without a name or a number', () => {
     const order = toOrderRow(
-      row({ respondent: { id: 'r1', firstName: null, phoneE164: null, anonymizedAt: new Date() } }),
+      row({
+        respondent: {
+          id: 'r1',
+          firstName: null,
+          phoneE164: null,
+          anonymizedAt: new Date(),
+          contactConsentAt: null,
+        },
+      }),
       true,
     );
-    expect(order.client).toEqual({ id: 'r1', firstName: null, phone: null, phoneE164: null });
+    expect(order.client).toEqual({
+      id: 'r1',
+      firstName: null,
+      phone: null,
+      phoneE164: null,
+      contactRefused: false,
+    });
     expect(order.totalAmount).toBe(22_500);
   });
 

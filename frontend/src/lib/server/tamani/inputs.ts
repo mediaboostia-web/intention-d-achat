@@ -235,6 +235,8 @@ export const responseStepSchema = z
     phone: z.string().trim().min(6).max(30).optional(),
     /** The respondent's own country, when it is not the shop's. */
     phoneCountry: z.string().refine(isPhoneCountry, { message: 'Unknown country' }).optional(),
+    /** « J'accepte que {boutique} me contacte » (2026-11-04), not required. */
+    contactConsent: z.boolean().optional(),
   })
   .refine((s) => (s.firstName === undefined) === (s.phone === undefined), {
     message: 'firstName and phone go together',

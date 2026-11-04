@@ -24,8 +24,9 @@ import {
 } from './campaign-export';
 import { COUNTED, ROW_SELECT, toRow } from './campaign-responses';
 import { clientFilterWhere, clientFiltersOf, visibleClientWhere } from './clients';
+import { CONTACT_CONSENTED, shownPhone } from './contact';
 import type { Db } from './locks';
-import { displayPhone, maskPhone, phoneCountryOf } from './phone';
+import { displayPhone, phoneCountryOf } from './phone';
 
 const PREVIEW_ROWS = 10;
 const MAX_FILE_ROWS = 20_000;
@@ -89,6 +90,7 @@ const CLIENT_SELECT = {
   id: true,
   firstName: true,
   phoneE164: true,
+  contactConsentAt: true,
   responses: {
     where: COUNTED,
     orderBy: NEWEST,
@@ -117,9 +119,11 @@ async function clientRows(
   return rows.map((r) => {
     const last = r.responses[0];
     const phone = r.phoneE164;
+    const shown = shownPhone(phone, canSeeContacts, r.contactConsentAt);
     return {
       firstName: r.firstName,
-      phone: phone === null ? null : canSeeContacts ? displayPhone(phone) : maskPhone(phone),
+      phone: shown.phone,
+      contactRefused: shown.contactRefused,
       country: phone === null ? null : phoneCountryOf(phone),
       kind: (last?.buyerType as BuyerType | null | undefined) ?? null,
       topZone: mostFrequent(r.responses.map((a) => a.zone?.name ?? null)),
@@ -212,7 +216,7 @@ export async function exportNumbers(
   if (q.what === 'clients') {
     const where = clientsWhere(organizationId, q, true, now);
     const rows = await db.respondent.findMany({
-      where: { ...where, phoneE164: { not: null } },
+      where: { ...where, phoneE164: { not: null }, ...CONTACT_CONSENTED },
       orderBy: [{ lastSeenAt: 'desc' }, { id: 'desc' }],
       take: MAX_NUMBERS,
       select: { phoneE164: true },
@@ -222,7 +226,9 @@ export async function exportNumbers(
     const rows = await db.response.findMany({
       where: {
         ...responsesWhere(organizationId, q, now),
-        AND: [{ respondent: { anonymizedAt: null, phoneE164: { not: null } } }],
+        AND: [
+          { respondent: { anonymizedAt: null, phoneE164: { not: null }, ...CONTACT_CONSENTED } },
+        ],
       },
       orderBy: NEWEST,
       distinct: ['respondentId'],

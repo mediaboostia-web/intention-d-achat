@@ -23,6 +23,8 @@ export interface ClientRow {
   phone: string | null;
   /** The number WhatsApp needs; null on a plan without contacts (Free). */
   phoneE164: string | null;
+  /** The client gave a number but did not tick « J'accepte d'être contacté » (2026-11-04). */
+  contactRefused: boolean;
   kind: BuyerType | null;
   last: ClientLast | null;
 }
@@ -80,6 +82,13 @@ export function clientWhatsappMessage(p: {
 /** Free plan: why the WhatsApp button is locked (spec §5.6). */
 export function lockedContactText(firstName: string | null): string {
   return `Prends un pass pour contacter ${firstName ?? 'ce client'}.`;
+}
+
+/** Where a number would be: the client did not tick « J'accepte d'être contacté » (2026-11-04). */
+export const CONTACT_REFUSED_LINE = 'Numéro non partagé';
+
+export function contactRefusedText(firstName: string | null): string {
+  return `${firstName ?? 'Ce client'} n'a pas accepté d'être contacté : son numéro reste caché. Ses réponses comptent dans tes résultats.`;
 }
 
 /** The note's limit after trim, the server's ClientNotesPatch. */

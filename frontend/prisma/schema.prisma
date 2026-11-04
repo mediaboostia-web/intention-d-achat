@@ -457,19 +457,23 @@ model CampaignLink {
 // is two respondents. Postgres allows many NULL phoneE164 (anonymized rows)
 // under the unique key.
 model Respondent {
-  id             String       @id @default(cuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  phoneE164      String?
-  firstName      String?
-  notes          String?
-  firstSeenAt    DateTime     @default(now())
-  lastSeenAt     DateTime     @default(now())
-  anonymizedAt   DateTime?
-  responses      Response[]
-  orders         SaleOrder[]
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id               String       @id @default(cuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  phoneE164        String?
+  firstName        String?
+  notes            String?
+  firstSeenAt      DateTime     @default(now())
+  lastSeenAt       DateTime     @default(now())
+  anonymizedAt     DateTime?
+  // When the client last ticked « J'accepte que {boutique} me contacte » in the
+  // popup (2026-11-04), or the shop typed the number for a manual order. Null:
+  // the number never leaves the server (lib/server/tamani/contact.ts).
+  contactConsentAt DateTime?
+  responses        Response[]
+  orders           SaleOrder[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   @@unique([organizationId, phoneE164])
 }

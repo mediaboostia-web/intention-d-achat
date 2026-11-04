@@ -15,6 +15,8 @@ import { errorMessage } from '@/lib/tamani/api-messages';
 import {
   CLIENT_NOTE_MAX,
   clientWhatsappMessage,
+  CONTACT_REFUSED_LINE,
+  contactRefusedText,
   lockedContactText,
   lockedReliabilityText,
   normalizeClientNote,
@@ -350,6 +352,7 @@ export function ClientDetailView({
             {clientName(client.firstName)}
           </h1>
           {client.phone && <p className="text-ink-soft">{client.phone}</p>}
+          {client.contactRefused && <p className="text-ink-soft">{CONTACT_REFUSED_LINE}</p>}
           <p className="text-sm text-ink-muted">
             Client depuis le {formatDateFr(new Date(client.firstSeenAt), now)}
           </p>
@@ -373,6 +376,10 @@ export function ClientDetailView({
         >
           Écrire sur WhatsApp
         </Button>
+      ) : client.contactRefused ? (
+        <Notice tone="info" className="mt-6">
+          {contactRefusedText(client.firstName)}
+        </Notice>
       ) : (
         <Notice
           tone="info"

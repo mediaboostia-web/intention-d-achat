@@ -39,6 +39,8 @@ import {
 } from '@/lib/tamani/popup-machine';
 import { leavePage } from '@/lib/tamani/leave-page';
 import {
+  consentLabel,
+  consentNote,
   ANSWERS_CLOSED_TITLE,
   answersClosedLine,
   poweredByHref,
@@ -56,7 +58,13 @@ import { ThanksDialog } from './thanks-dialog';
 
 const MIN_COUNTER = 3;
 
-type Contact = { firstName: string; phone: string; phoneCountry?: string };
+type Contact = {
+  firstName: string;
+  phone: string;
+  phoneCountry?: string;
+  /** « J'accepte que {boutique} me contacte » (2026-11-04). */
+  contactConsent: boolean;
+};
 
 export interface PopupViewProps {
   campaign: PublicCampaign;
@@ -304,8 +312,41 @@ function DeliveryStep({ c, answers, onAction }: StepProps) {
   );
 }
 
-function consent(shop: string): string {
-  return `Ton numéro est partagé uniquement avec ${shop} pour te recontacter au sujet de ce produit.`;
+/** Not required and never ticked for them: without it the shop never sees the number. */
+function ConsentBox({
+  shop,
+  checked,
+  onChange,
+}: {
+  shop: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="mt-4">
+      <label htmlFor="popup-consent" className="flex min-h-12 cursor-pointer items-start gap-3">
+        <input
+          id="popup-consent"
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className="mt-0.5 size-6 shrink-0 cursor-pointer accent-primary"
+        />
+        <span className="text-ink">{consentLabel(shop)}</span>
+      </label>
+      <p className="mt-1 text-sm text-ink-muted">
+        {consentNote(shop)}{' '}
+        <a
+          href="/confidentialite"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-2"
+        >
+          Confidentialité
+        </a>
+      </p>
+    </div>
+  );
 }
 
 function ContactStep({
@@ -319,6 +360,7 @@ function ContactStep({
   const [phone, setPhone] = useState('');
   const [country, setCountry] = useState(c.shop.country);
   const [countries] = useState(() => phoneCountryChoices(c.shop.country));
+  const [agreed, setAgreed] = useState(false);
   const title =
     state.answers.interested === false
       ? 'Pour être prévenu des prochains arrivages'
@@ -339,24 +381,33 @@ function ContactStep({
             pas toi ?
           </button>
         </p>
+        <ConsentBox shop={c.shop.name} checked={agreed} onChange={setAgreed} />
         <Button
           size="lg"
           className="mt-4 w-full"
           disabled={busy}
           onClick={() =>
-            onContact({ firstName: remembered.firstName, phone: remembered.phoneE164 })
+            onContact({
+              firstName: remembered.firstName,
+              phone: remembered.phoneE164,
+              contactConsent: agreed,
+            })
           }
         >
           Envoyer ma réponse
         </Button>
-        <p className="mt-3 text-sm text-ink-muted">{consent(c.shop.name)}</p>
       </>
     );
   }
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (firstName.trim() && phone.trim()) {
-      onContact({ firstName: firstName.trim(), phone, phoneCountry: country });
+      onContact({
+        firstName: firstName.trim(),
+        phone,
+        phoneCountry: country,
+        contactConsent: agreed,
+      });
     }
   };
   return (
@@ -379,13 +430,13 @@ function ContactStep({
           countries={countries}
           country={country}
           onCountryChange={setCountry}
-          hint={consent(c.shop.name)}
           maxLength={30}
           required
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
         />
       </div>
+      <ConsentBox shop={c.shop.name} checked={agreed} onChange={setAgreed} />
       <Button type="submit" size="lg" className="mt-4 w-full" disabled={busy}>
         Envoyer ma réponse
       </Button>

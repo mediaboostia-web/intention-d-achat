@@ -116,6 +116,7 @@ export const LEGAL_PAGES: Record<LegalSlug, LegalPageContent> = {
         body: [
           'Ton compte : ton prénom, ton e-mail, ton mot de passe (jamais en clair), ta boutique (nom, pays, numéro WhatsApp, logo, réglages), tes produits, campagnes et commandes.',
           'Les clients qui répondent : leur prénom, leur numéro WhatsApp, leur réponse (oui ou non, quantité, usage, échéance, livraison, quartier ou lieu) et la date. Un identifiant au hasard est gardé sur leur téléphone pour éviter les doublons, avec leur prénom et leur numéro pour remplir la prochaine réponse plus vite.',
+          'Le vendeur ne voit le numéro d’un client que si ce client a coché « J’accepte que … me contacte » en répondant. Sans cette case, sa réponse compte dans les résultats, mais son numéro reste chez Tamani.',
           'Le paiement : SasPay traite ton paiement. Nous ne voyons ni ta carte ni ton code Mobile Money.',
         ],
       },

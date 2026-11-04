@@ -38,7 +38,13 @@ const stored = (over: Record<string, unknown> = {}) =>
     zone: null,
     product: { name: 'Marmites inox 5 L', unitLabel: 'pièce' },
     campaign: null,
-    respondent: { id: 'r1', firstName: 'Awa', phoneE164: '+221771234512', anonymizedAt: null },
+    respondent: {
+      id: 'r1',
+      firstName: 'Awa',
+      phoneE164: '+221771234512',
+      anonymizedAt: null,
+      contactConsentAt: new Date('2026-10-20T10:00:00Z'),
+    },
     ...over,
   } as never);
 const patch = (body: unknown, csrf = true) =>

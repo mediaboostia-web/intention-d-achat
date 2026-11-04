@@ -51,6 +51,15 @@ export function poweredByHref(appUrl: string, shopSlug: string): string {
 }
 
 /** No pass and the month's ceiling reached (spec §5.6): the product stays, nothing is asked. */
+/** The box at the contact step (porteur, 2026-11-04): not required, never ticked for them. */
+export function consentLabel(shopName: string): string {
+  return `J'accepte que ${shopName} me contacte sur WhatsApp pour ce produit et ses prochains arrivages.`;
+}
+
+export function consentNote(shopName: string): string {
+  return `Sans cette case, ta réponse compte quand même, mais ${shopName} ne voit pas ton numéro.`;
+}
+
 export const ANSWERS_CLOSED_TITLE = 'Réponses fermées pour ce mois';
 
 export function answersClosedLine(shopName: string): string {

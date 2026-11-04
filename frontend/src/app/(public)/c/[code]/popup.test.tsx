@@ -198,11 +198,24 @@ describe('PopupView', () => {
     expect(html(<PopupView campaign={campaign} state={start} />)).not.toContain('line-clamp-3');
   });
 
-  it('shows the consent sentence under the number', () => {
-    const t = text(<PopupView campaign={campaign} state={at('contact')} />);
-    expect(t).toContain(
-      'Ton numéro est partagé uniquement avec Diallo Import pour te recontacter au sujet de ce produit.',
-    );
+  // Porteur, 2026-11-04: a box to agree to be contacted, not required.
+  it('asks, unticked, whether the shop may contact the respondent, and says what happens without', () => {
+    for (const state of [at('contact'), at('contact', { remembered: awa })]) {
+      const out = html(<PopupView campaign={campaign} state={state} />);
+      const box = out.match(/<input [^>]*id="popup-consent"[^>]*>/)?.[0] ?? '';
+      expect(box).toContain('type="checkbox"');
+      expect(box).not.toContain('checked');
+      expect(box).not.toContain('required');
+      expect(out).toContain('for="popup-consent"');
+      expect(out).toMatch(/<a [^>]*href="\/confidentialite"[^>]*target="_blank"/);
+      const t = text(<PopupView campaign={campaign} state={state} />).replaceAll('&#x27;', "'");
+      expect(t).toContain(
+        "J'accepte que Diallo Import me contacte sur WhatsApp pour ce produit et ses prochains arrivages.",
+      );
+      expect(t).toContain(
+        'Sans cette case, ta réponse compte quand même, mais Diallo Import ne voit pas ton numéro.',
+      );
+    }
     expect(html(<PopupView campaign={campaign} state={at('contact')} />)).toContain('+221');
   });
 

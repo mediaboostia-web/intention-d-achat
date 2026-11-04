@@ -20,7 +20,7 @@ import {
   renderShareMessage,
 } from '@/lib/tamani/share-message';
 import { effectiveStatus } from './campaign-status';
-import { displayPhone, maskPhone } from './phone';
+import { shownPhone } from './contact';
 import { effectivePlan } from './subscription';
 
 /** Product.photos is Json: keep the strings, drop anything else. */
@@ -175,15 +175,24 @@ export const ORDER_SELECT = {
   zone: { select: { name: true } },
   product: { select: { name: true, unitLabel: true } },
   campaign: { select: { title: true } },
-  respondent: { select: { id: true, firstName: true, phoneE164: true, anonymizedAt: true } },
+  respondent: {
+    select: {
+      id: true,
+      firstName: true,
+      phoneE164: true,
+      anonymizedAt: true,
+      contactConsentAt: true,
+    },
+  },
 } satisfies Prisma.SaleOrderSelect;
 
 export type OrderSelectRow = Prisma.SaleOrderGetPayload<{ select: typeof ORDER_SELECT }>;
 
 /**
  * An order as the shop sees it. Without the plan's contacts (Free) the
- * number is masked and its E.164 form stays here; an anonymized client
- * keeps their orders, without a name or a number.
+ * number is masked and its E.164 form stays here; without the client's
+ * consent it stays here on every plan; an anonymized client keeps their
+ * orders, without a name or a number.
  */
 export function toOrderRow(o: OrderSelectRow, canSeeContacts: boolean): OrderRow {
   const who = o.respondent.anonymizedAt ? null : o.respondent;
@@ -211,8 +220,7 @@ export function toOrderRow(o: OrderSelectRow, canSeeContacts: boolean): OrderRow
     client: {
       id: o.respondent.id,
       firstName: who?.firstName ?? null,
-      phone: phone === null ? null : canSeeContacts ? displayPhone(phone) : maskPhone(phone),
-      phoneE164: canSeeContacts ? phone : null,
+      ...shownPhone(phone, canSeeContacts, who?.contactConsentAt ?? null),
     },
   };
 }

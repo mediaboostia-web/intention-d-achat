@@ -100,6 +100,7 @@ describe('upsertResponse', () => {
         firstName: 'Awa',
         firstSeenAt: NOW,
         lastSeenAt: NOW,
+        contactConsentAt: null,
       },
       update: { firstName: 'Awa', lastSeenAt: NOW },
     });
@@ -110,6 +111,23 @@ describe('upsertResponse', () => {
       respondent: { firstName: 'Awa', phoneE164: '+221771234567', phoneMasked: '77 •• •• 67' },
       interestedCount: 1,
     });
+  });
+
+  // Porteur, 2026-11-04: the box is not required; ticked, the shop may see the number.
+  it('a ticked box records when the client agreed to be contacted', async () => {
+    fakePublicDb();
+    await upsertResponse(prismaMock, { ...base, ...yes, ...contact, contactConsent: true }, NOW);
+    const call = prismaMock.respondent.upsert.mock.calls[0]![0];
+    expect(call.create).toMatchObject({ contactConsentAt: NOW });
+    expect(call.update).toMatchObject({ contactConsentAt: NOW });
+  });
+
+  it('an unticked box never takes back an earlier yes: the client asks the shop or Tamani', async () => {
+    fakePublicDb();
+    await upsertResponse(prismaMock, { ...base, ...yes, ...contact, contactConsent: false }, NOW);
+    const call = prismaMock.respondent.upsert.mock.calls[0]![0];
+    expect(call.create).toMatchObject({ contactConsentAt: null });
+    expect(call.update).not.toHaveProperty('contactConsentAt');
   });
 
   it('keeps the answer pending when the pass is full, and counts it otherwise', async () => {

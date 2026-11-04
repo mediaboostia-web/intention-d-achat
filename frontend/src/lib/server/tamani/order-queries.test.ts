@@ -41,7 +41,13 @@ function order(id: string, over: Record<string, unknown> = {}) {
     zone: { name: 'Médina', sortOrder: 1 },
     product: { name: 'Riz parfumé', unitLabel: 'sac' },
     campaign: { title: 'Riz' },
-    respondent: { id: 'r1', firstName: 'Awa', phoneE164: '+221771234512', anonymizedAt: null },
+    respondent: {
+      id: 'r1',
+      firstName: 'Awa',
+      phoneE164: '+221771234512',
+      anonymizedAt: null,
+      contactConsentAt: new Date('2026-10-20T10:00:00Z'),
+    },
     ...over,
   };
 }
@@ -132,6 +138,7 @@ describe('listOrders', () => {
       firstName: 'Awa',
       phone: '77 •• •• 12',
       phoneE164: null,
+      contactRefused: false,
     });
   });
 
@@ -221,6 +228,20 @@ describe('createManualOrder', () => {
     prismaMock.saleOrder.create.mockResolvedValue({ id: 'order_1' } as never);
   });
 
+  // The shop typed the number itself: the box of the popup has nothing to hide.
+  it('a manual order makes a client who had not ticked the box reachable (2026-11-04)', async () => {
+    prismaMock.respondent.upsert.mockResolvedValue({
+      id: 'r1',
+      firstName: 'Awa D.',
+      contactConsentAt: null,
+    } as never);
+    await make();
+    expect(prismaMock.respondent.updateMany).toHaveBeenCalledWith({
+      where: { id: 'r1', organizationId: 'org_1' },
+      data: { contactConsentAt: now },
+    });
+  });
+
   it('manual order finds the client by normalized number', async () => {
     await expect(make()).resolves.toEqual({ id: 'order_1' });
     expect(prismaMock.respondent.upsert).toHaveBeenCalledWith({
@@ -231,9 +252,10 @@ describe('createManualOrder', () => {
         firstName: 'Awa',
         firstSeenAt: now,
         lastSeenAt: now,
+        contactConsentAt: now,
       },
       update: {},
-      select: { id: true, firstName: true },
+      select: { id: true, firstName: true, contactConsentAt: true },
     });
     // The client already had a first name: it is kept.
     expect(prismaMock.respondent.updateMany).not.toHaveBeenCalled();
