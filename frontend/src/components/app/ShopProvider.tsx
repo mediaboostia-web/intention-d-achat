@@ -6,7 +6,7 @@
 // which has no shop yet, reports the one it creates with useShopGate().
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Button, Logo } from '@/components/ui';
+import { Button, Logo, ShopSkeleton } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, ApiError } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -117,7 +117,7 @@ export function ShopGate({ children }: { children: ReactNode }) {
       />
     );
   }
-  if (decision.kind === 'wait' || decision.kind === 'redirect') return <GateLoading />;
+  if (decision.kind === 'wait' || decision.kind === 'redirect') return <ShopSkeleton />;
   if (loaded.status === 'error') {
     return (
       <GateProblem
@@ -132,7 +132,7 @@ export function ShopGate({ children }: { children: ReactNode }) {
   if (decision.kind === 'bare') {
     return <ShopGateContext.Provider value={actions}>{children}</ShopGateContext.Provider>;
   }
-  if (loaded.status !== 'ready') return <GateLoading />;
+  if (loaded.status !== 'ready') return <ShopSkeleton />;
   return (
     <ShopGateContext.Provider value={actions}>
       <ShopContext.Provider
@@ -147,23 +147,6 @@ export function ShopGate({ children }: { children: ReactNode }) {
         <AppShell>{children}</AppShell>
       </ShopContext.Provider>
     </ShopGateContext.Provider>
-  );
-}
-
-/** Blank notebook page while the session and the shop load. */
-function GateLoading() {
-  return (
-    <div className="min-h-dvh bg-paper px-4 pt-8 lg:pl-72">
-      <div role="status" className="mx-auto max-w-3xl">
-        <Logo variant="mark" size={32} />
-        <p className="mt-6 font-hand text-2xl text-ink-muted">Chargement de ta boutique…</p>
-        <div aria-hidden="true" className="mt-8 flex flex-col gap-4 motion-safe:animate-pulse">
-          <span className="h-24 rounded-card bg-grid/70" />
-          <span className="h-14 w-2/3 rounded-card bg-grid/70" />
-          <span className="h-14 rounded-card bg-grid/70" />
-        </div>
-      </div>
-    </div>
   );
 }
 

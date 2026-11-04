@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Avatar, Badge, Button, Card, Notice, Textarea } from '@/components/ui';
+import { Avatar, Badge, Button, Card, DetailSkeleton, Notice, Textarea } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import {
@@ -473,15 +473,7 @@ export function ClientScreen({ id }: { id: string }) {
     );
   }
   if (!client) {
-    return (
-      <div role="status" aria-label="Chargement du client">
-        <div aria-hidden="true" className="flex flex-col gap-4 motion-safe:animate-pulse">
-          <span className="h-16 w-2/3 rounded-card bg-grid/70" />
-          <span className="h-12 w-48 rounded-card bg-grid/70" />
-          <span className="h-40 rounded-card bg-grid/70" />
-        </div>
-      </div>
-    );
+    return <DetailSkeleton label="Chargement du client" />;
   }
   return (
     <ClientDetailView

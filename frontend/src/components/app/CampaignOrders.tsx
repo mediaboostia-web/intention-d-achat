@@ -6,7 +6,15 @@
 // the stock it reads 0 and says by how much. On Free the numbers come
 // masked from the server. CampaignOrdersTab loads; CampaignOrdersView draws.
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Card, DataList, EmptyState, Notice } from '@/components/ui';
+import {
+  Button,
+  Card,
+  DataList,
+  DetailSkeleton,
+  EmptyState,
+  Notice,
+  RowsSkeleton,
+} from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import { NO_ORDER_FILTERS, type OrderRow } from '@/lib/tamani/orders-view';
@@ -90,12 +98,7 @@ export function CampaignOrdersView({
         </div>
       )}
 
-      {loading && (
-        <div aria-hidden="true" className="flex flex-col gap-2 motion-safe:animate-pulse">
-          <span className="h-[72px] rounded-card bg-grid/70" />
-          <span className="h-[72px] rounded-card bg-grid/70" />
-        </div>
-      )}
+      {loading && <RowsSkeleton label="Chargement des commandes" count={2} />}
       {error && (
         <Notice
           tone="danger"
@@ -208,13 +211,7 @@ export function CampaignOrdersTab({
         </Notice>
       );
     }
-    return (
-      <div role="status" className="flex flex-col gap-4 motion-safe:animate-pulse">
-        <span className="sr-only">Chargement des commandes…</span>
-        <span aria-hidden="true" className="h-32 rounded-card bg-grid/70" />
-        <span aria-hidden="true" className="h-[72px] rounded-card bg-grid/70" />
-      </div>
-    );
+    return <DetailSkeleton label="Chargement des commandes" />;
   }
   return (
     <CampaignOrdersView

@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Badge, Button, EmptyState, FilterBar, Icon, Notice } from '@/components/ui';
+import { Badge, Button, EmptyState, FilterBar, Icon, Notice, RowsSkeleton } from '@/components/ui';
 import { ApiError, api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import type { CampaignStatus } from '@/lib/tamani/campaign-actions';
@@ -303,12 +303,7 @@ export function InterestedView({
         </ul>
       )}
 
-      {loading && (
-        <div aria-hidden="true" className="flex flex-col gap-2 motion-safe:animate-pulse">
-          <span className="h-[72px] rounded-card bg-grid/70" />
-          <span className="h-[72px] rounded-card bg-grid/70" />
-        </div>
-      )}
+      {loading && <RowsSkeleton label="Chargement des intéressés" count={3} />}
 
       {!loading &&
         !error &&

@@ -13,7 +13,14 @@ import { CampaignEditForm, type CampaignPatchBody } from '@/components/app/Campa
 import { ShareCard } from '@/components/app/ShareCard';
 import { useShop } from '@/components/app/ShopProvider';
 import { SourceLinks } from '@/components/app/SourceLinks';
-import { Button, CampaignStatusBadge, Notice, PageHeader, Tabs } from '@/components/ui';
+import {
+  Button,
+  CampaignStatusBadge,
+  DetailSkeleton,
+  Notice,
+  PageHeader,
+  Tabs,
+} from '@/components/ui';
 import { useToast } from '@/contexts/ToastContext';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -106,13 +113,7 @@ function CampaignDetail() {
     );
   }
   if (!campaign) {
-    return (
-      <div role="status" className="flex flex-col gap-4 motion-safe:animate-pulse">
-        <span className="sr-only">Chargement de la campagne…</span>
-        <span aria-hidden="true" className="h-10 w-2/3 rounded-card bg-grid/70" />
-        <span aria-hidden="true" className="h-40 rounded-card bg-grid/70" />
-      </div>
-    );
+    return <DetailSkeleton label="Chargement de la campagne" tabs={5} />;
   }
 
   const base = `/app/campagnes/${campaign.id}`;

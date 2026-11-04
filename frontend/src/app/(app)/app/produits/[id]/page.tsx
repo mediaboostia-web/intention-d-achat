@@ -8,7 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ProductForm } from '@/components/app/ProductForm';
 import { useShop } from '@/components/app/ShopProvider';
 import { useShopUnits } from '@/components/app/use-shop-units';
-import { Badge, Button, Notice, PageHeader } from '@/components/ui';
+import { Badge, Button, FormSkeleton, Notice, PageHeader } from '@/components/ui';
 import { useToast } from '@/contexts/ToastContext';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -86,13 +86,7 @@ export default function ProductPage() {
     );
   }
   if (!product) {
-    return (
-      <div role="status" className="flex flex-col gap-4 motion-safe:animate-pulse">
-        <span className="sr-only">Chargement du produit…</span>
-        <span aria-hidden="true" className="h-10 w-2/3 rounded-card bg-grid/70" />
-        <span aria-hidden="true" className="h-64 rounded-card bg-grid/70" />
-      </div>
-    );
+    return <FormSkeleton label="Chargement du produit" fields={5} />;
   }
 
   return (

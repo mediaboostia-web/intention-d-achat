@@ -7,7 +7,7 @@
 import { useRouter } from 'next/navigation';
 import { ProfileView, type PasswordChange } from '@/components/app/ProfileView';
 import { useShop } from '@/components/app/ShopProvider';
-import { PageHeader } from '@/components/ui';
+import { FormSkeleton, PageHeader } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { api } from '@/lib/api';
@@ -59,9 +59,7 @@ export default function ProfilePage() {
           onSignOut={() => void signOut()}
         />
       ) : (
-        <p role="status" className="mt-8 text-ink-muted">
-          Chargement du profil…
-        </p>
+        <FormSkeleton label="Chargement du profil" fields={2} className="mt-8" />
       )}
     </>
   );

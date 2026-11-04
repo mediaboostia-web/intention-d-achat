@@ -21,6 +21,7 @@ import {
   PageHeader,
   Select,
   Tabs,
+  RowsSkeleton,
 } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -314,10 +315,11 @@ export function OrderListView({
       )}
 
       {loading && (
-        <div aria-hidden="true" className="mt-5 flex flex-col gap-2 motion-safe:animate-pulse">
-          <span className="h-[72px] rounded-card bg-grid/70" />
-          <span className="h-[72px] rounded-card bg-grid/70" />
-        </div>
+        <RowsSkeleton
+          label="Chargement des commandes"
+          count={rows.length > 0 ? 2 : 4}
+          className="mt-5"
+        />
       )}
       {error && (
         <Notice

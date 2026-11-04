@@ -21,6 +21,7 @@ import {
   PassMeter,
   VerdictTile,
   type IconName,
+  HomeSkeleton,
 } from '@/components/ui';
 import type { VerdictTone } from '@/lib/design/tokens';
 import { api } from '@/lib/api';
@@ -143,15 +144,7 @@ export function HomeView({ summary: given }: { summary?: ShopSummary }) {
 }
 
 function HomeLoading() {
-  return (
-    <div role="status" aria-label="Chargement de l'accueil" className="mt-6">
-      <div aria-hidden="true" className="flex flex-col gap-4 motion-safe:animate-pulse">
-        <span className="h-44 rounded-card bg-grid/70" />
-        <span className="h-16 rounded-card bg-grid/70" />
-        <span className="h-40 rounded-card bg-grid/70" />
-      </div>
-    </div>
-  );
+  return <HomeSkeleton className="mt-6" />;
 }
 
 const plural = (n: number, one: string, many: string) => (n > 1 ? many : one);

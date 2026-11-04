@@ -7,7 +7,17 @@
 // OrderScreen loads and saves; OrderDetailView draws from its props.
 import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { Badge, Button, DataList, Icon, Input, Notice, Switch, Textarea } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  DataList,
+  DetailSkeleton,
+  Icon,
+  Input,
+  Notice,
+  Switch,
+  Textarea,
+} from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import { formatDateFr } from '@/lib/tamani/dates';
@@ -409,15 +419,7 @@ export function OrderScreen({ id }: { id: string }) {
     );
   }
   if (!order) {
-    return (
-      <div role="status" aria-label="Chargement de la commande">
-        <div aria-hidden="true" className="flex flex-col gap-4 motion-safe:animate-pulse">
-          <span className="h-12 w-2/3 rounded-card bg-grid/70" />
-          <span className="h-14 w-48 rounded-card bg-grid/70" />
-          <span className="h-40 rounded-card bg-grid/70" />
-        </div>
-      </div>
-    );
+    return <DetailSkeleton label="Chargement de la commande" />;
   }
   return (
     <OrderDetailView
