@@ -7,7 +7,7 @@ import { SignOutButton } from './SignOutButton';
 
 /**
  * The back-office frame (lot 11b, after the porteur's model): a white sidebar
- * from 1024px (a top bar of pills below), a search, then the page on a
+ * from 1024px (four tabs on top below), a search, then the page on a
  * violet-tinted ground. Inside it the kit's « primary » is the admin violet,
  * so buttons, links and fields leave the shop space's blue pen behind.
  */
@@ -68,7 +68,6 @@ export function AdminShell({
               />
             </div>
           </form>
-          <div className="lg:hidden">{who}</div>
         </div>
         <main className="px-4 py-6 lg:px-8">{children}</main>
       </div>

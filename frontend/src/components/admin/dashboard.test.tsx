@@ -63,7 +63,8 @@ const view = (over: Partial<Parameters<typeof DashboardView>[0]> = {}) => (
 describe('DashboardView', () => {
   it('shows the month’s figures, each with its calculation', () => {
     const t = text(view());
-    expect(t).toContain('Encaissé en novembre 2026');
+    expect(t).toContain('Les chiffres de novembre 2026');
+    expect(t).toContain('Encaissé');
     expect(t).toContain('13 800 FCFA');
     expect(t).toContain('30 derniers jours : 17 700 FCFA');
     expect(t).toContain('MRR');
@@ -122,6 +123,20 @@ describe('DashboardView', () => {
     expect(t).toMatch(/Archivées\s*2/);
     expect(t).toMatch(/Comptes\s*12/);
     expect(t).toMatch(/Suspendus\s*1/);
+  });
+
+  it('writes « d’octobre » before a vowel', () => {
+    const t = text(
+      <DashboardView
+        data={{ ...DATA, month: '2026-10' }}
+        prevMonth="2026-09"
+        nextMonth="2026-11"
+        canEdit
+      />,
+    );
+    expect(t).toContain('Les chiffres d’octobre 2026');
+    expect(t).toContain('Paiements d’octobre 2026');
+    expect(t).toContain('Dépense marketing d’octobre 2026');
   });
 
   it('moves between months, never past the current one', () => {

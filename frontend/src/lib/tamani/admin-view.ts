@@ -42,6 +42,12 @@ const DATE = new Intl.DateTimeFormat('fr-FR', {
   timeZone: 'UTC',
 });
 
+/** « de novembre 2026 », « d’octobre 2026 »: French elides « de » before a vowel. */
+export function ofMonth(month: string): string {
+  const label = monthLabel(month);
+  return /^[aeiouâéèêîôû]/i.test(label) ? `d’${label}` : `de ${label}`;
+}
+
 const SHORT_MONTH = new Intl.DateTimeFormat('fr-FR', { month: 'short', timeZone: 'UTC' });
 
 /** « 2026-07 » → « juil. », under the chart. */

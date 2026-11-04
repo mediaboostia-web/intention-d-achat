@@ -16,6 +16,7 @@ import {
   dateLabel,
   growthText,
   monthLabel,
+  ofMonth,
   planLabel,
   providerLabel,
   typeLabel,
@@ -147,6 +148,7 @@ export function DashboardView({
   canEdit: boolean;
 }) {
   const month = monthLabel(data.month);
+  const ofThisMonth = ofMonth(data.month);
   const { revenue, shops, campaigns } = data;
   const sales = revenue.byPass.reduce((n, p) => n + p.count, 0);
   const churn = churnText(data.churn, data.month);
@@ -173,7 +175,7 @@ export function DashboardView({
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-ink">Tableau de bord</h1>
-          <p className="text-ink-soft">Les chiffres de {month}.</p>
+          <p className="text-ink-soft">Les chiffres {ofThisMonth}.</p>
         </div>
         <nav aria-label="Mois" className="admin-card flex flex-wrap items-center p-1">
           <Link
@@ -201,7 +203,7 @@ export function DashboardView({
       <section aria-label="Chiffres clés" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Figure
           hero
-          label={`Encaissé en ${month}`}
+          label="Encaissé"
           value={adminMoney(revenue.total)}
           calc={`${sales} paiement${sales > 1 ? 's' : ''} · 30 derniers jours : ${adminMoney(revenue.last30Days)}`}
           badge={
@@ -227,8 +229,8 @@ export function DashboardView({
           value={`${shops.active} / ${shops.total}`}
           calc="Essai ou pass en cours, grâce comprise"
         />
-        <Figure label={`Churn de ${month}`} value={churn.value} calc={churn.calc} />
-        <Figure label={`CAC de ${month}`} value={cac.value} calc={cac.calc} />
+        <Figure label="Churn du mois" value={churn.value} calc={churn.calc} />
+        <Figure label="CAC du mois" value={cac.value} calc={cac.calc} />
       </section>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -242,6 +244,11 @@ export function DashboardView({
           }
         >
           <RevenueChart series={revenue.series} />
+          {sixMonths === 0 && (
+            <p className="text-center text-sm text-ink-soft">
+              Aucun encaissement sur ces {revenue.series.length} mois.
+            </p>
+          )}
           <details className="mt-3">
             <summary className="inline-flex min-h-11 cursor-pointer items-center font-bold text-admin">
               Voir les montants
@@ -266,7 +273,7 @@ export function DashboardView({
         <Panel
           id="pass"
           title="Pass les plus vendus"
-          aside={<p className="text-sm text-ink-soft">part de l&apos;encaissé de {month}</p>}
+          aside={<p className="text-sm text-ink-soft">part de l&apos;encaissé {ofThisMonth}</p>}
         >
           <ShareList
             rows={passRows}
@@ -322,12 +329,12 @@ export function DashboardView({
         </Panel>
       </div>
 
-      <Panel id="paiements" title={`Paiements de ${month}`}>
+      <Panel id="paiements" title={`Paiements ${ofThisMonth}`}>
         {revenue.payments.length === 0 ? (
           <p className="text-sm text-ink-soft">Aucun encaissement ce mois-ci.</p>
         ) : (
           <AdminTable
-            caption={`Paiements de ${month}`}
+            caption={`Paiements ${ofThisMonth}`}
             columns={[
               { label: 'Date' },
               { label: 'Boutique' },

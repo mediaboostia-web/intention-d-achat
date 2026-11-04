@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { Button, Input } from '@/components/ui';
 import { api } from '@/lib/api';
-import { monthLabel } from '@/lib/tamani/admin-view';
+import { ofMonth } from '@/lib/tamani/admin-view';
 import { currencyLabel } from '@/lib/tamani/currency';
 import { parseAmount } from '@/lib/tamani/fcfa-input';
 
@@ -35,7 +35,7 @@ export function MarketingSpendForm({ month, amount }: { month: string; amount: n
     <form id="marketing-spend" onSubmit={submit} className="flex flex-wrap items-end gap-3">
       <Input
         id="marketing-spend-amount"
-        label={`Dépense marketing de ${monthLabel(month)}`}
+        label={`Dépense marketing ${ofMonth(month)}`}
         hint={`Publicités, influenceurs, affiches… en ${currencyLabel('XOF')}. Elle sert au CAC.`}
         error={
           state === 'error'

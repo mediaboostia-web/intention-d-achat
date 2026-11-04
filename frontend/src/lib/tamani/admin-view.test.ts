@@ -11,6 +11,7 @@ import {
   orderStatusLabel,
   passLine,
   monthLabel,
+  ofMonth,
   percentText,
   planLabel,
   PLAN_ORDER,
@@ -146,5 +147,14 @@ describe('withShares', () => {
 
   it('keeps an empty list empty', () => {
     expect(withShares([])).toEqual([]);
+  });
+});
+
+describe('ofMonth', () => {
+  it('elides « de » before a vowel: d’avril, d’août, d’octobre', () => {
+    expect(ofMonth('2026-10')).toBe('d’octobre 2026');
+    expect(ofMonth('2026-08')).toBe('d’août 2026');
+    expect(ofMonth('2027-04')).toBe('d’avril 2027');
+    expect(ofMonth('2026-11')).toBe('de novembre 2026');
   });
 });
