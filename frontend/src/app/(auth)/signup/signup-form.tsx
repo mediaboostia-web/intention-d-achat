@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthForm, AuthLink, GoogleButton } from '@/components/app/AuthForm';
 import { PasswordInput } from '@/components/app/PasswordInput';
@@ -52,9 +53,22 @@ export function SignupForm({ google }: { google: boolean }) {
       onSubmit={onSubmit}
       before={google ? <GoogleButton next={next} /> : undefined}
       after={
-        <AuthLink question="Déjà un compte ?" href="/login">
-          Connecte-toi
-        </AuthLink>
+        <>
+          <p className="text-center text-sm text-ink-soft">
+            En créant ton compte, tu acceptes les{' '}
+            <Link href="/cgu" className="font-bold text-primary underline">
+              conditions d&apos;utilisation
+            </Link>{' '}
+            et la{' '}
+            <Link href="/confidentialite" className="font-bold text-primary underline">
+              politique de confidentialité
+            </Link>
+            .
+          </p>
+          <AuthLink question="Déjà un compte ?" href="/login">
+            Connecte-toi
+          </AuthLink>
+        </>
       }
     >
       <Input

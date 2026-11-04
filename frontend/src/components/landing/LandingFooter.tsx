@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Logo } from '@/components/ui';
 import { WORDMARK_PATH, WORDMARK_VIEWBOX } from '@/lib/design/logo-paths';
 import { colors } from '@/lib/design/tokens';
+import { LEGAL_PAGES, LEGAL_SLUGS } from '@/lib/tamani/legal';
 import {
   LANDING_CONTACT_EMAIL,
   LANDING_LINKS,
@@ -117,6 +118,13 @@ export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks 
         </InView>
         <div className="lp-foot__bar">
           <p>© 2026 Tamani. Tous droits réservés.</p>
+          <nav aria-label="Pages légales" className="lp-foot__legal">
+            {LEGAL_SLUGS.map((slug) => (
+              <Link key={slug} href={LEGAL_PAGES[slug].path}>
+                {LEGAL_PAGES[slug].label}
+              </Link>
+            ))}
+          </nav>
           <p>Fait pour les grossistes et importateurs d&apos;Afrique de l&apos;Ouest.</p>
         </div>
       </div>
