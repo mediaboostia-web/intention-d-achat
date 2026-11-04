@@ -27,6 +27,33 @@ const product = {
 };
 
 describe('toShop', () => {
+  it('toShop sends what the shop is and where it sells, null before the onboarding', () => {
+    const base = {
+      id: 'org_1',
+      slug: 'diallo-import',
+      name: 'Diallo Import',
+      ownerId: 'user_1',
+      whatsappPhone: '+221771234567',
+      country: 'SN',
+      currency: 'XOF',
+      logoUrl: null,
+      description: null,
+      coefConsumer: 0.5,
+      coefReseller: 0.7,
+      freeVerdictCampaignId: null,
+      createdAt: new Date('2026-10-24T10:00:00Z'),
+      updatedAt: new Date('2026-10-24T10:00:00Z'),
+    };
+    const now = new Date('2026-11-04T10:00:00Z');
+    expect(
+      toShop({ ...base, businessType: 'BOTH', salesChannel: 'ONLINE' }, null, now),
+    ).toMatchObject({ businessType: 'BOTH', salesChannel: 'ONLINE' });
+    expect(toShop({ ...base, businessType: null, salesChannel: null }, null, now)).toMatchObject({
+      businessType: null,
+      salesChannel: null,
+    });
+  });
+
   it('toShop sends the description', () => {
     const org = {
       id: 'org_1',
@@ -38,6 +65,8 @@ describe('toShop', () => {
       currency: 'XOF',
       logoUrl: null,
       description: 'Riz et huile en gros.',
+      businessType: null,
+      salesChannel: null,
       coefConsumer: 0.5,
       coefReseller: 0.7,
       freeVerdictCampaignId: null,

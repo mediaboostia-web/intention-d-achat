@@ -172,6 +172,31 @@ describe('GET /api/shops/me', () => {
   });
 });
 
+describe('POST /api/shops onboarding (2026-11-04)', () => {
+  it('saves what the shop is and where it sells', async () => {
+    const res = await post({ ...body, businessType: 'IMPORTER', salesChannel: 'BOTH' });
+    expect(res.status).toBe(201);
+    expect(prismaMock.organization.create.mock.calls[0]![0].data).toMatchObject({
+      businessType: 'IMPORTER',
+      salesChannel: 'BOTH',
+    });
+  });
+
+  it('a page opened before the onboarding still creates the shop, without them', async () => {
+    const res = await post(body);
+    expect(res.status).toBe(201);
+    expect(prismaMock.organization.create.mock.calls[0]![0].data).toMatchObject({
+      businessType: null,
+      salesChannel: null,
+    });
+  });
+
+  it('refuses a value the onboarding does not offer', async () => {
+    expect((await post({ ...body, businessType: 'RETAILER' })).status).toBe(400);
+    expect((await post({ ...body, salesChannel: 'MARKET' })).status).toBe(400);
+  });
+});
+
 describe('POST /api/shops currency (lot 7b)', () => {
   it('a shop in Guinea is in Guinean francs', async () => {
     const res = await post({ ...body, country: 'GN', whatsappPhone: '620 12 34 56' });

@@ -20,6 +20,8 @@ export const TEST_SHOP: Shop = {
   countryLocked: false,
   logoUrl: null,
   description: null,
+  businessType: 'WHOLESALER',
+  salesChannel: 'STORE',
   coefConsumer: 0.4,
   coefReseller: 0.7,
   plan: { id: 'FREE', inGrace: false, endsAt: null },

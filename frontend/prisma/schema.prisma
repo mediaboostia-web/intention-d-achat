@@ -114,6 +114,10 @@ model Organization {
   // Lot 6: on the free plan, the one campaign whose verdict is offered (the
   // first to reach 20 counted answers), reserved once by free-verdict.ts.
   freeVerdictCampaignId String?
+  // Onboarding (2026-11-04): what the shop is and where it sells, null for
+  // the shops made before. See lib/tamani/shop-profile.ts.
+  businessType          String? // WHOLESALER | IMPORTER | BOTH | OTHER
+  salesChannel          String? // ONLINE | STORE | BOTH
 
   zones        DeliveryZone[]
   products     Product[]

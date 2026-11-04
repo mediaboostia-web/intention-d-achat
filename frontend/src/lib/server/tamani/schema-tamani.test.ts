@@ -201,13 +201,26 @@ describe('Tamani core schema (lot 3)', () => {
     const names = readdirSync(resolve(PRISMA, 'migrations'))
       .filter((n) => !n.endsWith('.toml'))
       .sort();
-    expect(names.at(-1)).toBe('9d_campaign_archive');
+    expect(names.indexOf('9d_campaign_archive')).toBe(names.indexOf('9c_passes') + 1);
     const sql = readFileSync(
       resolve(PRISMA, 'migrations/9d_campaign_archive/migration.sql'),
       'utf8',
     );
     expect(sql).toMatch(/ALTER TABLE "Campaign" ADD COLUMN "archivedAt" TIMESTAMP\(3\);/);
     expect(sql).not.toMatch(/\bDROP\b/);
+  });
+
+  it('keeps what a shop is and where it sells as migration 9e_shop_profile (onboarding)', () => {
+    const org = modelBlock('Organization');
+    expect(field(org, 'businessType String?')).toBe(true);
+    expect(field(org, 'salesChannel String?')).toBe(true);
+    const names = readdirSync(resolve(PRISMA, 'migrations'))
+      .filter((n) => !n.endsWith('.toml'))
+      .sort();
+    expect(names.at(-1)).toBe('9e_shop_profile');
+    const sql = readFileSync(resolve(PRISMA, 'migrations/9e_shop_profile/migration.sql'), 'utf8');
+    expect(sql).toMatch(/ADD COLUMN "businessType" TEXT,\s+ADD COLUMN "salesChannel" TEXT;/);
+    expect(sql).not.toMatch(/\bDROP\b|NOT NULL/);
   });
 
   it('migration folders sort as text in the order they were written', () => {

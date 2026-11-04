@@ -10,6 +10,7 @@ import { BUYER_TYPES, NOT_INTERESTED_REASONS } from '@/lib/tamani/labels';
 import { ORDER_STATUSES } from '@/lib/tamani/orders-view';
 import { isPhoneCountry } from '@/lib/tamani/phone-countries';
 import { DEFAULT_SHARE_TEMPLATE } from '@/lib/tamani/share-message';
+import { BUSINESS_TYPES, SALES_CHANNELS } from '@/lib/tamani/shop-profile';
 import { TIMING_OPTIONS, type Timing } from '@/lib/tamani/timing';
 import { SHORT_CODE_REGEX } from './short-code';
 
@@ -44,11 +45,17 @@ const shopDescription = z
 const rawPhone = z.string().trim().min(1).max(30);
 const coefficient = z.number().min(0).max(1);
 
+const businessType = z.enum(BUSINESS_TYPES);
+const salesChannel = z.enum(SALES_CHANNELS);
+
+// The onboarding sends both; a page opened before it sends neither.
 export const ShopCreate = z.object({
   name: shopName,
   whatsappPhone: rawPhone,
   country: country.default('SN'),
   logoUrl: cloudinaryUrl.optional(),
+  businessType: businessType.optional(),
+  salesChannel: salesChannel.optional(),
 });
 
 export const ShopPatch = z
@@ -58,6 +65,8 @@ export const ShopPatch = z
     country: country.optional(),
     logoUrl: cloudinaryUrl.nullable().optional(),
     description: shopDescription.optional(),
+    businessType: businessType.optional(),
+    salesChannel: salesChannel.optional(),
     coefConsumer: coefficient.optional(),
     coefReseller: coefficient.optional(),
   })

@@ -6,6 +6,16 @@
 import { useState, type FormEvent } from 'react';
 import { Button, Input, Notice, PhoneInput, Select, Textarea } from '@/components/ui';
 import { dialCodeFor, SHOP_COUNTRIES } from '@/lib/tamani/countries';
+import {
+  BUSINESS_TYPES,
+  SALES_CHANNELS,
+  businessTypeLabel,
+  isBusinessType,
+  isSalesChannel,
+  salesChannelLabel,
+  type BusinessType,
+  type SalesChannel,
+} from '@/lib/tamani/shop-profile';
 import { PhotoPicker } from './PhotoPicker';
 import { ZonesInput } from './ZonesInput';
 
@@ -17,6 +27,9 @@ export interface ShopFormValues {
   /** Edit mode only: what the popup shows of the shop. */
   description: string;
   zones: string[];
+  /** Edit mode only: the onboarding's answers (welcome asks them in its own step). */
+  businessType: BusinessType | null;
+  salesChannel: SalesChannel | null;
 }
 
 export type ShopFormErrors = Partial<Record<'name' | 'whatsappPhone', string>>;
@@ -28,6 +41,8 @@ export const emptyShopForm: ShopFormValues = {
   logoUrl: null,
   description: '',
   zones: [],
+  businessType: null,
+  salesChannel: null,
 };
 
 export const SHOP_DESCRIPTION_MAX = 300;
@@ -36,6 +51,18 @@ const COUNTRY_OPTIONS = SHOP_COUNTRIES.map((c) => ({
   value: c.code,
   label: `${c.label} (${c.dialCode})`,
 }));
+
+const BLANK = { value: '', label: 'À choisir' };
+
+/** A select of the onboarding's answers: « À choisir » only while nothing is chosen. */
+function activityOptions<T extends string>(
+  values: readonly T[],
+  label: (v: T) => string,
+  current: T | null,
+) {
+  const options = values.map((v) => ({ value: v, label: label(v) }));
+  return current === null ? [BLANK, ...options] : options;
+}
 
 export function shopFormErrors(v: ShopFormValues): ShopFormErrors {
   const errors: ShopFormErrors = {};
@@ -148,6 +175,28 @@ export function ShopForm({
           value={values.description}
           onChange={(e) => set('description', e.target.value)}
         />
+      )}
+      {mode === 'edit' && (
+        <div className="grid gap-6 sm:grid-cols-2">
+          <Select
+            id="shop-business-type"
+            label="Tu es"
+            options={activityOptions(BUSINESS_TYPES, businessTypeLabel, values.businessType)}
+            value={values.businessType ?? ''}
+            onChange={(e) =>
+              set('businessType', isBusinessType(e.target.value) ? e.target.value : null)
+            }
+          />
+          <Select
+            id="shop-sales-channel"
+            label="Où tu vends"
+            options={activityOptions(SALES_CHANNELS, salesChannelLabel, values.salesChannel)}
+            value={values.salesChannel ?? ''}
+            onChange={(e) =>
+              set('salesChannel', isSalesChannel(e.target.value) ? e.target.value : null)
+            }
+          />
+        </div>
       )}
       {withZones && (
         <ZonesInput

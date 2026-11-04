@@ -12,6 +12,7 @@ import type {
   Subscription,
 } from '@prisma/client';
 import type { BuyerType } from '@/lib/tamani/labels';
+import { isBusinessType, isSalesChannel } from '@/lib/tamani/shop-profile';
 import type { Fulfillment, OrderRow, OrderStatus } from '@/lib/tamani/orders-view';
 import {
   formatAvailability,
@@ -47,6 +48,8 @@ export function toShop(
     countryLocked,
     logoUrl: org.logoUrl,
     description: org.description,
+    businessType: isBusinessType(org.businessType) ? org.businessType : null,
+    salesChannel: isSalesChannel(org.salesChannel) ? org.salesChannel : null,
     coefConsumer: org.coefConsumer,
     coefReseller: org.coefReseller,
     plan: { id: plan, inGrace, endsAt: endsAt?.toISOString() ?? null },

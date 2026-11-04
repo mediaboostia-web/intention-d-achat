@@ -198,6 +198,8 @@ export function SettingsView({ google }: { google: boolean }) {
                   logoUrl: shop.logoUrl,
                   description: shop.description ?? '',
                   zones: [],
+                  businessType: shop.businessType,
+                  salesChannel: shop.salesChannel,
                 }}
                 withZones={false}
                 mode="edit"

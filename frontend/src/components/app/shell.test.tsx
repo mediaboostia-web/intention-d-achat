@@ -19,7 +19,8 @@ vi.mock('@/contexts/AuthContext', () => ({
 vi.mock('./PushPrompt', () => ({ PushPrompt: () => <div data-push-prompt="" /> }));
 
 const { AppShell } = await import('./AppShell');
-const { ShopForm } = await import('./ShopForm');
+const { ShopForm, emptyShopForm } = await import('./ShopForm');
+const { ActivityStep } = await import('./Onboarding');
 const { ZonesInput } = await import('./ZonesInput');
 const { PhotoPicker } = await import('./PhotoPicker');
 const { default: WelcomePage } = await import('@/app/(app)/app/bienvenue/page');
@@ -162,6 +163,50 @@ describe('AppShell', () => {
 });
 
 describe('welcome', () => {
+  // Porteur, 2026-11-04: the onboarding asks what the shop is and where it
+  // sells, then the shop form.
+  it('welcome opens on the two activity questions', () => {
+    mockNextNavigation({ pathname: '/app/bienvenue' });
+    const page = (
+      <ShopTestProvider>
+        <WelcomePage />
+      </ShopTestProvider>
+    );
+    const out = html(page);
+    const step =
+      out.match(
+        /<div data-step="1"[^>]*>[\s\S]*?<\/fieldset>\s*<fieldset[\s\S]*?<\/fieldset>/,
+      )?.[0] ?? '';
+    expect(step).toMatch(/<legend[^>]*>Tu es<\/legend>/);
+    expect(step).toMatch(/<legend[^>]*>Où tu vends<\/legend>/);
+    for (const label of [
+      'Grossiste',
+      'Importateur',
+      'Les deux',
+      'Autre',
+      'Vente en ligne',
+      'Boutique physique',
+    ]) {
+      expect(step, label).toContain(`>${label}</button>`);
+    }
+    expect(out).toContain('Étape 1 sur 2');
+    expect(out).toMatch(/<div data-step="2" hidden=""/);
+    expect(out).toMatch(/<button[^>]*disabled=""[^>]*>Continuer<\/button>/);
+  });
+
+  it('the activity step continues once both questions are answered', () => {
+    const out = html(
+      <ActivityStep
+        value={{ businessType: 'BOTH', salesChannel: 'STORE' }}
+        onChange={() => {}}
+        onNext={() => {}}
+      />,
+    );
+    expect(out).toMatch(/aria-pressed="true"[^>]*>Les deux<\/button>/);
+    expect(out).toMatch(/aria-pressed="true"[^>]*>Boutique physique<\/button>/);
+    expect(out).not.toMatch(/<button[^>]*disabled=""[^>]*>Continuer/);
+  });
+
   it('welcome form labels every field and defaults to Senegal +221', () => {
     mockNextNavigation({ pathname: '/app/bienvenue' });
     const page = (
@@ -183,11 +228,40 @@ describe('welcome', () => {
     expect(t).toContain('Bienvenue ! Créons ta boutique.');
     expect(t).toContain('Tu pourras les changer plus tard.');
     expect(t).toContain('Créer ma boutique');
-    expect(out.match(/shadow-press/g)).toHaveLength(1);
+    expect(t).toContain('Retour');
+    // One main gesture per step: « Continuer », then « Créer ma boutique ».
+    expect(out.match(/shadow-press/g)).toHaveLength(2);
   });
 });
 
 describe('ShopForm', () => {
+  it('in Réglages, asks what the shop is and where it sells, « À choisir » until then', () => {
+    const edit = (businessType: 'IMPORTER' | null) =>
+      html(
+        <ShopForm
+          mode="edit"
+          withZones={false}
+          initial={{ ...emptyShopForm, businessType, salesChannel: null }}
+          submitLabel="Enregistrer"
+          submittingLabel="…"
+          submitting={false}
+          onSubmit={() => {}}
+        />,
+      );
+    const unset = edit(null);
+    expect(unset).toContain('for="shop-business-type"');
+    expect(unset).toContain('for="shop-sales-channel"');
+    expect(unset).toContain('À choisir');
+    expect(unset).toContain('Grossiste et importateur');
+    expect(unset).toContain('En ligne et en boutique');
+    const set = edit('IMPORTER');
+    expect(set).toMatch(
+      /<option [^>]*value="IMPORTER"[^>]*selected=""|<option [^>]*selected=""[^>]*value="IMPORTER"/,
+    );
+    // Once chosen, it is changed, never emptied (the API refuses null).
+    expect(set.match(/À choisir/g)).toHaveLength(1);
+  });
+
   it('greys the country once the shop has a product, and says why (lot 7b)', () => {
     const out = html(
       <ShopForm
