@@ -30,6 +30,25 @@ export function shiftMonth(month: string, delta: number): string {
   return currentMonth(new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + delta, 1)));
 }
 
+/** How many months the revenue chart shows, the current one last. */
+export const SERIES_MONTHS = 6;
+
+/** What came in each month, for the `count` months ending with `month`, oldest first. */
+export function revenueSeries(
+  orders: readonly { activatedAt: Date; amount: number }[],
+  month: string,
+  count = SERIES_MONTHS,
+): { month: string; total: number }[] {
+  return Array.from({ length: count }, (_, i) => shiftMonth(month, i - count + 1)).map((m) => {
+    const { start, end } = monthRange(m);
+    const total = orders.reduce(
+      (sum, o) => (o.activatedAt >= start && o.activatedAt < end ? sum + o.amount : sum),
+      0,
+    );
+    return { month: m, total };
+  });
+}
+
 /** An activated pass order: a SasPay payment or a pass granted by hand. */
 export interface PassOrder {
   organizationId: string;

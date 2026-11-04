@@ -73,6 +73,19 @@ describe('loadAdminDashboard', () => {
     expect(d.revenue.payments[0]).toMatchObject({ shopName: 'Boutique b', provider: 'saspay' });
     // Oct 20 is within the last 30 days of Nov 15.
     expect(d.revenue.last30Days).toBe(17_700);
+    // The chart: six months ending with the one shown, gifts left out.
+    expect(d.revenue.series.map((m) => m.month)).toEqual([
+      '2026-06',
+      '2026-07',
+      '2026-08',
+      '2026-09',
+      '2026-10',
+      '2026-11',
+    ]);
+    expect(d.revenue.series.slice(-2)).toEqual([
+      { month: '2026-10', total: 3900 },
+      { month: '2026-11', total: 13_800 },
+    ]);
   });
 
   it('splits the active shops by plan, kind of business and where they sell', async () => {
@@ -83,10 +96,10 @@ describe('loadAdminDashboard', () => {
         { organizationId: 'c', plan: 'TRIAL', currentPeriodEnd: new Date('2026-11-01') },
       ],
       orgs: [
-        { id: 'a', businessType: 'WHOLESALER', salesChannel: 'STORE' },
-        { id: 'b', businessType: null, salesChannel: 'ONLINE' },
-        { id: 'c', businessType: 'IMPORTER', salesChannel: 'BOTH' },
-        { id: 'd', businessType: null, salesChannel: null },
+        { id: 'a', businessType: 'WHOLESALER', salesChannel: 'STORE', country: 'BJ' },
+        { id: 'b', businessType: null, salesChannel: 'ONLINE', country: 'SN' },
+        { id: 'c', businessType: 'IMPORTER', salesChannel: 'BOTH', country: 'BJ' },
+        { id: 'd', businessType: null, salesChannel: null, country: 'GN' },
       ],
     });
     const d = await loadAdminDashboard(prismaMock, '2026-11', NOW);
@@ -96,6 +109,7 @@ describe('loadAdminDashboard', () => {
       byPlan: { WEEK: 1, TRIAL: 1, FREE: 2 },
       byType: { WHOLESALER: 1, NONE: 1 },
       byChannel: { STORE: 1, ONLINE: 1 },
+      byCountry: { BJ: 1, SN: 1 },
     });
     expect(d.mrr).toBe(16_714);
   });
