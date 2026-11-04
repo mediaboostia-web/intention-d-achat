@@ -131,6 +131,49 @@ describe('upsertResponse', () => {
     expect(call.update).not.toHaveProperty('contactConsentAt');
   });
 
+  // The thanks dialog promises a call only when the shop can see the number.
+  it('says the number is shared once the box is ticked', async () => {
+    fakePublicDb();
+    const result = await upsertResponse(
+      prismaMock,
+      { ...base, ...yes, ...contact, contactConsent: true },
+      NOW,
+    );
+    expect(result.contactShared).toBe(true);
+  });
+
+  it('says the number stays hidden for a new client who left the box empty', async () => {
+    fakePublicDb();
+    const result = await upsertResponse(prismaMock, { ...base, ...yes, ...contact }, NOW);
+    expect(result.contactShared).toBe(false);
+  });
+
+  it('says the number is shared when the client agreed on an earlier answer', async () => {
+    const { respondents } = fakePublicDb();
+    const before = new Date('2026-10-01T10:00:00Z');
+    respondents.push({
+      id: 'rsp_old',
+      organizationId: 'org_1',
+      phoneE164: '+221771234567',
+      firstName: 'Awa',
+      firstSeenAt: before,
+      lastSeenAt: before,
+      contactConsentAt: before,
+    });
+    const result = await upsertResponse(
+      prismaMock,
+      { ...base, ...yes, ...contact, contactConsent: false },
+      NOW,
+    );
+    expect(result.contactShared).toBe(true);
+  });
+
+  it('shares nothing before the number is given', async () => {
+    fakePublicDb();
+    const result = await upsertResponse(prismaMock, { ...base, ...yes }, NOW);
+    expect(result.contactShared).toBe(false);
+  });
+
   it('keeps the answer pending when the pass is full, and counts it otherwise', async () => {
     const { responses } = fakePublicDb();
     quota.shouldLockNewCompletion.mockResolvedValue(true);

@@ -25,6 +25,8 @@ export function thanksCopy(i: {
   productName: string;
   unitLabel: string;
   quantity: number | null;
+  /** The shop can see the number (porteur, 2026-11-04): only then is a call promised. */
+  contactShared: boolean;
 }): ThanksCopy {
   if (!i.interested) {
     return {
@@ -36,13 +38,31 @@ export function thanksCopy(i: {
     i.quantity === null
       ? ofProduct(i.productName)
       : `${i.quantity} ${pluralizeUnit(i.unitLabel, i.quantity)} ${ofProduct(i.productName)}`;
+  const title = i.firstName ? `C'est noté, ${i.firstName} !` : "C'est noté !";
+  if (!i.contactShared) {
+    return {
+      title,
+      lines: [
+        `Ta demande de ${what} est bien enregistrée.`,
+        `Sans la case cochée, ${i.shopName} ne voit pas ton numéro et ne pourra pas te contacter.`,
+      ],
+    };
+  }
   return {
-    title: i.firstName ? `C'est noté, ${i.firstName} !` : "C'est noté !",
+    title,
     lines: [
       `Ta commande de ${what} est bien enregistrée.`,
       `${i.shopName} va te contacter sur WhatsApp pour la confirmer.`,
     ],
   };
+}
+
+/** Why the number is asked: a product in stock is booked, an arrival is announced. */
+export function contactTitle(interested: boolean, availability: 'IN_STOCK' | 'INCOMING'): string {
+  if (!interested) return 'Pour être prévenu des prochains arrivages';
+  return availability === 'IN_STOCK'
+    ? 'Pour réserver ta commande'
+    : "Pour être prévenu à l'arrivée";
 }
 
 /** « Propulsé par Tamani » opens the app at its own address (APP_URL), the shop as referrer. */

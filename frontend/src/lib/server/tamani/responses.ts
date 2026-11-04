@@ -38,6 +38,8 @@ export interface UpsertResult {
   /** True only on the write that completed the response: the shop is told then. */
   firstCompletion: boolean;
   respondent: { firstName: string; phoneE164: string; phoneMasked: string } | null;
+  /** The shop can see this number: the box ticked now or on an earlier answer. */
+  contactShared: boolean;
   interestedCount: number | null;
 }
 
@@ -220,6 +222,7 @@ export async function upsertResponse(
       });
 
   let respondent: UpsertResult['respondent'] = null;
+  let contactShared = false;
   let firstCompletion = false;
   if (phoneE164 !== null && input.firstName !== undefined) {
     if (!isComplete(row, campaign.deliveryEnabled)) throw invalid('Incomplete answer');
@@ -265,6 +268,7 @@ export async function upsertResponse(
       },
     });
     respondent = { firstName: input.firstName, phoneE164, phoneMasked: maskPhone(phoneE164) };
+    contactShared = person.contactConsentAt != null;
   }
 
   return {
@@ -273,6 +277,7 @@ export async function upsertResponse(
     completed: row.completedAt !== null,
     firstCompletion,
     respondent,
+    contactShared,
     interestedCount: campaign.showLiveCounter
       ? await db.response.count({ where: interestedWhere(campaign.id) })
       : null,

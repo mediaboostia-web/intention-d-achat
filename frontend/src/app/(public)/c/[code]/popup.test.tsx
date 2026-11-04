@@ -327,6 +327,31 @@ describe('PopupView', () => {
     expect(out).toMatch(/<div [^>]*inert=""/);
   });
 
+  // Porteur, 2026-11-04: without the box the shop never sees the number.
+  it('after a yes without the box, the dialog promises no call', () => {
+    const t = text(<PopupView campaign={campaign} state={saidYes} contactShared={false} />);
+    expect(t).toContain('Ta demande de 3 pièces de Marmites inox 5 L est bien enregistrée.');
+    expect(t).toContain(
+      'Sans la case cochée, Diallo Import ne voit pas ton numéro et ne pourra pas te contacter.',
+    );
+    expect(t).not.toContain('va te contacter');
+  });
+
+  it('a product in stock asks the number to book the order, not to hear of its arrival', () => {
+    const inStock = {
+      ...campaign,
+      availability: 'IN_STOCK' as const,
+      availabilityText: 'Disponible maintenant',
+    };
+    const yes = at('contact', { answers: { ...EMPTY_ANSWERS, interested: true } });
+    const t = text(<PopupView campaign={inStock} state={yes} />);
+    expect(t).toContain('Pour réserver ta commande');
+    expect(t).not.toContain("Pour être prévenu à l'arrivée");
+    expect(text(<PopupView campaign={campaign} state={yes} />)).toContain(
+      "Pour être prévenu à l'arrivée",
+    );
+  });
+
   it('after a no, the dialog thanks for the opinion and offers to change one’s mind', () => {
     const out = html(<PopupView campaign={campaign} state={saidNo} />);
     const t = text(<PopupView campaign={campaign} state={saidNo} />);

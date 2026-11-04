@@ -82,6 +82,7 @@ export interface FakeRespondent {
   firstName: string | null;
   firstSeenAt: Date;
   lastSeenAt: Date;
+  contactConsentAt?: Date | null;
 }
 
 const BLANK = {

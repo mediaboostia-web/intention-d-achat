@@ -41,6 +41,7 @@ import { leavePage } from '@/lib/tamani/leave-page';
 import {
   consentLabel,
   consentNote,
+  contactTitle,
   ANSWERS_CLOSED_TITLE,
   answersClosedLine,
   poweredByHref,
@@ -80,6 +81,8 @@ export interface PopupViewProps {
   left?: boolean;
   /** The app's address (APP_URL), where « Propulsé par Tamani » leads. */
   homeUrl?: string;
+  /** The shop can see the respondent's number: the thanks dialog promises a call only then. */
+  contactShared?: boolean;
 }
 
 function Question({ children }: { children: ReactNode }) {
@@ -446,10 +449,7 @@ function ContactStep({
   const [country, setCountry] = useState(c.shop.country);
   const [countries] = useState(() => phoneCountryChoices(c.shop.country));
   const [agreed, setAgreed] = useState(false);
-  const title =
-    state.answers.interested === false
-      ? 'Pour être prévenu des prochains arrivages'
-      : "Pour être prévenu à l'arrivée";
+  const title = contactTitle(state.answers.interested !== false, c.availability);
   const { remembered } = state;
   if (remembered) {
     return (
@@ -716,6 +716,7 @@ export function PopupView({
   onLeave = () => {},
   left = false,
   homeUrl = '',
+  contactShared = true,
 }: PopupViewProps) {
   const photo = c.product.photos[0] ? cloudinaryVariant(c.product.photos[0], POPUP_PHOTO) : null;
   const hasPhotos = c.product.photos.length > 0;
@@ -835,6 +836,7 @@ export function PopupView({
             productName: c.product.name,
             unitLabel: c.product.unitLabel,
             quantity: state.answers.quantity,
+            contactShared,
           })}
           interested={state.answers.interested === true}
           recap={recap(c, state.answers).slice(1)}
@@ -861,6 +863,7 @@ export function PopupSheet({ campaign, homeUrl }: { campaign: PublicCampaign; ho
   const [error, setError] = useState<string | null>(null);
   const [count, setCount] = useState(campaign.interestedCount);
   const [left, setLeft] = useState(false);
+  const [shared, setShared] = useState(true);
   const storage = useRef<Storage | null>(null);
   const memory = useRef<DeviceMemory | null>(null);
   const token = useRef<string | null>(null);
@@ -878,6 +881,7 @@ export function PopupSheet({ campaign, homeUrl }: { campaign: PublicCampaign; ho
   useEffect(() => {
     const m = deviceMemory();
     token.current = m.saved[campaign.campaignId]?.token ?? null;
+    setShared(m.saved[campaign.campaignId]?.contactShared ?? true);
     dispatch({ type: 'restore', memory: m, campaignId: campaign.campaignId });
     if (campaign.accepting) postView(campaign.code, m.deviceId);
     // Once per page: the campaign is fixed for the page's life.
@@ -917,6 +921,8 @@ export function PopupSheet({ campaign, homeUrl }: { campaign: PublicCampaign; ho
     }
     const m = deviceMemory();
     const { respondent, token: saved } = reply.result;
+    const contactShared = reply.result.contactShared === true;
+    setShared(contactShared);
     memory.current = {
       ...m,
       respondent,
@@ -926,6 +932,7 @@ export function PopupSheet({ campaign, homeUrl }: { campaign: PublicCampaign; ho
           token: saved,
           answers: state.answers,
           savedAt: new Date().toISOString(),
+          contactShared,
         },
       },
     };
@@ -952,6 +959,7 @@ export function PopupSheet({ campaign, homeUrl }: { campaign: PublicCampaign; ho
       onLeave={onLeave}
       left={left}
       homeUrl={homeUrl}
+      contactShared={shared}
     />
   );
 }
