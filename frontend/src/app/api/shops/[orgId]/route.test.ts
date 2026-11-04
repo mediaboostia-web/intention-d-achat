@@ -102,7 +102,7 @@ describe('PATCH /api/shops/[orgId] activity (onboarding, 2026-11-04)', () => {
   });
 
   it('refuses a value the onboarding does not offer', async () => {
-    expect((await patch({ businessType: 'RETAILER' })).status).toBe(400);
+    expect((await patch({ businessType: 'MANUFACTURER' })).status).toBe(400);
     expect((await patch({ salesChannel: null })).status).toBe(400);
   });
 });

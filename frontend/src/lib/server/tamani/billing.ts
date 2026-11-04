@@ -29,7 +29,7 @@ export const SESSION_TTL_MS = 3_600_000;
 /** How long an unfinished purchase is still reconciled. */
 const RECONCILE_WINDOW_MS = 48 * 3_600_000;
 /** Activation is a dozen queries; Neon can take seconds each on a bad day. */
-const ACTIVATION_TX = { maxWait: 10_000, timeout: 30_000 };
+export const ACTIVATION_TX = { maxWait: 10_000, timeout: 30_000 };
 
 export function billingLock(organizationId: string): string {
   return `billing:${organizationId}`;
@@ -47,7 +47,7 @@ export class BillingError extends Error {
 
 export type ReconcileOutcome = 'ACTIVATED' | 'ALREADY_DONE' | 'PENDING' | 'FAILED';
 
-function passStateOf(sub: Subscription | null): PassState | null {
+export function passStateOf(sub: Subscription | null): PassState | null {
   if (!sub || !isPlanId(sub.plan)) return null;
   return {
     plan: sub.plan,

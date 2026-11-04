@@ -11,13 +11,15 @@ import {
 } from './shop-profile';
 
 // Porteur, 2026-11-04: « Créer un Onboarding : Grossiste, Importateur, Autres
-// ou les Deux / Vente en ligne, Boutique physique, Les deux ».
+// ou les Deux / Vente en ligne, Boutique physique, Les deux », then « Détaillant »
+// (back-office request, added the same day).
 describe('shop profile', () => {
   it('asks what the shop is, in the porteur’s words and order', () => {
     expect(BUSINESS_TYPE_OPTIONS.map((o) => o.label)).toEqual([
       'Grossiste',
       'Importateur',
       'Les deux',
+      'Détaillant',
       'Autre',
     ]);
     expect(BUSINESS_TYPE_OPTIONS.map((o) => o.value)).toEqual([...BUSINESS_TYPES]);
@@ -36,11 +38,13 @@ describe('shop profile', () => {
     expect(businessTypeLabel('BOTH')).toBe('Grossiste et importateur');
     expect(salesChannelLabel('BOTH')).toBe('En ligne et en boutique');
     expect(businessTypeLabel(null)).toBe('Non renseigné');
+    expect(businessTypeLabel('RETAILER')).toBe('Détaillant');
   });
 
   it('knows its own values only', () => {
     expect(isBusinessType('IMPORTER')).toBe(true);
-    expect(isBusinessType('RETAILER')).toBe(false);
+    expect(isBusinessType('RETAILER')).toBe(true);
+    expect(isBusinessType('retailer')).toBe(false);
     expect(isSalesChannel('STORE')).toBe(true);
     expect(isSalesChannel('both')).toBe(false);
   });

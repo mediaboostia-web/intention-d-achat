@@ -114,6 +114,7 @@ Convention du kit : `id String @id @default(cuid())`, statuts en `String` (pas d
 **Lot 7, migration `9_sale_orders`** (renumérotée deux fois le 2026-10-25 : le lot 5 a pris le n° 7, le lot 5b le n° 8 ; les lots 6 et 6b ont pris `8b` et `8c`)
 - `SaleOrder { organizationId, respondentId, productId, campaignId String?, responseId String? @unique, buyerType, quantity Int, unitPrice Int, totalAmount Int, fulfillment String /* DELIVERY|PICKUP */, zoneId String?, status String @default("TO_CONFIRM") /* TO_CONFIRM|CONFIRMED|FULFILLED|CANCELLED */, paid Boolean @default(false), paidAt DateTime?, notes String?, confirmedAt DateTime?, fulfilledAt DateTime?, cancelledAt DateTime? }`, avec `@@index([organizationId, status])` et `@@index([respondentId])`.
 - **Lot 8, migration `9c_passes`** (2026-10-29) : on réutilise `Order` (existant) pour les achats de pass : `provider = 'saspay'`, `organizationId`, `offer`, `activatedAt` (activation unique), `providerChargeId` = identifiant de la session de checkout, `paymentUrl` = son `checkout_url`, statuts `PENDING | PAID | FAILED | EXPIRED`. `Subscription` garde le pass en cours (`plan` parmi les `PlanId`, `periodStart`, `currentPeriodEnd`, `graceUntil`, `responsesIncluded`) ; `Response.countedAt` marque une réponse comptée dans un pass.
+- **Lot 11, migration `9h_marketing_spend`** (2026-11-04) : `MarketingSpend { month String @id /* AAAA-MM */, amount Int, updatedById String, updatedAt }`, la dépense marketing d'un mois saisie par un super-admin, base du CAC. Un pass attribué à la main est une `Order` `provider = 'manual'`, `status = 'PAID'`, montant en XOF, `metadata { days, responses }`.
 
 ### Identité et composants (lot 2)
 Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction « Cahier du marché ».
@@ -342,15 +343,19 @@ Charte : [docs/brand/tamani-brand.md](../../brand/tamani-brand.md), direction «
   - `DELETE …/clients/[respondentId]` (anonymisation, rôle `ADMIN` minimum) → `200 { anonymized: true }` (du JSON, comme les autres suppressions, car `api()` lit chaque succès en JSON), journalisée avec les seuls identifiants.
 - **Lot 8, facturation** : `POST /api/shops/[orgId]/billing/checkout` (`ADMIN`), `GET /api/shops/[orgId]/billing` et `GET /api/shops/[orgId]/billing/orders/[orderId]` (`MEMBER`), et `POST /api/webhooks/saspay` (signal du rapprochement).
 - **Lot 8, tâches planifiées** : `GET /api/cron/billing-verify` (`*/1`) et `GET /api/cron/subscription-renewals` (`0 8 * * *`). `vercel.json` en compte alors **8**.
-- **Lot 9, admin** : `GET /api/admin/shops`, `GET /api/admin/shops/[orgId]` et `POST /api/admin/shops/[orgId]/plan` (avec audit).
+- **Lot 11, support-admin** (remplace ce que le lot 9 prévoyait) : les lectures sont faites par les pages serveur, pas par des routes. Écritures, toutes journalisées par `logAdminAction` :
+  - `PUT /api/admin/marketing-spend` `{ month, amount }` (`SUPERADMIN`) → `{ spend }`, action `marketing.spend_set` ;
+  - `POST /api/admin/shops/[orgId]/pass` `{ plan, amount, days?, responses? }` (`SUPERADMIN`) → `201 { orderId, endsAt }`, `404 SHOP_NOT_FOUND`, action `shop.pass_grant` ; `DELETE` → `{ ended: true }`, action `shop.pass_end` ;
+  - `POST /api/admin/users` `{ email, name }` (`SUPERADMIN`) → `201 { user, temporaryPassword }`, `409 EMAIL_TAKEN`, action `user.create` ; `PATCH /api/admin/users/[id]` `{ name }` (`ADMIN`) → action `user.rename` ;
+  - inchangées, celles du kit : `PATCH /api/admin/users/[id]/role` et `…/status`.
 
 ### Pages
 - `(public)` : `/`, `/tarifs`, `/c/[code]`, `/login`, `/signup`, `/verify-email`, `/forgot-password`, `/reset-password`, `/auth/error`, `/confidentialite`, `/cgu`.
 - `(app)` : `/app`, `/app/bienvenue`, `/app/produits`, `/app/produits/nouveau`, `/app/produits/[id]`, `/app/campagnes`, `/app/campagnes/nouvelle`, `/app/campagnes/[id]`, `/app/commandes`, `/app/commandes/nouvelle` et `/app/commandes/[id]` (lot 7), `/app/clients` (sans onglets), `/app/clients/[id]`, `/app/exporter` (lot 6b), `/app/abonnement`, `/app/reglages`, `/app/plus` et `/app/profil` (lot 6b).
-- `(admin)` : `/admin`, `/admin/boutiques` et `/admin/boutiques/[id]`.
+- `(admin)` (lot 11) : `/support-admin` (`?mois=AAAA-MM`), `/support-admin/boutiques` (`?q=&forfait=&page=`), `/support-admin/boutiques/[id]`, `/support-admin/utilisateurs` (`?q=&page=`), `/support-admin/utilisateurs/[id]` et `/support-admin/journal`. `/admin` renvoie vers `/support-admin`.
 
 ### Variables d'environnement
-- **Lot 4** (ajout) : `AUTH_PROTECTED_PREFIXES="/app,/admin"` et `AUTH_LOGIN_PATH="/login"`.
+- **Lot 4** (ajout) : `AUTH_PROTECTED_PREFIXES="/app,/admin"` et `AUTH_LOGIN_PATH="/login"`. Lot 11 : quand `/admin` y figure, `proxy.ts` protège aussi `/support-admin` (aucune variable à changer).
 - **Lot 5** (ajout) : `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` et `VAPID_SUBJECT` (`mailto:` ou `https:`). Facultatives : sans elles, le push est inerte.
 - **Lot 8** (ajout) : `SASPAY_API_KEY`, `SASPAY_WEBHOOK_SECRET` et `SASPAY_API_URL="https://api.saspay.me/api/v1"`. Elles sont facultatives : si elles manquent, l'API renvoie `503 BILLING_NOT_CONFIGURED`.
 - **Retraits** : le lot 1 retire `WITHDRAWAL_*`, `BICTORYS_PRIVATE_KEY` et `BICTORYS_MERCHANT_SECRET_CODE`. Le lot 8 retire les autres `BICTORYS_*` et `COMMISSION_RATE_BP`.
@@ -743,7 +748,24 @@ Ordre demandé : « Le plus simple au plus difficile ».
 6. **Onboarding** : « Tu es » (Grossiste, Importateur, Les deux, Autre) et « Où tu vends » (Vente en ligne, Boutique physique, Les deux), modifiables dans Réglages. Choix unique pour chaque question (« Les deux » couvre le cas des deux).
 7. **Case de consentement** : non obligatoire (porteur : « il peut répondre sans la cocher, et tu ne vois alors pas son numéro »). Sans la case, la réponse compte mais le numéro reste caché sur tous les forfaits. Décisions de l'agent : une case non cochée ne retire pas un accord donné avant (le client le retire en écrivant au vendeur ou à Tamani) ; une commande manuelle rend le client joignable ; les clients enregistrés avant la case gardent leur numéro (l'ancien popup disait déjà que le numéro allait au vendeur).
 8. **Quantités par option** (couleur, taille) dans le popup : une ligne par option avec − / nombre / +, le total, puis « Valider ». Une seule dimension par produit (couleur **ou** taille, comme le libellé d'option du produit) : le porteur a écrit « par couleur ou taille ». La quantité totale reste celle de la réponse, donc estimation, verdict et argent ne changent pas.
-9. **Back-office complet** (support-admin).
+9. **Back-office complet** (support-admin) : fait au lot 11.
+
+### Lot 11 : Support-admin (2026-11-04)
+
+Plan : [2026-11-04-tamani-11-support-admin.md](2026-11-04-tamani-11-support-admin.md). Demande du porteur du 2026-10-30 ; définitions de churn, CAC et MRR validées le 2026-11-04.
+
+1. **Adresse** : `/support-admin` à la place de `/admin` (demande du porteur), qui y renvoie. Un visiteur connecté sans rôle d'admin reçoit une page introuvable.
+2. **Tableau de bord** du mois : encaissé par pass et par moyen, MRR, churn, CAC, boutiques actives par forfait, par type et par canal de vente, campagnes en cours, brouillons, terminées et archivées, comptes.
+3. **Boutiques** : liste avec recherche et filtre par forfait, fiche avec l'usage du pass et les achats ; attribution d'un pass à la main (Illimité compris) et arrêt d'un pass.
+4. **Utilisateurs** : création d'un compte avec mot de passe temporaire, renommage, rôle, suspension et rétablissement.
+5. **Journal** des 100 dernières actions.
+
+Décisions de l'agent :
+- Lire : `ADMIN`. Écrire de l'argent, un pass ou un compte : `SUPERADMIN` seulement, comme le changement de rôle du kit.
+- Un pass attribué à la main suit le même chemin qu'un achat (verrous, report des réponses non utilisées tant que le pass court, réponses en attente débloquées, cloche) ; son montant (prix du pass par défaut, 0 possible) compte dans l'encaissé sous « Manuel ».
+- Un compte créé par le support est déjà vérifié ; son mot de passe temporaire s'affiche une seule fois et n'est écrit nulle part ailleurs. La personne crée sa boutique à sa première connexion.
+- Les heures du journal sont celles de Cotonou ; les mois du tableau de bord sont des mois UTC.
+- « Détaillant » ajouté aux types de l'onboarding (porteur, 2026-11-04), après « Les deux » pour que « Les deux » reste à côté des deux choix qu'il réunit : Grossiste, Importateur, Les deux, Détaillant, Autre. Valeur `RETAILER`, sans migration (colonne texte).
 
 ## Protocole d'exécution
 1. Au début de chaque lot : créer la branche `plan/NN-<nom>`, puis écrire le plan détaillé `docs/superpowers/plans/AAAA-MM-JJ-tamani-NN-<nom>.md` (skill writing-plans), à partir de ce document et du code en place.

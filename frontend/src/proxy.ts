@@ -26,10 +26,15 @@ const ACCESS_COOKIE = `${COOKIE_PREFIX}-token`;
 const REFRESH_COOKIE = `${COOKIE_PREFIX}-refresh`;
 const LOGIN_PATH = process.env.AUTH_LOGIN_PATH || '/login';
 
-const AUTHED_PREFIXES = (process.env.AUTH_PROTECTED_PREFIXES || '')
+const LISTED_PREFIXES = (process.env.AUTH_PROTECTED_PREFIXES || '')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
+// Tamani's back-office moved to /support-admin (lot 11): wherever /admin is
+// protected, so is its new address, without touching the deployed variable.
+const AUTHED_PREFIXES = LISTED_PREFIXES.includes('/admin')
+  ? [...LISTED_PREFIXES, '/support-admin']
+  : LISTED_PREFIXES;
 
 function isAuthedPath(pathname: string): boolean {
   return AUTHED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));

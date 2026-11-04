@@ -55,4 +55,21 @@ describe('proxy (protected pages)', () => {
     expect(proxy(request('/login')).headers.get('location')).toBeNull();
     expect(proxy(request('/application')).headers.get('location')).toBeNull();
   });
+
+  // Porteur, 2026-10-30: the back-office moved to /support-admin; Vercel's
+  // AUTH_PROTECTED_PREFIXES still says /admin, so it covers both.
+  it('protects /support-admin wherever /admin is protected', async () => {
+    const proxy = await loadProxy('/app,/admin');
+    const res = proxy(request('/support-admin/boutiques'));
+    expect(res.status).toBe(303);
+    expect(res.headers.get('location')).toBe(
+      'http://localhost:3001/login?next=%2Fsupport-admin%2Fboutiques',
+    );
+    expect(proxy(request('/support-administrer')).headers.get('location')).toBeNull();
+  });
+
+  it('leaves /support-admin alone when /admin is not protected', async () => {
+    const proxy = await loadProxy('/app');
+    expect(proxy(request('/support-admin')).headers.get('location')).toBeNull();
+  });
 });
