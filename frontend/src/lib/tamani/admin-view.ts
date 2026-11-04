@@ -1,0 +1,131 @@
+// Support-admin words (lot 11): months, rates, plan and profile names, and
+// each figure's calculation written out under it (brand rule: the
+// calculation is always visible).
+import type { AdminDashboard } from './admin-dashboard';
+import { formatMoney } from './currency';
+import { PASS_IDS, PLANS, isPlanId } from './plans';
+import {
+  BUSINESS_TYPES,
+  SALES_CHANNELS,
+  businessTypeLabel,
+  isBusinessType,
+  isSalesChannel,
+  salesChannelLabel,
+} from './shop-profile';
+
+const MONTHS = [
+  'janvier',
+  'février',
+  'mars',
+  'avril',
+  'mai',
+  'juin',
+  'juillet',
+  'août',
+  'septembre',
+  'octobre',
+  'novembre',
+  'décembre',
+];
+
+/** « 2026-11 » → « novembre 2026 ». */
+export function monthLabel(month: string): string {
+  const [year, m] = month.split('-').map(Number) as [number, number];
+  return `${MONTHS[m - 1] ?? ''} ${year}`;
+}
+
+const DATE = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+/** « 3 nov. 2026 », in UTC like the months. */
+export function dateLabel(iso: string): string {
+  return DATE.format(new Date(iso));
+}
+
+/** French puts a no-break space before « % ». */
+const NBSP = String.fromCharCode(0xa0);
+
+/** 0.125 → « 12,5 % », one decimal at most. */
+export function percentText(rate: number): string {
+  const value = Math.round(rate * 1000) / 10;
+  return `${String(value).replace('.', ',')}${NBSP}%`;
+}
+
+/** Tamani's own money is counted in FCFA. */
+export const adminMoney = (amount: number) => formatMoney(amount, 'XOF');
+
+export function planLabel(plan: string): string {
+  return isPlanId(plan) ? PLANS[plan].label : plan;
+}
+
+export const PLAN_ORDER: readonly string[] = ['TRIAL', ...PASS_IDS, 'UNLIMITED', 'FREE'];
+export const TYPE_ORDER: readonly string[] = [...BUSINESS_TYPES, 'NONE'];
+export const CHANNEL_ORDER: readonly string[] = [...SALES_CHANNELS, 'NONE'];
+
+export function providerLabel(provider: string): string {
+  if (provider === 'saspay') return 'SasPay';
+  if (provider === 'manual') return 'Manuel';
+  return provider;
+}
+
+export function typeLabel(key: string): string {
+  return businessTypeLabel(isBusinessType(key) ? key : null);
+}
+
+export function channelLabel(key: string): string {
+  return salesChannelLabel(isSalesChannel(key) ? key : null);
+}
+
+export interface BreakdownRow {
+  key: string;
+  label: string;
+  count: number;
+}
+
+/** A tally as rows, in the given order, empty rows dropped, unknown keys last. */
+export function breakdown(
+  tally: Record<string, number>,
+  order: readonly string[],
+  label: (key: string) => string,
+): BreakdownRow[] {
+  const keys = [...order, ...Object.keys(tally).filter((k) => !order.includes(k))];
+  return keys.flatMap((key) => {
+    const count = tally[key] ?? 0;
+    return count > 0 ? [{ key, label: label(key), count }] : [];
+  });
+}
+
+const shops = (n: number) => `${n} boutique${n > 1 ? 's' : ''}`;
+
+export interface FigureText {
+  value: string;
+  calc: string;
+}
+
+export function churnText(churn: AdminDashboard['churn'], month: string): FigureText {
+  const first = `le 1er ${monthLabel(month)}`;
+  if (churn.rate === null) {
+    return { value: '—', calc: `Aucune boutique n'avait de pass ${first}` };
+  }
+  const left = `${shops(churn.churned)} partie${churn.churned > 1 ? 's' : ''}`;
+  return {
+    value: percentText(churn.rate),
+    calc: `${left} sur ${churn.atStart} qui avaient un pass ${first}`,
+  };
+}
+
+export function cacText(cac: AdminDashboard['cac']): FigureText {
+  if (cac.spend === null) return { value: '—', calc: 'Dépense marketing du mois non saisie' };
+  const spent = `${adminMoney(cac.spend)} de marketing`;
+  if (cac.value === null || cac.payers === 0) {
+    return { value: '—', calc: `${spent}, aucune nouvelle boutique payante` };
+  }
+  const payers = `${cac.payers} nouvelle${cac.payers > 1 ? 's' : ''} ${
+    cac.payers > 1 ? 'boutiques payantes' : 'boutique payante'
+  }`;
+  return { value: adminMoney(cac.value), calc: `${spent} ÷ ${payers}` };
+}
