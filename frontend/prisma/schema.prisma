@@ -116,7 +116,7 @@ model Organization {
   freeVerdictCampaignId String?
   // Onboarding (2026-11-04): what the shop is and where it sells, null for
   // the shops made before. See lib/tamani/shop-profile.ts.
-  businessType          String? // WHOLESALER | IMPORTER | BOTH | OTHER
+  businessType          String? // WHOLESALER | IMPORTER | BOTH | RETAILER | OTHER
   salesChannel          String? // ONLINE | STORE | BOTH
 
   zones        DeliveryZone[]

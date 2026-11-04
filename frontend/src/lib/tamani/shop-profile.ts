@@ -1,9 +1,11 @@
 // What a shop is and where it sells (onboarding, porteur 2026-11-04):
 // « Grossiste, Importateur, Autres ou les Deux / Vente en ligne, Boutique
-// physique, Les deux ». Asked before the shop form, changed in Réglages; the
-// back-office counts shops by type. Shops made before stay null.
+// physique, Les deux ». « Détaillant » joined the same day (back-office
+// request: « Grossistes, importateur, Détaillants »). Asked before the shop
+// form, changed in Réglages; the back-office counts shops by type. Shops made
+// before stay null.
 
-export const BUSINESS_TYPES = ['WHOLESALER', 'IMPORTER', 'BOTH', 'OTHER'] as const;
+export const BUSINESS_TYPES = ['WHOLESALER', 'IMPORTER', 'BOTH', 'RETAILER', 'OTHER'] as const;
 export type BusinessType = (typeof BUSINESS_TYPES)[number];
 
 export const SALES_CHANNELS = ['ONLINE', 'STORE', 'BOTH'] as const;
@@ -14,6 +16,7 @@ export const BUSINESS_TYPE_OPTIONS: ReadonlyArray<{ value: BusinessType; label: 
   { value: 'WHOLESALER', label: 'Grossiste' },
   { value: 'IMPORTER', label: 'Importateur' },
   { value: 'BOTH', label: 'Les deux' },
+  { value: 'RETAILER', label: 'Détaillant' },
   { value: 'OTHER', label: 'Autre' },
 ];
 

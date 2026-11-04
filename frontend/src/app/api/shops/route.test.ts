@@ -192,7 +192,7 @@ describe('POST /api/shops onboarding (2026-11-04)', () => {
   });
 
   it('refuses a value the onboarding does not offer', async () => {
-    expect((await post({ ...body, businessType: 'RETAILER' })).status).toBe(400);
+    expect((await post({ ...body, businessType: 'MANUFACTURER' })).status).toBe(400);
     expect((await post({ ...body, salesChannel: 'MARKET' })).status).toBe(400);
   });
 });

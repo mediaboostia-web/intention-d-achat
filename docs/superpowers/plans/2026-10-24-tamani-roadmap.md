@@ -765,7 +765,7 @@ Décisions de l'agent :
 - Un pass attribué à la main suit le même chemin qu'un achat (verrous, report des réponses non utilisées tant que le pass court, réponses en attente débloquées, cloche) ; son montant (prix du pass par défaut, 0 possible) compte dans l'encaissé sous « Manuel ».
 - Un compte créé par le support est déjà vérifié ; son mot de passe temporaire s'affiche une seule fois et n'est écrit nulle part ailleurs. La personne crée sa boutique à sa première connexion.
 - Les heures du journal sont celles de Cotonou ; les mois du tableau de bord sont des mois UTC.
-- « Détaillant » n'est pas parmi les types de l'onboarding (Grossiste, Importateur, Les deux, Autre) : question posée au porteur.
+- « Détaillant » ajouté aux types de l'onboarding (porteur, 2026-11-04), après « Les deux » pour que « Les deux » reste à côté des deux choix qu'il réunit : Grossiste, Importateur, Les deux, Détaillant, Autre. Valeur `RETAILER`, sans migration (colonne texte).
 
 ## Protocole d'exécution
 1. Au début de chaque lot : créer la branche `plan/NN-<nom>`, puis écrire le plan détaillé `docs/superpowers/plans/AAAA-MM-JJ-tamani-NN-<nom>.md` (skill writing-plans), à partir de ce document et du code en place.
