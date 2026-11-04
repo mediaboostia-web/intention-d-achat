@@ -246,13 +246,29 @@ describe('Tamani core schema (lot 3)', () => {
     const names = readdirSync(resolve(PRISMA, 'migrations'))
       .filter((n) => !n.endsWith('.toml'))
       .sort();
-    expect(names.at(-1)).toBe('9g_option_quantities');
+    expect(names.indexOf('9g_option_quantities')).toBe(names.indexOf('9f_contact_consent') + 1);
     const sql = readFileSync(
       resolve(PRISMA, 'migrations/9g_option_quantities/migration.sql'),
       'utf8',
     );
     expect(sql).toMatch(/ALTER TABLE "Response" ADD COLUMN "optionQuantities" JSONB;/);
     expect(sql).not.toMatch(/\bDROP\b|NOT NULL/);
+  });
+
+  it('keeps the monthly marketing spend as migration 9h_marketing_spend (lot 11)', () => {
+    const block = modelBlock('MarketingSpend');
+    expect(field(block, 'month       String   @id')).toBe(true);
+    expect(field(block, 'amount      Int')).toBe(true);
+    const names = readdirSync(resolve(PRISMA, 'migrations'))
+      .filter((n) => !n.endsWith('.toml'))
+      .sort();
+    expect(names.at(-1)).toBe('9h_marketing_spend');
+    const sql = readFileSync(
+      resolve(PRISMA, 'migrations/9h_marketing_spend/migration.sql'),
+      'utf8',
+    );
+    expect(sql).toMatch(/CREATE TABLE "MarketingSpend"/);
+    expect(sql).not.toMatch(/\bDROP\b|ALTER TABLE/);
   });
 
   it('migration folders sort as text in the order they were written', () => {

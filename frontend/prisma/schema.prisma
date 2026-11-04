@@ -569,3 +569,12 @@ model Subscription {
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 }
+
+// Lot 11 (support-admin): what Tamani spent on marketing in a month, typed by
+// a super-admin; the CAC divides it by the shops that paid a first pass.
+model MarketingSpend {
+  month       String   @id // AAAA-MM, a UTC calendar month
+  amount      Int // FCFA
+  updatedById String
+  updatedAt   DateTime @updatedAt
+}
