@@ -17,6 +17,13 @@ describe('actionLabel', () => {
     expect(actionLabel('user.restore')).toBe('Compte rétabli');
   });
 
+  it('names the super-admin made by the command line', () => {
+    expect(actionLabel('BOOTSTRAP_SUPERADMIN')).toBe('Super-admin nommé (ligne de commande)');
+    expect(actionDetail('BOOTSTRAP_SUPERADMIN', { via: 'cli-script', previousRole: 'USER' })).toBe(
+      'Utilisateur → Super-admin',
+    );
+  });
+
   it('keeps the code of an action it does not know', () => {
     expect(actionLabel('outbox.retry')).toBe('outbox.retry');
   });

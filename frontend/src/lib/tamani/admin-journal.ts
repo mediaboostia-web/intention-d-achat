@@ -27,6 +27,8 @@ const LABELS: Record<string, string> = {
   'user.role_change': 'Rôle changé',
   'user.suspend': 'Compte suspendu',
   'user.restore': 'Compte rétabli',
+  // The kit's `pnpm db:make-superadmin <email>` (scripts/make-superadmin.ts).
+  BOOTSTRAP_SUPERADMIN: 'Super-admin nommé (ligne de commande)',
 };
 
 /** French name of an action; an unknown one keeps its code. */
@@ -64,6 +66,10 @@ export function actionDetail(action: string, metadata: unknown): string | null {
       return fromText === null || toText === null
         ? null
         : `${userRoleLabel(fromText)} → ${userRoleLabel(toText)}`;
+    case 'BOOTSTRAP_SUPERADMIN': {
+      const before = str(field(metadata, 'previousRole'));
+      return before === null ? null : `${userRoleLabel(before)} → ${userRoleLabel('SUPERADMIN')}`;
+    }
     case 'marketing.spend_set': {
       const after = num(to);
       if (after === null) return null;
