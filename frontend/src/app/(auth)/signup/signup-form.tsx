@@ -16,6 +16,7 @@ export function SignupForm({ google }: { google: boolean }) {
   const router = useRouter();
   const params = useSearchParams();
   const next = safeNextPath(params.get('next'));
+  const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +28,10 @@ export function SignupForm({ google }: { google: boolean }) {
     setError(null);
     try {
       // Signup never signs in: the account opens once the emailed code is entered.
-      await api('/api/auth/signup', { method: 'POST', body: { email, password } });
+      await api('/api/auth/signup', {
+        method: 'POST',
+        body: { firstName: firstName.trim(), email, password },
+      });
       router.push(
         `/verify-email?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`,
       );
@@ -53,6 +57,15 @@ export function SignupForm({ google }: { google: boolean }) {
         </AuthLink>
       }
     >
+      <Input
+        id="firstName"
+        label="Ton prénom"
+        required
+        maxLength={60}
+        autoComplete="given-name"
+        value={firstName}
+        onChange={(e) => setFirstName(e.target.value)}
+      />
       <Input
         id="email"
         label="Ton email"
