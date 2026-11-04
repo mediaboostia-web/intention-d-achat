@@ -15,7 +15,11 @@ type Grantable = (typeof GRANTABLE)[number];
 
 const priceOf = (plan: Grantable) => String(PLANS[plan].priceXof ?? '');
 
-function failure(err: unknown): string {
+/** Status 0 is api()'s late or lost answer: the grant may well be saved. */
+export function grantFailure(err: unknown): string {
+  if (err instanceof ApiError && err.status === 0) {
+    return 'Pas de réponse à temps. Recharge la fiche pour voir si le pass a été attribué avant de réessayer.';
+  }
   if (err instanceof ApiError && err.status === 403) return 'Réservé au super-admin.';
   if (err instanceof ApiError && err.code === 'VALIDATION_FAILED') {
     return 'Vérifier les champs : jours de 1 à 366, réponses de 1 à 1 000 000.';
@@ -58,7 +62,8 @@ export function GrantPassForm({ shopId }: { shopId: string }) {
       });
       router.refresh();
     } catch (err) {
-      setMessage({ ok: false, text: failure(err) });
+      setMessage({ ok: false, text: grantFailure(err) });
+      if (err instanceof ApiError && err.status === 0) router.refresh();
     } finally {
       busy.current = false;
     }

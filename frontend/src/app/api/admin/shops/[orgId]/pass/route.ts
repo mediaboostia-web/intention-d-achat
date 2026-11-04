@@ -10,6 +10,7 @@ import { verifyCsrf } from '@/lib/server/auth';
 import { requireSuperadmin } from '@/lib/server/middleware';
 import { prisma } from '@/lib/server/prisma';
 import { logAdminAction } from '@/lib/server/admin/audit';
+import { ACTIVATION_TX } from '@/lib/server/tamani/billing';
 import { enforceAdminRateLimit } from '@/lib/server/middleware/rate-limit-by-userid';
 import { makeRequestContext, withRequestContext } from '@/lib/server/observability/request-context';
 import { endPass, grantPass, grantTerms, notifyGrant } from '@/lib/server/tamani/admin/grant';
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest, { params }: Params): Promise<NextRe
         metadata: { ...terms, amount, orderId: result.orderId },
       });
       return result;
-    });
+    }, ACTIVATION_TX);
     if (!granted) return notFound();
     await notifyGrant(
       prisma,
@@ -97,7 +98,7 @@ export async function DELETE(req: NextRequest, { params }: Params): Promise<Next
         metadata: { from: result.from },
       });
       return result;
-    });
+    }, ACTIVATION_TX);
     if (!ended) return notFound();
     return NextResponse.json({ ended: true }, { headers: { 'x-request-id': ctx.requestId } });
   });

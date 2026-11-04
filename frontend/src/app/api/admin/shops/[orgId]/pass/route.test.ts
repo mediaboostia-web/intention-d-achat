@@ -70,6 +70,15 @@ describe('POST /api/admin/shops/[orgId]/pass', () => {
     expect(notifyGrant).toHaveBeenCalled();
   });
 
+  it('gives the grant the purchase activation’s time, never the 5 s default', async () => {
+    await post({ plan: 'MONTH', amount: 9900 });
+    // Same locks and queries as a SasPay activation (billing.ts ACTIVATION_TX).
+    expect(prismaMock.$transaction.mock.calls[0]?.[1]).toEqual({
+      maxWait: 10_000,
+      timeout: 30_000,
+    });
+  });
+
   it('grants an Unlimited pass with the typed days and answers', async () => {
     const res = await post({ plan: 'UNLIMITED', amount: 55_000, days: 30, responses: 50_000 });
     expect(res.status).toBe(201);

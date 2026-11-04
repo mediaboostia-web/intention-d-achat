@@ -29,7 +29,7 @@ export const SESSION_TTL_MS = 3_600_000;
 /** How long an unfinished purchase is still reconciled. */
 const RECONCILE_WINDOW_MS = 48 * 3_600_000;
 /** Activation is a dozen queries; Neon can take seconds each on a bad day. */
-const ACTIVATION_TX = { maxWait: 10_000, timeout: 30_000 };
+export const ACTIVATION_TX = { maxWait: 10_000, timeout: 30_000 };
 
 export function billingLock(organizationId: string): string {
   return `billing:${organizationId}`;
