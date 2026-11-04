@@ -2,6 +2,7 @@
 // each figure's calculation written out under it (brand rule: the
 // calculation is always visible).
 import type { AdminDashboard } from './admin-dashboard';
+import { SHOP_COUNTRIES } from './countries';
 import { formatMoney } from './currency';
 import { PASS_IDS, PLANS, isPlanId } from './plans';
 import {
@@ -128,4 +129,35 @@ export function cacText(cac: AdminDashboard['cac']): FigureText {
     cac.payers > 1 ? 'boutiques payantes' : 'boutique payante'
   }`;
   return { value: adminMoney(cac.value), calc: `${spent} ÷ ${payers}` };
+}
+
+export function countryLabel(code: string): string {
+  return SHOP_COUNTRIES.find((c) => c.code === code)?.label ?? code;
+}
+
+const MEMBER_ROLES: Record<string, string> = {
+  OWNER: 'Propriétaire',
+  ADMIN: 'Admin',
+  MEMBER: 'Membre',
+};
+
+export function memberRoleLabel(role: string): string {
+  return MEMBER_ROLES[role] ?? role;
+}
+
+const ORDER_STATUSES: Record<string, string> = {
+  PAID: 'Payé',
+  PENDING: 'En attente',
+  FAILED: 'Échoué',
+  EXPIRED: 'Expiré',
+  REFUNDED: 'Remboursé',
+};
+
+export function orderStatusLabel(status: string): string {
+  return ORDER_STATUSES[status] ?? status;
+}
+
+/** « Pass Semaine », with « (grâce) » while the shop is in its grace days. */
+export function passLine(plan: string, inGrace: boolean): string {
+  return inGrace ? `${planLabel(plan)} (grâce)` : planLabel(plan);
 }

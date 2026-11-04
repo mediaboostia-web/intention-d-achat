@@ -5,6 +5,10 @@ import {
   dateLabel,
   channelLabel,
   churnText,
+  countryLabel,
+  memberRoleLabel,
+  orderStatusLabel,
+  passLine,
   monthLabel,
   percentText,
   planLabel,
@@ -90,5 +94,17 @@ describe('cacText', () => {
       value: '—',
       calc: '50 000 FCFA de marketing, aucune nouvelle boutique payante',
     });
+  });
+});
+
+describe('shop card words', () => {
+  it('names a country, a member role, a payment status and the pass in force', () => {
+    expect(countryLabel('BJ')).toBe('Bénin');
+    expect(countryLabel('XX')).toBe('XX');
+    expect(memberRoleLabel('OWNER')).toBe('Propriétaire');
+    expect(orderStatusLabel('PAID')).toBe('Payé');
+    expect(orderStatusLabel('PENDING')).toBe('En attente');
+    expect(passLine('WEEK', true)).toBe('Pass Semaine (grâce)');
+    expect(passLine('FREE', false)).toBe('Sans pass');
   });
 });

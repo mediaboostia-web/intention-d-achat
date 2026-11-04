@@ -5,6 +5,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { AdminDashboard, AdminPayment } from '@/lib/tamani/admin-dashboard';
 import { PASS_IDS, PLANS, isPassId } from '@/lib/tamani/plans';
 import { effectivePlan } from '../subscription';
+import { countCampaigns } from './counts';
 import { cacOf, churnOf, coverages, monthRange, mrrOf, newPayers, type PassOrder } from './metrics';
 
 type Db = Pick<
@@ -36,45 +37,35 @@ export async function loadAdminDashboard(
   now: Date,
 ): Promise<AdminDashboard> {
   const range = monthRange(month);
-  const [rows, subs, orgs, running, drafts, live, archived, spend, users, suspended] =
-    await Promise.all([
-      db.order.findMany({
-        where: {
-          activatedAt: { not: null },
-          organizationId: { not: null },
-          offer: { not: null },
-          currency: { in: CFA_FRANCS },
-        },
-        select: {
-          id: true,
-          organizationId: true,
-          offer: true,
-          amount: true,
-          provider: true,
-          activatedAt: true,
-          metadata: true,
-          organization: { select: { name: true } },
-        },
-        orderBy: { activatedAt: 'asc' },
-      }),
-      db.subscription.findMany({
-        select: { organizationId: true, plan: true, currentPeriodEnd: true, graceUntil: true },
-      }),
-      db.organization.findMany({ select: { id: true, businessType: true, salesChannel: true } }),
-      db.campaign.count({
-        where: {
-          archivedAt: null,
-          status: 'ACTIVE',
-          OR: [{ endsAt: null }, { endsAt: { gt: now } }],
-        },
-      }),
-      db.campaign.count({ where: { archivedAt: null, status: 'DRAFT' } }),
-      db.campaign.count({ where: { archivedAt: null } }),
-      db.campaign.count({ where: { archivedAt: { not: null } } }),
-      db.marketingSpend.findUnique({ where: { month }, select: { amount: true } }),
-      db.user.count(),
-      db.user.count({ where: { status: 'SUSPENDED' } }),
-    ]);
+  const [rows, subs, orgs, campaigns, spend, users, suspended] = await Promise.all([
+    db.order.findMany({
+      where: {
+        activatedAt: { not: null },
+        organizationId: { not: null },
+        offer: { not: null },
+        currency: { in: CFA_FRANCS },
+      },
+      select: {
+        id: true,
+        organizationId: true,
+        offer: true,
+        amount: true,
+        provider: true,
+        activatedAt: true,
+        metadata: true,
+        organization: { select: { name: true } },
+      },
+      orderBy: { activatedAt: 'asc' },
+    }),
+    db.subscription.findMany({
+      select: { organizationId: true, plan: true, currentPeriodEnd: true, graceUntil: true },
+    }),
+    db.organization.findMany({ select: { id: true, businessType: true, salesChannel: true } }),
+    countCampaigns(db, {}, now),
+    db.marketingSpend.findUnique({ where: { month }, select: { amount: true } }),
+    db.user.count(),
+    db.user.count({ where: { status: 'SUSPENDED' } }),
+  ]);
 
   const orders: (PassOrder & { id: string; shopName: string })[] = rows.flatMap((r) =>
     r.organizationId && r.offer && r.activatedAt
@@ -156,7 +147,7 @@ export async function loadAdminDashboard(
     churn: churnOf(coverages(orders), orders, range),
     cac: { spend: spent, payers, value: cacOf(spent, payers) },
     shops: { total: orgs.length, active, byPlan, byType, byChannel },
-    campaigns: { running, drafts, finished: Math.max(0, live - running - drafts), archived },
+    campaigns,
     users: { total: users, suspended },
   };
 }
