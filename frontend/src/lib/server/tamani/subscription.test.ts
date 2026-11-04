@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   GRACE_DAYS,
+  applyGrant,
   applyPurchase,
   effectivePlan,
   trialPass,
@@ -132,5 +133,26 @@ describe('applyPurchase', () => {
     expect(applyPurchase(month, 'WEEK', 900, now).responsesIncluded).toBe(250);
     // Answers over the count never take answers off the new pass.
     expect(applyPurchase(month, 'WEEK', 1200, now).responsesIncluded).toBe(150);
+  });
+});
+
+// Lot 11: a pass granted by hand follows the purchase rules with its own terms.
+describe('applyGrant', () => {
+  it('an Unlimited pass runs for the days and answers the super-admin typed', () => {
+    const now = d('2026-11-04');
+    expect(applyGrant(null, { plan: 'UNLIMITED', days: 30, responses: 50_000 }, 0, now)).toEqual({
+      plan: 'UNLIMITED',
+      periodStart: now,
+      currentPeriodEnd: d('2026-12-04'),
+      graceUntil: d('2026-12-07'),
+      responsesIncluded: 50_000,
+    });
+  });
+
+  it('keeps the unused answers of the pass in force and never ends before it', () => {
+    const now = d('2026-11-01');
+    const granted = applyGrant(month, { plan: 'WEEK', days: 7, responses: 150 }, 400, now);
+    expect(granted.responsesIncluded).toBe(150 + 600);
+    expect(granted.currentPeriodEnd).toEqual(d('2026-11-24'));
   });
 });

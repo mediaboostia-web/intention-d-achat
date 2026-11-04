@@ -68,20 +68,38 @@ export function applyPurchase(
   used: number,
   now: Date,
 ): PassState {
+  const terms = { plan: pass, days: PLANS[pass].durationDays ?? 0, responses: passResponses(pass) };
+  return applyGrant(current, terms, used, now);
+}
+
+/** A pass's own length and answers: as sold, or typed by a super-admin (lot 11). */
+export interface GrantTerms {
+  plan: PassId | 'UNLIMITED';
+  days: number;
+  responses: number;
+}
+
+/** The purchase rules, for any terms: a pass granted by hand behaves like one bought. */
+export function applyGrant(
+  current: PassState | null,
+  terms: GrantTerms,
+  used: number,
+  now: Date,
+): PassState {
   const running =
     current !== null &&
     effectivePlan(current, now).plan !== 'FREE' &&
     current.currentPeriodEnd !== null &&
     current.currentPeriodEnd > now;
   const carried = running ? Math.max(0, current.responsesIncluded - used) : 0;
-  const ownEnd = addDays(now, PLANS[pass].durationDays ?? 0);
+  const ownEnd = addDays(now, terms.days);
   const runningEnd = running ? current.currentPeriodEnd : null;
   const currentPeriodEnd = runningEnd && runningEnd > ownEnd ? runningEnd : ownEnd;
   return {
-    plan: pass,
+    plan: terms.plan,
     periodStart: now,
     currentPeriodEnd,
     graceUntil: addDays(currentPeriodEnd, GRACE_DAYS),
-    responsesIncluded: passResponses(pass) + carried,
+    responsesIncluded: terms.responses + carried,
   };
 }

@@ -47,7 +47,7 @@ export class BillingError extends Error {
 
 export type ReconcileOutcome = 'ACTIVATED' | 'ALREADY_DONE' | 'PENDING' | 'FAILED';
 
-function passStateOf(sub: Subscription | null): PassState | null {
+export function passStateOf(sub: Subscription | null): PassState | null {
   if (!sub || !isPlanId(sub.plan)) return null;
   return {
     plan: sub.plan,
