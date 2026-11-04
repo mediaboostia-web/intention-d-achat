@@ -105,6 +105,14 @@ export function NotificationPanel({
   );
 }
 
+/**
+ * The open panel. On a phone the avatar sits right of the bell, so a panel
+ * hung off the bell was cut on the left: below lg it spans the screen under
+ * the bar; from lg it hangs off the bell.
+ */
+export const BELL_PANEL =
+  'frame z-40 overflow-hidden rounded-card bg-surface shadow-press max-lg:fixed max-lg:inset-x-4 max-lg:top-[4.25rem] max-lg:w-auto lg:absolute lg:top-full lg:right-0 lg:mt-2 lg:w-[22rem]';
+
 export function NotificationBell() {
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
@@ -185,7 +193,7 @@ export function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="frame absolute top-full right-0 z-40 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-card bg-surface shadow-press">
+        <div className={BELL_PANEL}>
           <p className="border-b-2 border-ink px-4 py-3 font-hand text-xl font-bold text-primary">
             Notifications
           </p>

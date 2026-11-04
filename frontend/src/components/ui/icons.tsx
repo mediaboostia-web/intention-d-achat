@@ -35,7 +35,8 @@ export type IconName =
   | 'sidebar'
   | 'grid'
   | 'rows'
-  | 'heart';
+  | 'heart'
+  | 'download';
 
 // Drawn with the pen: one 2px round stroke in currentColor, no fill, so an
 // icon takes the colour of the text next to it.
@@ -236,6 +237,7 @@ const SHAPES: Record<IconName, ReactNode> = {
   logout: (
     <path d="M14 4.5H6.5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1H14M10.5 12h10M17 8.5l3.5 3.5-3.5 3.5" />
   ),
+  download: <path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" />,
 };
 
 export function Icon({ name, className }: { name: IconName; className?: string | undefined }) {

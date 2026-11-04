@@ -8,6 +8,7 @@ import {
   urlBase64ToUint8Array,
   writePushPrompt,
   type PushEnv,
+  pushTestLine,
 } from './push-state';
 
 const android: PushEnv = {
@@ -145,5 +146,29 @@ describe('urlBase64ToUint8Array', () => {
     const key = Buffer.from(raw).toString('base64url');
     expect(key).toMatch(/^[A-Za-z0-9_-]+$/);
     expect(urlBase64ToUint8Array(key)).toEqual(raw);
+  });
+});
+
+// « Tester la notification » (2026-11-04): what the test push did, in words.
+describe('pushTestLine', () => {
+  it('says the phone should ring when every device got it', () => {
+    expect(pushTestLine({ devices: 1, sent: 1, failed: 0 })).toEqual({
+      tone: 'success',
+      text: 'Notification envoyée : ton téléphone doit sonner dans quelques secondes.',
+    });
+  });
+
+  it('says when no device of the account is registered', () => {
+    expect(pushTestLine({ devices: 0, sent: 0, failed: 0 })).toEqual({
+      tone: 'danger',
+      text: "Aucun appareil n'est inscrit pour ton compte. Recharge la page, puis réessaie.",
+    });
+  });
+
+  it('says when a push did not leave, and how many', () => {
+    expect(pushTestLine({ devices: 2, sent: 1, failed: 1 })).toEqual({
+      tone: 'danger',
+      text: "1 envoi sur 2 n'est pas parti. Écris au support : on regarde ça.",
+    });
   });
 });

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1A4FBF" />
+    <title>Pas de connexion — Tamani</title>
+    <!-- Shown by the service worker when a page cannot load: no network. -->
+    <style>
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 24px 16px;
+        box-sizing: border-box;
+        background-color: #fdfdf8;
+        background-image:
+          linear-gradient(#dde6f4 1px, transparent 1px),
+          linear-gradient(90deg, #dde6f4 1px, transparent 1px);
+        background-size: 18px 18px;
+        color: #10204a;
+        font-family: system-ui, sans-serif;
+        text-align: center;
+      }
+      main {
+        max-width: 360px;
+        padding: 28px 22px;
+        border: 2.5px solid #10204a;
+        border-radius: 18px;
+        background: #ffffff;
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 24px;
+        color: #1a4fbf;
+      }
+      p {
+        margin: 0 0 22px;
+        line-height: 1.5;
+        color: #3e4660;
+      }
+      button {
+        min-height: 48px;
+        padding: 0 22px;
+        border: 2.5px solid #10204a;
+        border-radius: 12px;
+        background: #1a4fbf;
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Pas de connexion</h1>
+      <p>
+        Tamani a besoin d'internet pour afficher tes réponses. Vérifie ton réseau, puis réessaie.
+      </p>
+      <button type="button" onclick="location.reload()">Réessayer</button>
+    </main>
+  </body>
+</html>

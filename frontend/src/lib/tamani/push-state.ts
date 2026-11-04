@@ -88,3 +88,29 @@ export function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   const raw = atob(padded);
   return Uint8Array.from(raw, (c) => c.charCodeAt(0));
 }
+
+/** What « Tester la notification » did (POST /api/push/test), in words. */
+export interface PushTestResult {
+  devices: number;
+  sent: number;
+  failed: number;
+}
+
+export function pushTestLine(r: PushTestResult): { tone: 'success' | 'danger'; text: string } {
+  if (r.devices === 0) {
+    return {
+      tone: 'danger',
+      text: "Aucun appareil n'est inscrit pour ton compte. Recharge la page, puis réessaie.",
+    };
+  }
+  if (r.failed > 0) {
+    return {
+      tone: 'danger',
+      text: `${r.failed} envoi sur ${r.devices} n'est pas parti. Écris au support : on regarde ça.`,
+    };
+  }
+  return {
+    tone: 'success',
+    text: 'Notification envoyée : ton téléphone doit sonner dans quelques secondes.',
+  };
+}

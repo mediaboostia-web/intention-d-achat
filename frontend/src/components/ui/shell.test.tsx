@@ -38,6 +38,7 @@ const ICONS = [
   'chevron-right',
   'tag',
   'logout',
+  'download',
 ] as const;
 
 const SHOP = { name: 'Diallo Import', logoUrl: null, planLabel: 'Essai gratuit' };

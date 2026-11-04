@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Button, Icon, Logo } from '@/components/ui';
+import { useInstall } from '@/components/app/use-install';
+import { INSTALL_COPY, type InstallState } from '@/lib/tamani/install';
 import { LANDING_LINKS, navStep, type LandingLinks } from '@/lib/tamani/landing';
 import { Illustration } from './Illustration';
 import { PlatformLogo } from './PlatformLogo';
@@ -13,6 +15,39 @@ const SECTIONS = [
   { href: '#tarifs', label: 'Tarifs' },
   { href: '#questions', label: 'Questions' },
 ] as const;
+
+/** « Installer l'application » in the phone menu, or the iPhone steps; nothing elsewhere. */
+export function DrawerInstall({
+  state,
+  onInstall,
+}: {
+  state: InstallState | 'hidden';
+  onInstall: () => void;
+}) {
+  if (state === 'prompt') {
+    return (
+      <button type="button" className="lp-drawer__install" onClick={onInstall}>
+        <Icon name="download" />
+        <span>
+          <b>{INSTALL_COPY.prompt.label}</b>
+          {INSTALL_COPY.prompt.note}
+        </span>
+      </button>
+    );
+  }
+  if (state === 'ios') {
+    return (
+      <p className="lp-drawer__install">
+        <Icon name="download" />
+        <span>
+          <b>{INSTALL_COPY.ios.label}</b>
+          {INSTALL_COPY.ios.note}
+        </span>
+      </p>
+    );
+  }
+  return null;
+}
 
 /**
  * The floating bar of the porteur's references: logo, section links, sign-up.
@@ -46,6 +81,7 @@ export function LandingNav({ links = LANDING_LINKS }: { links?: LandingLinks }) 
         ]
       : []),
   ];
+  const { state: installState, install } = useInstall();
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -232,6 +268,7 @@ export function LandingNav({ links = LANDING_LINKS }: { links?: LandingLinks }) 
               ))}
             </ul>
           )}
+          <DrawerInstall state={installState} onInstall={() => void install()} />
           <div className="lp-drawer__end" style={{ '--i': SECTIONS.length } as CSSProperties}>
             <Button href="/signup" size="lg" className="w-full">
               Commencer gratuitement

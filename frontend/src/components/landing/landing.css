@@ -521,6 +521,39 @@ html:has(.lp) {
   height: 18px;
   color: var(--color-success);
 }
+.lp-drawer__install {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  border: 2px dashed var(--color-primary);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  color: var(--color-ink-soft);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: left;
+}
+button.lp-drawer__install {
+  cursor: pointer;
+}
+.lp-drawer__install svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  color: var(--color-primary);
+}
+.lp-drawer__install span {
+  display: grid;
+  gap: 2px;
+}
+.lp-drawer__install b {
+  color: var(--color-ink);
+  font-size: 15px;
+}
 .lp-drawer__end {
   display: grid;
   gap: 12px;

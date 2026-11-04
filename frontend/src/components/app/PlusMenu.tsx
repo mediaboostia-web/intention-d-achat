@@ -9,6 +9,7 @@ import Link from 'next/link';
 import type { Shop } from '@/components/app/shop-context';
 import { Icon, type IconName } from '@/components/ui';
 import { formatDateFr } from '@/lib/tamani/dates';
+import { INSTALL_COPY, type InstallState } from '@/lib/tamani/install';
 import { PLANS } from '@/lib/tamani/plans';
 import { cn } from '@/lib/utils';
 
@@ -67,16 +68,41 @@ export function PlusMenu({
   help,
   signingOut,
   onSignOut,
+  install,
 }: {
   plan: Shop['plan'];
   /** Tamani's WhatsApp contact (a wa.me link), or null while it is not given. */
   help: string | null;
   signingOut: boolean;
   onSignOut: () => void;
+  /** Installing Tamani on the home screen (useInstall), first while it is possible. */
+  install?: { state: InstallState | 'hidden'; onInstall: () => void };
 }) {
   const limits = PLANS[plan.id];
   return (
     <ul className="mt-8 flex flex-col gap-3">
+      {install?.state === 'prompt' && (
+        <li>
+          <button
+            type="button"
+            onClick={install.onInstall}
+            className={cn(ROW, 'border-primary text-left')}
+          >
+            <RowBody icon="download" label={INSTALL_COPY.prompt.label} arrow>
+              {note(INSTALL_COPY.prompt.note)}
+            </RowBody>
+          </button>
+        </li>
+      )}
+      {install?.state === 'ios' && (
+        <li>
+          <div className={ROW}>
+            <RowBody icon="download" label={INSTALL_COPY.ios.label}>
+              {note(INSTALL_COPY.ios.note)}
+            </RowBody>
+          </div>
+        </li>
+      )}
       <li>
         <Link href="/app/produits" className={ROW}>
           <RowBody icon="box" label="Produits" arrow>

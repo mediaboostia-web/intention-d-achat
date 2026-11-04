@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { html, text } from '@/components/ui/test-html';
-import { NotificationBell, NotificationPanel, bellLabel } from './NotificationBell';
+import { BELL_PANEL, NotificationBell, NotificationPanel, bellLabel } from './NotificationBell';
 import { PushCardView } from './PushCard';
 import { PushPromptView } from './PushPrompt';
 
@@ -53,6 +53,21 @@ describe('PushCardView', () => {
     );
   });
 
+  it('once on, offers a test push and shows what it did', () => {
+    const idle = text(<PushCardView state="on" place="settings" onTest={() => {}} />);
+    expect(idle).toContain('Tester la notification');
+    const done = text(
+      <PushCardView
+        state="on"
+        place="settings"
+        onTest={() => {}}
+        testResult={{ tone: 'success', text: 'Notification envoyée.' }}
+      />,
+    );
+    expect(done).toContain('Notification envoyée.');
+    expect(text(<PushCardView state="on" place="settings" />)).not.toContain('Tester');
+  });
+
   it('names the browsers that can receive them', () => {
     expect(text(<PushCardView state="unsupported" />)).toContain(
       'Ce navigateur ne reçoit pas les notifications.',
@@ -87,6 +102,22 @@ describe('PushCardView', () => {
 });
 
 describe('NotificationBell', () => {
+  // Porteur, 2026-11-04: on a phone the panel hung off the bell and was cut on
+  // the left (the avatar sits right of the bell). Below lg it spans the screen.
+  it('on a phone the panel spans the screen with a margin, under the bar', () => {
+    const classes = BELL_PANEL.split(' ');
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        'max-lg:fixed',
+        'max-lg:inset-x-4',
+        'max-lg:w-auto',
+        'lg:absolute',
+        'lg:right-0',
+      ]),
+    );
+    expect(classes).not.toContain('absolute');
+  });
+
   it('bellLabel counts the unread ones', () => {
     expect(bellLabel(0)).toBe('Notifications');
     expect(bellLabel(1)).toBe('Notifications, 1 non lue');
