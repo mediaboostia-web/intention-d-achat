@@ -1,10 +1,16 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { Logo } from '@/components/ui';
+import { Icon, Logo } from '@/components/ui';
 import { ADMIN_HOME, adminRoleLabel } from '@/lib/tamani/admin-nav';
 import { AdminNav } from './AdminNav';
+import { SignOutButton } from './SignOutButton';
 
-/** The back-office frame: the notebook cover on top, the page on squared paper. */
+/**
+ * The back-office frame (lot 11b, after the porteur's model): a white sidebar
+ * from 1024px (a top bar of pills below), a search, then the page on a
+ * violet-tinted ground. Inside it the kit's « primary » is the admin violet,
+ * so buttons, links and fields leave the shop space's blue pen behind.
+ */
 export function AdminShell({
   email,
   role,
@@ -14,23 +20,58 @@ export function AdminShell({
   role: string;
   children: ReactNode;
 }) {
+  const who = (
+    <div className="min-w-0">
+      <p className="truncate text-sm font-bold text-ink">{email}</p>
+      <p className="text-sm text-admin">{adminRoleLabel(role)}</p>
+    </div>
+  );
   return (
-    <div className="min-h-dvh bg-bg bg-paper text-ink">
-      <header className="border-b-[2.5px] border-ink bg-deep text-deep-ink">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 pt-3">
-          <Link href={ADMIN_HOME} className="flex min-h-11 items-center gap-2">
-            <Logo variant="mark" tone="inverse" size={28} />
-            <span className="font-hand text-xl font-bold">Support-admin</span>
-          </Link>
-          <p className="min-w-0 truncate text-sm">
-            {email} · <b>{adminRoleLabel(role)}</b>
-          </p>
-        </div>
-        <div className="mx-auto max-w-6xl px-2">
+    <div className="min-h-dvh bg-admin-bg text-ink [--color-primary-ink:var(--color-admin-ink)] [--color-primary:var(--color-admin)] lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
+      <aside className="lg:sticky lg:top-0 lg:h-dvh lg:p-4">
+        <div className="flex flex-col gap-3 border-b border-admin-soft bg-surface px-4 pt-3 pb-2 lg:h-full lg:rounded-card lg:border lg:px-3 lg:py-5 lg:shadow-[0_12px_32px_-20px_color-mix(in_srgb,var(--color-admin)_55%,transparent)]">
+          <div className="flex items-center justify-between gap-3 lg:px-2">
+            <Link href={ADMIN_HOME} className="flex min-h-11 items-center gap-2">
+              <Logo variant="mark" size={28} />
+              <span className="text-lg font-bold text-ink">Support-admin</span>
+            </Link>
+            <SignOutButton className="lg:hidden" />
+          </div>
           <AdminNav />
+          <div className="mt-auto hidden space-y-2 lg:block">
+            <div className="rounded-control bg-admin-bg p-3">{who}</div>
+            <SignOutButton className="w-full" />
+          </div>
         </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-6 lg:py-8">{children}</main>
+      </aside>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 lg:px-8 lg:pt-6">
+          <form
+            action={`${ADMIN_HOME}/boutiques`}
+            role="search"
+            className="flex min-w-0 flex-1 items-center gap-2 lg:max-w-md"
+          >
+            <label htmlFor="admin-search" className="sr-only">
+              Chercher une boutique
+            </label>
+            <div className="relative min-w-0 flex-1">
+              <Icon
+                name="search"
+                className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-ink-muted"
+              />
+              <input
+                id="admin-search"
+                name="q"
+                type="search"
+                placeholder="Boutique ou e-mail du propriétaire"
+                className="admin-field w-full pl-10"
+              />
+            </div>
+          </form>
+          <div className="lg:hidden">{who}</div>
+        </div>
+        <main className="px-4 py-6 lg:px-8">{children}</main>
+      </div>
     </div>
   );
 }

@@ -22,7 +22,7 @@ export function AdminTable({
   const cell = (numeric: boolean | undefined) =>
     cn('px-3 py-2 whitespace-nowrap', numeric && 'text-right tabular-nums');
   return (
-    <div className="frame overflow-x-auto rounded-card bg-surface">
+    <div className="overflow-x-auto rounded-control border border-admin-soft bg-surface">
       <table className="w-full min-w-max border-collapse text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>

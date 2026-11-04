@@ -32,11 +32,7 @@ export function MarketingSpendForm({ month, amount }: { month: string; amount: n
   }
 
   return (
-    <form
-      id="marketing-spend"
-      onSubmit={submit}
-      className="frame flex flex-wrap items-end gap-3 rounded-card bg-surface p-4"
-    >
+    <form id="marketing-spend" onSubmit={submit} className="flex flex-wrap items-end gap-3">
       <Input
         id="marketing-spend-amount"
         label={`Dépense marketing de ${monthLabel(month)}`}

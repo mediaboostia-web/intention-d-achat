@@ -27,7 +27,7 @@ export function UsersView({
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-hand text-3xl font-bold text-primary">Utilisateurs</h1>
+        <h1 className="text-2xl font-bold text-ink">Utilisateurs</h1>
         <p className="text-ink-soft">
           {list.total} compte{list.total > 1 ? 's' : ''}
         </p>
@@ -38,11 +38,7 @@ export function UsersView({
       <form action={action} role="search" className="flex flex-wrap items-end gap-3">
         <label className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-sm font-bold">E-mail ou nom</span>
-          <input
-            name="q"
-            defaultValue={query.q}
-            className="frame min-h-12 rounded-control bg-surface px-4 text-base text-ink"
-          />
+          <input name="q" defaultValue={query.q} className="admin-field text-base" />
         </label>
         <Button type="submit" variant="secondary">
           Chercher

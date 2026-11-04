@@ -12,14 +12,14 @@ import {
 } from '@/lib/tamani/admin-view';
 import { AdminTable } from './AdminTable';
 
-const field = 'frame min-h-12 rounded-control bg-surface px-4 text-base text-ink';
+const field = 'admin-field text-base';
 
 export function ShopsView({ list, query }: { list: AdminShopList; query: ShopQuery }) {
   const action = shopsHref({});
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-hand text-3xl font-bold text-primary">Boutiques</h1>
+        <h1 className="text-2xl font-bold text-ink">Boutiques</h1>
         <p className="text-ink-soft">
           {list.total} boutique{list.total > 1 ? 's' : ''}
         </p>

@@ -42,6 +42,14 @@ const DATE = new Intl.DateTimeFormat('fr-FR', {
   timeZone: 'UTC',
 });
 
+const SHORT_MONTH = new Intl.DateTimeFormat('fr-FR', { month: 'short', timeZone: 'UTC' });
+
+/** « 2026-07 » → « juil. », under the chart. */
+export function shortMonthLabel(month: string): string {
+  const [year, m] = month.split('-').map(Number) as [number, number];
+  return SHORT_MONTH.format(new Date(Date.UTC(year, m - 1, 1)));
+}
+
 /** « 3 nov. 2026 », in UTC like the months. */
 export function dateLabel(iso: string): string {
   return DATE.format(new Date(iso));
@@ -160,4 +168,37 @@ export function orderStatusLabel(status: string): string {
 /** « Pass Semaine », with « (grâce) » while the shop is in its grace days. */
 export function passLine(plan: string, inGrace: boolean): string {
   return inGrace ? `${planLabel(plan)} (grâce)` : planLabel(plan);
+}
+
+const MINUS = String.fromCharCode(0x2212);
+
+/** The month against the one before it: « +50 % vs octobre », or null when that one had nothing. */
+export function growthText(
+  series: readonly { month: string; total: number }[],
+): { text: string; tone: 'up' | 'down' | 'flat' } | null {
+  const now = series[series.length - 1];
+  const before = series[series.length - 2];
+  if (!now || !before || before.total <= 0) return null;
+  const rate = (now.total - before.total) / before.total;
+  const tone = rate > 0 ? 'up' : rate < 0 ? 'down' : 'flat';
+  const sign = rate > 0 ? '+' : rate < 0 ? MINUS : '';
+  const name = monthLabel(before.month).split(' ')[0] ?? '';
+  return { text: `${sign}${percentText(Math.abs(rate))} vs ${name}`, tone };
+}
+
+export interface ShareRow extends BreakdownRow {
+  /** Its part of the whole list, « 66,7 % ». */
+  share: string;
+  /** Its bar, to scale on the largest row (0 to 1). */
+  ratio: number;
+}
+
+export function withShares(rows: readonly BreakdownRow[]): ShareRow[] {
+  const total = rows.reduce((n, r) => n + r.count, 0);
+  const max = Math.max(1, ...rows.map((r) => r.count));
+  return rows.map((r) => ({
+    ...r,
+    share: percentText(total > 0 ? r.count / total : 0),
+    ratio: r.count / max,
+  }));
 }

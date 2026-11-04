@@ -3,10 +3,10 @@
 export const ADMIN_HOME = '/support-admin';
 
 export const ADMIN_NAV = [
-  { href: ADMIN_HOME, label: 'Tableau de bord' },
-  { href: `${ADMIN_HOME}/boutiques`, label: 'Boutiques' },
-  { href: `${ADMIN_HOME}/utilisateurs`, label: 'Utilisateurs' },
-  { href: `${ADMIN_HOME}/journal`, label: 'Journal' },
+  { href: ADMIN_HOME, label: 'Tableau de bord', icon: 'grid' },
+  { href: `${ADMIN_HOME}/boutiques`, label: 'Boutiques', icon: 'home' },
+  { href: `${ADMIN_HOME}/utilisateurs`, label: 'Utilisateurs', icon: 'people' },
+  { href: `${ADMIN_HOME}/journal`, label: 'Journal', icon: 'clock' },
 ] as const;
 
 /** The dashboard is active on its own page only; a section on its sub-pages too. */

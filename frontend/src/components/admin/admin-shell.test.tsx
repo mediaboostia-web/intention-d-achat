@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { html, text } from '@/components/ui/test-html';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { AdminShell } from './AdminShell';
 import AdminRedirect from '@/app/(admin)/admin/page';
 import { mockNextNavigation } from '@/test-utils/next-navigation';
@@ -10,9 +11,11 @@ describe('AdminShell', () => {
   const shell = (pathname: string) => {
     mockNextNavigation({ pathname });
     return (
-      <AdminShell email="hullys@example.com" role="SUPERADMIN">
-        <p>contenu</p>
-      </AdminShell>
+      <AuthProvider>
+        <AdminShell email="hullys@example.com" role="SUPERADMIN">
+          <p>contenu</p>
+        </AdminShell>
+      </AuthProvider>
     );
   };
 
@@ -22,6 +25,9 @@ describe('AdminShell', () => {
     expect(t).toContain('hullys@example.com');
     expect(t).toContain('Super-admin');
     expect(t).toContain('contenu');
+    expect(t).toContain('Se déconnecter');
+    // The search goes to the shops list.
+    expect(html(shell('/support-admin'))).toContain('action="/support-admin/boutiques"');
   });
 
   it('marks the current section only', () => {
