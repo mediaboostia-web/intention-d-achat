@@ -20,10 +20,19 @@ describe('robots.txt', () => {
 });
 
 describe('sitemap.xml', () => {
-  it('lists the home page', () => {
+  it('lists the home page, then the legal pages', () => {
     vi.stubEnv('APP_URL', 'https://tamani.app');
+    const legal = (path: string) => ({
+      url: `https://tamani.app${path}`,
+      changeFrequency: 'yearly',
+      priority: 0.2,
+    });
     expect(sitemap()).toEqual([
       { url: 'https://tamani.app/', changeFrequency: 'weekly', priority: 1 },
+      legal('/cgu'),
+      legal('/confidentialite'),
+      legal('/securite'),
+      legal('/mentions-legales'),
     ]);
   });
 });
