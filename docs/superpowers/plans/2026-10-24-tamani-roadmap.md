@@ -742,7 +742,7 @@ Ordre demandé : « Le plus simple au plus difficile ».
 5. **Skeleton loaders** partout dans l'espace boutique.
 6. **Onboarding** : « Tu es » (Grossiste, Importateur, Les deux, Autre) et « Où tu vends » (Vente en ligne, Boutique physique, Les deux), modifiables dans Réglages. Choix unique pour chaque question (« Les deux » couvre le cas des deux).
 7. **Case de consentement** : non obligatoire (porteur : « il peut répondre sans la cocher, et tu ne vois alors pas son numéro »). Sans la case, la réponse compte mais le numéro reste caché sur tous les forfaits. Décisions de l'agent : une case non cochée ne retire pas un accord donné avant (le client le retire en écrivant au vendeur ou à Tamani) ; une commande manuelle rend le client joignable ; les clients enregistrés avant la case gardent leur numéro (l'ancien popup disait déjà que le numéro allait au vendeur).
-8. **Quantités par option** (couleur, taille) dans le popup.
+8. **Quantités par option** (couleur, taille) dans le popup : une ligne par option avec − / nombre / +, le total, puis « Valider ». Une seule dimension par produit (couleur **ou** taille, comme le libellé d'option du produit) : le porteur a écrit « par couleur ou taille ». La quantité totale reste celle de la réponse, donc estimation, verdict et argent ne changent pas.
 9. **Back-office complet** (support-admin).
 
 ## Protocole d'exécution

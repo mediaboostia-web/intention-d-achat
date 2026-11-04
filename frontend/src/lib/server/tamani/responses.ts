@@ -3,7 +3,8 @@
 // last step completes it, puts the person in the shop's client book, and
 // folds a second phone into the answer that number already gave.
 import 'server-only';
-import type { Response } from '@prisma/client';
+import { Prisma, type Response } from '@prisma/client';
+import { splitTotal } from '@/lib/tamani/option-split';
 import { TIMING_OPTIONS } from '@/lib/tamani/timing';
 import { isAcceptingResponses } from './campaign-status';
 import type { TamaniErrorCode } from './errors';
@@ -17,6 +18,8 @@ import { answersClosed, shouldLockNewCompletion } from './quota';
 import { signResponseToken, verifyResponseToken } from './response-token';
 
 const SUSPICIOUS_NUMBERS = 3;
+/** The most pieces one answer may ask, split or not (inputs.ts caps a quantity the same). */
+const MAX_QUANTITY = 100_000;
 
 export class ResponseWriteError extends Error {
   constructor(
@@ -49,7 +52,10 @@ type AnswerFields = Pick<
   | 'wantsDelivery'
   | 'zoneId'
   | 'deliveryPlace'
->;
+> & {
+  /** The split per option (2026-11-04), [{ option, quantity }]; DbNull clears it. */
+  optionQuantities: Prisma.InputJsonValue | typeof Prisma.DbNull;
+};
 
 const invalid = (message: string) => new ResponseWriteError('VALIDATION_FAILED', 400, message);
 
@@ -66,6 +72,17 @@ function answerData(input: ResponseStepInput): Partial<AnswerFields> {
     zoneId: input.zoneId,
     deliveryPlace: input.deliveryPlace,
   });
+  // A split gives the total and, alone, the option; a bare quantity drops a split.
+  if (input.optionQuantities !== undefined) {
+    const split = input.optionQuantities;
+    Object.assign(data, {
+      quantity: splitTotal(split),
+      option: split.length === 1 ? split[0]!.option : null,
+      optionQuantities: split.map((e) => ({ option: e.option, quantity: e.quantity })),
+    });
+  } else if (input.quantity !== undefined) {
+    data.optionQuantities = Prisma.DbNull;
+  }
   // A place is a delivery outside the zones: a zone drops it, and it drops a zone
   // chosen before. Sent together, the zone wins.
   if (input.zoneId != null) data.deliveryPlace = null;
@@ -76,6 +93,7 @@ function answerData(input: ResponseStepInput): Partial<AnswerFields> {
       buyerType: null,
       quantity: null,
       option: null,
+      optionQuantities: Prisma.DbNull,
       timing: null,
       wantsDelivery: null,
       zoneId: null,
@@ -93,6 +111,9 @@ function answersOf(r: Response): AnswerFields {
     buyerType: r.buyerType,
     quantity: r.quantity,
     option: r.option,
+    optionQuantities: Array.isArray(r.optionQuantities)
+      ? (r.optionQuantities as Prisma.InputJsonArray)
+      : Prisma.DbNull,
     timing: r.timing,
     wantsDelivery: r.wantsDelivery,
     zoneId: r.zoneId,
@@ -134,6 +155,12 @@ export async function upsertResponse(
   }
   if (input.option != null && !product.options.includes(input.option)) {
     throw invalid('Unknown option');
+  }
+  if (input.optionQuantities !== undefined) {
+    if (input.optionQuantities.some((e) => !product.options.includes(e.option))) {
+      throw invalid('Unknown option');
+    }
+    if (splitTotal(input.optionQuantities) > MAX_QUANTITY) throw invalid('Too many pieces');
   }
   if (input.zoneId != null) {
     const zone = campaign.deliveryEnabled

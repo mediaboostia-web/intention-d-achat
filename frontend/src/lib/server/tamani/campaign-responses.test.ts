@@ -16,6 +16,7 @@ const answer = (id: string, over: object = {}) => ({
   buyerType: 'RESELLER',
   quantity: 12,
   option: 'Rouge',
+  optionQuantities: null,
   timing: 'ON_ARRIVAL',
   wantsDelivery: true,
   deliveryPlace: null,
@@ -160,6 +161,27 @@ describe('listCampaignResponses', () => {
     });
     expect(page.items).toHaveLength(1);
     expect(page.nextCursor).toBe(encodeCursor({ createdAt: at('2026-10-26T10:00:00Z'), id: 'a1' }));
+  });
+});
+
+describe('quantities per option (2026-11-04)', () => {
+  it('a split answer reads « Rouge × 3, Noir × 2 » where the option goes', async () => {
+    prismaMock.response.findMany.mockResolvedValue([
+      answer('a1', {
+        quantity: 5,
+        option: null,
+        optionQuantities: [
+          { option: 'Rouge', quantity: 3 },
+          { option: 'Noir', quantity: 2 },
+        ],
+      }),
+    ] as never);
+    prismaMock.response.count.mockResolvedValue(1);
+    const page = await listCampaignResponses(prismaMock, 'org_1', 'c1', 'yes', null, {
+      canSeeContacts: true,
+      limit: 20,
+    });
+    expect(page.items[0]).toMatchObject({ quantity: 5, option: 'Rouge × 3, Noir × 2' });
   });
 });
 

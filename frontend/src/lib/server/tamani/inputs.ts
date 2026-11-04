@@ -217,6 +217,18 @@ export const responseStepSchema = z
     buyerType: z.enum(BUYER_TYPES).optional(),
     quantity: z.number().int().min(1).max(100_000).optional(),
     option: z.string().trim().min(1).max(60).nullable().optional(),
+    /** How many of each colour or size (2026-11-04); its total becomes the quantity. */
+    optionQuantities: z
+      .array(
+        z.object({
+          option: z.string().trim().min(1).max(60),
+          quantity: z.number().int().min(1).max(100_000),
+        }),
+      )
+      .min(1)
+      .max(12)
+      .refine((s) => new Set(s.map((e) => e.option)).size === s.length, 'Duplicate option')
+      .optional(),
     timing: z.enum(TIMINGS).optional(),
     wantsDelivery: z.boolean().optional(),
     zoneId: z.string().min(1).max(40).nullable().optional(),

@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prismaMock } from '@/test-utils/prisma-mock';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEVICE_A, DEVICE_B, NOW, fakePublicDb, publicLink } from '@/test-utils/public-fixtures';
@@ -216,6 +217,48 @@ describe('upsertResponse', () => {
       wantsDelivery: null,
       zoneId: null,
     });
+  });
+
+  // Porteur, 2026-11-04: how many of each colour or size.
+  it('saves how many of each option, their total as the quantity', async () => {
+    const { responses } = fakePublicDb();
+    const split = [
+      { option: 'Rouge', quantity: 3 },
+      { option: 'Noir', quantity: 2 },
+    ];
+    await upsertResponse(prismaMock, { ...base, interested: true, optionQuantities: split }, NOW);
+    expect(responses[0]).toMatchObject({ quantity: 5, option: null, optionQuantities: split });
+  });
+
+  it('one option alone is also the answer’s option', async () => {
+    const { responses } = fakePublicDb();
+    const split = [{ option: 'Noir', quantity: 4 }];
+    await upsertResponse(prismaMock, { ...base, interested: true, optionQuantities: split }, NOW);
+    expect(responses[0]).toMatchObject({ quantity: 4, option: 'Noir', optionQuantities: split });
+  });
+
+  it('a quantity sent without a split drops an earlier split', async () => {
+    fakePublicDb();
+    await upsertResponse(prismaMock, { ...base, interested: true, quantity: 6 }, NOW);
+    expect(prismaMock.response.create.mock.calls[0]![0].data).toMatchObject({
+      quantity: 6,
+      optionQuantities: Prisma.DbNull,
+    });
+  });
+
+  it('refuses a split the product does not offer, or too many pieces', async () => {
+    fakePublicDb();
+    const invalid = { code: 'VALIDATION_FAILED', status: 400 };
+    const attempt = (optionQuantities: object) =>
+      failure(upsertResponse(prismaMock, { ...base, optionQuantities } as never, NOW));
+    expect(await attempt([{ option: 'Violet', quantity: 1 }])).toEqual(invalid);
+    expect(
+      await attempt([
+        { option: 'Rouge', quantity: 60_000 },
+        { option: 'Noir', quantity: 60_000 },
+      ]),
+    ).toEqual(invalid);
+    expect(prismaMock.response.create).not.toHaveBeenCalled();
   });
 
   it('refuses an option, timing or zone the campaign does not offer', async () => {

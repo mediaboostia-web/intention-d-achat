@@ -30,6 +30,7 @@ const row = (over: Partial<StatsRow> = {}): StatsRow => ({
   buyerType: 'CONSUMER',
   quantity: 2,
   option: null,
+  optionQuantities: null,
   timing: null,
   wantsDelivery: null,
   zoneId: null,
@@ -41,6 +42,29 @@ const no = (reason: string | null) =>
   row({ interested: false, buyerType: null, quantity: null, notInterestedReason: reason });
 
 describe('computeCampaignStats', () => {
+  // 2026-11-04: an answer split over colours counts in each colour it names.
+  it('counts each option of a split answer apart, with its own quantity', () => {
+    const s = computeCampaignStats(
+      [
+        row({
+          quantity: 5,
+          optionQuantities: [
+            { option: 'Rouge', quantity: 3 },
+            { option: 'Bleu', quantity: 2 },
+          ],
+        }),
+        row({ quantity: 4, option: 'Rouge' }),
+      ],
+      campaign(),
+      zones,
+      coefs,
+    );
+    expect(s.byOption).toEqual([
+      { option: 'Rouge', respondents: 2, quantity: 7 },
+      { option: 'Bleu', respondents: 1, quantity: 2 },
+    ]);
+  });
+
   it('counts only completed, unlocked, unsuspicious answers', () => {
     const s = computeCampaignStats(
       [

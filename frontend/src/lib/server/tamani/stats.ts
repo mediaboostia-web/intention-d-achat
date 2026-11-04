@@ -3,6 +3,7 @@
 // stats route reads the rows and decides what the plan may see.
 import 'server-only';
 import { BUYER_TYPES, NOT_INTERESTED_REASONS, type BuyerType } from '@/lib/tamani/labels';
+import { optionSplit } from '@/lib/tamani/option-split';
 import type { CampaignStats } from '@/lib/tamani/results-view';
 import { TIMING_LABELS, type Availability, type Timing } from '@/lib/tamani/timing';
 import type { Coefficients } from './coefficients';
@@ -21,6 +22,8 @@ export interface StatsRow {
   buyerType: string | null;
   quantity: number | null;
   option: string | null;
+  /** The split per option (2026-11-04), read through optionSplit. */
+  optionQuantities: unknown;
   timing: string | null;
   wantsDelivery: boolean | null;
   zoneId: string | null;
@@ -118,7 +121,17 @@ export function computeCampaignStats(
     return t ? [{ timing, respondents: t.respondents, quantity: t.quantity }] : [];
   });
 
-  const byOption = [...tally(yes, (y) => (y.option ? y.option : null))]
+  // A split answer counts in each option it names, with that option's pieces.
+  const options = new Map<string, { respondents: number; quantity: number }>();
+  for (const y of yes) {
+    for (const { option, quantity } of optionSplit(y)) {
+      const cur = options.get(option) ?? { respondents: 0, quantity: 0 };
+      cur.respondents += 1;
+      cur.quantity += quantity;
+      options.set(option, cur);
+    }
+  }
+  const byOption = [...options]
     .map(([option, t]) => ({ option, ...t }))
     .sort((a, b) => byQuantity(a, b) || a.option.localeCompare(b.option, 'fr'));
 

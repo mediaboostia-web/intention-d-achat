@@ -14,6 +14,7 @@ import {
   type ClientFilterState,
 } from '@/lib/tamani/client-filters';
 import type { BuyerType } from '@/lib/tamani/labels';
+import { optionSplit, optionText } from '@/lib/tamani/option-split';
 import { dialPrefixFor } from '@/lib/tamani/phone-countries';
 import type {
   ClientCounts,
@@ -262,6 +263,7 @@ export async function getClient(
           ...LAST_SELECT,
           id: true,
           option: true,
+          optionQuantities: true,
           timing: true,
           wantsDelivery: true,
           zone: { select: { name: true } },
@@ -316,7 +318,7 @@ export async function getClient(
       ...toLast(x),
       campaignTitle: x.campaign.title,
       buyerType: (x.buyerType as BuyerType | null) ?? null,
-      option: x.option,
+      option: optionText(optionSplit(x)),
       timing: x.timing,
       wantsDelivery: x.wantsDelivery,
       zoneName: x.zone?.name ?? null,

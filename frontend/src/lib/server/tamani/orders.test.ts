@@ -181,6 +181,22 @@ describe('convertResponseToOrder', () => {
     expect(created().data).toMatchObject({ notes: 'Couleur : Rouge\nLieu : Keur Massar' });
   });
 
+  it('writes how many of each colour in the note (2026-11-04)', async () => {
+    prismaMock.response.findFirst.mockResolvedValue(
+      answer({
+        quantity: 5,
+        option: null,
+        optionQuantities: [
+          { option: 'Rouge', quantity: 3 },
+          { option: 'Noir', quantity: 2 },
+        ],
+        campaign: { productId: 'prod_1', product: { ...product, optionLabel: 'Couleur' } },
+      }) as never,
+    );
+    await convert();
+    expect(created().data).toMatchObject({ quantity: 5, notes: 'Couleur : Rouge × 3, Noir × 2' });
+  });
+
   it('names a nameless option « Option »', async () => {
     prismaMock.response.findFirst.mockResolvedValue(answer({ option: '5 L' }) as never);
     await convert();

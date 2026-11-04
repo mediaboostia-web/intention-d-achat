@@ -4,6 +4,7 @@
 import 'server-only';
 import type { Prisma } from '@prisma/client';
 import type { BuyerType, NotInterestedReason } from '@/lib/tamani/labels';
+import { optionSplit, optionText } from '@/lib/tamani/option-split';
 import type { InterestedPage, InterestedRow } from '@/lib/tamani/results-view';
 import type { Timing } from '@/lib/tamani/timing';
 import type { Cursor } from '@/lib/server/notifications/cursor';
@@ -37,6 +38,7 @@ export const ROW_SELECT = {
   buyerType: true,
   quantity: true,
   option: true,
+  optionQuantities: true,
   timing: true,
   wantsDelivery: true,
   deliveryPlace: true,
@@ -64,7 +66,8 @@ export function toRow(r: ResponseRow, canSeeContacts: boolean): InterestedRow {
     reason: (r.notInterestedReason as NotInterestedReason | null) ?? null,
     buyerType: (r.buyerType as BuyerType | null) ?? null,
     quantity: r.quantity,
-    option: r.option,
+    // « Rouge × 3, Noir × 2 » for a split answer, the option alone otherwise.
+    option: optionText(optionSplit(r)),
     timing: (r.timing as Timing | null) ?? null,
     wantsDelivery: r.wantsDelivery,
     zoneName: r.zone?.name ?? null,

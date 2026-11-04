@@ -4,6 +4,7 @@
 // sheet posts stepBody(action) for each tap.
 import type { DeviceMemory, RememberedRespondent } from './device-memory';
 import type { BuyerType, NotInterestedReason } from './labels';
+import type { OptionQuantity } from './option-split';
 import type { Timing } from './timing';
 
 export type PopupStep =
@@ -22,6 +23,8 @@ export interface PopupAnswers {
   buyerType: BuyerType | null;
   quantity: number | null;
   option: string | null;
+  /** How many of each colour or size (2026-11-04); `quantity` is their total. */
+  optionQuantities: OptionQuantity[] | null;
   timing: Timing | null;
   wantsDelivery: boolean | null;
   zoneId: string | null;
@@ -35,6 +38,7 @@ export const EMPTY_ANSWERS: PopupAnswers = {
   buyerType: null,
   quantity: null,
   option: null,
+  optionQuantities: null,
   timing: null,
   wantsDelivery: null,
   zoneId: null,
@@ -54,7 +58,12 @@ export type PopupAction =
   | { type: 'interest'; interested: boolean }
   | { type: 'reason'; reason: NotInterestedReason | null }
   | { type: 'buyer'; buyerType: BuyerType }
-  | { type: 'quantity'; quantity: number; option: string | null }
+  | {
+      type: 'quantity';
+      quantity: number;
+      option: string | null;
+      optionQuantities?: OptionQuantity[];
+    }
   | { type: 'timing'; timing: Timing }
   | { type: 'delivery'; wantsDelivery: boolean; zoneId: string | null; place?: string | null }
   | { type: 'completed'; respondent: RememberedRespondent }
@@ -83,6 +92,8 @@ export interface ResponseStepBody {
   phoneCountry?: string;
   /** « J'accepte que {boutique} me contacte » (2026-11-04). */
   contactConsent?: boolean;
+  /** How many of each colour or size (2026-11-04). */
+  optionQuantities?: OptionQuantity[];
 }
 
 export function initialPopupState(ctx: {
@@ -133,7 +144,12 @@ export function popupReducer(state: PopupState, action: PopupAction): PopupState
     case 'buyer':
       return next(state, { ...a, buyerType: action.buyerType });
     case 'quantity':
-      return next(state, { ...a, quantity: action.quantity, option: action.option });
+      return next(state, {
+        ...a,
+        quantity: action.quantity,
+        option: action.option,
+        optionQuantities: action.optionQuantities ?? null,
+      });
     case 'timing':
       return next(state, { ...a, timing: action.timing });
     case 'delivery':
@@ -187,7 +203,9 @@ export function stepBody(action: PopupAction): ResponseStepBody {
     case 'buyer':
       return { buyerType: action.buyerType };
     case 'quantity':
-      return { quantity: action.quantity, option: action.option };
+      return action.optionQuantities
+        ? { optionQuantities: action.optionQuantities }
+        : { quantity: action.quantity, option: action.option };
     case 'timing':
       return { timing: action.timing };
     case 'delivery':
@@ -206,10 +224,12 @@ export function answersBody(a: PopupAnswers): ResponseStepBody {
   if (a.interested === false) {
     return { interested: false, notInterestedReason: a.notInterestedReason };
   }
-  const body: ResponseStepBody = { option: a.option };
+  // An answer kept on the phone before the split has no optionQuantities.
+  const split = a.optionQuantities ?? null;
+  const body: ResponseStepBody = split ? { optionQuantities: split } : { option: a.option };
   if (a.interested !== null) body.interested = a.interested;
   if (a.buyerType !== null) body.buyerType = a.buyerType;
-  if (a.quantity !== null) body.quantity = a.quantity;
+  if (a.quantity !== null && !split) body.quantity = a.quantity;
   if (a.timing !== null) body.timing = a.timing;
   if (a.wantsDelivery !== null) {
     body.wantsDelivery = a.wantsDelivery;

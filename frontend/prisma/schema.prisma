@@ -494,6 +494,10 @@ model Response {
   buyerType           String? // CONSUMER | RESELLER
   quantity            Int?
   option              String?
+  // How many of each colour or size (2026-11-04): [{ option, quantity }] in the
+  // product's order; `quantity` holds the total, `option` the option when only
+  // one is chosen. Null: no split (lib/tamani/option-split.ts).
+  optionQuantities    Json?
   timing              String?
   wantsDelivery       Boolean?
   zoneId              String?

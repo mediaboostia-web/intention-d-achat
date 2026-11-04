@@ -242,7 +242,8 @@ describe('PopupView', () => {
     for (const n of ['6', '12', '24', '50']) expect(t).toContain(n);
   });
 
-  it('asks for the option before the quantity', () => {
+  // Porteur, 2026-11-04: « des nombres différents par couleur ou taille ».
+  it('asks how many of each option, with the total, « Valider » once there is one', () => {
     const withOptions = {
       ...campaign,
       product: { ...campaign.product, optionLabel: 'Couleur', options: ['Rouge', 'Noir'] },
@@ -251,14 +252,30 @@ describe('PopupView', () => {
       answers: { ...EMPTY_ANSWERS, interested: true, buyerType: 'CONSUMER' },
     });
     const out = html(<PopupView campaign={withOptions} state={consumer} />);
-    expect(text(<PopupView campaign={withOptions} state={consumer} />)).toContain(
-      "Choisis d'abord : couleur",
+    const t = text(<PopupView campaign={withOptions} state={consumer} />);
+    expect(t).toContain('Couleur : combien de chaque ?');
+    for (const o of ['Rouge', 'Noir']) {
+      expect(out).toContain(`aria-label="Quantité : ${o}"`);
+      expect(out).toContain(`aria-label="Un de plus : ${o}"`);
+    }
+    expect(out).toMatch(/inputMode="numeric"/);
+    expect(t).toContain('Total : 0');
+    expect(out).toMatch(/<button[^>]*disabled=""[^>]*>Valider<\/button>/);
+
+    const split = [
+      { option: 'Rouge', quantity: 3 },
+      { option: 'Noir', quantity: 2 },
+    ];
+    const chosen = {
+      ...consumer,
+      answers: { ...consumer.answers, quantity: 5, optionQuantities: split },
+    };
+    const back = html(<PopupView campaign={withOptions} state={chosen} />);
+    expect(back).toMatch(
+      /aria-label="Quantité : Rouge"[^>]*value="3"|value="3"[^>]*aria-label="Quantité : Rouge"/,
     );
-    expect(out.match(/<button[^>]*disabled=""/g)?.length).toBe(5);
-    const chosen = { ...consumer, answers: { ...consumer.answers, option: 'Rouge' } };
-    expect(text(<PopupView campaign={withOptions} state={chosen} />)).not.toContain(
-      "Choisis d'abord",
-    );
+    expect(text(<PopupView campaign={withOptions} state={chosen} />)).toContain('Total : 5');
+    expect(back).not.toMatch(/<button[^>]*disabled=""[^>]*>Valider<\/button>/);
   });
 
   it('keeps the page on one screen: the photos keep their height, the sheet scrolls', () => {

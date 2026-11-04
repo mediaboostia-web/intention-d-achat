@@ -3,6 +3,7 @@
 // « Oui » answer into an order. One order per answer: the unique
 // SaleOrder.responseId settles two taps at once.
 import 'server-only';
+import { optionSplit, optionText } from '@/lib/tamani/option-split';
 import type { NextResponse } from 'next/server';
 import { BUYER_TYPES, type BuyerType } from '@/lib/tamani/labels';
 import { orderUnitPrice } from '@/lib/tamani/orders-view';
@@ -54,6 +55,11 @@ function buyerTypeOf(raw: string | null): BuyerType {
  * « Autre endroit » place goes into the note. With `campaignId`, the
  * answer must also belong to that campaign. The order is dated `now`.
  */
+/** « Couleur : Rouge × 3, Noir × 2 » in the order's note; nothing without an option. */
+function optionLine(label: string | null, text: string | null): string | null {
+  return text ? `${label ?? 'Option'} : ${text}` : null;
+}
+
 export async function convertResponseToOrder(
   tx: Db,
   organizationId: string,
@@ -79,6 +85,7 @@ export async function convertResponseToOrder(
       zoneId: true,
       deliveryPlace: true,
       option: true,
+      optionQuantities: true,
       campaign: {
         select: {
           productId: true,
@@ -106,7 +113,7 @@ export async function convertResponseToOrder(
   const place = delivery && answer.zoneId === null ? answer.deliveryPlace : null;
   // What the round needs and the order has no field for: the size or colour, then where.
   const notes = [
-    answer.option ? `${answer.campaign.product.optionLabel ?? 'Option'} : ${answer.option}` : null,
+    optionLine(answer.campaign.product.optionLabel, optionText(optionSplit(answer))),
     place ? `Lieu : ${place}` : null,
   ].filter((line) => line !== null);
   try {
