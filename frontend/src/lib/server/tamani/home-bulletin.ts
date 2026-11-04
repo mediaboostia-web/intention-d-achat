@@ -77,6 +77,7 @@ export async function buildHomeBulletin(
     db.campaign.findMany({
       where: {
         organizationId,
+        archivedAt: null,
         OR: [
           activeCampaignWhere(now),
           { status: { not: 'DRAFT' }, createdAt: { gte: monthStart } },

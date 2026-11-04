@@ -331,7 +331,13 @@ const order: OrderRow = {
   responseId: 'resp1',
   buyerType: 'RESELLER',
   notes: null,
-  client: { id: 'r1', firstName: 'Awa', phone: '+221 77 123 45 12', phoneE164: '+221771234512' },
+  client: {
+    id: 'r1',
+    firstName: 'Awa',
+    phone: '+221 77 123 45 12',
+    phoneE164: '+221771234512',
+    contactRefused: false,
+  },
 };
 
 type OrdersProps = ComponentProps<typeof CampaignOrdersView>;

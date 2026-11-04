@@ -39,12 +39,29 @@ const pro: OrderRow = {
   responseId: 'resp1',
   buyerType: 'RESELLER',
   notes: null,
-  client: { id: 'r1', firstName: 'Awa', phone: '+221 77 123 45 12', phoneE164: '+221771234512' },
+  client: {
+    id: 'r1',
+    firstName: 'Awa',
+    phone: '+221 77 123 45 12',
+    phoneE164: '+221771234512',
+    contactRefused: false,
+  },
 };
 const free: OrderRow = {
   ...pro,
   id: 'o2',
-  client: { id: 'r1', firstName: 'Awa', phone: '77 •• •• 12', phoneE164: null },
+  client: {
+    id: 'r1',
+    firstName: 'Awa',
+    phone: '77 •• •• 12',
+    phoneE164: null,
+    contactRefused: false,
+  },
+};
+const refused: OrderRow = {
+  ...pro,
+  id: 'o4',
+  client: { id: 'r1', firstName: 'Awa', phone: null, phoneE164: null, contactRefused: true },
 };
 const paid: OrderRow = {
   ...pro,
@@ -52,7 +69,13 @@ const paid: OrderRow = {
   status: 'FULFILLED',
   paid: true,
   paidAt: '2026-10-27T15:00:00.000Z',
-  client: { id: 'r2', firstName: null, phone: '+221 77 999 88 77', phoneE164: '+221779998877' },
+  client: {
+    id: 'r2',
+    firstName: null,
+    phone: '+221 77 999 88 77',
+    phoneE164: '+221779998877',
+    contactRefused: false,
+  },
 };
 
 const counts: Record<OrderStatus, number> = {
@@ -239,6 +262,16 @@ const detailProps = (order: OrderRow, over: Partial<DetailProps> = {}): DetailPr
 });
 
 describe('OrderDetailView', () => {
+  it('an order of a client who did not agree: « Numéro non partagé », the card still opens', () => {
+    const out = html(<OrderDetailView {...detailProps(refused)} />);
+    expect(out).not.toContain('wa.me');
+    expect(out).toContain('href="/app/clients/r1"');
+    expect(text(<OrderDetailView {...detailProps(refused)} />)).toContain('Numéro non partagé');
+    expect(text(<OrderListView {...listProps({ rows: [refused] })} />)).toContain(
+      'Numéro non partagé',
+    );
+  });
+
   it('a new order is confirmed or cancelled, its price and quantity still editable', () => {
     const out = html(<OrderDetailView {...detailProps(pro)} />);
     expect(buttons(out)).toEqual(expect.arrayContaining(['Confirmer', 'Annuler']));

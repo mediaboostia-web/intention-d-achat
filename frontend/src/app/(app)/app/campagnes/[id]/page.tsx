@@ -8,11 +8,19 @@ import { CampaignActions } from '@/components/app/CampaignActions';
 import { CampaignOrdersTab } from '@/components/app/CampaignOrders';
 import { CampaignResultsTab } from '@/components/app/CampaignResults';
 import { InterestedTab } from '@/components/app/InterestedList';
+import { CampaignDeletion } from '@/components/app/CampaignDeletion';
 import { CampaignEditForm, type CampaignPatchBody } from '@/components/app/CampaignEditForm';
 import { ShareCard } from '@/components/app/ShareCard';
 import { useShop } from '@/components/app/ShopProvider';
 import { SourceLinks } from '@/components/app/SourceLinks';
-import { Button, CampaignStatusBadge, Notice, PageHeader, Tabs } from '@/components/ui';
+import {
+  Button,
+  CampaignStatusBadge,
+  DetailSkeleton,
+  Notice,
+  PageHeader,
+  Tabs,
+} from '@/components/ui';
 import { useToast } from '@/contexts/ToastContext';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -32,7 +40,7 @@ function CampaignDetail() {
   const { id } = useParams<{ id: string }>();
   const params = useSearchParams();
   const justSent = params.get('partager') === '1';
-  const { shop } = useShop();
+  const { shop, role } = useShop();
   const { toast } = useToast();
   const [campaign, setCampaign] = useState<ShopCampaign | null>(null);
   const [links, setLinks] = useState<ShopLink[]>([]);
@@ -105,13 +113,7 @@ function CampaignDetail() {
     );
   }
   if (!campaign) {
-    return (
-      <div role="status" className="flex flex-col gap-4 motion-safe:animate-pulse">
-        <span className="sr-only">Chargement de la campagne…</span>
-        <span aria-hidden="true" className="h-10 w-2/3 rounded-card bg-grid/70" />
-        <span aria-hidden="true" className="h-40 rounded-card bg-grid/70" />
-      </div>
-    );
+    return <DetailSkeleton label="Chargement de la campagne" tabs={5} />;
   }
 
   const base = `/app/campagnes/${campaign.id}`;
@@ -183,13 +185,16 @@ function CampaignDetail() {
             currency={shop.currency}
           />
         ) : tab === 'edit' ? (
-          <CampaignEditForm
-            key={campaign.id}
-            campaign={campaign}
-            currency={shop.currency}
-            error={saveError}
-            onSave={save}
-          />
+          <>
+            <CampaignEditForm
+              key={campaign.id}
+              campaign={campaign}
+              currency={shop.currency}
+              error={saveError}
+              onSave={save}
+            />
+            {role !== 'MEMBER' && <CampaignDeletion shopId={shop.id} campaignId={campaign.id} />}
+          </>
         ) : campaign.status === 'ACTIVE' && campaign.defaultLink ? (
           <div className="flex flex-col gap-10">
             <ShareCard message={campaign.shareMessage} url={campaign.defaultLink.url} />

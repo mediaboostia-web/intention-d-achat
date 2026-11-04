@@ -229,15 +229,18 @@ export async function createManualOrder(
       firstName: input.firstName,
       firstSeenAt: now,
       lastSeenAt: now,
+      // The shop typed the number itself (2026-11-04): nothing for the popup's box to hide.
+      contactConsentAt: now,
     },
     update: {},
-    select: { id: true, firstName: true },
+    select: { id: true, firstName: true, contactConsentAt: true },
   });
-  if (client.firstName === null) {
-    await tx.respondent.updateMany({
-      where: { id: client.id, organizationId },
-      data: { firstName: input.firstName },
-    });
+  const fill = {
+    ...(client.firstName === null && { firstName: input.firstName }),
+    ...(client.contactConsentAt === null && { contactConsentAt: now }),
+  };
+  if (Object.keys(fill).length > 0) {
+    await tx.respondent.updateMany({ where: { id: client.id, organizationId }, data: fill });
   }
 
   return tx.saleOrder.create({

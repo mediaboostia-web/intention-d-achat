@@ -114,6 +114,10 @@ model Organization {
   // Lot 6: on the free plan, the one campaign whose verdict is offered (the
   // first to reach 20 counted answers), reserved once by free-verdict.ts.
   freeVerdictCampaignId String?
+  // Onboarding (2026-11-04): what the shop is and where it sells, null for
+  // the shops made before. See lib/tamani/shop-profile.ts.
+  businessType          String? // WHOLESALER | IMPORTER | BOTH | OTHER
+  salesChannel          String? // ONLINE | STORE | BOTH
 
   zones        DeliveryZone[]
   products     Product[]
@@ -421,6 +425,9 @@ model Campaign {
   status          String         @default("DRAFT") // DRAFT | ACTIVE | CLOSED | ARRIVED
   closedAt        DateTime?
   arrivedAt       DateTime?
+  // Deleted by the shop while it had answers or orders: closed and out of the
+  // lists, its answers kept for the client book (2026-11-04).
+  archivedAt      DateTime?
   links           CampaignLink[]
   responses       Response[]
   orders          SaleOrder[]
@@ -450,19 +457,23 @@ model CampaignLink {
 // is two respondents. Postgres allows many NULL phoneE164 (anonymized rows)
 // under the unique key.
 model Respondent {
-  id             String       @id @default(cuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  phoneE164      String?
-  firstName      String?
-  notes          String?
-  firstSeenAt    DateTime     @default(now())
-  lastSeenAt     DateTime     @default(now())
-  anonymizedAt   DateTime?
-  responses      Response[]
-  orders         SaleOrder[]
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id               String       @id @default(cuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  phoneE164        String?
+  firstName        String?
+  notes            String?
+  firstSeenAt      DateTime     @default(now())
+  lastSeenAt       DateTime     @default(now())
+  anonymizedAt     DateTime?
+  // When the client last ticked « J'accepte que {boutique} me contacte » in the
+  // popup (2026-11-04), or the shop typed the number for a manual order. Null:
+  // the number never leaves the server (lib/server/tamani/contact.ts).
+  contactConsentAt DateTime?
+  responses        Response[]
+  orders           SaleOrder[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   @@unique([organizationId, phoneE164])
 }
@@ -483,6 +494,10 @@ model Response {
   buyerType           String? // CONSUMER | RESELLER
   quantity            Int?
   option              String?
+  // How many of each colour or size (2026-11-04): [{ option, quantity }] in the
+  // product's order; `quantity` holds the total, `option` the option when only
+  // one is chosen. Null: no split (lib/tamani/option-split.ts).
+  optionQuantities    Json?
   timing              String?
   wantsDelivery       Boolean?
   zoneId              String?

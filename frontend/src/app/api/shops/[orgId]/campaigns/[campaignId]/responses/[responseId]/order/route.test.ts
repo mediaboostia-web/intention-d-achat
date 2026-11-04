@@ -72,7 +72,13 @@ beforeEach(async () => {
     zone: { name: 'Médina' },
     product: { name: 'Marmites inox 5 L', unitLabel: 'pièce' },
     campaign: { title: 'Marmites' },
-    respondent: { id: 'r1', firstName: 'Awa', phoneE164: '+221771234512', anonymizedAt: null },
+    respondent: {
+      id: 'r1',
+      firstName: 'Awa',
+      phoneE164: '+221771234512',
+      anonymizedAt: null,
+      contactConsentAt: new Date('2026-10-20T10:00:00Z'),
+    },
   } as never);
 });
 

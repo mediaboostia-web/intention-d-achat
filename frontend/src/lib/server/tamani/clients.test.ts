@@ -37,6 +37,7 @@ const row = (id: string, over: object = {}) => ({
   id,
   firstName: 'Awa',
   phoneE164: '+221771112233',
+  contactConsentAt: new Date('2026-10-01T10:00:00Z'),
   lastSeenAt: new Date('2026-10-25T10:00:00Z'),
   responses: [
     {
@@ -99,6 +100,7 @@ describe('listClients', () => {
       firstName: 'Awa',
       phone: '+221 77 111 22 33',
       phoneE164: '+221771112233',
+      contactRefused: false,
       kind: 'RESELLER',
       last: {
         campaignId: 'c1',
@@ -147,9 +149,20 @@ describe('listClients', () => {
     expect(whereOf().AND).toContainEqual({ firstName: { contains: 'awa', mode: 'insensitive' } });
   });
 
-  it('matches digits typed with spaces', async () => {
+  it('matches digits typed with spaces, among the clients who agreed to be contacted', async () => {
     await listClients(prismaMock, 'org_1', { q: '77 111', kind: 'ALL' }, null, PRO);
-    expect(whereOf().AND).toContainEqual({ phoneE164: { contains: '77111' } });
+    expect(whereOf().AND).toContainEqual({
+      phoneE164: { contains: '77111' },
+      contactConsentAt: { not: null },
+    });
+  });
+
+  it('a client who did not tick the box shows no number, and says so (2026-11-04)', async () => {
+    prismaMock.respondent.findMany.mockResolvedValue([
+      row('r1', { contactConsentAt: null }),
+    ] as never);
+    const page = await listClients(prismaMock, 'org_1', ALL, null, PRO);
+    expect(page.items[0]).toMatchObject({ phone: null, phoneE164: null, contactRefused: true });
   });
 
   it('FREE search ignores digits', async () => {
@@ -305,7 +318,13 @@ function order(id: string, over: Record<string, unknown> = {}) {
     zone: { name: 'Médina' },
     product: { name: 'Riz parfumé', unitLabel: 'sac' },
     campaign: { title: 'Riz parfumé' },
-    respondent: { id: 'r1', firstName: 'Awa', phoneE164: '+221771112233', anonymizedAt: null },
+    respondent: {
+      id: 'r1',
+      firstName: 'Awa',
+      phoneE164: '+221771112233',
+      anonymizedAt: null,
+      contactConsentAt: new Date('2026-10-01T10:00:00Z'),
+    },
     ...over,
   };
 }
@@ -320,6 +339,7 @@ describe('getClient', () => {
     id: 'r1',
     firstName: 'Awa',
     phoneE164: '+221771112233',
+    contactConsentAt: new Date('2026-10-01T10:00:00Z'),
     notes: 'Paie en fin de mois',
     firstSeenAt: new Date('2026-10-01T10:00:00Z'),
     lastSeenAt: new Date('2026-10-25T10:00:00Z'),
@@ -443,6 +463,7 @@ describe('getClient', () => {
       firstName: 'Awa',
       phone: '+221 77 111 22 33',
       phoneE164: '+221771112233',
+      contactRefused: false,
     });
     expect(client?.totalSpent).toBe(22_500);
   });

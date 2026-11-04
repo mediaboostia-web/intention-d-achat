@@ -14,7 +14,7 @@ import {
 import { ClientList } from '@/components/app/ClientList';
 import { SearchField } from '@/components/app/SearchField';
 import { useShop } from '@/components/app/ShopProvider';
-import { Button, FilterBar, Notice, PageHeader } from '@/components/ui';
+import { Button, FilterBar, Notice, PageHeader, RowsSkeleton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import {
@@ -180,10 +180,11 @@ function Clients() {
         <ClientList rows={list.items} shopName={shop.name} now={new Date()} />
       )}
       {list.loading && (
-        <div aria-hidden="true" className="mt-4 flex flex-col gap-2 motion-safe:animate-pulse">
-          <span className="h-[72px] rounded-card bg-grid/70" />
-          <span className="h-[72px] rounded-card bg-grid/70" />
-        </div>
+        <RowsSkeleton
+          label="Chargement des clients"
+          count={list.items.length > 0 ? 2 : 4}
+          className="mt-4"
+        />
       )}
       {list.error && (
         <Notice

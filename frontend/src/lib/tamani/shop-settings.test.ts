@@ -7,6 +7,8 @@ const values = {
   country: 'GN',
   logoUrl: null,
   description: '  ',
+  businessType: null,
+  salesChannel: null,
 };
 
 describe('shopSettingsBody (lot 7b review)', () => {
@@ -23,6 +25,16 @@ describe('shopSettingsBody (lot 7b review)', () => {
     expect(shopSettingsBody({ ...values, country: 'SN' }, { country: 'GN' })).toMatchObject({
       country: 'SN',
     });
+  });
+
+  it('sends what the shop is and where it sells once chosen (onboarding)', () => {
+    expect(
+      shopSettingsBody(
+        { ...values, businessType: 'IMPORTER', salesChannel: 'ONLINE' },
+        { country: 'GN' },
+      ),
+    ).toMatchObject({ businessType: 'IMPORTER', salesChannel: 'ONLINE' });
+    expect(shopSettingsBody(values, { country: 'GN' })).not.toHaveProperty('businessType');
   });
 
   it('trims the description', () => {

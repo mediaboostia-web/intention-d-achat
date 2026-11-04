@@ -9,12 +9,14 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Avatar, Badge, Button, Card, Notice, Textarea } from '@/components/ui';
+import { Avatar, Badge, Button, Card, DetailSkeleton, Notice, Textarea } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import {
   CLIENT_NOTE_MAX,
   clientWhatsappMessage,
+  CONTACT_REFUSED_LINE,
+  contactRefusedText,
   lockedContactText,
   lockedReliabilityText,
   normalizeClientNote,
@@ -350,6 +352,7 @@ export function ClientDetailView({
             {clientName(client.firstName)}
           </h1>
           {client.phone && <p className="text-ink-soft">{client.phone}</p>}
+          {client.contactRefused && <p className="text-ink-soft">{CONTACT_REFUSED_LINE}</p>}
           <p className="text-sm text-ink-muted">
             Client depuis le {formatDateFr(new Date(client.firstSeenAt), now)}
           </p>
@@ -373,6 +376,10 @@ export function ClientDetailView({
         >
           Écrire sur WhatsApp
         </Button>
+      ) : client.contactRefused ? (
+        <Notice tone="info" className="mt-6">
+          {contactRefusedText(client.firstName)}
+        </Notice>
       ) : (
         <Notice
           tone="info"
@@ -473,15 +480,7 @@ export function ClientScreen({ id }: { id: string }) {
     );
   }
   if (!client) {
-    return (
-      <div role="status" aria-label="Chargement du client">
-        <div aria-hidden="true" className="flex flex-col gap-4 motion-safe:animate-pulse">
-          <span className="h-16 w-2/3 rounded-card bg-grid/70" />
-          <span className="h-12 w-48 rounded-card bg-grid/70" />
-          <span className="h-40 rounded-card bg-grid/70" />
-        </div>
-      </div>
-    );
+    return <DetailSkeleton label="Chargement du client" />;
   }
   return (
     <ClientDetailView

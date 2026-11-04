@@ -89,6 +89,24 @@ describe('GET /api/shops/[orgId]', () => {
   });
 });
 
+describe('PATCH /api/shops/[orgId] activity (onboarding, 2026-11-04)', () => {
+  it('saves what the shop is and where it sells, and sends them back', async () => {
+    const res = await patch({ businessType: 'WHOLESALER', salesChannel: 'STORE' });
+    expect(res.status).toBe(200);
+    expect(prismaMock.organization.update.mock.calls[0]![0].data).toMatchObject({
+      businessType: 'WHOLESALER',
+      salesChannel: 'STORE',
+    });
+    const sent = (await res.json()) as { shop: { businessType: string; salesChannel: string } };
+    expect(sent.shop).toMatchObject({ businessType: 'WHOLESALER', salesChannel: 'STORE' });
+  });
+
+  it('refuses a value the onboarding does not offer', async () => {
+    expect((await patch({ businessType: 'RETAILER' })).status).toBe(400);
+    expect((await patch({ salesChannel: null })).status).toBe(400);
+  });
+});
+
 describe('PATCH /api/shops/[orgId]', () => {
   it('updates coefficients within [0, 1]', async () => {
     const res = await patch({ coefConsumer: 0, coefReseller: 1 });

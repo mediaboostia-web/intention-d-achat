@@ -8,6 +8,8 @@ export interface StepResult {
   token: string;
   completed: boolean;
   respondent: RememberedRespondent | null;
+  /** The shop can see the number; absent on the honeypot's empty reply. */
+  contactShared?: boolean;
   interestedCount: number | null;
 }
 

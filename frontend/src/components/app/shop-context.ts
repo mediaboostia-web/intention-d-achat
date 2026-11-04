@@ -4,6 +4,7 @@
 // gate's actions for the welcome page (which has no shop yet).
 import { createContext, useContext } from 'react';
 import type { PlanId } from '@/lib/tamani/plans';
+import type { BusinessType, SalesChannel } from '@/lib/tamani/shop-profile';
 
 /** The shop as lib/server/tamani/serializers.ts toShop sends it. */
 export interface Shop {
@@ -17,6 +18,9 @@ export interface Shop {
   countryLocked: boolean;
   logoUrl: string | null;
   description: string | null;
+  /** The onboarding's answers (2026-11-04); null for a shop made before. */
+  businessType: BusinessType | null;
+  salesChannel: SalesChannel | null;
   coefConsumer: number;
   coefReseller: number;
   plan: { id: PlanId; inGrace: boolean; endsAt: string | null };

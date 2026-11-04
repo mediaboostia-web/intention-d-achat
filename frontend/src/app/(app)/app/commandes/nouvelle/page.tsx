@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { OrderForm, type OrderProductChoice } from '@/components/app/OrderForm';
 import { useShop } from '@/components/app/ShopProvider';
-import { Button, EmptyState, Notice, PageHeader } from '@/components/ui';
+import { Button, EmptyState, FormSkeleton, Notice, PageHeader } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import type { ShopCampaign } from '@/lib/tamani/campaign-view';
@@ -98,12 +98,7 @@ export default function NewOrderPage() {
             {loadError}
           </Notice>
         ) : choices === null ? (
-          <div role="status" className="flex flex-col gap-3 motion-safe:animate-pulse">
-            <span className="sr-only">Chargement de tes produits…</span>
-            <span aria-hidden="true" className="h-12 rounded-card bg-grid/70" />
-            <span aria-hidden="true" className="h-12 rounded-card bg-grid/70" />
-            <span aria-hidden="true" className="h-20 rounded-card bg-grid/70" />
-          </div>
+          <FormSkeleton label="Chargement de tes produits" fields={4} />
         ) : choices.products.length === 0 ? (
           <EmptyState
             title="Ajoute d'abord un produit"

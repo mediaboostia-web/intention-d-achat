@@ -1,11 +1,14 @@
 'use client';
 
 // /app/bienvenue: the one page an account sees before it has a shop. The
-// shop is created first, then each zone in order; a zone that fails does not
-// undo the shop — the product page says so and points to the settings.
+// onboarding asks what the shop is and where it sells (2026-11-04), then the
+// shop form. The shop is created first, then each zone in order; a zone that
+// fails does not undo the shop — the product page says so and points to the
+// settings.
 import { useState } from 'react';
 import { AuthTitle } from '@/components/app/AuthForm';
-import { ShopForm, type ShopFormErrors, type ShopFormValues } from '@/components/app/ShopForm';
+import { WelcomeFlow, type Activity } from '@/components/app/Onboarding';
+import type { ShopFormErrors, ShopFormValues } from '@/components/app/ShopForm';
 import { useShopGate, type Shop } from '@/components/app/ShopProvider';
 import { Logo } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
@@ -19,7 +22,7 @@ export default function WelcomePage() {
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<ShopFormErrors>({});
 
-  async function onSubmit(v: ShopFormValues) {
+  async function onSubmit(v: ShopFormValues, activity: Activity) {
     setSubmitting(true);
     setError(null);
     setErrors({});
@@ -32,6 +35,8 @@ export default function WelcomePage() {
           whatsappPhone: v.whatsappPhone,
           country: v.country,
           ...(v.logoUrl ? { logoUrl: v.logoUrl } : {}),
+          ...(activity.businessType ? { businessType: activity.businessType } : {}),
+          ...(activity.salesChannel ? { salesChannel: activity.salesChannel } : {}),
         },
       });
       shop = res.shop;
@@ -65,18 +70,13 @@ export default function WelcomePage() {
       <div className="mx-auto flex w-full max-w-md flex-col px-4 pt-8 pb-16">
         <Logo variant="lockup" size={34} />
         <main className="mt-12">
-          <AuthTitle
-            title="Bienvenue ! Créons ta boutique."
-            note="Ton nom et ton numéro apparaissent sur chaque campagne que tu partages."
-          />
+          <AuthTitle title="Bienvenue ! Créons ta boutique." />
           <div className="mt-8">
-            <ShopForm
-              submitLabel="Créer ma boutique"
-              submittingLabel="Création…"
+            <WelcomeFlow
               submitting={submitting}
               error={error}
               errors={errors}
-              onSubmit={(v) => void onSubmit(v)}
+              onSubmit={(v, activity) => void onSubmit(v, activity)}
             />
           </div>
         </main>

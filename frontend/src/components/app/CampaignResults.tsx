@@ -16,6 +16,7 @@ import {
   Notice,
   StockCard,
   VerdictCard,
+  DetailSkeleton,
 } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -460,14 +461,7 @@ export function CampaignResultsTab({
     );
   }
   if (!body) {
-    return (
-      <div role="status" className="flex flex-col gap-4 motion-safe:animate-pulse">
-        <span className="sr-only">Chargement des résultats…</span>
-        <span aria-hidden="true" className="h-24 w-2/3 rounded-card bg-grid/70" />
-        <span aria-hidden="true" className="h-10 rounded-card bg-grid/70" />
-        <span aria-hidden="true" className="h-40 rounded-card bg-grid/70" />
-      </div>
-    );
+    return <DetailSkeleton label="Chargement des résultats" />;
   }
   return (
     <CampaignResults

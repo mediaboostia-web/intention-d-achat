@@ -35,7 +35,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const parsed = ShopCreate.safeParse(await readJson(req));
     if (!parsed.success) return validationFailed();
-    const { name, whatsappPhone, country, logoUrl } = parsed.data;
+    const { name, whatsappPhone, country, logoUrl, businessType, salesChannel } = parsed.data;
     const phone = normalizePhone(whatsappPhone, shopCountry(country));
     if (!phone) return tamaniError('INVALID_PHONE', 400);
 
@@ -53,6 +53,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             country,
             currency: currencyForCountry(country),
             logoUrl: logoUrl ?? null,
+            businessType: businessType ?? null,
+            salesChannel: salesChannel ?? null,
             members: { create: { userId, role: 'OWNER' } },
             subscription: { create: trialPass(new Date()) },
           },

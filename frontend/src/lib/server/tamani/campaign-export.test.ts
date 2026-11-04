@@ -14,6 +14,7 @@ const row = (over: Partial<ExportResponseRow> = {}): ExportResponseRow => ({
   firstName: 'Awa',
   phone: '+221 77 123 45 12',
   phoneE164: '+221771234512',
+  contactRefused: false,
   interested: true,
   reason: null,
   buyerType: 'RESELLER',
@@ -73,6 +74,7 @@ describe('clientsCsv', () => {
     const client: ExportClientRow = {
       firstName: 'Kofi',
       phone: '+229 01 97 12 34 56',
+      contactRefused: false,
       country: 'BJ',
       kind: 'CONSUMER',
       topZone: 'Cadjehoun',
@@ -101,6 +103,27 @@ describe('clientsCsv', () => {
       "Kofi;'+229 01 97 12 34 56;Bénin;Usager;Cadjehoun;3;2;20/10/2026 08:00;Marmite",
     );
     expect(lines[2]).toBe(';;;;;3;2;;');
+  });
+
+  // 2026-11-04: a client who did not tick the box is in the file, without a number.
+  it('writes « Non partagé » for a client who did not agree to be contacted', () => {
+    const answer = responsesCsv([row({ phone: null, phoneE164: null, contactRefused: true })]);
+    expect(answer.split('\r\n')[1]).toContain(';Awa;Non partagé;Sénégal;');
+    const client = clientsCsv([
+      {
+        firstName: 'Kofi',
+        phone: null,
+        contactRefused: true,
+        country: 'BJ',
+        kind: null,
+        topZone: null,
+        responses: 1,
+        yes: 1,
+        lastAt: null,
+        lastProduct: null,
+      },
+    ]);
+    expect(client.split('\r\n')[1]).toBe('Kofi;Non partagé;Bénin;;;1;1;;');
   });
 });
 

@@ -149,6 +149,7 @@ describe('buildHomeBulletin', () => {
       expect.objectContaining({
         where: {
           organizationId: 'org_1',
+          archivedAt: null,
           OR: [
             activeCampaignWhere(now),
             { status: { not: 'DRAFT' }, createdAt: { gte: monthStart } },

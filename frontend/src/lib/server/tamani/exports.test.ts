@@ -21,7 +21,12 @@ const answer = (id: string, over: object = {}) => ({
   completedAt: new Date('2026-10-26T10:00:00Z'),
   zone: { name: 'Médina' },
   link: null,
-  respondent: { firstName: 'Awa', phoneE164: '+221771234512', anonymizedAt: null },
+  respondent: {
+    firstName: 'Awa',
+    phoneE164: '+221771234512',
+    anonymizedAt: null,
+    contactConsentAt: new Date('2026-10-26T10:00:00Z'),
+  },
   campaign: { product: { name: 'Riz' } },
   ...over,
 });
@@ -111,6 +116,7 @@ describe('previewExport', () => {
         id: 'r1',
         firstName: 'Kofi',
         phoneE164: '+2290197123456',
+        contactConsentAt: new Date('2026-10-10T08:00:00Z'),
         responses: [
           {
             interested: true,
@@ -162,7 +168,13 @@ describe('previewExport', () => {
 
   it('exports « pas encore commandé » and a client added by a manual order', async () => {
     prismaMock.respondent.findMany.mockResolvedValue([
-      { id: 'r_manual', firstName: 'Moussa', phoneE164: '+221771234512', responses: [] },
+      {
+        id: 'r_manual',
+        firstName: 'Moussa',
+        phoneE164: '+221771234512',
+        contactConsentAt: new Date('2026-10-20T08:00:00Z'),
+        responses: [],
+      },
     ] as never);
     prismaMock.respondent.count.mockResolvedValue(1);
     const preview = await previewExport(
@@ -243,7 +255,15 @@ describe('exportNumbers', () => {
       organizationId: 'org_1',
       interested: true,
       respondent: { phoneE164: { startsWith: '+221' } },
-      AND: [{ respondent: { anonymizedAt: null, phoneE164: { not: null } } }],
+      AND: [
+        {
+          respondent: {
+            anonymizedAt: null,
+            phoneE164: { not: null },
+            contactConsentAt: { not: null },
+          },
+        },
+      ],
     });
   });
 
@@ -256,6 +276,9 @@ describe('exportNumbers', () => {
       NOW,
     );
     expect(numbers).toEqual(['+229 01 97 12 34 56']);
-    expect(prismaMock.respondent.findMany.mock.calls[0]?.[0]).toMatchObject({ take: 5000 });
+    expect(prismaMock.respondent.findMany.mock.calls[0]?.[0]).toMatchObject({
+      take: 5000,
+      where: { phoneE164: { not: null }, contactConsentAt: { not: null } },
+    });
   });
 });

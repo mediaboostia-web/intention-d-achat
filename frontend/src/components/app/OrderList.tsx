@@ -21,6 +21,7 @@ import {
   PageHeader,
   Select,
   Tabs,
+  RowsSkeleton,
 } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -37,6 +38,7 @@ import {
   type ToDeliverGroup,
 } from '@/lib/tamani/orders-view';
 import { formatMoney } from '@/lib/tamani/currency';
+import { CONTACT_REFUSED_LINE } from '@/lib/tamani/client-view';
 import { clientName } from './ClientList';
 import { useShop } from './ShopProvider';
 
@@ -98,6 +100,9 @@ export function OrderLine({ order, currency }: { order: OrderRow; currency: stri
           </span>
           {order.client.phone && (
             <span className="block text-xs text-ink-muted">{order.client.phone}</span>
+          )}
+          {order.client.contactRefused && (
+            <span className="block text-xs text-ink-muted">{CONTACT_REFUSED_LINE}</span>
           )}
           <span className="block text-sm text-ink-soft">{productQuantity(order)}</span>
           {order.notes && (
@@ -314,10 +319,11 @@ export function OrderListView({
       )}
 
       {loading && (
-        <div aria-hidden="true" className="mt-5 flex flex-col gap-2 motion-safe:animate-pulse">
-          <span className="h-[72px] rounded-card bg-grid/70" />
-          <span className="h-[72px] rounded-card bg-grid/70" />
-        </div>
+        <RowsSkeleton
+          label="Chargement des commandes"
+          count={rows.length > 0 ? 2 : 4}
+          className="mt-5"
+        />
       )}
       {error && (
         <Notice

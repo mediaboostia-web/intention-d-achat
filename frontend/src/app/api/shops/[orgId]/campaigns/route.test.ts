@@ -284,10 +284,16 @@ describe('GET /api/shops/[orgId]/campaigns', () => {
     const res = await GET(apiRequest('/api/shops/org_1/campaigns?q=riz'), shop);
     const json = (await res.json()) as { counts: Record<string, number> };
     expect(json.counts).toEqual({ all: 9, ACTIVE: 3, DRAFT: 2, CLOSED: 4, ARRIVED: 0 });
-    // The counts describe the whole shop: no search, no status filter.
-    expect(prismaMock.campaign.count).toHaveBeenCalledWith({ where: { organizationId: 'org_1' } });
+    // The counts describe the whole shop: no search, no status filter, no
+    // archived campaign (2026-11-04).
     expect(prismaMock.campaign.count).toHaveBeenCalledWith({
-      where: { organizationId: 'org_1', status: 'DRAFT' },
+      where: { organizationId: 'org_1', archivedAt: null },
+    });
+    expect(prismaMock.campaign.count).toHaveBeenCalledWith({
+      where: { organizationId: 'org_1', archivedAt: null, status: 'DRAFT' },
+    });
+    expect(prismaMock.campaign.findMany.mock.calls[0]?.[0]?.where).toMatchObject({
+      archivedAt: null,
     });
   });
 

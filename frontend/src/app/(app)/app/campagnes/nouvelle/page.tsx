@@ -5,7 +5,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CampaignWizard } from '@/components/app/CampaignWizard';
 import { useShop } from '@/components/app/ShopProvider';
-import { Button, Notice, PageHeader } from '@/components/ui';
+import { Button, FormSkeleton, Notice, PageHeader } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import type { ShopCampaign } from '@/lib/tamani/campaign-view';
@@ -65,12 +65,7 @@ function NewCampaign() {
             {loadError}
           </Notice>
         ) : products === null ? (
-          <div role="status" className="flex flex-col gap-3 motion-safe:animate-pulse">
-            <span className="sr-only">Chargement de tes produits…</span>
-            <span aria-hidden="true" className="h-8 w-1/2 rounded-card bg-grid/70" />
-            <span aria-hidden="true" className="h-20 rounded-card bg-grid/70" />
-            <span aria-hidden="true" className="h-20 rounded-card bg-grid/70" />
-          </div>
+          <FormSkeleton label="Chargement de tes produits" fields={3} />
         ) : (
           <CampaignWizard
             products={products}

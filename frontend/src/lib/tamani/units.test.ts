@@ -14,6 +14,14 @@ describe('unitChoices', () => {
       'demi-douzaine',
       'kg',
       'litre',
+      // Porteur, 2026-11-04: « litre, pot, verre, boîtes, paire, douzaines ».
+      'pot',
+      'verre',
+      'boîte',
+      'paire',
+      'bidon',
+      'sachet',
+      'mètre',
     ]);
     expect(unitChoices(['Carton', 'bidon de 20 L', 'bidon de 20 L ', ' '])).toEqual([
       ...COMMON_UNITS,

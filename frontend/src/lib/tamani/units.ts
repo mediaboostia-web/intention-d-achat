@@ -13,6 +13,14 @@ export const COMMON_UNITS: readonly string[] = [
   'demi-douzaine',
   'kg',
   'litre',
+  // Porteur, 2026-11-04.
+  'pot',
+  'verre',
+  'boîte',
+  'paire',
+  'bidon',
+  'sachet',
+  'mètre',
 ];
 
 /** The common units first, then the shop's own, once each (case aside), never blank. */

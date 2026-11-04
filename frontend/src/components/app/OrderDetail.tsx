@@ -7,7 +7,17 @@
 // OrderScreen loads and saves; OrderDetailView draws from its props.
 import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { Badge, Button, DataList, Icon, Input, Notice, Switch, Textarea } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  DataList,
+  DetailSkeleton,
+  Icon,
+  Input,
+  Notice,
+  Switch,
+  Textarea,
+} from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import { formatDateFr } from '@/lib/tamani/dates';
@@ -26,6 +36,7 @@ import { frenchSpacing } from '@/lib/tamani/typography';
 import { waChatLink } from '@/lib/tamani/wa';
 import { currencyLabel, formatMoney } from '@/lib/tamani/currency';
 import { formatPrice } from '@/lib/utils';
+import { CONTACT_REFUSED_LINE } from '@/lib/tamani/client-view';
 import { clientName } from './ClientList';
 import { OrderStatusBadge, PaidMark } from './OrderList';
 import { useShop } from './ShopProvider';
@@ -221,7 +232,8 @@ export function OrderDetailView({
       <header className="mt-2">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <h1 className="font-hand text-3xl leading-tight font-bold break-words text-primary">
-            {client.phone ? (
+            {/* An anonymized client has no card; one who kept their number has. */}
+            {client.phone || client.contactRefused ? (
               <Link href={`/app/clients/${client.id}`} className="hover:underline">
                 {name}
               </Link>
@@ -233,6 +245,7 @@ export function OrderDetailView({
           {order.paid && <PaidMark />}
         </div>
         {client.phone && <p className="mt-1 text-ink-soft">{client.phone}</p>}
+        {client.contactRefused && <p className="mt-1 text-ink-soft">{CONTACT_REFUSED_LINE}</p>}
         <p className="text-sm text-ink-muted">
           Commande du {formatDateFr(new Date(order.createdAt), now)}
         </p>
@@ -409,15 +422,7 @@ export function OrderScreen({ id }: { id: string }) {
     );
   }
   if (!order) {
-    return (
-      <div role="status" aria-label="Chargement de la commande">
-        <div aria-hidden="true" className="flex flex-col gap-4 motion-safe:animate-pulse">
-          <span className="h-12 w-2/3 rounded-card bg-grid/70" />
-          <span className="h-14 w-48 rounded-card bg-grid/70" />
-          <span className="h-40 rounded-card bg-grid/70" />
-        </div>
-      </div>
-    );
+    return <DetailSkeleton label="Chargement de la commande" />;
   }
   return (
     <OrderDetailView

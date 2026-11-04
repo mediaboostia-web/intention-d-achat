@@ -9,7 +9,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Button, Card, Notice, OfferCard, PageHeader, PassMeter } from '@/components/ui';
+import {
+  BillingSkeleton,
+  Button,
+  Card,
+  Notice,
+  OfferCard,
+  PageHeader,
+  PassMeter,
+} from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import {
@@ -225,11 +233,7 @@ export function BillingScreen() {
   };
 
   if (!data) {
-    return error ? (
-      <Notice tone="danger">{error}</Notice>
-    ) : (
-      <p className="text-ink-soft">Chargement de ton pass…</p>
-    );
+    return error ? <Notice tone="danger">{error}</Notice> : <BillingSkeleton />;
   }
   return (
     <BillingView

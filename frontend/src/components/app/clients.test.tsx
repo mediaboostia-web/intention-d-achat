@@ -17,6 +17,7 @@ const yes: ClientRow = {
   firstName: 'Awa',
   phone: '+221 77 111 22 33',
   phoneE164: '+221771112233',
+  contactRefused: false,
   kind: 'RESELLER',
   last: {
     campaignId: 'c1',
@@ -34,6 +35,8 @@ const no: ClientRow = {
   last: { ...yes.last!, interested: false, quantity: null },
 };
 const free: ClientRow = { ...yes, phone: '77 •• •• 33', phoneE164: null };
+// 2026-11-04: answered without ticking « J'accepte d'être contacté ».
+const refused: ClientRow = { ...yes, phone: null, phoneE164: null, contactRefused: true };
 
 const anchors = (out: string) => out.match(/<a [^>]*>/g) ?? [];
 
@@ -68,6 +71,15 @@ describe('ClientList', () => {
     expect(lock).toContain('aria-label="Prends un pass pour contacter Awa."');
     expect(text(<ClientList rows={[free]} shopName="Diallo Import" now={now} />)).toContain(
       '77 •• •• 33',
+    );
+  });
+
+  it('a client who did not agree to be contacted: no button, « Numéro non partagé »', () => {
+    const out = html(<ClientList rows={[refused]} shopName="Diallo Import" now={now} />);
+    expect(out).not.toContain('wa.me');
+    expect(out).not.toContain('href="/app/abonnement"');
+    expect(text(<ClientList rows={[refused]} shopName="Diallo Import" now={now} />)).toContain(
+      'Numéro non partagé',
     );
   });
 
@@ -122,6 +134,16 @@ describe('ClientDetailView', () => {
     ],
   };
 
+  it('the card of a client who did not agree says so, with no pass to sell', () => {
+    const out = html(card({ ...client, phone: null, phoneE164: null, contactRefused: true }));
+    const t = text(card({ ...client, phone: null, phoneE164: null, contactRefused: true }));
+    expect(t.replaceAll('&#x27;', "'")).toContain(
+      "Awa n'a pas accepté d'être contacté : son numéro reste caché.",
+    );
+    expect(out).not.toContain('wa.me');
+    expect(t).not.toContain('Prends un pass pour contacter');
+  });
+
   const card = (c: ClientDetail, role: OrgRole = 'OWNER', currency = 'XOF') => (
     <ClientDetailView
       client={c}
@@ -153,7 +175,13 @@ describe('ClientDetailView', () => {
     responseId: 'resp_1',
     buyerType: 'RESELLER',
     notes: null,
-    client: { id: 'r1', firstName: 'Awa', phone: yes.phone, phoneE164: yes.phoneE164 },
+    client: {
+      id: 'r1',
+      firstName: 'Awa',
+      phone: yes.phone,
+      phoneE164: yes.phoneE164,
+      contactRefused: false,
+    },
     ...patch,
   });
   const pro: ClientDetail = {

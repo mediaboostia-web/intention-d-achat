@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prismaMock } from '@/test-utils/prisma-mock';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEVICE_A, DEVICE_B, NOW, fakePublicDb, publicLink } from '@/test-utils/public-fixtures';
@@ -100,6 +101,7 @@ describe('upsertResponse', () => {
         firstName: 'Awa',
         firstSeenAt: NOW,
         lastSeenAt: NOW,
+        contactConsentAt: null,
       },
       update: { firstName: 'Awa', lastSeenAt: NOW },
     });
@@ -110,6 +112,66 @@ describe('upsertResponse', () => {
       respondent: { firstName: 'Awa', phoneE164: '+221771234567', phoneMasked: '77 •• •• 67' },
       interestedCount: 1,
     });
+  });
+
+  // Porteur, 2026-11-04: the box is not required; ticked, the shop may see the number.
+  it('a ticked box records when the client agreed to be contacted', async () => {
+    fakePublicDb();
+    await upsertResponse(prismaMock, { ...base, ...yes, ...contact, contactConsent: true }, NOW);
+    const call = prismaMock.respondent.upsert.mock.calls[0]![0];
+    expect(call.create).toMatchObject({ contactConsentAt: NOW });
+    expect(call.update).toMatchObject({ contactConsentAt: NOW });
+  });
+
+  it('an unticked box never takes back an earlier yes: the client asks the shop or Tamani', async () => {
+    fakePublicDb();
+    await upsertResponse(prismaMock, { ...base, ...yes, ...contact, contactConsent: false }, NOW);
+    const call = prismaMock.respondent.upsert.mock.calls[0]![0];
+    expect(call.create).toMatchObject({ contactConsentAt: null });
+    expect(call.update).not.toHaveProperty('contactConsentAt');
+  });
+
+  // The thanks dialog promises a call only when the shop can see the number.
+  it('says the number is shared once the box is ticked', async () => {
+    fakePublicDb();
+    const result = await upsertResponse(
+      prismaMock,
+      { ...base, ...yes, ...contact, contactConsent: true },
+      NOW,
+    );
+    expect(result.contactShared).toBe(true);
+  });
+
+  it('says the number stays hidden for a new client who left the box empty', async () => {
+    fakePublicDb();
+    const result = await upsertResponse(prismaMock, { ...base, ...yes, ...contact }, NOW);
+    expect(result.contactShared).toBe(false);
+  });
+
+  it('says the number is shared when the client agreed on an earlier answer', async () => {
+    const { respondents } = fakePublicDb();
+    const before = new Date('2026-10-01T10:00:00Z');
+    respondents.push({
+      id: 'rsp_old',
+      organizationId: 'org_1',
+      phoneE164: '+221771234567',
+      firstName: 'Awa',
+      firstSeenAt: before,
+      lastSeenAt: before,
+      contactConsentAt: before,
+    });
+    const result = await upsertResponse(
+      prismaMock,
+      { ...base, ...yes, ...contact, contactConsent: false },
+      NOW,
+    );
+    expect(result.contactShared).toBe(true);
+  });
+
+  it('shares nothing before the number is given', async () => {
+    fakePublicDb();
+    const result = await upsertResponse(prismaMock, { ...base, ...yes }, NOW);
+    expect(result.contactShared).toBe(false);
   });
 
   it('keeps the answer pending when the pass is full, and counts it otherwise', async () => {
@@ -198,6 +260,48 @@ describe('upsertResponse', () => {
       wantsDelivery: null,
       zoneId: null,
     });
+  });
+
+  // Porteur, 2026-11-04: how many of each colour or size.
+  it('saves how many of each option, their total as the quantity', async () => {
+    const { responses } = fakePublicDb();
+    const split = [
+      { option: 'Rouge', quantity: 3 },
+      { option: 'Noir', quantity: 2 },
+    ];
+    await upsertResponse(prismaMock, { ...base, interested: true, optionQuantities: split }, NOW);
+    expect(responses[0]).toMatchObject({ quantity: 5, option: null, optionQuantities: split });
+  });
+
+  it('one option alone is also the answer’s option', async () => {
+    const { responses } = fakePublicDb();
+    const split = [{ option: 'Noir', quantity: 4 }];
+    await upsertResponse(prismaMock, { ...base, interested: true, optionQuantities: split }, NOW);
+    expect(responses[0]).toMatchObject({ quantity: 4, option: 'Noir', optionQuantities: split });
+  });
+
+  it('a quantity sent without a split drops an earlier split', async () => {
+    fakePublicDb();
+    await upsertResponse(prismaMock, { ...base, interested: true, quantity: 6 }, NOW);
+    expect(prismaMock.response.create.mock.calls[0]![0].data).toMatchObject({
+      quantity: 6,
+      optionQuantities: Prisma.DbNull,
+    });
+  });
+
+  it('refuses a split the product does not offer, or too many pieces', async () => {
+    fakePublicDb();
+    const invalid = { code: 'VALIDATION_FAILED', status: 400 };
+    const attempt = (optionQuantities: object) =>
+      failure(upsertResponse(prismaMock, { ...base, optionQuantities } as never, NOW));
+    expect(await attempt([{ option: 'Violet', quantity: 1 }])).toEqual(invalid);
+    expect(
+      await attempt([
+        { option: 'Rouge', quantity: 60_000 },
+        { option: 'Noir', quantity: 60_000 },
+      ]),
+    ).toEqual(invalid);
+    expect(prismaMock.response.create).not.toHaveBeenCalled();
   });
 
   it('refuses an option, timing or zone the campaign does not offer', async () => {

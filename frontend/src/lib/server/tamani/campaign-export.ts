@@ -23,6 +23,8 @@ export interface ExportResponseRow extends InterestedRow {
 export interface ExportClientRow {
   firstName: string | null;
   phone: string | null;
+  /** No number: the client did not tick « J'accepte d'être contacté » (2026-11-04). */
+  contactRefused: boolean;
   country: string | null;
   kind: BuyerType | null;
   topZone: string | null;
@@ -64,6 +66,10 @@ export const CLIENT_COLUMNS = [
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
+/** The number cell: « Non partagé » says why a client who answered has none. */
+const phoneCell = (r: { phone: string | null; contactRefused: boolean }) =>
+  r.contactRefused ? 'Non partagé' : r.phone;
+
 /** "26/10/2026 09:05", in UTC (Dakar time). */
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -75,7 +81,7 @@ export function responseCells(r: ExportResponseRow): Cells {
     date: formatDate(r.completedAt),
     product: r.productName,
     firstName: r.firstName,
-    phone: r.phone,
+    phone: phoneCell(r),
     country: r.country ? countryName(r.country) : null,
     interested: r.interested ? 'Oui' : 'Non',
     reason: r.reason ? NOT_INTERESTED_REASON_LABELS[r.reason] : null,
@@ -93,7 +99,7 @@ export function responseCells(r: ExportResponseRow): Cells {
 export function clientCells(r: ExportClientRow): Cells {
   return {
     firstName: r.firstName,
-    phone: r.phone,
+    phone: phoneCell(r),
     country: r.country ? countryName(r.country) : null,
     kind: r.kind ? BUYER_TYPE_LABELS[r.kind] : null,
     topZone: r.topZone,

@@ -5,7 +5,7 @@
 // /api/notifications routes; refreshed every minute while the page is seen.
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Icon } from '@/components/ui';
+import { Icon, NotificationsSkeleton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { relativeTime } from '@/lib/tamani/relative-time';
 
@@ -198,7 +198,7 @@ export function NotificationBell() {
             Notifications
           </p>
           {items === null ? (
-            <p className="p-4 text-ink-soft">Chargement…</p>
+            <NotificationsSkeleton />
           ) : (
             <NotificationPanel
               items={items}

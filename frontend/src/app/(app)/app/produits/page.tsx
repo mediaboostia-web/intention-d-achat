@@ -18,6 +18,7 @@ import {
   Notice,
   PageHeader,
   ProductCard,
+  CardsSkeleton,
 } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -153,13 +154,12 @@ function ProductList() {
       )}
 
       {list.loading && (
-        <div
-          aria-hidden="true"
-          className="mt-6 grid gap-3 motion-safe:animate-pulse sm:grid-cols-2"
-        >
-          <span className="h-[94px] rounded-card bg-grid/70" />
-          <span className="h-[94px] rounded-card bg-grid/70" />
-        </div>
+        <CardsSkeleton
+          label="Chargement des produits"
+          layout={layout}
+          count={list.items.length > 0 ? 2 : 4}
+          className="mt-6"
+        />
       )}
 
       {list.error && (

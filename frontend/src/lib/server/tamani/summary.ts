@@ -74,6 +74,7 @@ export async function buildShopSummary(
     db.campaign.findMany({
       where: {
         organizationId,
+        archivedAt: null,
         OR: [
           { status: 'ACTIVE', endsAt: { gt: now, lte: horizon } },
           {
@@ -93,7 +94,7 @@ export async function buildShopSummary(
         availableAt: true,
       },
     }),
-    db.campaign.count({ where: { organizationId } }),
+    db.campaign.count({ where: { organizationId, archivedAt: null } }),
     db.product.count({ where: { organizationId, archivedAt: null } }),
     db.campaign.findFirst({
       where: { organizationId, ...activeCampaignWhere(now) },

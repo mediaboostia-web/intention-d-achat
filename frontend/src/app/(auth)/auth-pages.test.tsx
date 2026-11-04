@@ -82,6 +82,18 @@ describe('signup', () => {
     expect(t).toContain('Créer mon compte');
     expect(t).toContain('Tu crées ta boutique juste après.');
   });
+
+  // Porteur, 2026-11-04: the first name first, so sign-up differs from sign-in.
+  it('signup asks the first name first', () => {
+    mockNextNavigation({ pathname: '/signup' });
+    const out = html(<SignupPage />);
+    const tag = inputTag(out, 'firstName');
+    expect(tag).toContain('autoComplete="given-name"');
+    expect(tag).toContain('required=""');
+    expect(tag).toContain('maxLength="60"');
+    expect(out.indexOf('id="firstName"')).toBeLessThan(out.indexOf('id="email"'));
+    expect(text(<SignupPage />)).toContain('Ton prénom');
+  });
 });
 
 describe('Google first', () => {

@@ -27,6 +27,33 @@ const product = {
 };
 
 describe('toShop', () => {
+  it('toShop sends what the shop is and where it sells, null before the onboarding', () => {
+    const base = {
+      id: 'org_1',
+      slug: 'diallo-import',
+      name: 'Diallo Import',
+      ownerId: 'user_1',
+      whatsappPhone: '+221771234567',
+      country: 'SN',
+      currency: 'XOF',
+      logoUrl: null,
+      description: null,
+      coefConsumer: 0.5,
+      coefReseller: 0.7,
+      freeVerdictCampaignId: null,
+      createdAt: new Date('2026-10-24T10:00:00Z'),
+      updatedAt: new Date('2026-10-24T10:00:00Z'),
+    };
+    const now = new Date('2026-11-04T10:00:00Z');
+    expect(
+      toShop({ ...base, businessType: 'BOTH', salesChannel: 'ONLINE' }, null, now),
+    ).toMatchObject({ businessType: 'BOTH', salesChannel: 'ONLINE' });
+    expect(toShop({ ...base, businessType: null, salesChannel: null }, null, now)).toMatchObject({
+      businessType: null,
+      salesChannel: null,
+    });
+  });
+
   it('toShop sends the description', () => {
     const org = {
       id: 'org_1',
@@ -38,6 +65,8 @@ describe('toShop', () => {
       currency: 'XOF',
       logoUrl: null,
       description: 'Riz et huile en gros.',
+      businessType: null,
+      salesChannel: null,
       coefConsumer: 0.5,
       coefReseller: 0.7,
       freeVerdictCampaignId: null,
@@ -100,6 +129,7 @@ describe('campaign serializers', () => {
     status: 'ACTIVE',
     closedAt: null,
     arrivedAt: null,
+    archivedAt: null,
     createdAt: now,
     updatedAt: now,
     links: [
@@ -164,7 +194,13 @@ describe('toOrderRow', () => {
     zone: { name: 'Médina' },
     product: { name: 'Marmites inox 5 L', unitLabel: 'pièce' },
     campaign: { title: 'Marmites' },
-    respondent: { id: 'r1', firstName: 'Awa', phoneE164: '+221771234512', anonymizedAt: null },
+    respondent: {
+      id: 'r1',
+      firstName: 'Awa',
+      phoneE164: '+221771234512',
+      anonymizedAt: null,
+      contactConsentAt: new Date('2026-10-20T10:00:00Z'),
+    },
     ...over,
   });
 
@@ -194,6 +230,7 @@ describe('toOrderRow', () => {
         firstName: 'Awa',
         phone: '+221 77 123 45 12',
         phoneE164: '+221771234512',
+        contactRefused: false,
       },
     });
   });
@@ -204,15 +241,52 @@ describe('toOrderRow', () => {
       firstName: 'Awa',
       phone: '77 •• •• 12',
       phoneE164: null,
+      contactRefused: false,
+    });
+  });
+
+  it('a client who did not agree to be contacted: no number, even on a pass (2026-11-04)', () => {
+    const order = toOrderRow(
+      row({
+        respondent: {
+          id: 'r1',
+          firstName: 'Awa',
+          phoneE164: '+221771234512',
+          anonymizedAt: null,
+          contactConsentAt: null,
+        },
+      }),
+      true,
+    );
+    expect(order.client).toEqual({
+      id: 'r1',
+      firstName: 'Awa',
+      phone: null,
+      phoneE164: null,
+      contactRefused: true,
     });
   });
 
   it('an anonymized client keeps the order, without a name or a number', () => {
     const order = toOrderRow(
-      row({ respondent: { id: 'r1', firstName: null, phoneE164: null, anonymizedAt: new Date() } }),
+      row({
+        respondent: {
+          id: 'r1',
+          firstName: null,
+          phoneE164: null,
+          anonymizedAt: new Date(),
+          contactConsentAt: null,
+        },
+      }),
       true,
     );
-    expect(order.client).toEqual({ id: 'r1', firstName: null, phone: null, phoneE164: null });
+    expect(order.client).toEqual({
+      id: 'r1',
+      firstName: null,
+      phone: null,
+      phoneE164: null,
+      contactRefused: false,
+    });
     expect(order.totalAmount).toBe(22_500);
   });
 

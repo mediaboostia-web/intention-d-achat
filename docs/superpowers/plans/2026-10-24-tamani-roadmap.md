@@ -731,6 +731,20 @@ Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08
 
 ---
 
+### Lot 10 : Liste du porteur du 2026-11-04
+
+Ordre demandé : « Le plus simple au plus difficile ».
+
+1. **Prénom à l'inscription** : facultatif côté API (anciens formulaires), demandé en premier par le formulaire.
+2. **Pages légales** : CGU, confidentialité, sécurité, mentions légales, au nom de Tamani (entreprise en cours d'immatriculation), Cotonou, Bénin. Responsable de la publication : Hullys Désiré. Remboursement (porteur) : aucun, puisque l'essai gratuit permet de tester, sauf pour un pass qui ne marche pas à cause de Tamani ou une erreur de paiement. Reste à décider : la déclaration du traitement à l'APDP.
+3. **Unités** : le porteur parlait des unités (litre, pot, verre, boîte, paire, douzaine), pas de catégories de produits. Les puces gagnent pot, verre, boîte, paire, bidon, sachet, mètre ; l'unité libre existait déjà.
+4. **Supprimer une campagne** : effacée sans réponse ni commande, archivée sinon (fermée, retirée des listes, réponses et clients gardés). Réservé au propriétaire et aux administrateurs.
+5. **Skeleton loaders** partout dans l'espace boutique.
+6. **Onboarding** : « Tu es » (Grossiste, Importateur, Les deux, Autre) et « Où tu vends » (Vente en ligne, Boutique physique, Les deux), modifiables dans Réglages. Choix unique pour chaque question (« Les deux » couvre le cas des deux).
+7. **Case de consentement** : non obligatoire (porteur : « il peut répondre sans la cocher, et tu ne vois alors pas son numéro »). Sans la case, la réponse compte mais le numéro reste caché sur tous les forfaits. Décisions de l'agent : une case non cochée ne retire pas un accord donné avant (le client le retire en écrivant au vendeur ou à Tamani) ; une commande manuelle rend le client joignable ; les clients enregistrés avant la case gardent leur numéro (l'ancien popup disait déjà que le numéro allait au vendeur).
+8. **Quantités par option** (couleur, taille) dans le popup : une ligne par option avec − / nombre / +, le total, puis « Valider ». Une seule dimension par produit (couleur **ou** taille, comme le libellé d'option du produit) : le porteur a écrit « par couleur ou taille ». La quantité totale reste celle de la réponse, donc estimation, verdict et argent ne changent pas.
+9. **Back-office complet** (support-admin).
+
 ## Protocole d'exécution
 1. Au début de chaque lot : créer la branche `plan/NN-<nom>`, puis écrire le plan détaillé `docs/superpowers/plans/AAAA-MM-JJ-tamani-NN-<nom>.md` (skill writing-plans), à partir de ce document et du code en place.
 2. Pour chaque tâche : TDD (test qui échoue, code, test qui passe), barrière, commit.

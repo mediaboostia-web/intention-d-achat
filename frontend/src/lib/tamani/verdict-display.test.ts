@@ -26,6 +26,13 @@ describe('pluralizeUnit pluralizes the first word only', () => {
     ['sac de 25 kg', 12, 'sacs de 25 kg'],
     ['colis', 3, 'colis'],
     ['demi-douzaine', 2, 'demi-douzaines'],
+    ['boîte', 4, 'boîtes'],
+    ['paire', 2, 'paires'],
+    // Symbols never take an s: « 3 kg », not « 3 kgs ».
+    ['kg', 3, 'kg'],
+    ['g', 500, 'g'],
+    ['ml', 250, 'ml'],
+    ['L', 20, 'L'],
   ])('%s × %i → %s', (label, n, out) => {
     expect(pluralizeUnit(label, n)).toBe(out);
   });

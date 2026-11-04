@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthForm, AuthLink, GoogleButton } from '@/components/app/AuthForm';
 import { PasswordInput } from '@/components/app/PasswordInput';
@@ -16,6 +17,7 @@ export function SignupForm({ google }: { google: boolean }) {
   const router = useRouter();
   const params = useSearchParams();
   const next = safeNextPath(params.get('next'));
+  const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,10 @@ export function SignupForm({ google }: { google: boolean }) {
     setError(null);
     try {
       // Signup never signs in: the account opens once the emailed code is entered.
-      await api('/api/auth/signup', { method: 'POST', body: { email, password } });
+      await api('/api/auth/signup', {
+        method: 'POST',
+        body: { firstName: firstName.trim(), email, password },
+      });
       router.push(
         `/verify-email?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`,
       );
@@ -48,11 +53,33 @@ export function SignupForm({ google }: { google: boolean }) {
       onSubmit={onSubmit}
       before={google ? <GoogleButton next={next} /> : undefined}
       after={
-        <AuthLink question="Déjà un compte ?" href="/login">
-          Connecte-toi
-        </AuthLink>
+        <>
+          <p className="text-center text-sm text-ink-soft">
+            En créant ton compte, tu acceptes les{' '}
+            <Link href="/cgu" className="font-bold text-primary underline">
+              conditions d&apos;utilisation
+            </Link>{' '}
+            et la{' '}
+            <Link href="/confidentialite" className="font-bold text-primary underline">
+              politique de confidentialité
+            </Link>
+            .
+          </p>
+          <AuthLink question="Déjà un compte ?" href="/login">
+            Connecte-toi
+          </AuthLink>
+        </>
       }
     >
+      <Input
+        id="firstName"
+        label="Ton prénom"
+        required
+        maxLength={60}
+        autoComplete="given-name"
+        value={firstName}
+        onChange={(e) => setFirstName(e.target.value)}
+      />
       <Input
         id="email"
         label="Ton email"

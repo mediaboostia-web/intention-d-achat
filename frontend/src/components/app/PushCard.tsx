@@ -4,7 +4,7 @@
 // Notifications section in Réglages, which also says when they are on. The
 // home page no longer shows it: on a phone, PushPrompt asks instead (§7).
 import { useState } from 'react';
-import { Button, Card, Icon } from '@/components/ui';
+import { Bone, Button, Card, Icon, Skeleton } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { pushTestLine, type PushCardState, type PushTestResult } from '@/lib/tamani/push-state';
 import { cn } from '@/lib/utils';
@@ -137,9 +137,11 @@ export function PushCard({ place = 'home', className }: { place?: Place; classNa
   };
   if (place === 'settings' && !ready) {
     return (
-      <p role="status" className="text-ink-muted">
-        Vérification des notifications…
-      </p>
+      <Skeleton label="Vérification des notifications" className="flex flex-col gap-3">
+        <Bone className="h-5 w-1/2" />
+        <Bone className="h-3 w-5/6" />
+        <Bone className="mt-1 h-11 w-48 rounded-control" />
+      </Skeleton>
     );
   }
   return (

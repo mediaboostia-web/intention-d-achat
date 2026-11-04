@@ -198,11 +198,24 @@ describe('PopupView', () => {
     expect(html(<PopupView campaign={campaign} state={start} />)).not.toContain('line-clamp-3');
   });
 
-  it('shows the consent sentence under the number', () => {
-    const t = text(<PopupView campaign={campaign} state={at('contact')} />);
-    expect(t).toContain(
-      'Ton numéro est partagé uniquement avec Diallo Import pour te recontacter au sujet de ce produit.',
-    );
+  // Porteur, 2026-11-04: a box to agree to be contacted, not required.
+  it('asks, unticked, whether the shop may contact the respondent, and says what happens without', () => {
+    for (const state of [at('contact'), at('contact', { remembered: awa })]) {
+      const out = html(<PopupView campaign={campaign} state={state} />);
+      const box = out.match(/<input [^>]*id="popup-consent"[^>]*>/)?.[0] ?? '';
+      expect(box).toContain('type="checkbox"');
+      expect(box).not.toContain('checked');
+      expect(box).not.toContain('required');
+      expect(out).toContain('for="popup-consent"');
+      expect(out).toMatch(/<a [^>]*href="\/confidentialite"[^>]*target="_blank"/);
+      const t = text(<PopupView campaign={campaign} state={state} />).replaceAll('&#x27;', "'");
+      expect(t).toContain(
+        "J'accepte que Diallo Import me contacte sur WhatsApp pour ce produit et ses prochains arrivages.",
+      );
+      expect(t).toContain(
+        'Sans cette case, ta réponse compte quand même, mais Diallo Import ne voit pas ton numéro.',
+      );
+    }
     expect(html(<PopupView campaign={campaign} state={at('contact')} />)).toContain('+221');
   });
 
@@ -229,7 +242,8 @@ describe('PopupView', () => {
     for (const n of ['6', '12', '24', '50']) expect(t).toContain(n);
   });
 
-  it('asks for the option before the quantity', () => {
+  // Porteur, 2026-11-04: « des nombres différents par couleur ou taille ».
+  it('asks how many of each option, with the total, « Valider » once there is one', () => {
     const withOptions = {
       ...campaign,
       product: { ...campaign.product, optionLabel: 'Couleur', options: ['Rouge', 'Noir'] },
@@ -238,14 +252,30 @@ describe('PopupView', () => {
       answers: { ...EMPTY_ANSWERS, interested: true, buyerType: 'CONSUMER' },
     });
     const out = html(<PopupView campaign={withOptions} state={consumer} />);
-    expect(text(<PopupView campaign={withOptions} state={consumer} />)).toContain(
-      "Choisis d'abord : couleur",
+    const t = text(<PopupView campaign={withOptions} state={consumer} />);
+    expect(t).toContain('Couleur : combien de chaque ?');
+    for (const o of ['Rouge', 'Noir']) {
+      expect(out).toContain(`aria-label="Quantité : ${o}"`);
+      expect(out).toContain(`aria-label="Un de plus : ${o}"`);
+    }
+    expect(out).toMatch(/inputMode="numeric"/);
+    expect(t).toContain('Total : 0');
+    expect(out).toMatch(/<button[^>]*disabled=""[^>]*>Valider<\/button>/);
+
+    const split = [
+      { option: 'Rouge', quantity: 3 },
+      { option: 'Noir', quantity: 2 },
+    ];
+    const chosen = {
+      ...consumer,
+      answers: { ...consumer.answers, quantity: 5, optionQuantities: split },
+    };
+    const back = html(<PopupView campaign={withOptions} state={chosen} />);
+    expect(back).toMatch(
+      /aria-label="Quantité : Rouge"[^>]*value="3"|value="3"[^>]*aria-label="Quantité : Rouge"/,
     );
-    expect(out.match(/<button[^>]*disabled=""/g)?.length).toBe(5);
-    const chosen = { ...consumer, answers: { ...consumer.answers, option: 'Rouge' } };
-    expect(text(<PopupView campaign={withOptions} state={chosen} />)).not.toContain(
-      "Choisis d'abord",
-    );
+    expect(text(<PopupView campaign={withOptions} state={chosen} />)).toContain('Total : 5');
+    expect(back).not.toMatch(/<button[^>]*disabled=""[^>]*>Valider<\/button>/);
   });
 
   it('keeps the page on one screen: the photos keep their height, the sheet scrolls', () => {
@@ -295,6 +325,31 @@ describe('PopupView', () => {
     expect(buttons(out)).toEqual(expect.arrayContaining(['Fermer', 'Modifier ma réponse']));
     // The sheet behind is out of reach while the dialog is open.
     expect(out).toMatch(/<div [^>]*inert=""/);
+  });
+
+  // Porteur, 2026-11-04: without the box the shop never sees the number.
+  it('after a yes without the box, the dialog promises no call', () => {
+    const t = text(<PopupView campaign={campaign} state={saidYes} contactShared={false} />);
+    expect(t).toContain('Ta demande de 3 pièces de Marmites inox 5 L est bien enregistrée.');
+    expect(t).toContain(
+      'Sans la case cochée, Diallo Import ne voit pas ton numéro et ne pourra pas te contacter.',
+    );
+    expect(t).not.toContain('va te contacter');
+  });
+
+  it('a product in stock asks the number to book the order, not to hear of its arrival', () => {
+    const inStock = {
+      ...campaign,
+      availability: 'IN_STOCK' as const,
+      availabilityText: 'Disponible maintenant',
+    };
+    const yes = at('contact', { answers: { ...EMPTY_ANSWERS, interested: true } });
+    const t = text(<PopupView campaign={inStock} state={yes} />);
+    expect(t).toContain('Pour réserver ta commande');
+    expect(t).not.toContain("Pour être prévenu à l'arrivée");
+    expect(text(<PopupView campaign={campaign} state={yes} />)).toContain(
+      "Pour être prévenu à l'arrivée",
+    );
   });
 
   it('after a no, the dialog thanks for the opinion and offers to change one’s mind', () => {

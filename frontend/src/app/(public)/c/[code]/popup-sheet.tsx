@@ -39,6 +39,9 @@ import {
 } from '@/lib/tamani/popup-machine';
 import { leavePage } from '@/lib/tamani/leave-page';
 import {
+  consentLabel,
+  consentNote,
+  contactTitle,
   ANSWERS_CLOSED_TITLE,
   answersClosedLine,
   poweredByHref,
@@ -48,6 +51,7 @@ import {
 import { formatMoney } from '@/lib/tamani/currency';
 import { TIMING_LABELS } from '@/lib/tamani/timing';
 import { phoneCountryChoices } from '@/lib/tamani/phone-countries';
+import { optionEntries, optionSplit, optionText, splitTotal } from '@/lib/tamani/option-split';
 import { pluralizeUnit } from '@/lib/tamani/verdict-display';
 import { cn } from '@/lib/utils';
 import { PhotoGallery } from './photo-gallery';
@@ -56,7 +60,13 @@ import { ThanksDialog } from './thanks-dialog';
 
 const MIN_COUNTER = 3;
 
-type Contact = { firstName: string; phone: string; phoneCountry?: string };
+type Contact = {
+  firstName: string;
+  phone: string;
+  phoneCountry?: string;
+  /** « J'accepte que {boutique} me contacte » (2026-11-04). */
+  contactConsent: boolean;
+};
 
 export interface PopupViewProps {
   campaign: PublicCampaign;
@@ -71,6 +81,8 @@ export interface PopupViewProps {
   left?: boolean;
   /** The app's address (APP_URL), where « Propulsé par Tamani » leads. */
   homeUrl?: string;
+  /** The shop can see the respondent's number: the thanks dialog promises a call only then. */
+  contactShared?: boolean;
 }
 
 function Question({ children }: { children: ReactNode }) {
@@ -133,48 +145,141 @@ function ProductHeader({ c, count }: { c: PublicCampaign; count: number | null }
   );
 }
 
-function QuantityStep({ c, answers, onAction }: StepProps) {
+function WholesaleLine({ c, buyerType }: { c: PublicCampaign; buyerType: string }) {
   const { product } = c;
+  if (buyerType !== 'RESELLER' || product.wholesalePrice === null) return null;
+  if (product.wholesaleMinQty === null) return null;
+  return (
+    <p className="-mt-1 mb-3 font-bold text-ink-soft">
+      Prix de gros : {formatMoney(product.wholesalePrice, c.shop.currency)} dès{' '}
+      {product.wholesaleMinQty}
+    </p>
+  );
+}
+
+const MAX_PIECES = 100_000;
+
+/** − / number / +, for one option. The number takes typing for big orders. */
+function Stepper({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: number;
+  onChange: (n: number) => void;
+}) {
+  const square =
+    'frame flex size-11 shrink-0 items-center justify-center rounded-control bg-surface text-xl font-bold text-ink active:translate-y-px disabled:opacity-40 motion-reduce:transition-none';
+  return (
+    <div className="flex shrink-0 items-center gap-2">
+      <button
+        type="button"
+        aria-label={`Un de moins : ${label}`}
+        disabled={value === 0}
+        onClick={() => onChange(value - 1)}
+        className={square}
+      >
+        −
+      </button>
+      <input
+        id={id}
+        aria-label={`Quantité : ${label}`}
+        inputMode="numeric"
+        pattern="[0-9]*"
+        autoComplete="off"
+        placeholder="0"
+        value={value === 0 ? '' : String(value)}
+        onChange={(e) => onChange(Number(e.target.value.replace(/\D/g, '').slice(0, 6)) || 0)}
+        className="frame h-11 w-16 rounded-control bg-surface text-center text-lg font-bold text-ink placeholder:text-ink-muted"
+      />
+      <button
+        type="button"
+        aria-label={`Un de plus : ${label}`}
+        disabled={value >= MAX_PIECES}
+        onClick={() => onChange(value + 1)}
+        className={square}
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
+/**
+ * A product with colours or sizes (porteur, 2026-11-04): how many of each,
+ * then « Valider ». The total is the answer's quantity.
+ */
+function OptionQuantityStep({ c, answers, onAction }: StepProps) {
+  const { product } = c;
+  const [counts, setCounts] = useState<Record<string, number>>(() =>
+    Object.fromEntries(
+      optionSplit({
+        option: answers.option,
+        quantity: answers.quantity,
+        optionQuantities: answers.optionQuantities ?? null,
+      }).map((e) => [e.option, e.quantity]),
+    ),
+  );
+  const entries = optionEntries(product.options, counts);
+  const total = splitTotal(entries);
+  const set = (option: string, n: number) =>
+    setCounts((cur) => ({ ...cur, [option]: Math.max(0, Math.min(MAX_PIECES, n)) }));
+  return (
+    <>
+      <Question>Combien ?</Question>
+      <WholesaleLine c={c} buyerType={answers.buyerType ?? 'CONSUMER'} />
+      <p className="mb-2 text-sm font-bold text-ink-soft">
+        {product.optionLabel ?? 'Choix'} : combien de chaque ?
+      </p>
+      <ul className="frame divide-y-2 divide-grid overflow-hidden rounded-card bg-surface">
+        {product.options.map((o, i) => (
+          <li key={o} className="flex items-center justify-between gap-3 px-3 py-2">
+            <span className="min-w-0 font-bold break-words text-ink">{o}</span>
+            <Stepper
+              id={`popup-qty-${i}`}
+              label={o}
+              value={counts[o] ?? 0}
+              onChange={(n) => set(o, n)}
+            />
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 font-bold text-ink" aria-live="polite">
+        Total : {total} {pluralizeUnit(product.unitLabel, total)}
+      </p>
+      <Button
+        size="lg"
+        className="mt-3 w-full"
+        disabled={total === 0}
+        onClick={() =>
+          onAction({
+            type: 'quantity',
+            quantity: total,
+            option: entries.length === 1 ? entries[0]!.option : null,
+            optionQuantities: entries,
+          })
+        }
+      >
+        Valider
+      </Button>
+    </>
+  );
+}
+
+/** A product without options: one tap on a preset, or « + » to type. */
+function QuantityStep({ c, answers, onAction }: StepProps) {
   const buyerType = answers.buyerType ?? 'CONSUMER';
-  const [option, setOption] = useState<string | null>(answers.option);
   const [custom, setCustom] = useState(false);
   const [typed, setTyped] = useState('');
-  const needsOption = product.options.length > 0 && option === null;
-  const choose = (quantity: number) => onAction({ type: 'quantity', quantity, option });
+  const choose = (quantity: number) => onAction({ type: 'quantity', quantity, option: null });
   const typedQty = Number(typed);
   return (
     <>
       <Question>Combien ?</Question>
-      {buyerType === 'RESELLER' &&
-        product.wholesalePrice !== null &&
-        product.wholesaleMinQty !== null && (
-          <p className="-mt-1 mb-3 font-bold text-ink-soft">
-            Prix de gros : {formatMoney(product.wholesalePrice, c.shop.currency)} dès{' '}
-            {product.wholesaleMinQty}
-          </p>
-        )}
-      {product.options.length > 0 && (
-        <div className="mb-3">
-          <p className="mb-2 text-sm font-bold text-ink-soft">{product.optionLabel ?? 'Choix'}</p>
-          <div className="flex flex-wrap gap-2">
-            {product.options.map((o) => (
-              <ChoiceButton
-                key={o}
-                selected={option === o}
-                onClick={() => setOption(o)}
-                className="min-h-12 w-auto px-4 text-base"
-              >
-                {o}
-              </ChoiceButton>
-            ))}
-          </div>
-          {needsOption && (
-            <p className="mt-2 text-sm text-ink-muted">
-              Choisis d&apos;abord : {(product.optionLabel ?? 'ton choix').toLowerCase()}
-            </p>
-          )}
-        </div>
-      )}
+      <WholesaleLine c={c} buyerType={buyerType} />
       {custom ? (
         <form
           className="flex items-end gap-2"
@@ -195,27 +300,18 @@ function QuantityStep({ c, answers, onAction }: StepProps) {
             className="flex-1"
             autoFocus
           />
-          <Button type="submit" disabled={needsOption || !(typedQty > 0)}>
+          <Button type="submit" disabled={!(typedQty > 0)}>
             Valider
           </Button>
         </form>
       ) : (
         <div className="grid grid-cols-3 gap-3">
           {QUANTITY_PRESETS[buyerType].map((n) => (
-            <ChoiceButton
-              key={n}
-              selected={answers.quantity === n}
-              disabled={needsOption}
-              onClick={() => choose(n)}
-            >
+            <ChoiceButton key={n} selected={answers.quantity === n} onClick={() => choose(n)}>
               {n}
             </ChoiceButton>
           ))}
-          <ChoiceButton
-            disabled={needsOption}
-            onClick={() => setCustom(true)}
-            aria-label="Autre quantité"
-          >
+          <ChoiceButton onClick={() => setCustom(true)} aria-label="Autre quantité">
             +
           </ChoiceButton>
         </div>
@@ -304,8 +400,41 @@ function DeliveryStep({ c, answers, onAction }: StepProps) {
   );
 }
 
-function consent(shop: string): string {
-  return `Ton numéro est partagé uniquement avec ${shop} pour te recontacter au sujet de ce produit.`;
+/** Not required and never ticked for them: without it the shop never sees the number. */
+function ConsentBox({
+  shop,
+  checked,
+  onChange,
+}: {
+  shop: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="mt-4">
+      <label htmlFor="popup-consent" className="flex min-h-12 cursor-pointer items-start gap-3">
+        <input
+          id="popup-consent"
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className="mt-0.5 size-6 shrink-0 cursor-pointer accent-primary"
+        />
+        <span className="text-ink">{consentLabel(shop)}</span>
+      </label>
+      <p className="mt-1 text-sm text-ink-muted">
+        {consentNote(shop)}{' '}
+        <a
+          href="/confidentialite"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-2"
+        >
+          Confidentialité
+        </a>
+      </p>
+    </div>
+  );
 }
 
 function ContactStep({
@@ -319,10 +448,8 @@ function ContactStep({
   const [phone, setPhone] = useState('');
   const [country, setCountry] = useState(c.shop.country);
   const [countries] = useState(() => phoneCountryChoices(c.shop.country));
-  const title =
-    state.answers.interested === false
-      ? 'Pour être prévenu des prochains arrivages'
-      : "Pour être prévenu à l'arrivée";
+  const [agreed, setAgreed] = useState(false);
+  const title = contactTitle(state.answers.interested !== false, c.availability);
   const { remembered } = state;
   if (remembered) {
     return (
@@ -339,24 +466,33 @@ function ContactStep({
             pas toi ?
           </button>
         </p>
+        <ConsentBox shop={c.shop.name} checked={agreed} onChange={setAgreed} />
         <Button
           size="lg"
           className="mt-4 w-full"
           disabled={busy}
           onClick={() =>
-            onContact({ firstName: remembered.firstName, phone: remembered.phoneE164 })
+            onContact({
+              firstName: remembered.firstName,
+              phone: remembered.phoneE164,
+              contactConsent: agreed,
+            })
           }
         >
           Envoyer ma réponse
         </Button>
-        <p className="mt-3 text-sm text-ink-muted">{consent(c.shop.name)}</p>
       </>
     );
   }
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (firstName.trim() && phone.trim()) {
-      onContact({ firstName: firstName.trim(), phone, phoneCountry: country });
+      onContact({
+        firstName: firstName.trim(),
+        phone,
+        phoneCountry: country,
+        contactConsent: agreed,
+      });
     }
   };
   return (
@@ -379,13 +515,13 @@ function ContactStep({
           countries={countries}
           country={country}
           onCountryChange={setCountry}
-          hint={consent(c.shop.name)}
           maxLength={30}
           required
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
         />
       </div>
+      <ConsentBox shop={c.shop.name} checked={agreed} onChange={setAgreed} />
       <Button type="submit" size="lg" className="mt-4 w-full" disabled={busy}>
         Envoyer ma réponse
       </Button>
@@ -413,7 +549,14 @@ function recap(c: PublicCampaign, a: PopupAnswers): string[] {
   const lines: string[] = [];
   if (a.quantity !== null) {
     const who = a.buyerType === 'RESELLER' ? 'pour revendre' : 'pour toi';
-    const option = a.option ? ` (${a.option})` : '';
+    const split = optionText(
+      optionSplit({
+        option: a.option,
+        quantity: a.quantity,
+        optionQuantities: a.optionQuantities ?? null,
+      }),
+    );
+    const option = split ? ` (${split})` : '';
     lines.push(`${a.quantity} ${pluralizeUnit(c.product.unitLabel, a.quantity)}${option}, ${who}.`);
   }
   if (a.timing !== null) lines.push(`${TIMING_LABELS[a.timing]}.`);
@@ -515,7 +658,11 @@ function StepContent({
         </>
       );
     case 'quantity':
-      return <QuantityStep c={c} answers={a} onAction={onAction} />;
+      return c.product.options.length > 0 ? (
+        <OptionQuantityStep c={c} answers={a} onAction={onAction} />
+      ) : (
+        <QuantityStep c={c} answers={a} onAction={onAction} />
+      );
     case 'timing':
       return (
         <>
@@ -569,6 +716,7 @@ export function PopupView({
   onLeave = () => {},
   left = false,
   homeUrl = '',
+  contactShared = true,
 }: PopupViewProps) {
   const photo = c.product.photos[0] ? cloudinaryVariant(c.product.photos[0], POPUP_PHOTO) : null;
   const hasPhotos = c.product.photos.length > 0;
@@ -688,6 +836,7 @@ export function PopupView({
             productName: c.product.name,
             unitLabel: c.product.unitLabel,
             quantity: state.answers.quantity,
+            contactShared,
           })}
           interested={state.answers.interested === true}
           recap={recap(c, state.answers).slice(1)}
@@ -714,6 +863,7 @@ export function PopupSheet({ campaign, homeUrl }: { campaign: PublicCampaign; ho
   const [error, setError] = useState<string | null>(null);
   const [count, setCount] = useState(campaign.interestedCount);
   const [left, setLeft] = useState(false);
+  const [shared, setShared] = useState(true);
   const storage = useRef<Storage | null>(null);
   const memory = useRef<DeviceMemory | null>(null);
   const token = useRef<string | null>(null);
@@ -731,6 +881,7 @@ export function PopupSheet({ campaign, homeUrl }: { campaign: PublicCampaign; ho
   useEffect(() => {
     const m = deviceMemory();
     token.current = m.saved[campaign.campaignId]?.token ?? null;
+    setShared(m.saved[campaign.campaignId]?.contactShared ?? true);
     dispatch({ type: 'restore', memory: m, campaignId: campaign.campaignId });
     if (campaign.accepting) postView(campaign.code, m.deviceId);
     // Once per page: the campaign is fixed for the page's life.
@@ -770,6 +921,8 @@ export function PopupSheet({ campaign, homeUrl }: { campaign: PublicCampaign; ho
     }
     const m = deviceMemory();
     const { respondent, token: saved } = reply.result;
+    const contactShared = reply.result.contactShared === true;
+    setShared(contactShared);
     memory.current = {
       ...m,
       respondent,
@@ -779,6 +932,7 @@ export function PopupSheet({ campaign, homeUrl }: { campaign: PublicCampaign; ho
           token: saved,
           answers: state.answers,
           savedAt: new Date().toISOString(),
+          contactShared,
         },
       },
     };
@@ -805,6 +959,7 @@ export function PopupSheet({ campaign, homeUrl }: { campaign: PublicCampaign; ho
       onLeave={onLeave}
       left={left}
       homeUrl={homeUrl}
+      contactShared={shared}
     />
   );
 }

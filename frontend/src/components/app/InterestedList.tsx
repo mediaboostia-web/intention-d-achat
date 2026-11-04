@@ -10,12 +10,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Badge, Button, EmptyState, FilterBar, Icon, Notice } from '@/components/ui';
+import { Badge, Button, EmptyState, FilterBar, Icon, Notice, RowsSkeleton } from '@/components/ui';
 import { ApiError, api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import type { CampaignStatus } from '@/lib/tamani/campaign-actions';
 import type { Availability } from '@/lib/tamani/timing';
-import { clientWhatsappMessage, lockedContactText } from '@/lib/tamani/client-view';
+import {
+  CONTACT_REFUSED_LINE,
+  clientWhatsappMessage,
+  lockedContactText,
+} from '@/lib/tamani/client-view';
 import { DEFAULT_EXPORT, exportHref } from '@/lib/tamani/export-view';
 import { relativeTime } from '@/lib/tamani/relative-time';
 import {
@@ -259,6 +263,11 @@ export function InterestedView({
                     {row.phone && (
                       <span className="ml-2 text-sm font-normal text-ink-muted">{row.phone}</span>
                     )}
+                    {row.contactRefused && (
+                      <span className="ml-2 text-sm font-normal text-ink-muted">
+                        {CONTACT_REFUSED_LINE}
+                      </span>
+                    )}
                   </p>
                   <p className="text-sm text-ink-soft">
                     {interestedDetail(row, campaign.unitLabel)}
@@ -303,12 +312,7 @@ export function InterestedView({
         </ul>
       )}
 
-      {loading && (
-        <div aria-hidden="true" className="flex flex-col gap-2 motion-safe:animate-pulse">
-          <span className="h-[72px] rounded-card bg-grid/70" />
-          <span className="h-[72px] rounded-card bg-grid/70" />
-        </div>
-      )}
+      {loading && <RowsSkeleton label="Chargement des intéressés" count={3} />}
 
       {!loading &&
         !error &&

@@ -105,6 +105,8 @@ export interface InterestedRow {
   firstName: string | null;
   phone: string | null;
   phoneE164: string | null;
+  /** The client gave a number but did not tick « J'accepte d'être contacté » (2026-11-04). */
+  contactRefused: boolean;
   interested: boolean;
   reason: NotInterestedReason | null;
   buyerType: BuyerType | null;

@@ -7,7 +7,16 @@
 // ExportScreen loads; ExportView draws from its props.
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Badge, Button, FilterBar, Icon, Notice, PageHeader, Select } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  FilterBar,
+  Icon,
+  Notice,
+  PageHeader,
+  Select,
+  TableSkeleton,
+} from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
 import { NO_CLIENT_FILTERS, periodLabel, recentMonths } from '@/lib/tamani/client-filters';
@@ -305,7 +314,7 @@ export function ExportView({
           {preview && <p className="font-bold text-ink">{lines(total)}</p>}
         </div>
         {preview === null ? (
-          <p className="text-ink-soft">Aperçu en cours…</p>
+          <TableSkeleton label="Chargement de l'aperçu" />
         ) : total === 0 ? (
           <p className="text-ink-soft">Rien à exporter avec ces filtres.</p>
         ) : (

@@ -46,7 +46,13 @@ const orderRow = (id: string, over: Record<string, unknown> = {}) => ({
   zone: { name: 'Médina', sortOrder: 0 },
   product: { name: 'Marmites inox 5 L', unitLabel: 'pièce' },
   campaign: { title: 'Marmites' },
-  respondent: { id: 'r1', firstName: 'Awa', phoneE164: '+221771234512', anonymizedAt: null },
+  respondent: {
+    id: 'r1',
+    firstName: 'Awa',
+    phoneE164: '+221771234512',
+    anonymizedAt: null,
+    contactConsentAt: new Date('2026-10-20T10:00:00Z'),
+  },
   ...over,
 });
 
@@ -108,6 +114,7 @@ describe('GET /api/shops/[orgId]/orders', () => {
       firstName: 'Awa',
       phone: '77 •• •• 12',
       phoneE164: null,
+      contactRefused: false,
     });
     expect(JSON.stringify(json)).not.toContain('771234512');
   });

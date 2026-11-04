@@ -12,7 +12,7 @@ import { PushCard } from '@/components/app/PushCard';
 import { ShopForm, type ShopFormErrors, type ShopFormValues } from '@/components/app/ShopForm';
 import { useShop } from '@/components/app/ShopProvider';
 import { ZoneEditor, type Zone } from '@/components/app/ZoneEditor';
-import { Button, Card, Notice, PageHeader } from '@/components/ui';
+import { Button, Card, Notice, PageHeader, RowsSkeleton } from '@/components/ui';
 import { useToast } from '@/contexts/ToastContext';
 import { api, ApiError } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
@@ -198,6 +198,8 @@ export function SettingsView({ google }: { google: boolean }) {
                   logoUrl: shop.logoUrl,
                   description: shop.description ?? '',
                   zones: [],
+                  businessType: shop.businessType,
+                  salesChannel: shop.salesChannel,
                 }}
                 withZones={false}
                 mode="edit"
@@ -225,9 +227,7 @@ export function SettingsView({ google }: { google: boolean }) {
                   {zonesError}
                 </Notice>
               ) : zones === null ? (
-                <p role="status" className="text-ink-muted">
-                  Chargement des zones…
-                </p>
+                <RowsSkeleton label="Chargement des zones" count={3} avatar={false} />
               ) : (
                 <ZoneEditor shopId={shop.id} zones={zones} onCountChange={setZoneCount} />
               )}

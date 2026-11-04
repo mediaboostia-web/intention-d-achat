@@ -224,6 +224,37 @@ describe('answersBody', () => {
   });
 });
 
+describe('quantities per option (2026-11-04)', () => {
+  const split = [
+    { option: 'Rouge', quantity: 3 },
+    { option: 'Noir', quantity: 2 },
+  ];
+
+  it('keeps the split and its total', () => {
+    const s = popupReducer(
+      { ...fresh(), step: 'quantity' },
+      { type: 'quantity', quantity: 5, option: null, optionQuantities: split },
+    );
+    expect(s.answers).toMatchObject({ quantity: 5, option: null, optionQuantities: split });
+    expect(s.step).toBe('timing');
+  });
+
+  it('sends the split alone: the server sums it', () => {
+    expect(
+      stepBody({ type: 'quantity', quantity: 5, option: null, optionQuantities: split }),
+    ).toEqual({ optionQuantities: split });
+    expect(
+      answersBody({ ...EMPTY_ANSWERS, interested: true, quantity: 5, optionQuantities: split }),
+    ).toEqual({ interested: true, optionQuantities: split });
+  });
+
+  it('an answer kept on the phone before the split is sent as before', () => {
+    const old = { ...EMPTY_ANSWERS, interested: true, quantity: 4, option: 'Rouge' };
+    delete (old as Partial<typeof old>).optionQuantities;
+    expect(answersBody(old)).toEqual({ interested: true, quantity: 4, option: 'Rouge' });
+  });
+});
+
 describe('stepBody', () => {
   it("sends only the step's fields", () => {
     expect(stepBody({ type: 'quantity', quantity: 12, option: 'Rouge' })).toEqual({

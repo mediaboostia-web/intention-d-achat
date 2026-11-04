@@ -14,6 +14,7 @@ import {
   type ClientFilterState,
 } from '@/lib/tamani/client-filters';
 import type { BuyerType } from '@/lib/tamani/labels';
+import { optionSplit, optionText } from '@/lib/tamani/option-split';
 import { dialPrefixFor } from '@/lib/tamani/phone-countries';
 import type {
   ClientCounts,
@@ -25,7 +26,7 @@ import type {
 import type { Cursor } from '@/lib/server/notifications/cursor';
 import { buildPage } from '@/lib/server/pagination/paginate';
 import type { Db } from './locks';
-import { displayPhone, maskPhone } from './phone';
+import { CONTACT_CONSENTED, shownPhone } from './contact';
 import { clientReliability, learnableCampaignIds } from './reliability';
 import { ORDER_SELECT, toOrderRow } from './serializers';
 
@@ -117,10 +118,15 @@ export function clientFilterWhere(
   return and;
 }
 
-/** Digits search the numbers only on a plan that shows them: no guessing a masked one. */
+/**
+ * Digits search the numbers only on a plan that shows them, and only the
+ * numbers of clients who agreed to be contacted: no guessing a hidden one.
+ */
 export function clientSearchWhere(q: string, canSeeContacts: boolean): Prisma.RespondentWhereInput {
   const digits = q.replace(/\D/g, '');
-  if (canSeeContacts && digits.length >= 3) return { phoneE164: { contains: digits } };
+  if (canSeeContacts && digits.length >= 3) {
+    return { phoneE164: { contains: digits }, ...CONTACT_CONSENTED };
+  }
   return { firstName: { contains: q, mode: 'insensitive' } };
 }
 
@@ -147,19 +153,20 @@ function toLast(r: LastRow): ClientLast {
 }
 
 function toRow(
-  r: { id: string; firstName: string | null; phoneE164: string | null; responses: LastRow[] },
+  r: {
+    id: string;
+    firstName: string | null;
+    phoneE164: string | null;
+    contactConsentAt: Date | null;
+    responses: LastRow[];
+  },
   canSeeContacts: boolean,
 ): ClientRow {
   const last = r.responses[0];
   return {
     id: r.id,
     firstName: r.firstName,
-    phone: r.phoneE164
-      ? canSeeContacts
-        ? displayPhone(r.phoneE164)
-        : maskPhone(r.phoneE164)
-      : null,
-    phoneE164: canSeeContacts ? r.phoneE164 : null,
+    ...shownPhone(r.phoneE164, canSeeContacts, r.contactConsentAt),
     kind: (last?.buyerType as BuyerType | null | undefined) ?? null,
     last: last ? toLast(last) : null,
   };
@@ -204,6 +211,7 @@ export async function listClients(
         id: true,
         firstName: true,
         phoneE164: true,
+        contactConsentAt: true,
         lastSeenAt: true,
         responses: {
           where: COUNTED,
@@ -244,6 +252,7 @@ export async function getClient(
       id: true,
       firstName: true,
       phoneE164: true,
+      contactConsentAt: true,
       notes: true,
       firstSeenAt: true,
       lastSeenAt: true,
@@ -254,6 +263,7 @@ export async function getClient(
           ...LAST_SELECT,
           id: true,
           option: true,
+          optionQuantities: true,
           timing: true,
           wantsDelivery: true,
           zone: { select: { name: true } },
@@ -308,7 +318,7 @@ export async function getClient(
       ...toLast(x),
       campaignTitle: x.campaign.title,
       buyerType: (x.buyerType as BuyerType | null) ?? null,
-      option: x.option,
+      option: optionText(optionSplit(x)),
       timing: x.timing,
       wantsDelivery: x.wantsDelivery,
       zoneName: x.zone?.name ?? null,

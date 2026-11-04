@@ -14,6 +14,8 @@ export interface SavedAnswer {
   token: string;
   answers: PopupAnswers;
   savedAt: string;
+  /** Lot 10: the shop can see the number. Older saves predate the box, and kept their numbers. */
+  contactShared?: boolean;
 }
 
 export interface DeviceMemory {

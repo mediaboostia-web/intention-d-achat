@@ -82,6 +82,8 @@ export interface OrderClient {
   phone: string | null;
   /** The number WhatsApp needs; null on a plan without contacts (Free). */
   phoneE164: string | null;
+  /** The client gave a number but did not tick « J'accepte d'être contacté » (2026-11-04). */
+  contactRefused: boolean;
 }
 
 export interface OrderRow {
