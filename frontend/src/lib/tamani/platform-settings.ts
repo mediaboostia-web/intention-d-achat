@@ -108,9 +108,7 @@ export function settingsFromRow(row: PlatformSettingRow | null): PlatformSetting
   };
 }
 
-export function rowFromInput(
-  input: PlatformSettingsInput,
-): Omit<PlatformSettingRow, 'id' | 'updatedAt' | 'updatedById'> {
+export function rowFromInput(input: PlatformSettingsInput): PlatformSettingColumns {
   return {
     displayName: input.displayName,
     contactEmail: input.contactEmail,
@@ -124,19 +122,125 @@ export function rowFromInput(
   };
 }
 
+export type PlatformSettingColumns = Omit<PlatformSettingRow, 'id' | 'updatedAt' | 'updatedById'>;
+
+/** The settings as columns: what a save is compared with when no row exists yet. */
+export function columnsFromSettings(s: PlatformSettings): PlatformSettingColumns {
+  return {
+    displayName: s.displayName,
+    contactEmail: s.contactEmail,
+    whatsappContact: s.links.whatsappContact,
+    community: s.links.community,
+    facebook: s.links.facebook,
+    instagram: s.links.instagram,
+    tiktok: s.links.tiktok,
+    videoUrl: s.video?.src ?? null,
+    captionsUrl: s.video?.captions ?? null,
+  };
+}
+
+const COLUMNS = Object.keys(PlatformSettingsInput.shape) as (keyof PlatformSettingColumns)[];
+
+/** The names of the fields a save changes, for the journal (never their values). */
+export function changedFields(
+  before: PlatformSettingColumns,
+  after: PlatformSettingColumns,
+): (keyof PlatformSettingColumns)[] {
+  return COLUMNS.filter((k) => before[k] !== after[k]);
+}
+
 /** The form's starting values: the saved settings, written back as fields. */
 export function inputFromSettings(
   s: PlatformSettings,
 ): Record<keyof PlatformSettingsInput, string> {
-  return {
-    displayName: s.displayName,
-    contactEmail: s.contactEmail,
-    whatsappContact: s.links.whatsappContact ?? '',
-    community: s.links.community ?? '',
-    facebook: s.links.facebook ?? '',
-    instagram: s.links.instagram ?? '',
-    tiktok: s.links.tiktok ?? '',
-    videoUrl: s.video?.src ?? '',
-    captionsUrl: s.video?.captions ?? '',
-  };
+  const c = columnsFromSettings(s);
+  return Object.fromEntries(COLUMNS.map((k) => [k, c[k] ?? ''])) as Record<
+    keyof PlatformSettingsInput,
+    string
+  >;
+}
+
+export type SettingsField = keyof PlatformSettingsInput;
+
+/** The fields of the Paramètres page, in their groups, with their words. */
+export const SETTINGS_GROUPS: readonly {
+  title: string;
+  fields: readonly {
+    name: SettingsField;
+    label: string;
+    hint: string;
+    type: 'text' | 'email' | 'url';
+  }[];
+}[] = [
+  {
+    title: 'La plateforme',
+    fields: [
+      {
+        name: 'displayName',
+        label: 'Nom de la plateforme',
+        hint: 'Il signe les e-mails.',
+        type: 'text',
+      },
+      {
+        name: 'contactEmail',
+        label: 'E-mail de contact',
+        hint: 'Affiché en bas du site.',
+        type: 'email',
+      },
+    ],
+  },
+  {
+    title: 'Les liens',
+    fields: [
+      {
+        name: 'whatsappContact',
+        label: "WhatsApp de l'assistance",
+        hint: 'Un lien wa.me. Il sert au bouton Aide et au site.',
+        type: 'url',
+      },
+      {
+        name: 'community',
+        label: 'Groupe WhatsApp de la communauté',
+        hint: "Un lien chat.whatsapp.com. Vide : le site propose l'inscription.",
+        type: 'url',
+      },
+      {
+        name: 'facebook',
+        label: 'Page Facebook',
+        hint: 'Vide : pas de bouton Facebook.',
+        type: 'url',
+      },
+      {
+        name: 'instagram',
+        label: 'Compte Instagram',
+        hint: 'Vide : pas de bouton Instagram.',
+        type: 'url',
+      },
+      { name: 'tiktok', label: 'Compte TikTok', hint: 'Vide : pas de bouton TikTok.', type: 'url' },
+    ],
+  },
+  {
+    title: 'La vidéo de présentation',
+    fields: [
+      {
+        name: 'videoUrl',
+        label: 'Adresse de la vidéo',
+        hint: "Un fichier sur res.cloudinary.com. Vide : l'affiche reste.",
+        type: 'url',
+      },
+      {
+        name: 'captionsUrl',
+        label: 'Sous-titres de la vidéo',
+        hint: 'Un fichier .vtt sur res.cloudinary.com.',
+        type: 'url',
+      },
+    ],
+  },
+];
+
+/** What a field says when the check refuses it. */
+export function settingsFieldError(name: SettingsField): string {
+  if (name === 'displayName') return 'De 1 à 40 caractères.';
+  if (name === 'contactEmail') return 'Une adresse e-mail valide.';
+  return `Un lien qui commence par https://${LINK_HOSTS[name][0]}/`;
 }

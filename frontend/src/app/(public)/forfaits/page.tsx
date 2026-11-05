@@ -7,6 +7,8 @@ import { DurationSwitch } from '@/components/landing/forfaits/DurationSwitch';
 import { PlanGrid } from '@/components/landing/forfaits/PlanGrid';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { LandingNav } from '@/components/landing/LandingNav';
+import { prisma } from '@/lib/server/prisma';
+import { loadPlatformSettings } from '@/lib/server/tamani/platform-settings';
 import { FORFAITS_FAQ, forfaitsJsonLd, forfaitsMetadata } from '@/lib/tamani/landing-forfaits';
 
 const appUrl = () => process.env.APP_URL ?? 'http://localhost:3000';
@@ -26,9 +28,10 @@ const TRUST = [
 /**
  * The pricing page (lot 12, spec §6): reached from the menu, not shown on the
  * home page. Static: the duration switch is two radios, both groups of cards
- * are in the HTML.
+ * are in the HTML. The links and the contact address are the platform settings (lot 13a).
  */
-export default function ForfaitsPage() {
+export default async function ForfaitsPage() {
+  const { links, contactEmail } = await loadPlatformSettings(prisma);
   // `<` escaped so the graph can never close its <script> early.
   const jsonLd = JSON.stringify(forfaitsJsonLd(appUrl())).replace(/</g, '\\u003c');
   return (
@@ -39,7 +42,7 @@ export default function ForfaitsPage() {
       >
         Aller au contenu
       </a>
-      <LandingNav current="/forfaits" />
+      <LandingNav current="/forfaits" links={links} />
       <main id="contenu">
         <section className="lp-section lp-plans" aria-labelledby="lp-plans-title">
           <div className="lp-wrap">
@@ -54,7 +57,7 @@ export default function ForfaitsPage() {
               </p>
               <DurationSwitch />
             </div>
-            <PlanGrid />
+            <PlanGrid links={links} />
             <ul className="lp-plans__trust">
               {TRUST.map((line) => (
                 <li key={line}>
@@ -88,9 +91,14 @@ export default function ForfaitsPage() {
             <CompareTable />
           </div>
         </section>
-        <Faq items={FORFAITS_FAQ} id="questions-forfaits" title="Tes questions sur les forfaits" />
+        <Faq
+          items={FORFAITS_FAQ}
+          id="questions-forfaits"
+          title="Tes questions sur les forfaits"
+          links={links}
+        />
       </main>
-      <LandingFooter />
+      <LandingFooter links={links} contactEmail={contactEmail} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
     </div>
   );

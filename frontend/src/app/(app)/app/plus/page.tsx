@@ -4,17 +4,18 @@
 // feedback 2, §8), as one list. The account moved to /app/profil.
 import { useRouter } from 'next/navigation';
 import { PlusMenu } from '@/components/app/PlusMenu';
+import { usePlatformLinks } from '@/components/app/PlatformLinks';
 import { useInstall } from '@/components/app/use-install';
 import { useShop } from '@/components/app/ShopProvider';
 import { PageHeader } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
-import { LANDING_LINKS } from '@/lib/tamani/landing';
 
 export default function PlusPage() {
   const router = useRouter();
   const { shop } = useShop();
   const { logout, loggingOut } = useAuth();
   const { state: installState, install } = useInstall();
+  const links = usePlatformLinks();
 
   async function signOut() {
     await logout();
@@ -26,7 +27,7 @@ export default function PlusPage() {
       <PageHeader title="Plus" />
       <PlusMenu
         plan={shop.plan}
-        help={LANDING_LINKS.whatsappContact}
+        help={links.whatsappContact}
         signingOut={loggingOut}
         onSignOut={() => void signOut()}
         install={{ state: installState, onInstall: () => void install() }}

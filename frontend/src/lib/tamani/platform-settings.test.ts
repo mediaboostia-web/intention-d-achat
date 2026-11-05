@@ -3,6 +3,8 @@ import { LANDING_CONTACT_EMAIL, LANDING_LINKS, LANDING_VIDEO } from './landing';
 import {
   DEFAULT_PLATFORM_SETTINGS,
   PlatformSettingsInput,
+  changedFields,
+  columnsFromSettings,
   rowFromInput,
   settingsFromRow,
   type PlatformSettingRow,
@@ -108,5 +110,20 @@ describe('platform settings', () => {
       captionsUrl: null,
     });
     expect(r).not.toHaveProperty('id');
+  });
+
+  it('names the fields a save changes, against the defaults when nothing was saved', () => {
+    const next = rowFromInput(PlatformSettingsInput.parse(VALID));
+    expect(changedFields(next, next)).toEqual([]);
+    expect(changedFields({ ...next, facebook: null, tiktok: null }, next)).toEqual([
+      'facebook',
+      'tiktok',
+    ]);
+    const defaults = columnsFromSettings(DEFAULT_PLATFORM_SETTINGS);
+    expect(defaults.whatsappContact).toBe(LANDING_LINKS.whatsappContact);
+    expect(defaults.videoUrl).toBe(LANDING_VIDEO?.src ?? null);
+    expect(changedFields(defaults, { ...defaults, contactEmail: 'autre@tamani.app' })).toEqual([
+      'contactEmail',
+    ]);
   });
 });

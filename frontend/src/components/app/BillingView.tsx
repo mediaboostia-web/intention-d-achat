@@ -33,9 +33,9 @@ import {
 } from '@/lib/tamani/billing-view';
 import { formatMoney } from '@/lib/tamani/currency';
 import { formatDateFr } from '@/lib/tamani/dates';
-import { LANDING_LINKS } from '@/lib/tamani/landing';
 import { PLANS, isPassId, isPaymentCountry, type PassId } from '@/lib/tamani/plans';
 import type { OrgRole } from './shop-context';
+import { usePlatformLinks } from './PlatformLinks';
 import { useShop } from './shop-context';
 
 const POLL_FOR_MS = 120_000;
@@ -205,6 +205,7 @@ export function requestCheckout(shopId: string, offer: PassId, call: typeof api 
 
 export function BillingScreen() {
   const { shop, role } = useShop();
+  const links = usePlatformLinks();
   const [data, setData] = useState<BillingData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<PassId | null>(null);
@@ -244,7 +245,7 @@ export function BillingScreen() {
       now={new Date()}
       busy={busy}
       error={error}
-      help={LANDING_LINKS.whatsappContact}
+      help={links.whatsappContact}
       onChoose={(offer) => void choose(offer)}
     />
   );

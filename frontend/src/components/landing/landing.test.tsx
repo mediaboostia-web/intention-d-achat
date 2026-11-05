@@ -441,6 +441,12 @@ describe('LandingFooter', () => {
     expect(out).toContain('href="https://facebook.com/tamani"');
     expect(out).toContain('href="https://tiktok.com/@tamani"');
   });
+
+  it('writes the contact address it is given (lot 13a settings)', () => {
+    const out = html(<LandingFooter links={NO_LINKS} contactEmail="bonjour@tamani.app" />);
+    expect(out).toContain('href="mailto:bonjour@tamani.app"');
+    expect(out).not.toContain(`mailto:${LANDING_CONTACT_EMAIL}`);
+  });
 });
 
 describe('motion that invites, never in the way', () => {
