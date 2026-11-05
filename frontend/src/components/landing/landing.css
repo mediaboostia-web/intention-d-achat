@@ -1871,6 +1871,124 @@ button.lp-drawer__install {
   }
 }
 
+/* ---------- Lot 12: the porteur's new sections ---------- */
+/* The hero's reassurance: one line of text that wraps as text on a phone. */
+p.lp-hero__checks {
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.4;
+}
+p.lp-hero__checks svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+/* 3. The five situations: one column on a phone, two from 640, three from 1024. */
+.lp-pain__text .lp-lead {
+  margin-top: 12px;
+}
+.lp-pains {
+  display: grid;
+  gap: 16px;
+  margin-top: 40px;
+}
+@media (min-width: 640px) {
+  .lp-pains {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+@media (min-width: 1024px) {
+  .lp-pains {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.lp-pains__card {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 6px 14px;
+  align-content: start;
+  padding: 20px;
+  border: 2px solid var(--color-ink);
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-press);
+}
+.lp-pains__card .lp-tile-ic {
+  grid-row: span 2;
+}
+.lp-pains__card h3 {
+  align-self: center;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.lp-pains__card p {
+  color: var(--color-ink-soft);
+  line-height: 1.5;
+}
+.lp-pains + .lp-pain__punch {
+  text-align: center;
+  border-top: 0;
+  margin-top: 36px;
+  padding-top: 0;
+}
+
+/* 4. Six points: one column on a phone, two from 640, three from 900. */
+@media (min-width: 640px) and (max-width: 899px) {
+  .lp-gains {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+  }
+}
+
+/* 6. The running example under the slider. */
+.lp-ba__example {
+  max-width: 62ch;
+  margin: 28px auto 0;
+  text-align: center;
+  font-size: clamp(17px, 0.3vw + 16px, 19px);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* 9. The last call. */
+.lp-final {
+  padding-block: clamp(56px, 7vw, 96px);
+}
+.lp-final .lp-h2 {
+  max-width: 24ch;
+}
+.lp-final__cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+}
+.lp-final__small {
+  margin-top: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink-soft);
+}
+
+/* 10. The footer's WhatsApp question. */
+.lp-foot__ask {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 14px;
+  font-weight: 700;
+  color: var(--color-surface);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.lp-foot__ask svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html:has(.lp) {
     scroll-behavior: auto;

@@ -14,7 +14,7 @@ export function InView({
   children,
   ...rest
 }: {
-  as?: 'div' | 'section' | 'ol';
+  as?: 'div' | 'section' | 'ol' | 'ul';
   threshold?: number;
   className?: string;
   children: ReactNode;

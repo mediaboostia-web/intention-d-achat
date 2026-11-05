@@ -4,33 +4,38 @@ import { EXAMPLE } from './content';
 import { Illustration } from './Illustration';
 
 const BEFORE = [
-  "Tu commandes au feeling, d'après les messages du groupe.",
-  `${EXAMPLE.ordered} cartons commandés, ${EXAMPLE.unsold} dorment au dépôt.`,
-  `${EXAMPLE.blocked} bloqués pendant des mois.`,
-  'Quand tu manques, tes clients vont ailleurs.',
+  'Des dizaines de messages pour des renseignements, et peu de ventes',
+  'Tu commandes ton stock sans savoir qui va payer',
+  "Tu ne sais pas quel groupe ou quel réseau t'apporte des clients",
+  'Tu ne sais pas quels produits vont partir',
+  "De l'argent bloqué dans des invendus",
 ];
-const WITH_TAMANI = [
-  'Tes clients disent combien ils veulent, en moins de 30 secondes.',
-  `Tu commandes ${EXAMPLE.advised} cartons : ceux qui vont vraiment partir.`,
-  'Ton argent reste libre pour le prochain arrivage.',
-  "À l'arrivée, tu sais qui prévenir sur WhatsApp.",
+const AFTER = [
+  'Une liste de clients prêts à être livrés',
+  "Tu testes un produit auprès de tes clients avant d'en commander un carton",
+  "Tu vois quels canaux t'apportent vraiment des clients",
+  'Tu sais quels produits partent, et lesquels attendre',
+  'Ton argent reste dans ta poche, pas dans ton stock',
 ];
 const SIZES = '(min-width: 1180px) 1100px, 100vw';
 
-/** 6. Before / after: the same depot, the same arrival. */
+/** 6. Benefits: before / after, the same depot, the same arrival. */
 export function BeforeAfter() {
   return (
     <section
-      id="avant-apres"
+      id="benefices"
       className="lp-panel lp-panel--paper lp-section"
       aria-labelledby="lp-ba-title"
     >
       <div className="lp-wrap">
         <div className="lp-center">
           <h2 id="lp-ba-title" className="lp-h2">
-            Avant, tu devines. Avec Tamani, tu sais.
+            Tu vends comme avant. En mieux.
           </h2>
-          <p className="lp-lead">Le même dépôt, le même arrivage. Glisse la barre pour comparer.</p>
+          <p className="lp-lead">
+            Tamani ne change pas ta façon de travailler. Il t&apos;évite de perdre ton temps et ton
+            argent.
+          </p>
         </div>
         <CompareSlider
           label="Comparer le dépôt avant et avec Tamani"
@@ -53,6 +58,11 @@ export function BeforeAfter() {
             />
           }
         />
+        <p className="lp-ba__example">
+          Exemple : sans Tamani, {EXAMPLE.ordered} cartons commandés et {EXAMPLE.unsold} invendus,
+          soit <span className="lp-hl">{EXAMPLE.blocked}</span> bloqués. Avec Tamani,{' '}
+          {EXAMPLE.advised} cartons : ceux que tes clients ont demandés.
+        </p>
         <div className="lp-vs">
           <div className="lp-vs__col lp-vs__col--before">
             <h3>Avant</h3>
@@ -66,9 +76,9 @@ export function BeforeAfter() {
             </ul>
           </div>
           <div className="lp-vs__col lp-vs__col--after">
-            <h3>Avec Tamani</h3>
+            <h3>Après</h3>
             <ul>
-              {WITH_TAMANI.map((line) => (
+              {AFTER.map((line) => (
                 <li key={line}>
                   <Icon name="check" />
                   {line}
@@ -78,7 +88,6 @@ export function BeforeAfter() {
           </div>
         </div>
         <div className="lp-cta-row">
-          <p>Fais ce calcul avant ton prochain arrivage.</p>
           <Button href="/signup" size="lg" className="lp-press">
             Essayer gratuitement
           </Button>

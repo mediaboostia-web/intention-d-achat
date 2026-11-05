@@ -76,7 +76,7 @@ export const ORBIT_NETWORKS: readonly OrbitNetwork[] = [
   {
     slug: 'facebook',
     label: 'Facebook',
-    what: 'Groupes et pages',
+    what: 'Groupes, pages et lives',
     color: '#0866FF',
     x: 89,
     y: 50,
@@ -103,7 +103,7 @@ export const ORBIT_NETWORKS: readonly OrbitNetwork[] = [
   {
     slug: 'tiktok',
     label: 'TikTok',
-    what: 'Bio et vidéos',
+    what: 'Bio, vidéos et lives',
     color: '#10204A',
     x: 19,
     y: 78,

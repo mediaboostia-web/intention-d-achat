@@ -4,11 +4,11 @@ import { LANDING_FAQ, LANDING_LINKS, type LandingLinks } from '@/lib/tamani/land
 /** 9. Questions: the same as the page's FAQPage structured data. */
 export function Faq({ links = LANDING_LINKS }: { links?: LandingLinks }) {
   return (
-    <section id="questions" className="lp-section" aria-labelledby="lp-faq-title">
+    <section id="faq" className="lp-section" aria-labelledby="lp-faq-title">
       <div className="lp-wrap">
         <div className="lp-center">
           <h2 id="lp-faq-title" className="lp-h2">
-            Tes questions.
+            Tes questions, nos réponses
           </h2>
         </div>
         <div className="lp-faq">

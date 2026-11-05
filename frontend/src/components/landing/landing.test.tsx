@@ -7,19 +7,20 @@ import {
   LANDING_CONTACT_EMAIL,
   LANDING_FAQ,
   LANDING_LINKS,
+  LANDING_NAV,
   type LandingLinks,
 } from '@/lib/tamani/landing';
-import { planFeatures } from '@/lib/tamani/billing-view';
+import { PLANS } from '@/lib/tamani/plans';
 import { BeforeAfter } from './BeforeAfter';
 import { Community } from './Community';
 import { ORBIT_NETWORKS } from './content';
 import { Faq } from './Faq';
 import { Film } from './Film';
+import { FinalCta } from './FinalCta';
 import { Hero } from './Hero';
 import { LandingFooter } from './LandingFooter';
 import { DrawerInstall, LandingNav } from './LandingNav';
 import { PLATFORM_PATHS } from './platform-paths';
-import { Pricing } from './Pricing';
 import { Problem } from './Problem';
 import { Solution } from './Solution';
 import { Steps } from './Steps';
@@ -47,32 +48,36 @@ const sections = [
   <Solution key="solution" />,
   <Steps key="steps" />,
   <BeforeAfter key="ba" />,
-  <Pricing key="pricing" />,
   <Community key="community" />,
   <Faq key="faq" />,
+  <FinalCta key="final" />,
   <LandingFooter key="footer" />,
 ];
 const page = html(<>{sections}</>);
+const { TRIAL } = PLANS;
 
 describe('the landing sections', () => {
   it("come in the porteur's order", () => {
     const ids = [
       'film',
       'probleme',
-      'solution',
+      'fonctionnalites',
       'comment-ca-marche',
-      'avant-apres',
-      'tarifs',
+      'benefices',
       'communaute',
-      'questions',
+      'faq',
+      'final',
+      'contact',
     ];
     const at = ids.map((id) => page.indexOf(`id="${id}"`));
     expect(at.every((i) => i > 0)).toBe(true);
     expect([...at].sort((a, b) => a - b)).toEqual(at);
   });
 
-  it('draw no phone mockup', () => {
+  it('draw no phone mockup and no price grid', () => {
     expect(page).not.toMatch(/dphone|device__|lp-phone/);
+    expect(page).not.toContain('lp-rail');
+    expect(page).not.toContain('id="tarifs"');
   });
 
   it('say under 30 seconds and never 5 seconds, without em or en dash', () => {
@@ -80,6 +85,12 @@ describe('the landing sections', () => {
     expect(t).toContain('moins de 30 secondes');
     expect(t).not.toMatch(/5 secondes/);
     expect(t).not.toMatch(/[–—]/);
+  });
+
+  it('name TikTok and Facebook, not only WhatsApp', () => {
+    const t = text(<>{sections}</>);
+    expect(t).toContain('TikTok');
+    expect(t).toContain('Facebook');
   });
 
   it('give every illustration an alt text and a webp source', () => {
@@ -93,18 +104,20 @@ describe('the landing sections', () => {
 });
 
 describe('LandingNav', () => {
-  it('links to the four sections, sign-in and sign-up', () => {
+  it('links to the six menu entries, sign-in and sign-up', () => {
     const out = html(<LandingNav />);
-    for (const href of [
-      '#comment-ca-marche',
-      '#avant-apres',
-      '#tarifs',
-      '#questions',
-      '/login',
-      '/signup',
-    ]) {
+    for (const href of [...LANDING_NAV.map((n) => n.href), '/login', '/signup']) {
       expect(out).toContain(`href="${href}"`);
     }
+    for (const n of LANDING_NAV) expect(text(<LandingNav />)).toContain(n.label);
+  });
+
+  it('marks Forfaits as the current page on /forfaits', () => {
+    expect(html(<LandingNav />)).not.toContain('aria-current="page"');
+    const out = html(<LandingNav current="/forfaits" />);
+    expect(out).toMatch(
+      /<a [^>]*href="\/forfaits"[^>]*aria-current="page"|aria-current="page"[^>]*href="\/forfaits"/,
+    );
   });
 
   it('starts visible with its phone menu closed', () => {
@@ -130,10 +143,7 @@ describe('LandingNav', () => {
     const drawer = out.slice(out.indexOf('id="lp-menu"'));
     const hrefs = [...drawer.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
     expect(hrefs).toEqual([
-      '#comment-ca-marche',
-      '#avant-apres',
-      '#tarifs',
-      '#questions',
+      ...LANDING_NAV.map((n) => n.href),
       LANDING_LINKS.whatsappContact,
       LANDING_LINKS.community,
       '/signup',
@@ -142,7 +152,7 @@ describe('LandingNav', () => {
     expect(text(<LandingNav />)).toContain('Commencer gratuitement');
     expect(text(<LandingNav />)).toContain('Déjà un compte ? Se connecter');
     // The links come in one after the other.
-    expect(drawer.match(/style="--i:\d"/g)).toHaveLength(5);
+    expect(drawer.match(/style="--i:\d"/g)).toHaveLength(LANDING_NAV.length + 1);
   });
 
   it('the drawer offers the support and the WhatsApp group, each only once given', () => {
@@ -200,31 +210,25 @@ describe('LandingNav', () => {
 });
 
 describe('Hero', () => {
-  it('has one h1 on two lines and a sign-up link', () => {
+  it('says the promise in one h1, the trial reassurance under the buttons', () => {
     const out = html(<Hero />);
     expect(out.match(/<h1/g)).toHaveLength(1);
-    expect(text(<Hero />)).toContain('Ta communauté parle. Tu sais quoi acheter.');
+    const h1 = out.match(/<h1[\s\S]*?<\/h1>/)?.[0] ?? '';
+    expect(text(<div dangerouslySetInnerHTML={{ __html: h1 }} />).trim()).toBe(
+      'Commande seulement ce que tes clients vont acheter.',
+    );
+    const t = text(<Hero />);
+    expect(t).toContain('Pour les grossistes, importateurs et vendeurs en ligne');
+    expect(t).toContain(
+      "Partage un lien sur WhatsApp, TikTok ou Facebook. En moins de 30 secondes, tes clients disent ce qu'ils veulent et combien. Tamani te dit quoi commander, et à qui livrer.",
+    );
+    expect(t).toContain("3 jours d'essai · sans carte bancaire · paiement par Mobile Money");
     expect(out).toMatch(
       /<a [^>]*href="\/signup"[^>]*id="lp-hero-cta"|<a [^>]*id="lp-hero-cta"[^>]*href="\/signup"/,
     );
-  });
-
-  // Porteur, 2026-10-30: simple and clear, no jargon.
-  it('says in plain words what Tamani does', () => {
-    expect(text(<Hero />)).toContain(
-      "Avant d'acheter ton stock, demande à tes clients. Tu envoies un lien sur WhatsApp, ils répondent en moins de 30 secondes, et tu sais combien commander.",
-    );
-  });
-
-  // Porteur, 2026-10-30: the three checks wrapped 2 + 1 on a phone; no column
-  // either. Two checks stay, on one row.
-  it('keeps two checks on one row', () => {
-    const items = html(<Hero />).match(/<ul class="lp-hero__checks">[\s\S]*?<\/ul>/)?.[0] ?? '';
-    expect(items.match(/<li>/g)).toHaveLength(2);
-    expect(text(<Hero />)).not.toContain('Prêt en 3 minutes');
-    const css = readFileSync(path.resolve(__dirname, 'landing.css'), 'utf8');
-    expect(css).toMatch(/\.lp-hero__checks\s*\{[^}]*display:\s*flex;[^}]*\}/);
-    expect(css).not.toMatch(/\.lp-hero__checks\s*\{[^}]*grid-template-columns/);
+    expect(out).toContain('href="/#comment-ca-marche"');
+    expect(t).toContain('Voir comment ça marche');
+    expect(t).toContain('Ton lien marche partout où sont tes clients.');
   });
 
   it('stamps the running example on the illustration', () => {
@@ -233,20 +237,28 @@ describe('Hero', () => {
 
   it('lists the platforms twice for a seamless loop, the copy hidden from screen readers', () => {
     const out = html(<Hero />);
-    expect(out.match(/<ul/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(out.match(/<ul/g)?.length).toBeGreaterThanOrEqual(2);
     expect(out).toMatch(/<ul aria-hidden="true">/);
     expect(text(<Hero />).match(/Telegram/g)).toHaveLength(2);
   });
 
   it('promises the 3-day trial, not a free plan', () => {
-    const t = text(<Hero />) + text(<Community links={NO_LINKS} />);
-    expect(t).toContain("3 jours d'essai gratuit");
+    const t = text(<Hero />);
+    expect(t).toContain("3 jours d'essai");
     expect(t).not.toContain('Gratuit pour commencer');
     expect(t).not.toContain('compte gratuit');
   });
 });
 
 describe('Film', () => {
+  it('is titled « Regarde Tamani en action » and describes the 90 seconds', () => {
+    const t = text(<Film />);
+    expect(t).toContain('Regarde Tamani en action');
+    expect(t).toContain(
+      'En 90 secondes, un grossiste crée un produit, partage le lien dans son groupe WhatsApp, puis voit arriver les réponses de ses clients avec la quantité à commander.',
+    );
+  });
+
   it('waits for the video: a play button and the poster, no <video>', () => {
     const out = html(<Film />);
     expect(out).toContain('aria-label="Lancer la vidéo de présentation, 1 minute 30"');
@@ -256,16 +268,45 @@ describe('Film', () => {
 });
 
 describe('Problem', () => {
-  it('tells the running example and highlights the money', () => {
+  it('lists the five situations Tamani helps avoid', () => {
+    const out = html(<Problem />);
     const t = text(<Problem />);
-    expect(t).toContain('Tu as commandé 300 cartons');
-    expect(t).toContain('190 dorment encore au dépôt');
-    // Narrow no-break spaces: the amount never splits across two lines.
-    expect(html(<Problem />)).toContain('class="lp-hl">1\u202f900\u202f000\u202fFCFA<');
+    expect(t).toContain('Tu reconnais ces situations ?');
+    expect(t).toContain("Ce sont les galères que Tamani t'aide à éviter.");
+    const list = out.match(/<ul class="lp-pains"[\s\S]*?<\/ul>/)?.[0] ?? '';
+    expect(list.match(/<li/g)).toHaveLength(5);
+    for (const title of [
+      "De l'argent qui dort dans ton stock",
+      'Trop de messages, pas assez de commandes',
+      'Le client ne sait pas ce qui reste',
+      'Commander gros sans savoir si ça va plaire',
+      'Tu ne connais pas vraiment tes clients',
+    ]) {
+      expect(t).toContain(title);
+    }
+    expect(t).toContain('Et si un seul lien réglait tout ça ?');
   });
 });
 
 describe('Solution', () => {
+  it('has the six points and the orbit names TikTok and Facebook lives', () => {
+    const t = text(<Solution />);
+    expect(t).toContain('Un seul lien pour tous tes clients');
+    for (const title of [
+      'Tes clients répondent en moins de 30 secondes',
+      'Tu sais qui veut quoi, combien et où',
+      "Tu sais quel canal t'apporte des clients",
+      'Pas besoin de site web',
+      'Ton client voit ce qui est disponible',
+      'Tamani te dit combien commander',
+    ]) {
+      expect(t).toContain(title);
+    }
+    expect(t).toContain('Bio, vidéos et lives');
+    expect(t).toContain('Groupes, pages et lives');
+    expect(html(<Solution />)).toContain('href="/signup"');
+  });
+
   it('the orbit lists the 8 networks with their real logos', () => {
     const out = html(<Solution />);
     expect(ORBIT_NETWORKS).toHaveLength(8);
@@ -278,16 +319,52 @@ describe('Solution', () => {
 });
 
 describe('Steps', () => {
-  it('shows three numbered gestures and stamps the last one', () => {
+  it('share a product in one minute, the CTA creates the first product', () => {
     const t = text(<Steps />);
-    for (const s of ['Ajoute ton produit', 'Partage le lien', 'Commande la bonne quantité'])
+    expect(t).toContain('1 minute pour partager ton produit');
+    for (const s of [
+      'Crée ton produit',
+      'Partage le lien en un clic',
+      'Reçois les réponses et prépare les commandes',
+    ])
       expect(t).toContain(s);
-    expect(html(<Steps />).match(/<li/g)).toHaveLength(3);
+    const out = html(<Steps />);
+    expect(out.match(/<li/g)).toHaveLength(3);
+    expect(t).toContain('Créer mon premier produit');
+    expect(out).toContain('href="/signup"');
     expect(t).toContain('Commande ≈120 cartons');
   });
 });
 
 describe('BeforeAfter', () => {
+  it('lists the five before and after lines', () => {
+    const t = text(<BeforeAfter />);
+    expect(t).toContain('Tu vends comme avant. En mieux.');
+    for (const line of [
+      'Des dizaines de messages pour des renseignements, et peu de ventes',
+      'Tu commandes ton stock sans savoir qui va payer',
+      "Tu ne sais pas quel groupe ou quel réseau t'apporte des clients",
+      'Tu ne sais pas quels produits vont partir',
+      "De l'argent bloqué dans des invendus",
+      'Une liste de clients prêts à être livrés',
+      "Tu testes un produit auprès de tes clients avant d'en commander un carton",
+      "Tu vois quels canaux t'apportent vraiment des clients",
+      'Tu sais quels produits partent, et lesquels attendre',
+      'Ton argent reste dans ta poche, pas dans ton stock',
+    ]) {
+      expect(t).toContain(line);
+    }
+  });
+
+  it('tells the running example and highlights the money', () => {
+    const t = text(<BeforeAfter />);
+    expect(t).toContain('300 cartons commandés');
+    expect(t).toContain('190 invendus');
+    expect(t).toContain('120 cartons');
+    // Narrow no-break spaces: the amount never splits across two lines.
+    expect(html(<BeforeAfter />)).toContain('1 900 000 FCFA');
+  });
+
   it('the slider is a labelled range over the two pictures', () => {
     const out = html(<BeforeAfter />);
     expect(out).toMatch(
@@ -295,115 +372,30 @@ describe('BeforeAfter', () => {
     );
     expect(out).toContain('%2Faccueil%2Favant.webp');
     expect(out).toContain('%2Faccueil%2Fapres.webp');
-    expect(text(<BeforeAfter />)).toContain('Avec Tamani');
-  });
-});
-
-describe('Pricing', () => {
-  // The rail's cards only, not the table below them.
-  const rail = (out: string) =>
-    out.slice(out.indexOf('lp-rail__track'), out.indexOf('lp-rail__note'));
-  const cards = (out: string) =>
-    rail(out)
-      // A card is a bare <li>; its feature lines carry attributes.
-      .split('<li>')
-      .filter((c) => c.includes('</h3>'));
-  const names = (out: string) => [...rail(out).matchAll(/<h3[^>]*>(.*?)<\/h3>/g)].map((m) => m[1]);
-
-  it("seven cards in the porteur's order", () => {
-    expect(names(html(<Pricing />))).toEqual([
-      'Essai gratuit',
-      'Pass Semaine',
-      'Pass 2 Semaines',
-      'Pass Mois',
-      'Pass Mois Plus',
-      'Pass Mois Max',
-      'Pass Illimité',
-    ]);
-    const t = text(<Pricing />);
-    expect(t).toContain('3 900 FCFA');
-    expect(t).toContain('24 900 FCFA');
-    expect(t).toContain('30 jours · 5 000 réponses');
-    expect(t).toContain('30 jours · 2 500 réponses');
-    expect(t).toContain('Pour un arrivage à écouler vite.');
-    const out = html(<Pricing />);
-    expect(out.match(/href="\/signup"/g)).toHaveLength(6);
-    expect(cards(out)[0]).toContain('Essayer gratuitement');
-  });
-
-  it('Mois Max carries « Le meilleur prix par réponse »', () => {
-    const badged = cards(html(<Pricing />)).filter((c) =>
-      c.includes('Le meilleur prix par réponse'),
-    );
-    expect(badged).toHaveLength(1);
-    expect(badged[0]).toContain('Pass Mois Max</h3>');
-  });
-
-  it('Illimité reads « Sur devis » and hides its button while whatsappContact is null', () => {
-    const last = (links: LandingLinks) => cards(html(<Pricing links={links} />)).at(-1) ?? '';
-    expect(last(NO_LINKS)).toContain('Sur devis');
-    expect(last(NO_LINKS)).not.toContain('Contacter le support');
-    expect(last(NO_LINKS)).not.toContain('href=');
-    expect(last(ALL_LINKS)).toContain('Contacter le support');
-    expect(last(ALL_LINKS)).toContain('href="https://wa.me/221770000000"');
-  });
-
-  // Porteur, 2026-10-30: the benefits sit on each card.
-  it('each card lists what it opens; the trial greys out what it leaves out', () => {
-    const out = html(<Pricing />);
-    expect(text(<Pricing />)).not.toContain('Dans chaque pass');
-    const all = cards(out);
-    expect(all).toHaveLength(7);
-    const lines = planFeatures('WEEK').length;
-    for (const card of all) {
-      expect(card.match(/data-included="/g)).toHaveLength(lines);
-    }
-    const [trial, ...rest] = all;
-    expect(trial?.match(/data-included="false"/g)).toHaveLength(3);
-    expect(trial).toContain('1 campagne à la fois');
-    for (const card of rest) {
-      expect(card).not.toContain('data-included="false"');
-      expect(card).toContain('Campagnes illimitées');
-    }
-  });
-
-  it('the line under the cards', () => {
-    expect(text(<Pricing />)).toContain(
-      'Mobile Money ou carte · Pas de renouvellement automatique · Campagnes illimitées',
-    );
-  });
-
-  it('no 12-month toggle', () => {
-    const out = html(<Pricing />);
-    expect(out).not.toContain('aria-pressed');
-    expect(text(<Pricing />)).not.toMatch(/12 mois|Au mois|\bPro\b/);
-  });
-
-  it('the rail scrolls in CSS; its arrows name what they move', () => {
-    const out = html(<Pricing />);
-    expect(out).toContain('class="lp-rail__track"');
-    expect(out).toMatch(/<button[^>]*aria-label="Pass précédents"/);
-    expect(out).toMatch(/<button[^>]*aria-label="Pass suivants"/);
   });
 });
 
 describe('Community', () => {
-  it('hides the WhatsApp group button without a link', () => {
-    const out = html(<Community links={NO_LINKS} />);
-    expect(out).toContain('href="/signup"');
-    expect(out).not.toContain('chat.whatsapp.com');
-    expect(text(<Community links={NO_LINKS} />)).not.toContain('Rejoindre le groupe');
+  it("invites to the sellers' WhatsApp group, free", () => {
+    const t = text(<Community links={ALL_LINKS} />);
+    expect(t).toContain('Rejoins la communauté des vendeurs Tamani');
+    expect(t).toContain('Rejoindre le groupe');
+    expect(t).toContain("C'est gratuit.");
+    expect(html(<Community links={ALL_LINKS} />)).toContain('href="https://chat.whatsapp.com/abc"');
   });
 
-  it('shows it once the porteur gives the link', () => {
-    expect(html(<Community links={ALL_LINKS} />)).toContain('href="https://chat.whatsapp.com/abc"');
-    expect(text(<Community links={ALL_LINKS} />)).toContain('Rejoindre le groupe');
+  it('without the link, no group button: the sign-up instead, so no button leads nowhere', () => {
+    const out = html(<Community links={NO_LINKS} />);
+    expect(out).not.toContain('chat.whatsapp.com');
+    expect(text(<Community links={NO_LINKS} />)).not.toContain('Rejoindre le groupe');
+    expect(out).toContain('href="/signup"');
   });
 });
 
 describe('Faq', () => {
-  it('asks the shared questions, with the contact button only when there is a number', () => {
+  it('is titled « Tes questions, nos réponses » and asks every LANDING_FAQ question', () => {
     const t = text(<Faq links={NO_LINKS} />);
+    expect(t).toContain('Tes questions, nos réponses');
     for (const q of LANDING_FAQ) expect(t).toContain(q.question);
     expect(html(<Faq links={NO_LINKS} />).match(/<details/g)).toHaveLength(LANDING_FAQ.length);
     expect(t).not.toContain('Écris-nous sur WhatsApp');
@@ -411,7 +403,31 @@ describe('Faq', () => {
   });
 });
 
+describe('FinalCta', () => {
+  it('closes the page on the trial', () => {
+    const t = text(<FinalCta />);
+    expect(t).toContain("Ton prochain stock, commande-le en sachant qui va l'acheter.");
+    expect(t).toContain('Essayer gratuitement');
+    expect(t).toContain(
+      `${TRIAL.durationDays} jours · ${TRIAL.includedResponses} réponses · sans carte bancaire`,
+    );
+    expect(html(<FinalCta />)).toContain('href="/signup"');
+  });
+});
+
 describe('LandingFooter', () => {
+  it('is the contact section', () => {
+    const out = html(<LandingFooter links={ALL_LINKS} />);
+    expect(out).toMatch(/<footer [^>]*id="contact"/);
+    expect(text(<LandingFooter links={ALL_LINKS} />)).toContain(
+      'Une question ? Écris-nous sur WhatsApp',
+    );
+    for (const href of ['/forfaits', '/#comment-ca-marche', '/#faq', '/login', '/signup']) {
+      expect(out).toContain(`href="${href}"`);
+    }
+    expect(out).toContain(`href="mailto:${LANDING_CONTACT_EMAIL}"`);
+  });
+
   it("draws the whole wordmark: the svg's viewBox is the path's own", () => {
     const out = html(<LandingFooter links={NO_LINKS} />);
     expect(out).toContain(`viewBox="${WORDMARK_VIEWBOX}"`);
