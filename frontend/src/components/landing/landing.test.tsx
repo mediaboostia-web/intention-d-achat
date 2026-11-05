@@ -14,6 +14,7 @@ import { PLANS } from '@/lib/tamani/plans';
 import { BeforeAfter } from './BeforeAfter';
 import { Community } from './Community';
 import { ORBIT_NETWORKS } from './content';
+import { CountUp } from './CountUp';
 import { Faq } from './Faq';
 import { Film } from './Film';
 import { FinalCta } from './FinalCta';
@@ -439,5 +440,58 @@ describe('LandingFooter', () => {
     const out = html(<LandingFooter links={ALL_LINKS} />);
     expect(out).toContain('href="https://facebook.com/tamani"');
     expect(out).toContain('href="https://tiktok.com/@tamani"');
+  });
+});
+
+describe('motion that invites, never in the way', () => {
+  const css = readFileSync(path.resolve(__dirname, 'landing.css'), 'utf8');
+  const reduced = css.slice(css.lastIndexOf('@media (prefers-reduced-motion: reduce)'));
+
+  it('every new animation stops under reduced motion', () => {
+    for (const cls of [
+      '.lp-word',
+      '.lp-shine',
+      '.lp-nudge',
+      '.lp-step__arrow',
+      '.lp-faq',
+      '.lp-plans',
+      '.lp-count',
+      '.lp-pains',
+    ]) {
+      expect(reduced, cls).toContain(cls);
+    }
+  });
+
+  it('what waits for the screen stays visible without JavaScript', () => {
+    const scripted = css.slice(css.indexOf('@media (scripting: enabled)'));
+    expect(css).toContain('@media (scripting: enabled)');
+    expect(scripted).toContain(".lp-pains[data-inview='false'] .lp-pains__card");
+  });
+
+  it('the hero title words are spans for the stagger, the h1 still reads as one sentence', () => {
+    const h1 = html(<Hero />).match(/<h1[\s\S]*?<\/h1>/)?.[0] ?? '';
+    expect(h1.match(/class="lp-word"/g)).toHaveLength(8);
+    expect(text(<div dangerouslySetInnerHTML={{ __html: h1 }} />).trim()).toBe(
+      'Commande seulement ce que tes clients vont acheter.',
+    );
+  });
+
+  it('the hero button shines once and nudges a few times, its arrow slides', () => {
+    const cta = html(<Hero />).match(/<a [^>]*id="lp-hero-cta"[^>]*>/)?.[0] ?? '';
+    for (const cls of ['lp-shine', 'lp-nudge', 'lp-go']) expect(cta).toContain(cls);
+    expect(css).toMatch(/\.lp-nudge\s*\{[^}]*animation:[^;]*\b3\b/);
+  });
+});
+
+describe('CountUp', () => {
+  it('renders the final value once for the server, search engines and screen readers', () => {
+    const out = html(<CountUp value={120} />);
+    expect(out.match(/120/g)).toHaveLength(1);
+    expect(out).not.toContain('aria-hidden');
+    expect(out).toContain('class="lp-count"');
+  });
+
+  it('writes money in FCFA, glued', () => {
+    expect(html(<CountUp value={1_900_000} unit="money" />)).toContain('1 900 000 FCFA');
   });
 });

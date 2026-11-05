@@ -1,3 +1,4 @@
+import { Fragment, type CSSProperties } from 'react';
 import { Button, Icon, Stamp } from '@/components/ui';
 import { EXAMPLE, MARQUEE } from './content';
 import { Illustration } from './Illustration';
@@ -6,6 +7,22 @@ import { PlatformLogo } from './PlatformLogo';
 import { PLANS } from '@/lib/tamani/plans';
 
 const { TRIAL } = PLANS;
+
+const LINE_1 = 'Commande seulement ce que';
+const LINE_2 = 'tes clients vont acheter.';
+
+/** Each word its own span, so the title rises word by word (landing.css). */
+function words(line: string, from: number) {
+  const list = line.split(' ');
+  return list.map((w, i) => (
+    <Fragment key={w + i}>
+      <span className="lp-word" style={{ '--i': from + i } as CSSProperties}>
+        {w}
+      </span>
+      {i < list.length - 1 && ' '}
+    </Fragment>
+  ));
+}
 
 function PlatformList({ hidden = false }: { hidden?: boolean }) {
   return (
@@ -39,9 +56,9 @@ export function Hero() {
               Pour les grossistes, importateurs et vendeurs en ligne
             </p>
             <h1 id="lp-hero-title" className="lp-hero__title">
-              <span>Commande seulement ce que </span>
+              <span>{words(LINE_1, 0)} </span>
               <span className="lp-hero__l2">
-                tes clients vont acheter.
+                {words(LINE_2, LINE_1.split(' ').length)}
                 <svg
                   className="lp-hero__underline"
                   viewBox="0 0 300 16"
@@ -58,8 +75,14 @@ export function Hero() {
               livrer.
             </p>
             <div className="lp-hero__ctas lp-btn-row">
-              <Button href="/signup" size="lg" id="lp-hero-cta">
+              <Button
+                href="/signup"
+                size="lg"
+                id="lp-hero-cta"
+                className="lp-press lp-go lp-shine lp-nudge"
+              >
                 Essayer gratuitement
+                <Icon name="chevron-right" />
               </Button>
               <Button href="/#comment-ca-marche" size="lg" variant="secondary">
                 Voir comment ça marche

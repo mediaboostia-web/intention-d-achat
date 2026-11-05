@@ -59,7 +59,6 @@ export function LandingNav({
   /** The page showing the bar: its own entry is marked aria-current="page". */
   current?: '/' | '/forfaits';
 }) {
-  const here = (href: string) => (href === current ? { 'aria-current': 'page' as const } : {});
   const help = [
     ...(links.whatsappContact
       ? [
@@ -86,11 +85,37 @@ export function LandingNav({
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  // On the home page, the section in view: its menu entry gets underlined.
+  const [active, setActive] = useState<string | null>(null);
+  const here = (href: string) => ({
+    ...(href === current && { 'aria-current': 'page' as const }),
+    ...(href === active && { 'data-active': 'true' }),
+  });
   const barRef = useRef<HTMLElement>(null);
   const menuRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openRef = useRef(false);
+
+  useEffect(() => {
+    if (current !== '/' || !('IntersectionObserver' in window)) return;
+    const sections = LANDING_NAV.flatMap((n) => {
+      const el = n.href.startsWith('/#') ? document.getElementById(n.href.slice(2)) : null;
+      return el ? [{ href: n.href, el }] : [];
+    });
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const hit = sections.find((x) => x.el === e.target);
+          if (hit && e.isIntersecting) setActive(hit.href);
+        }
+      },
+      // A thin band across the middle of the screen: the section crossing it is « here ».
+      { rootMargin: '-45% 0px -50% 0px' },
+    );
+    sections.forEach((x) => io.observe(x.el));
+    return () => io.disconnect();
+  }, [current]);
 
   useEffect(() => {
     openRef.current = open;

@@ -1,6 +1,7 @@
 import { Button, Icon } from '@/components/ui';
 import { CompareSlider } from './CompareSlider';
 import { EXAMPLE } from './content';
+import { CountUp } from './CountUp';
 import { Illustration } from './Illustration';
 
 const BEFORE = [
@@ -59,9 +60,13 @@ export function BeforeAfter() {
           }
         />
         <p className="lp-ba__example">
-          Exemple : sans Tamani, {EXAMPLE.ordered} cartons commandés et {EXAMPLE.unsold} invendus,
-          soit <span className="lp-hl">{EXAMPLE.blocked}</span> bloqués. Avec Tamani,{' '}
-          {EXAMPLE.advised} cartons : ceux que tes clients ont demandés.
+          Exemple : sans Tamani, <CountUp value={EXAMPLE.ordered} /> cartons commandés et{' '}
+          <CountUp value={EXAMPLE.unsold} /> invendus, soit{' '}
+          <span className="lp-hl">
+            <CountUp value={EXAMPLE.blockedAmount} unit="money" />
+          </span>{' '}
+          bloqués. Avec Tamani, <CountUp value={EXAMPLE.advised} /> cartons : ceux que tes clients
+          ont demandés.
         </p>
         <div className="lp-vs">
           <div className="lp-vs__col lp-vs__col--before">

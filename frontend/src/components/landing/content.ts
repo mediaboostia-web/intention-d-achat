@@ -141,6 +141,8 @@ export const EXAMPLE = {
   unsold: UNSOLD,
   advised: 120,
   cartonPriceText: unbroken(formatMoney(CARTON_PRICE, 'XOF')),
+  /** The money sleeping in the unsold cartons, in FCFA. */
+  blockedAmount: UNSOLD * CARTON_PRICE,
   /** "1 900 000 FCFA" */
   blocked: unbroken(formatMoney(UNSOLD * CARTON_PRICE, 'XOF')),
 } as const;

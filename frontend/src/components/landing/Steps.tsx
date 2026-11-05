@@ -28,6 +28,7 @@ function Arrow() {
   return (
     <svg className="lp-step__arrow" viewBox="0 0 46 26" aria-hidden="true">
       <path
+        pathLength={1}
         d="M42 22 C 30 6, 18 4, 6 9 M11 3.5 L5 9 L12 13"
         fill="none"
         stroke="currentColor"

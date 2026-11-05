@@ -200,6 +200,15 @@ export function pickWeighted(weights: readonly number[], r: number): number {
   return weights.length - 1;
 }
 
+/**
+ * The value a counting number shows at t in [0, 1] of its run: an ease-out
+ * (fast start, gentle landing), rounded, never past the target.
+ */
+export function countFrame(target: number, t: number): number {
+  const k = Math.min(1, Math.max(0, t));
+  return Math.min(target, Math.round(target * (1 - (1 - k) ** 3)));
+}
+
 export function clampPercent(n: number): number {
   return Math.min(100, Math.max(0, n));
 }

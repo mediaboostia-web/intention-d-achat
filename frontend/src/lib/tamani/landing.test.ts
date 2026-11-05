@@ -6,6 +6,7 @@ import {
   LANDING_NAV,
   LANDING_TITLE,
   clampPercent,
+  countFrame,
   landingJsonLd,
   landingMetadata,
   navStep,
@@ -260,5 +261,19 @@ describe('the menu, the titles and the questions of the new site', () => {
     expect(landingJsonLd('https://tamani.app/')).toEqual(
       landingJsonLd('https://tamani.app/', LANDING_LINKS),
     );
+  });
+});
+
+describe('countFrame', () => {
+  it('eases out from 0 to the target and never overshoots', () => {
+    expect(countFrame(120, 0)).toBe(0);
+    expect(countFrame(120, 1)).toBe(120);
+    expect(countFrame(120, 0.5)).toBeGreaterThan(60);
+    for (let t = 0; t <= 1; t += 0.05) {
+      expect(countFrame(120, t)).toBeLessThanOrEqual(120);
+      expect(Number.isInteger(countFrame(120, t))).toBe(true);
+    }
+    expect(countFrame(120, -1)).toBe(0);
+    expect(countFrame(120, 2)).toBe(120);
   });
 });
