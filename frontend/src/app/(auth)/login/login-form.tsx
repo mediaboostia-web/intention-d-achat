@@ -86,7 +86,7 @@ export function LoginForm({ google }: { google: boolean }) {
           />
           <Link
             href="/forgot-password"
-            className="self-end text-sm font-bold text-primary underline decoration-2 underline-offset-4"
+            className="inline-flex min-h-11 items-center self-end text-sm font-bold text-primary underline decoration-2 underline-offset-4"
           >
             Mot de passe oublié ?
           </Link>

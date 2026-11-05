@@ -41,7 +41,11 @@ export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks 
       <div className="lp-wrap">
         <div className="lp-foot__top">
           <div className="lp-foot__brand">
-            <Link href="/" aria-label="Tamani, accueil" className="inline-block rounded-[8px]">
+            <Link
+              href="/"
+              aria-label="Tamani, accueil"
+              className="inline-flex min-h-11 items-center rounded-[8px]"
+            >
               <Logo size={34} tone="inverse" />
             </Link>
             <p className="lp-foot__slogan">{LANDING_SLOGAN}</p>

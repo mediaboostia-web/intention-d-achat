@@ -476,6 +476,37 @@ describe('motion that invites, never in the way', () => {
     );
   });
 
+  // Recette 2026-11-05: removing the old pricing rules took the FAQ's shared summary rule with them.
+  it('the FAQ question keeps its plus on the same line, without the browser triangle', () => {
+    expect(css).toMatch(/\.lp-faq summary\s*\{[^}]*display:\s*flex;[^}]*list-style:\s*none/);
+    expect(css).toMatch(/\.lp-faq summary::-webkit-details-marker\s*\{\s*display:\s*none/);
+  });
+
+  // Recette 2026-11-05: the table's sr-only « Oui » (position: absolute) escaped
+  // its scrolling frame and widened the phone page to 794 px.
+  it('the comparison table frame holds its own absolutely placed text', () => {
+    expect(css).toMatch(/\.lp-compare__scroll\s*\{[^}]*position:\s*relative/);
+  });
+
+  // Recette 2026-11-05: footer links were 37 to 40 px tall on a phone, the bar's logo 34 px.
+  it('every link of the bar and the footer is at least 44 px tall', () => {
+    expect(css).toMatch(/\.lp-nav__logo\s*\{[^}]*min-height:\s*44px/);
+    expect(css).toMatch(/\.lp-nav__links a\s*\{[^}]*min-height:\s*44px/);
+    expect(css).toMatch(/\.lp-foot nav a,\s*\.lp-foot__legal a\s*\{[^}]*min-height:\s*44px/);
+    expect(css).toMatch(/\.lp-nav__login\s*\{[^}]*min-height:\s*44px/);
+    expect(html(<LandingFooter links={NO_LINKS} />)).toMatch(
+      /<a [^>]*aria-label="Tamani, accueil"[^>]*class="[^"]*min-h-11|<a [^>]*class="[^"]*min-h-11[^"]*"[^>]*aria-label="Tamani, accueil"/,
+    );
+  });
+
+  // Recette 2026-11-05: six entries centred in the bar ran into « Se connecter » at 1280 px.
+  it('the bar shows its six entries only where they fit, never centred over the sign-in', () => {
+    expect(css).not.toMatch(/\.lp-nav__links\s*\{[^}]*left:\s*50%/);
+    expect(css).toMatch(
+      /@media \(min-width: 1120px\)\s*\{\s*\.lp-nav__links\s*\{\s*display:\s*flex[\s\S]*?\.lp-nav__menu\s*\{\s*display:\s*none/,
+    );
+  });
+
   it('the hero button shines once and nudges a few times, its arrow slides', () => {
     const cta = html(<Hero />).match(/<a [^>]*id="lp-hero-cta"[^>]*>/)?.[0] ?? '';
     for (const cls of ['lp-shine', 'lp-nudge', 'lp-go']) expect(cta).toContain(cls);

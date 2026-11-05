@@ -59,6 +59,10 @@ describe('login', () => {
     expect(out).toContain('href="/api/auth/oauth/google/start?next=%2Fapp%2Fcampagnes"');
     expect(out).toContain('href="/signup"');
     expect(out).toContain('href="/forgot-password"');
+    // Recette 2026-11-05: a 20 px tall link was too small for a thumb.
+    expect(out).toMatch(
+      /<a [^>]*class="[^"]*min-h-11[^"]*"[^>]*href="\/forgot-password"|<a [^>]*href="\/forgot-password"[^>]*class="[^"]*min-h-11/,
+    );
     expect(text(<LoginPage />)).toContain('Continuer avec Google');
   });
 

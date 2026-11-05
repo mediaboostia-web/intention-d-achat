@@ -8,8 +8,9 @@ import { PLANS } from '@/lib/tamani/plans';
 
 const { TRIAL } = PLANS;
 
-const LINE_1 = 'Commande seulement ce que';
-const LINE_2 = 'tes clients vont acheter.';
+// The break falls after « seulement »: « ce que » never stays alone on a line.
+const LINE_1 = 'Commande seulement';
+const LINE_2 = 'ce que tes clients vont acheter.';
 
 /** Each word its own span, so the title rises word by word (landing.css). */
 function words(line: string, from: number) {
