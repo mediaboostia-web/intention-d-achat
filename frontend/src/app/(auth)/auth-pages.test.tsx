@@ -38,9 +38,18 @@ describe('login', () => {
     expect(inputTag(out, 'password')).toContain('type="password"');
     expect(inputTag(out, 'password')).toContain('autoComplete="current-password"');
     const t = text(<LoginPage />);
-    expect(t).toContain('Content de te revoir');
     expect(t).toContain('Se connecter');
     expect(out.match(/shadow-press/g)).toHaveLength(1);
+  });
+
+  it('login is titled « Se connecter », with the sign-up link right under the title', () => {
+    mockNextNavigation({ pathname: '/login' });
+    const out = html(<LoginPage />);
+    expect(out).toMatch(/<h1[^>]*>Se connecter<\/h1>/);
+    const link = out.indexOf('Pas encore de compte ?');
+    expect(link).toBeGreaterThan(out.indexOf('</h1>'));
+    expect(link).toBeLessThan(out.indexOf('<input'));
+    expect(out.match(/href="\/signup"/g)).toHaveLength(1);
   });
 
   it('login offers Google and links to signup and forgot-password', () => {
@@ -78,9 +87,18 @@ describe('signup', () => {
     expect(inputTag(out, 'password')).toContain('autoComplete="new-password"');
     expect(inputTag(out, 'password')).toContain('minLength="10"');
     const t = text(<SignupPage />);
-    expect(t).toContain('Crée ton espace');
     expect(t).toContain('Créer mon compte');
     expect(t).toContain('Tu crées ta boutique juste après.');
+  });
+
+  it('signup is titled « Créer un compte », with the sign-in link right under the title', () => {
+    mockNextNavigation({ pathname: '/signup' });
+    const out = html(<SignupPage />);
+    expect(out).toMatch(/<h1[^>]*>Créer un compte<\/h1>/);
+    const link = out.indexOf('Déjà un compte ?');
+    expect(link).toBeGreaterThan(out.indexOf('</h1>'));
+    expect(link).toBeLessThan(out.indexOf('<input'));
+    expect(out.match(/href="\/login"/g)).toHaveLength(1);
   });
 
   // Porteur, 2026-11-04: the first name first, so sign-up differs from sign-in.
@@ -137,14 +155,29 @@ describe('layout', () => {
     return { out, panel: out.match(/<aside [^>]*>[\s\S]*?<\/aside>/)?.[0] ?? '' };
   };
 
-  it('the desktop panel stays in view, on computers only', () => {
+  // Porteur, 2026-11-05 (AMU capture): a bigger picture, seen on phones too.
+  it('the picture shows on phones as a band and on computers as a big rounded card', () => {
     const { out, panel } = panelOf('/login');
     const classes = panel.match(/^<aside [^>]*class="([^"]*)"/)?.[1]?.split(' ') ?? [];
+    expect(classes).not.toContain('hidden');
     expect(classes).toEqual(
-      expect.arrayContaining(['hidden', 'lg:flex', 'lg:sticky', 'lg:top-0', 'lg:h-dvh']),
+      expect.arrayContaining([
+        'rounded-card',
+        'h-56',
+        'lg:sticky',
+        'lg:top-4',
+        'lg:h-[calc(100dvh-2rem)]',
+      ]),
     );
-    expect(out).toMatch(/class="[^"]*lg:grid-cols-2/);
+    expect(panel).toMatch(/<a [^>]*href="\/"[^>]*>[\s\S]*?Retour au site/);
+    expect(out).toMatch(/class="[^"]*lg:grid-cols-\[/);
     expect(out).toContain('<p>page</p>');
+  });
+
+  it('the sentence on the picture reads on a dark wash, in both themes', () => {
+    const { panel } = panelOf('/signup');
+    expect(panel).toContain('from-deep');
+    expect(panel).toContain('text-deep-ink');
   });
 
   // Porteur, 2026-10-30: each page speaks to the visitor, with its own drawing.

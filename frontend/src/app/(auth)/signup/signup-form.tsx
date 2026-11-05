@@ -44,7 +44,7 @@ export function SignupForm({ google }: { google: boolean }) {
 
   return (
     <AuthForm
-      title="Crée ton espace"
+      title="Créer un compte"
       note="Tu crées ta boutique juste après."
       error={error}
       submitLabel="Créer mon compte"
@@ -65,10 +65,12 @@ export function SignupForm({ google }: { google: boolean }) {
             </Link>
             .
           </p>
-          <AuthLink question="Déjà un compte ?" href="/login">
-            Connecte-toi
-          </AuthLink>
         </>
+      }
+      switchLink={
+        <AuthLink question="Déjà un compte ?" href="/login">
+          Se connecter
+        </AuthLink>
       }
     >
       <Input

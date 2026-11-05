@@ -45,8 +45,8 @@ export function LoginForm({ google }: { google: boolean }) {
         </Notice>
       )}
       <AuthForm
-        title="Content de te revoir"
-        note="Connecte-toi pour suivre tes campagnes."
+        title="Se connecter"
+        note="Content de te revoir. Tes campagnes t'attendent."
         error={error}
         errorAction={
           unverified ? (
@@ -60,9 +60,9 @@ export function LoginForm({ google }: { google: boolean }) {
         submitting={submitting}
         onSubmit={onSubmit}
         before={google ? <GoogleButton next={next} /> : undefined}
-        after={
+        switchLink={
           <AuthLink question="Pas encore de compte ?" href="/signup">
-            Crée ton espace
+            Créer un compte
           </AuthLink>
         }
       >
