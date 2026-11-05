@@ -767,6 +767,12 @@ Décisions de l'agent :
 - Les heures du journal sont celles de Cotonou ; les mois du tableau de bord sont des mois UTC.
 - « Détaillant » ajouté aux types de l'onboarding (porteur, 2026-11-04), après « Les deux » pour que « Les deux » reste à côté des deux choix qu'il réunit : Grossiste, Importateur, Les deux, Détaillant, Autre. Valeur `RETAILER`, sans migration (colonne texte).
 
+### Lot 11b : Habillage du support-admin (2026-11-04)
+
+Le porteur a donné un modèle de tableau de bord (barre latérale, cartes de chiffres, courbe des ventes, clients par pays, produits les plus vendus, performance par canal) et demandé « une autre couleur différente de celle des utilisateurs ». Choix validés par le porteur (« Ok ») : **violet**, **liste classée par pays** (pas de carte), **courbe des 6 derniers mois**.
+
+Décisions de l'agent : un fond clair uni et des cartes blanches au lieu du papier quadrillé ; des titres sans écriture manuscrite ; le violet remplace le bleu du kit dans tout le back-office (boutons, liens, champs) ; sur téléphone, quatre onglets en haut ; la courbe reste lisible sans survol (« Voir les montants ») et se parcourt au clavier ; les pays, l'activité et les canaux portent sur les boutiques actives, les forfaits sur toutes.
+
 ### Lot 12 : Site public v2 (2026-11-05)
 
 Spec : [2026-11-05-tamani-site-public-v2-design.md](../specs/2026-11-05-tamani-site-public-v2-design.md). Plan : [2026-11-05-tamani-12-site-public.md](2026-11-05-tamani-12-site-public.md). Demande du porteur du 2026-11-05, spec validée le même jour (« Tout est bon »).

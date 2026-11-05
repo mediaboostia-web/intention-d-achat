@@ -7,6 +7,7 @@ import {
   mrrOf,
   newPayers,
   parseMonth,
+  revenueSeries,
   shiftMonth,
   type PassOrder,
 } from './metrics';
@@ -21,6 +22,33 @@ const order = (org: string, at: string, over: Partial<PassOrder> = {}): PassOrde
   activatedAt: day(at),
   days: 7,
   ...over,
+});
+
+describe('revenueSeries', () => {
+  it('sums each of the six months ending with the one shown, oldest first', () => {
+    const paid = [
+      order('a', '2026-11-02'),
+      order('b', '2026-11-20', { amount: 9900 }),
+      order('c', '2026-09-30'),
+      order('d', '2026-04-10'), // before the six months
+    ];
+    expect(revenueSeries(paid, '2026-11')).toEqual([
+      { month: '2026-06', total: 0 },
+      { month: '2026-07', total: 0 },
+      { month: '2026-08', total: 0 },
+      { month: '2026-09', total: 3900 },
+      { month: '2026-10', total: 0 },
+      { month: '2026-11', total: 13_800 },
+    ]);
+  });
+
+  it('crosses the new year', () => {
+    expect(revenueSeries([order('a', '2025-12-31')], '2026-02', 3)).toEqual([
+      { month: '2025-12', total: 3900 },
+      { month: '2026-01', total: 0 },
+      { month: '2026-02', total: 0 },
+    ]);
+  });
 });
 
 describe('months', () => {

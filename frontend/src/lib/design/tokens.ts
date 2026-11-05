@@ -23,6 +23,15 @@ export const colors = {
   /** The notebook's cover (sidebar, ink cards): dark in both themes. */
   deep: '#10204A',
   deepInk: '#FFFFFF',
+  /**
+   * The support-admin's own colour (porteur, 2026-11-04: « une autre couleur
+   * différente de celle des utilisateurs »): violet, never the shop space's
+   * blue pen and yellow. Back-office pages only.
+   */
+  admin: '#5B3FD6',
+  adminInk: '#FFFFFF',
+  adminSoft: '#ECE8FD',
+  adminBg: '#F5F3FC',
 } as const satisfies Record<string, `#${string}`>;
 
 export type ColorToken = keyof typeof colors;
@@ -52,6 +61,11 @@ export const nightColors = {
   whatsappInk: '#073B1F',
   deep: '#070D24',
   deepInk: '#EEF1FA',
+  // The back-office stays in day mode; these only keep the pairs readable.
+  admin: '#B6A6FF',
+  adminInk: '#130F33',
+  adminSoft: '#2B2466',
+  adminBg: '#100C2E',
 } as const satisfies Record<ColorToken, `#${string}`>;
 
 /** Color family of a verdict stamp (see lib/tamani/verdict-display.ts). */
@@ -84,6 +98,12 @@ export const contrastPairs: ReadonlyArray<{ fg: ColorToken; bg: ColorToken; use:
   { fg: 'surface', bg: 'ink', use: 'texte sur un bouton encre' },
   { fg: 'deepInk', bg: 'deep', use: 'texte sur la couverture du cahier' },
   { fg: 'accent', bg: 'deep', use: 'montant et lien sur la couverture' },
+  { fg: 'adminInk', bg: 'admin', use: 'bouton et menu actif du support-admin' },
+  { fg: 'admin', bg: 'surface', use: 'lien et chiffre clé du support-admin' },
+  { fg: 'admin', bg: 'adminSoft', use: 'pastille du support-admin' },
+  { fg: 'admin', bg: 'adminBg', use: 'titre et lien sur le fond du support-admin' },
+  { fg: 'ink', bg: 'adminBg', use: 'texte sur le fond du support-admin' },
+  { fg: 'inkSoft', bg: 'adminBg', use: 'texte secondaire sur le fond du support-admin' },
   ...(['bg', 'surface'] as const).flatMap((bg) =>
     Object.values(verdictToneColor).map((fg) => ({ fg, bg, use: 'tampon de verdict' })),
   ),

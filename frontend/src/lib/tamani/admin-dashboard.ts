@@ -20,6 +20,8 @@ export interface AdminDashboard {
     byPass: { offer: string; count: number; amount: number }[];
     /** The month's payments, newest first (50 at most). */
     payments: AdminPayment[];
+    /** The six months ending with this one, oldest first: the chart. */
+    series: { month: string; total: number }[];
   };
   /** Monthly recurring revenue now: each running paid pass brought to 30 days. */
   mrr: number;
@@ -33,6 +35,8 @@ export interface AdminDashboard {
     /** Among the active shops; `NONE` when the shop never said. */
     byType: Record<string, number>;
     byChannel: Record<string, number>;
+    /** Among the active shops, by ISO country code. */
+    byCountry: Record<string, number>;
   };
   campaigns: { running: number; drafts: number; finished: number; archived: number };
   users: { total: number; suspended: number };
