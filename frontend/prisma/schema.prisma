@@ -46,6 +46,7 @@ model User {
   // Apps that need it (marketplace, B2B SaaS, classifieds) wire owner relations
   // on their domain models.
   ownedOrganizations Organization[]       @relation("OrgOwner")
+  adminFeedSeen      AdminFeedSeen?
   memberships        OrganizationMember[] @relation("OrgMembership")
 
   @@index([email])
@@ -577,4 +578,31 @@ model MarketingSpend {
   amount      Int // FCFA
   updatedById String
   updatedAt   DateTime @updatedAt
+}
+
+// The platform's own details (lot 13a), edited by a SUPERADMIN in
+// /support-admin/parametres. One row, id "platform"; no row means the
+// constants of lib/tamani/landing.ts. A saved row is the truth: a null link
+// hides its button on the public site.
+model PlatformSetting {
+  id              String   @id @default("platform")
+  displayName     String
+  contactEmail    String
+  whatsappContact String?
+  community       String?
+  facebook        String?
+  instagram       String?
+  tiktok          String?
+  videoUrl        String?
+  captionsUrl     String?
+  updatedAt       DateTime @updatedAt
+  updatedById     String?
+}
+
+// When each admin last opened the notifications feed (lot 13a): the badge
+// counts what happened after it, for that admin only.
+model AdminFeedSeen {
+  userId String   @id
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seenAt DateTime
 }

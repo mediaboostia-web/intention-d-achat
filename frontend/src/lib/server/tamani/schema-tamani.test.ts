@@ -262,13 +262,44 @@ describe('Tamani core schema (lot 3)', () => {
     const names = readdirSync(resolve(PRISMA, 'migrations'))
       .filter((n) => !n.endsWith('.toml'))
       .sort();
-    expect(names.at(-1)).toBe('9h_marketing_spend');
+    expect(names).toContain('9h_marketing_spend');
     const sql = readFileSync(
       resolve(PRISMA, 'migrations/9h_marketing_spend/migration.sql'),
       'utf8',
     );
     expect(sql).toMatch(/CREATE TABLE "MarketingSpend"/);
     expect(sql).not.toMatch(/\bDROP\b|ALTER TABLE/);
+  });
+
+  it('keeps the platform settings and the admin feed visits as migration 9i_platform_settings (lot 13a)', () => {
+    const settings = modelBlock('PlatformSetting');
+    expect(field(settings, 'id String @id @default("platform")')).toBe(true);
+    for (const f of [
+      'whatsappContact String?',
+      'community String?',
+      'facebook String?',
+      'instagram String?',
+      'tiktok String?',
+      'videoUrl String?',
+      'captionsUrl String?',
+    ]) {
+      expect(field(settings, f), `PlatformSetting.${f}`).toBe(true);
+    }
+    const seen = modelBlock('AdminFeedSeen');
+    expect(field(seen, 'userId String @id')).toBe(true);
+    expect(field(seen, 'seenAt DateTime')).toBe(true);
+    const names = readdirSync(resolve(PRISMA, 'migrations'))
+      .filter((n) => !n.endsWith('.toml'))
+      .sort();
+    expect(names.at(-1)).toBe('9i_platform_settings');
+    const sql = readFileSync(
+      resolve(PRISMA, 'migrations/9i_platform_settings/migration.sql'),
+      'utf8',
+    );
+    expect(sql).toMatch(/CREATE TABLE "PlatformSetting"/);
+    expect(sql).toMatch(/CREATE TABLE "AdminFeedSeen"/);
+    expect(sql).toMatch(/ON DELETE CASCADE/);
+    expect(sql).not.toMatch(/\bDROP\b|ALTER TABLE "(?!AdminFeedSeen)/);
   });
 
   it('migration folders sort as text in the order they were written', () => {
