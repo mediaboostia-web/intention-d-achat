@@ -76,7 +76,7 @@ export const ORBIT_NETWORKS: readonly OrbitNetwork[] = [
   {
     slug: 'facebook',
     label: 'Facebook',
-    what: 'Groupes et pages',
+    what: 'Groupes, pages et lives',
     color: '#0866FF',
     x: 89,
     y: 50,
@@ -103,7 +103,7 @@ export const ORBIT_NETWORKS: readonly OrbitNetwork[] = [
   {
     slug: 'tiktok',
     label: 'TikTok',
-    what: 'Bio et vidéos',
+    what: 'Bio, vidéos et lives',
     color: '#10204A',
     x: 19,
     y: 78,
@@ -141,6 +141,8 @@ export const EXAMPLE = {
   unsold: UNSOLD,
   advised: 120,
   cartonPriceText: unbroken(formatMoney(CARTON_PRICE, 'XOF')),
+  /** The money sleeping in the unsold cartons, in FCFA. */
+  blockedAmount: UNSOLD * CARTON_PRICE,
   /** "1 900 000 FCFA" */
   blocked: unbroken(formatMoney(UNSOLD * CARTON_PRICE, 'XOF')),
 } as const;

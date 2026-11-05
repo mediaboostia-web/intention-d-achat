@@ -13,13 +13,13 @@ describe('/ (the home page)', () => {
       'contenu',
       'film',
       'probleme',
-      'solution',
+      'fonctionnalites',
       'comment-ca-marche',
-      'avant-apres',
-      'tarifs',
+      'benefices',
       'communaute',
-      'questions',
-      'lp-footer',
+      'faq',
+      'final',
+      'contact',
     ]) {
       expect(out, id).toContain(`id="${id}"`);
     }
@@ -31,6 +31,13 @@ describe('/ (the home page)', () => {
     expect(text(<HomePage />)).toContain('Aller au contenu');
     expect(out).toContain('class="lp-nav"');
     expect(out).toContain('class="lp-sticky"');
+  });
+
+  it('has no price grid: the prices live on /forfaits', () => {
+    const out = html(<HomePage />);
+    expect(out).not.toContain('lp-rail');
+    expect(out).not.toContain('Le meilleur prix par réponse');
+    expect(out).toContain('href="/forfaits"');
   });
 
   it('embeds the JSON-LD graph, readable by JSON.parse', () => {

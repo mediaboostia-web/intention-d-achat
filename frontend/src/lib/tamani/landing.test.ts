@@ -2,8 +2,11 @@ import { describe, it, expect } from 'vitest';
 import {
   LANDING_DESCRIPTION,
   LANDING_FAQ,
+  LANDING_LINKS,
+  LANDING_NAV,
   LANDING_TITLE,
   clampPercent,
+  countFrame,
   landingJsonLd,
   landingMetadata,
   navStep,
@@ -11,7 +14,24 @@ import {
   pricingOffers,
 } from './landing';
 import { planFeatures } from './billing-view';
-import { PLANS } from './plans';
+import { SHOP_COUNTRIES } from './countries';
+import { PASS_IDS, PLANS } from './plans';
+
+const NO_LINKS = {
+  whatsappContact: null,
+  community: null,
+  facebook: null,
+  instagram: null,
+  tiktok: null,
+} as const;
+const ALL_LINKS = {
+  whatsappContact: 'https://wa.me/221770000000',
+  community: 'https://chat.whatsapp.com/abc',
+  facebook: 'https://facebook.com/tamani',
+  instagram: 'https://instagram.com/tamani',
+  tiktok: 'https://tiktok.com/@tamani',
+} as const;
+const words = (s: string) => s.trim().split(/\s+/).length;
 
 describe('pricingOffers reads PLANS', () => {
   it("seven cards in the porteur's order, each with who it is for", () => {
@@ -107,20 +127,34 @@ describe('landingJsonLd', () => {
     expect(byType('WebSite')['@id']).toBe('https://tamani.app/#site');
   });
 
-  it('JSON-LD lists the five passes in XOF', () => {
-    const offers = byType('SoftwareApplication')['offers'] as {
-      name: string;
-      price: string;
-      priceCurrency: string;
-    }[];
-    expect(offers.map((o) => [o.name, o.price, o.priceCurrency])).toEqual([
-      ['Essai gratuit', '0', 'XOF'],
-      ['Pass Semaine', '3900', 'XOF'],
-      ['Pass 2 Semaines', '5900', 'XOF'],
-      ['Pass Mois', '9900', 'XOF'],
-      ['Pass Mois Plus', '14900', 'XOF'],
-      ['Pass Mois Max', '24900', 'XOF'],
+  it('JSON-LD sells one aggregate offer in XOF, from the trial to the dearest pass', () => {
+    const dearest = Math.max(...PASS_IDS.map((id) => PLANS[id].priceXof ?? 0));
+    expect(byType('SoftwareApplication')['offers']).toEqual({
+      '@type': 'AggregateOffer',
+      priceCurrency: 'XOF',
+      lowPrice: '0',
+      highPrice: String(dearest),
+      offerCount: 6,
+    });
+  });
+
+  it('the organisation gives its WhatsApp contact and only the social links that exist', () => {
+    const org = (links: typeof ALL_LINKS | typeof NO_LINKS) =>
+      (landingJsonLd('https://tamani.app/', links)['@graph'] as Record<string, unknown>[]).find(
+        (n) => n['@type'] === 'Organization',
+      ) as Record<string, unknown>;
+    expect(org(ALL_LINKS)['sameAs']).toEqual([
+      ALL_LINKS.facebook,
+      ALL_LINKS.instagram,
+      ALL_LINKS.tiktok,
     ]);
+    expect(org(ALL_LINKS)['contactPoint']).toMatchObject({
+      '@type': 'ContactPoint',
+      url: ALL_LINKS.whatsappContact,
+      availableLanguage: 'fr',
+    });
+    expect(org(NO_LINKS)).not.toHaveProperty('sameAs');
+    expect(org(NO_LINKS)['contactPoint']).not.toHaveProperty('url');
   });
 
   it('the FAQ JSON-LD repeats LANDING_FAQ', () => {
@@ -173,11 +207,73 @@ describe('landing copy', () => {
     expect(trial?.answer).toContain(`${PLANS.TRIAL.durationDays} jours`);
     expect(trial?.answer).toContain(`${PLANS.TRIAL.includedResponses} réponses`);
     expect(trial?.answer).toContain('sans carte bancaire');
-    expect(trial?.answer).toContain('la première limite atteinte');
-    expect(trial?.answer).toContain('en prenant un pass');
   });
 
   it('speaks of passes, never of Pro, Gratuit or 12 months', () => {
     expect(copy).not.toMatch(/\bPro\b|forfait Gratuit|12 mois/);
+  });
+});
+
+describe('the menu, the titles and the questions of the new site', () => {
+  it('LANDING_NAV lists the six menu entries, sections as /#anchors', () => {
+    expect(LANDING_NAV.map((n) => [n.href, n.label])).toEqual([
+      ['/#comment-ca-marche', 'Comment ça marche'],
+      ['/#fonctionnalites', 'Fonctionnalités'],
+      ['/#benefices', 'Bénéfices'],
+      ['/forfaits', 'Forfaits'],
+      ['/#faq', 'FAQ'],
+      ['/#contact', 'Contact'],
+    ]);
+  });
+
+  it('the title and description fit search results', () => {
+    expect(LANDING_TITLE).toBe("Tamani : sache quoi commander avant d'acheter ton stock");
+    expect(LANDING_TITLE.length).toBeLessThanOrEqual(60);
+    expect(LANDING_DESCRIPTION.length).toBeLessThanOrEqual(160);
+    for (const network of ['WhatsApp', 'TikTok', 'Facebook']) {
+      expect(LANDING_DESCRIPTION).toContain(network);
+    }
+  });
+
+  it('the FAQ asks the eleven questions of the spec, each answer first and short', () => {
+    expect(LANDING_FAQ.map((q) => q.question)).toEqual([
+      "C'est quoi, Tamani ?",
+      'Mes clients doivent-ils installer une application ?',
+      'Où est-ce que je peux partager le lien ?',
+      'Comment tester un produit avant de le commander en gros ?',
+      "Puis-je vendre un produit que je n'ai pas encore en stock ?",
+      'Comment Tamani calcule-t-il la quantité à commander ?',
+      'Mes clients voient-ils les réponses des autres ?',
+      "L'essai gratuit, comment ça marche ?",
+      'Que se passe-t-il quand mon pass se termine ?',
+      'Comment je paie ?',
+      'Dans quels pays marche Tamani ?',
+    ]);
+    for (const q of LANDING_FAQ) expect(words(q.answer), q.question).toBeLessThanOrEqual(70);
+  });
+
+  it('the countries answer lists every shop country', () => {
+    const answer = LANDING_FAQ.find((q) => q.question.startsWith('Dans quels pays'))?.answer ?? '';
+    for (const c of SHOP_COUNTRIES) expect(answer).toContain(c.label);
+  });
+
+  it('the JSON-LD links default to the porteur ones', () => {
+    expect(landingJsonLd('https://tamani.app/')).toEqual(
+      landingJsonLd('https://tamani.app/', LANDING_LINKS),
+    );
+  });
+});
+
+describe('countFrame', () => {
+  it('eases out from 0 to the target and never overshoots', () => {
+    expect(countFrame(120, 0)).toBe(0);
+    expect(countFrame(120, 1)).toBe(120);
+    expect(countFrame(120, 0.5)).toBeGreaterThan(60);
+    for (let t = 0; t <= 1; t += 0.05) {
+      expect(countFrame(120, t)).toBeLessThanOrEqual(120);
+      expect(Number.isInteger(countFrame(120, t))).toBe(true);
+    }
+    expect(countFrame(120, -1)).toBe(0);
+    expect(countFrame(120, 2)).toBe(120);
   });
 });

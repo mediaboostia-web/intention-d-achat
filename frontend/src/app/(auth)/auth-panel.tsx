@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Illustration } from '@/components/landing/Illustration';
-import { Logo } from '@/components/ui';
+import { Icon, Logo } from '@/components/ui';
 
-// The computer-only panel of the sign-in pages (porteur, 2026-10-30): each page
-// speaks to the visitor with its own drawing, and stays in view while the form
-// scrolls. Signing up (and its code) asks the community first; every other page
-// is a return, where the answers may already be waiting.
+// The picture of the sign-in pages (porteur, 2026-10-30, enlarged 2026-11-05
+// after the AMU capture): a band above the form on a phone, a big rounded
+// card that stays in view from lg. Signing up (and its code) asks the
+// community first; every other page is a return, where the answers may
+// already be waiting. The sentence sits on a deep wash, readable in both themes.
 const SIGN_UP = ['/signup', '/verify-email'];
 
 const COPY = {
@@ -28,22 +29,33 @@ export function AuthPanel() {
   const pathname = usePathname();
   const copy = SIGN_UP.some((p) => pathname.startsWith(p)) ? COPY.up : COPY.in;
   return (
-    <aside className="hidden flex-col gap-8 border-r-[2.5px] border-ink bg-surface px-12 pt-12 lg:sticky lg:top-0 lg:flex lg:h-dvh">
-      <Link href="/" className="self-start rounded-control focus-visible:outline-accent">
-        <Logo variant="lockup" size={34} />
-      </Link>
-      <div className="max-w-lg">
-        <p className="font-hand text-4xl leading-tight font-bold text-ink">{copy.title}</p>
-        <p className="mt-3 text-lg text-ink-soft">{copy.line}</p>
+    <aside className="relative m-3 flex h-56 flex-col justify-between overflow-hidden rounded-card border-[2.5px] border-ink bg-surface p-4 sm:h-64 lg:sticky lg:top-4 lg:m-4 lg:h-[calc(100dvh-2rem)] lg:p-8">
+      <Illustration
+        name={copy.image}
+        alt=""
+        sizes="(min-width: 1024px) 46vw, 100vw"
+        fill
+        className="object-cover object-[center_30%] brightness-[1.03]"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-deep/90 via-deep/45 to-transparent"
+      />
+      <div className="relative flex items-start justify-between gap-3">
+        <span className="rounded-control bg-surface px-2 py-1">
+          <Logo variant="lockup" size={28} />
+        </span>
+        <Link
+          href="/"
+          className="inline-flex min-h-11 items-center gap-1 rounded-full bg-surface px-4 text-sm font-bold text-ink shadow-press focus-visible:outline-accent"
+        >
+          <Icon name="chevron-left" className="size-4" />
+          Retour au site
+        </Link>
       </div>
-      <div className="relative min-h-0 flex-1">
-        <Illustration
-          name={copy.image}
-          alt=""
-          sizes="(min-width: 1024px) 40vw, 1px"
-          fill
-          className="object-contain object-bottom brightness-[1.03]"
-        />
+      <div className="relative max-w-lg text-deep-ink">
+        <p className="font-hand text-2xl leading-tight font-bold lg:text-4xl">{copy.title}</p>
+        <p className="mt-1 text-sm lg:mt-3 lg:text-lg">{copy.line}</p>
       </div>
     </aside>
   );

@@ -7,20 +7,20 @@ const STEPS: readonly { image: LandingImageName; alt: string; title: string; tex
   {
     image: 'etape-1',
     alt: 'La grossiste photographie un carton de marmites avec son téléphone.',
-    title: 'Ajoute ton produit',
-    text: "Une photo, un prix, la date d'arrivage. C'est prêt en 3 minutes.",
+    title: 'Crée ton produit',
+    text: "Une photo, un prix et les options (taille, couleur…). Dis s'il est déjà en stock ou s'il arrive bientôt.",
   },
   {
     image: 'etape-2',
     alt: 'La grossiste envoie le lien. Une revendeuse, un jeune à moto, une mère de famille et un boutiquier répondent depuis chez eux.',
-    title: 'Partage le lien',
-    text: 'Dans tes groupes, tes statuts et tes pages. Tes clients répondent en moins de 30 secondes, sans rien installer.',
+    title: 'Partage le lien en un clic',
+    text: 'Envoie-le dans tes groupes WhatsApp, ton statut, ton live TikTok ou ta page Facebook. Le message est déjà écrit.',
   },
   {
     image: 'etape-3',
     alt: 'La grossiste, sereine, passe sa commande au fournisseur devant une pile de cartons bien dosée.',
-    title: 'Commande la bonne quantité',
-    text: 'Tamani compte les vrais acheteurs et te dit combien commander. Le calcul est toujours affiché.',
+    title: 'Reçois les réponses et prépare les commandes',
+    text: 'Tu vois qui veut quoi, combien et où livrer. Tu transformes les réponses en commandes, en commençant par les clients que tu connais déjà.',
   },
 ];
 
@@ -28,6 +28,7 @@ function Arrow() {
   return (
     <svg className="lp-step__arrow" viewBox="0 0 46 26" aria-hidden="true">
       <path
+        pathLength={1}
         d="M42 22 C 30 6, 18 4, 6 9 M11 3.5 L5 9 L12 13"
         fill="none"
         stroke="currentColor"
@@ -39,17 +40,17 @@ function Arrow() {
   );
 }
 
-/** 5. How it works: three gestures, one picture each; the verdict lands on the last. */
+/** 5. How it works: one minute to share a product, one picture per step. */
 export function Steps() {
   return (
     <section id="comment-ca-marche" className="lp-section" aria-labelledby="lp-steps-title">
       <div className="lp-wrap">
         <div className="lp-center">
           <h2 id="lp-steps-title" className="lp-h2">
-            Trois gestes, et tu sais quoi commander.
+            1 minute pour partager ton produit
           </h2>
           <p className="lp-lead">
-            Si tu sais envoyer un message sur WhatsApp, tu sais utiliser Tamani.
+            Pas de formation, pas de réglages compliqués. Trois étapes, et tes clients répondent.
           </p>
         </div>
         <InView as="ol" className="lp-steps" threshold={0.4}>
@@ -81,9 +82,8 @@ export function Steps() {
           ))}
         </InView>
         <div className="lp-cta-row">
-          <p>Ta première campagne est prête en 3 minutes.</p>
           <Button href="/signup" size="lg" className="lp-press">
-            Essayer gratuitement
+            Créer mon premier produit
           </Button>
         </div>
       </div>

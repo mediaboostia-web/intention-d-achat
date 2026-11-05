@@ -31,23 +31,35 @@ export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks 
     return href ? [{ ...s, href }] : [];
   });
   const help = [
-    { href: '#questions', label: 'Questions' },
+    { href: '/#faq', label: 'FAQ' },
     ...(links.community ? [{ href: links.community, label: 'Le groupe WhatsApp' }] : []),
-    ...(links.whatsappContact
-      ? [{ href: links.whatsappContact, label: 'Écrire sur WhatsApp' }]
-      : []),
     { href: `mailto:${LANDING_CONTACT_EMAIL}`, label: LANDING_CONTACT_EMAIL },
   ];
 
   return (
-    <footer id="lp-footer" className="lp-panel lp-panel--cover lp-foot">
+    <footer id="contact" className="lp-panel lp-panel--cover lp-foot">
       <div className="lp-wrap">
         <div className="lp-foot__top">
           <div className="lp-foot__brand">
-            <Link href="/" aria-label="Tamani, accueil" className="inline-block rounded-[8px]">
+            <Link
+              href="/"
+              aria-label="Tamani, accueil"
+              className="inline-flex min-h-11 items-center rounded-[8px]"
+            >
               <Logo size={34} tone="inverse" />
             </Link>
             <p className="lp-foot__slogan">{LANDING_SLOGAN}</p>
+            {links.whatsappContact && (
+              <a
+                className="lp-foot__ask"
+                href={links.whatsappContact}
+                target="_blank"
+                rel="noopener"
+              >
+                <PlatformLogo slug="whatsapp" />
+                Une question ? Écris-nous sur WhatsApp
+              </a>
+            )}
             {socials.length > 0 && (
               <div className="lp-foot__social">
                 {socials.map((s) => (
@@ -62,16 +74,16 @@ export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks 
             <h3>Produit</h3>
             <ul>
               <li>
-                <a href="#comment-ca-marche">Comment ça marche</a>
+                <a href="/#comment-ca-marche">Comment ça marche</a>
               </li>
               <li>
-                <a href="#avant-apres">Avant / après</a>
+                <a href="/#fonctionnalites">Fonctionnalités</a>
               </li>
               <li>
-                <a href="#film">La vidéo</a>
+                <a href="/#benefices">Bénéfices</a>
               </li>
               <li>
-                <a href="#tarifs">Tarifs</a>
+                <Link href="/forfaits">Forfaits</Link>
               </li>
             </ul>
           </nav>
@@ -79,7 +91,7 @@ export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks 
             <h3>Ton compte</h3>
             <ul>
               <li>
-                <Link href="/signup">Essayer gratuitement</Link>
+                <Link href="/signup">Créer un compte</Link>
               </li>
               <li>
                 <Link href="/login">Se connecter</Link>
@@ -125,7 +137,7 @@ export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks 
               </Link>
             ))}
           </nav>
-          <p>Fait pour les grossistes et importateurs d&apos;Afrique de l&apos;Ouest.</p>
+          <p>Fait pour les grossistes et vendeurs en ligne d&apos;Afrique francophone.</p>
         </div>
       </div>
     </footer>

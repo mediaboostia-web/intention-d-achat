@@ -1,8 +1,29 @@
+import { Fragment, type CSSProperties } from 'react';
 import { Button, Icon, Stamp } from '@/components/ui';
 import { EXAMPLE, MARQUEE } from './content';
 import { Illustration } from './Illustration';
 import { InView } from './InView';
 import { PlatformLogo } from './PlatformLogo';
+import { PLANS } from '@/lib/tamani/plans';
+
+const { TRIAL } = PLANS;
+
+// The break falls after « seulement »: « ce que » never stays alone on a line.
+const LINE_1 = 'Commande seulement';
+const LINE_2 = 'ce que tes clients vont acheter.';
+
+/** Each word its own span, so the title rises word by word (landing.css). */
+function words(line: string, from: number) {
+  const list = line.split(' ');
+  return list.map((w, i) => (
+    <Fragment key={w + i}>
+      <span className="lp-word" style={{ '--i': from + i } as CSSProperties}>
+        {w}
+      </span>
+      {i < list.length - 1 && ' '}
+    </Fragment>
+  ));
+}
 
 function PlatformList({ hidden = false }: { hidden?: boolean }) {
   return (
@@ -33,12 +54,12 @@ export function Hero() {
               <span className="lp-pill__ic" aria-hidden="true">
                 <Icon name="box" className="size-[18px]" />
               </span>
-              Pour les grossistes et les importateurs
+              Pour les grossistes, importateurs et vendeurs en ligne
             </p>
             <h1 id="lp-hero-title" className="lp-hero__title">
-              <span>Ta communauté parle.</span>
+              <span>{words(LINE_1, 0)} </span>
               <span className="lp-hero__l2">
-                Tu sais quoi acheter.
+                {words(LINE_2, LINE_1.split(' ').length)}
                 <svg
                   className="lp-hero__underline"
                   viewBox="0 0 300 16"
@@ -50,30 +71,31 @@ export function Hero() {
               </span>
             </h1>
             <p className="lp-hero__sub">
-              Avant d&apos;acheter ton stock, demande à tes clients. Tu envoies un lien sur
-              WhatsApp, ils répondent en moins de 30 secondes, et tu sais combien commander.
+              Partage un lien sur WhatsApp, TikTok ou Facebook. En moins de 30 secondes, tes clients
+              disent ce qu&apos;ils veulent et combien. Tamani te dit quoi commander, et à qui
+              livrer.
             </p>
             <div className="lp-hero__ctas lp-btn-row">
-              <Button href="/signup" size="lg" id="lp-hero-cta">
+              <Button
+                href="/signup"
+                size="lg"
+                id="lp-hero-cta"
+                className="lp-press lp-go lp-shine lp-nudge"
+              >
                 Essayer gratuitement
+                <Icon name="chevron-right" />
               </Button>
-              <Button href="#film" size="lg" variant="secondary">
-                <span className="lp-playdot" aria-hidden="true">
-                  <svg viewBox="0 0 12 12">
-                    <path d="M1.5 0.8v10.4L11 6z" />
-                  </svg>
-                </span>
-                Voir la vidéo
+              <Button href="/#comment-ca-marche" size="lg" variant="secondary">
+                Voir comment ça marche
               </Button>
             </div>
-            <ul className="lp-hero__checks">
-              {["3 jours d'essai gratuit", 'Sans carte bancaire'].map((c) => (
-                <li key={c}>
-                  <Icon name="check" />
-                  {c}
-                </li>
-              ))}
-            </ul>
+            <p className="lp-hero__checks">
+              <Icon name="check" />
+              <span>
+                {TRIAL.durationDays} jours d&apos;essai · sans carte bancaire · paiement par Mobile
+                Money
+              </span>
+            </p>
           </div>
           <div className="lp-hero__art">
             <Illustration
@@ -100,7 +122,7 @@ export function Hero() {
         </div>
 
         <div className="lp-strip">
-          <p>Ton lien s&apos;ouvre partout où tes clients discutent</p>
+          <p>Ton lien marche partout où sont tes clients.</p>
           <div className="lp-marquee">
             <div className="lp-marquee__track">
               <PlatformList />

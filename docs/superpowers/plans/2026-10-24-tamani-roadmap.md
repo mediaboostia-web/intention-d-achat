@@ -767,6 +767,36 @@ Décisions de l'agent :
 - Les heures du journal sont celles de Cotonou ; les mois du tableau de bord sont des mois UTC.
 - « Détaillant » ajouté aux types de l'onboarding (porteur, 2026-11-04), après « Les deux » pour que « Les deux » reste à côté des deux choix qu'il réunit : Grossiste, Importateur, Les deux, Détaillant, Autre. Valeur `RETAILER`, sans migration (colonne texte).
 
+### Lot 12 : Site public v2 (2026-11-05)
+
+Spec : [2026-11-05-tamani-site-public-v2-design.md](../specs/2026-11-05-tamani-site-public-v2-design.md). Plan : [2026-11-05-tamani-12-site-public.md](2026-11-05-tamani-12-site-public.md). Demande du porteur du 2026-11-05, spec validée le même jour (« Tout est bon »).
+
+Décisions du porteur :
+1. **Textes** simples et clairs, pour un débutant. Tamani parle de WhatsApp, mais aussi des lives TikTok et de Facebook.
+2. **Menu** : Comment ça marche, Fonctionnalités, Bénéfices, Forfaits, FAQ, Contact.
+3. **Sections de l'accueil**, dans cet ordre : hero, vidéo, « Tu reconnais ces situations ? » (5 situations), « Un seul lien pour tous tes clients », « 1 minute pour partager ton produit », avant / après, communauté, FAQ.
+4. **Forfaits** sur une page à part, `/forfaits`, ouverte depuis le menu ; aucune grille de prix sur l'accueil.
+   - Un bouton « Courte durée / Au mois » choisit les cartes.
+   - La carte d'essai dit sa durée, ses réponses, le verdict, les campagnes, et ce qu'elle n'a pas : l'export, les canaux de diffusion, le filigrane Tamani.
+   - Les campagnes ne sont jamais coupées à la fin d'un pass. Les clients répondent toujours, mais leurs informations restent cachées tant qu'aucun pass ne court.
+5. **Inscription et connexion** : couleurs Tamani, en clair, avec une image plus grande et bien visible.
+6. **Page admin** isolée et très protégée : connexion par code envoyé par e-mail, au lot 11c, après la fusion de la PR du lot 11b.
+7. **Animations** qui donnent envie de s'inscrire, et un site responsive et accessible sur téléphone.
+8. Plus tard : le nom de domaine, les liens Facebook, Instagram et TikTok, la vidéo, puis un lot blog.
+
+Décisions de l'agent (spec §12) :
+- Le titre du hero : « Commande seulement ce que tes clients vont acheter. », coupé après « seulement ».
+- `/forfaits` s'ouvre sur « Courte durée », pour montrer l'essai et le prix le plus bas. Le bandeau « Le meilleur prix par réponse » va sur le Pass Mois Max (règle du 2026-10-29) ; pas de badge « le plus choisi », faute de données.
+- L'image de connexion et d'inscription est aussi montrée sur téléphone, en bandeau.
+- La FAQ passe à 11 questions (« C'est quoi Tamani ? », tester un produit, vendre sans stock, les pays) pour les moteurs de recherche et les IA. Un `llms.txt` est ajouté.
+- Le menu ne s'affiche dans la barre qu'à partir de 1120 px ; en dessous, il est dans le tiroir.
+- Toutes les cibles tactiles font au moins 44 px.
+- Les animations s'arrêtent si le téléphone demande moins de mouvement, et rien ne reste caché sans JavaScript.
+- Au lot 11c :
+  - le code vaut 10 min, avec 5 essais ;
+  - on peut le renvoyer après 60 s, 5 envois par heure au plus ;
+  - chaque entrée dans l'admin laisse une ligne au journal.
+
 ## Protocole d'exécution
 1. Au début de chaque lot : créer la branche `plan/NN-<nom>`, puis écrire le plan détaillé `docs/superpowers/plans/AAAA-MM-JJ-tamani-NN-<nom>.md` (skill writing-plans), à partir de ce document et du code en place.
 2. Pour chaque tâche : TDD (test qui échoue, code, test qui passe), barrière, commit.
