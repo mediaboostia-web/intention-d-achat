@@ -144,7 +144,7 @@ export function LandingNav({
   }, []);
 
   // While the drawer is open: focus inside it, Tab kept in it, Escape closes,
-  // the page under it does not scroll, and a window grown past 1000px (where
+  // the page under it does not scroll, and a window grown past 1120px (where
   // the bar shows every link) closes it.
   useEffect(() => {
     if (!open) return;
@@ -171,7 +171,7 @@ export function LandingNav({
         first.focus();
       }
     };
-    const wide = window.matchMedia('(min-width: 1000px)');
+    const wide = window.matchMedia('(min-width: 1120px)');
     const onWide = () => {
       if (wide.matches) setOpen(false);
     };

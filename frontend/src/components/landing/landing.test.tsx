@@ -507,6 +507,18 @@ describe('motion that invites, never in the way', () => {
     );
   });
 
+  it('the drawer exists wherever the menu button shows (below 1120 px)', () => {
+    // Hidden from 1000 px while the button stayed until 1119 px, a tap showed
+    // nothing and locked the page's scroll.
+    expect(css).not.toMatch(
+      /@media \(min-width: 1000px\)\s*\{\s*\.lp-drawer\s*\{\s*display:\s*none/,
+    );
+    expect(css).toMatch(/@media \(min-width: 1120px\)\s*\{\s*\.lp-drawer\s*\{\s*display:\s*none/);
+    const nav = readFileSync(path.join(__dirname, 'LandingNav.tsx'), 'utf8');
+    expect(nav).toContain("matchMedia('(min-width: 1120px)')");
+    expect(nav).not.toContain("matchMedia('(min-width: 1000px)')");
+  });
+
   it('the hero button shines once and nudges a few times, its arrow slides', () => {
     const cta = html(<Hero />).match(/<a [^>]*id="lp-hero-cta"[^>]*>/)?.[0] ?? '';
     for (const cls of ['lp-shine', 'lp-nudge', 'lp-go']) expect(cta).toContain(cls);

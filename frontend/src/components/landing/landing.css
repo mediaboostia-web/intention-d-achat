@@ -581,7 +581,8 @@ button.lp-drawer__install {
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
 }
-@media (min-width: 1000px) {
+/* The drawer lives as long as its menu button does (below 1120 px). */
+@media (min-width: 1120px) {
   .lp-drawer {
     display: none;
   }

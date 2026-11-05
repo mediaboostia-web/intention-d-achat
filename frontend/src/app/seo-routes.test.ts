@@ -1,4 +1,6 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { GET as llmsTxt } from './llms.txt/route';
 import robots from './robots';
 import sitemap from './sitemap';
@@ -8,13 +10,22 @@ afterEach(() => {
 });
 
 describe('robots.txt', () => {
-  it('keeps crawlers out of the shop space, both admins and the API, and points to the sitemap', () => {
+  it('keeps crawlers out of the shop space, the admin and the API, and points to the sitemap', () => {
     vi.stubEnv('APP_URL', 'https://tamani.app/');
     const r = robots();
-    expect(r.rules).toEqual([
-      { userAgent: '*', allow: '/', disallow: ['/app', '/admin', '/support-admin', '/api'] },
-    ]);
+    expect(r.rules).toEqual([{ userAgent: '*', allow: '/', disallow: ['/app', '/admin', '/api'] }]);
     expect(r.sitemap).toBe('https://tamani.app/sitemap.xml');
+  });
+
+  it('never names the back-office, which its own noindex keeps out of search', () => {
+    // Listed here, its address would be public, and a disallowed page's
+    // noindex is never read by the crawler.
+    expect(JSON.stringify(robots())).not.toContain('support-admin');
+    const layout = readFileSync(
+      path.join(__dirname, '(admin)', 'support-admin', 'layout.tsx'),
+      'utf8',
+    );
+    expect(layout).toMatch(/robots:\s*\{\s*index:\s*false,\s*follow:\s*false\s*\}/);
   });
 
   it('blocks no AI search crawler', () => {

@@ -37,7 +37,7 @@ The porteur's rewrite of the public site on 2026-11-05 ([spec](../superpowers/sp
   - FAQPage built from `LANDING_FAQ` (11 questions).
 
   The other files:
-  - [robots.ts](../../frontend/src/app/robots.ts) disallows `/app`, `/admin`, `/support-admin` and `/api`;
+  - [robots.ts](../../frontend/src/app/robots.ts) disallows `/app`, `/admin` and `/api`, and never names `/support-admin`: its layout carries `noindex`, which a disallowed page would hide from crawlers, and naming it would publish the address (the spec's §8.5 line was overruled at the final review);
   - [sitemap.ts](../../frontend/src/app/sitemap.ts) adds `/forfaits`;
   - [app/llms.txt/route.ts](../../frontend/src/app/llms.txt/route.ts) is a static `text/plain` summary for AI crawlers.
 
