@@ -2,6 +2,8 @@
 
 # Tamani — lot 9a (home page)
 
+> Lot 12 (2026-11-05) rewrote the sections, the menu and the footer, and moved the prices to `/forfaits`: `Pricing`, `OfferRail` and the home page's pricing section below no longer exist. Read [tamani-lot-12-site-public.md](tamani-lot-12-site-public.md) first; what follows still holds for the styles, the illustrations and the client leaves.
+
 ## Tamani home page (lot 9a)
 
 - **Route** — `/` is [app/(public)/page.tsx](../../frontend/src/app/(public)/page.tsx), static. It renders the sections of [components/landing/](../../frontend/src/components/landing/) in the porteur's order:
