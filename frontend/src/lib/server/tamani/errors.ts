@@ -35,6 +35,10 @@ export const TAMANI_ERRORS = [
   'PAYMENT_PROVIDER_UNAVAILABLE',
   'PURCHASE_NOT_FOUND',
   'PUSH_NOT_CONFIGURED',
+  'ADMIN_ALREADY',
+  'ADMIN_SELF_CHANGE',
+  'ADMIN_LAST_SUPERADMIN',
+  'ADMIN_NOT_FOUND',
 ] as const;
 
 export type TamaniErrorCode = (typeof TAMANI_ERRORS)[number];
@@ -69,6 +73,10 @@ const DEFAULT_MESSAGES: Record<TamaniErrorCode, string> = {
   PAYMENT_PROVIDER_UNAVAILABLE: 'Le paiement est indisponible pour le moment.',
   PURCHASE_NOT_FOUND: 'Cet achat est introuvable.',
   PUSH_NOT_CONFIGURED: 'Les notifications sur le téléphone ne sont pas encore disponibles.',
+  ADMIN_ALREADY: 'Ce compte est déjà admin.',
+  ADMIN_SELF_CHANGE: 'Tu ne peux pas changer ton propre rôle : demande à un autre super-admin.',
+  ADMIN_LAST_SUPERADMIN: "C'est le dernier super-admin : nomme d'abord quelqu'un d'autre.",
+  ADMIN_NOT_FOUND: 'Ce compte est introuvable.',
 };
 
 export function tamaniError(code: TamaniErrorCode, status: number, message?: string): NextResponse {

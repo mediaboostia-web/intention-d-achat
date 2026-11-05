@@ -34,6 +34,10 @@ export const TAMANI_ERROR_CODES = [
   'PAYMENT_PROVIDER_UNAVAILABLE',
   'PURCHASE_NOT_FOUND',
   'PUSH_NOT_CONFIGURED',
+  'ADMIN_ALREADY',
+  'ADMIN_SELF_CHANGE',
+  'ADMIN_LAST_SUPERADMIN',
+  'ADMIN_NOT_FOUND',
 ] as const;
 
 const NETWORK = 'Pas de connexion au serveur. Vérifie ton réseau et réessaie.';
@@ -74,6 +78,10 @@ const MESSAGES: Record<string, string> = {
     'Le paiement est indisponible pour le moment. Réessaie dans quelques minutes.',
   PURCHASE_NOT_FOUND: 'Cet achat est introuvable.',
   PUSH_NOT_CONFIGURED: 'Les notifications sur le téléphone ne sont pas encore disponibles.',
+  ADMIN_ALREADY: 'Ce compte est déjà admin.',
+  ADMIN_SELF_CHANGE: 'Tu ne peux pas changer ton propre rôle : demande à un autre super-admin.',
+  ADMIN_LAST_SUPERADMIN: "C'est le dernier super-admin : nomme d'abord quelqu'un d'autre.",
+  ADMIN_NOT_FOUND: 'Ce compte est introuvable.',
   // Kit: auth
   INVALID_CREDENTIALS: 'Email ou mot de passe incorrect.',
   EMAIL_NOT_VERIFIED: "Confirme d'abord ton email avec le code reçu.",
