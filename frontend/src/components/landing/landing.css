@@ -1461,102 +1461,11 @@ button.lp-drawer__install {
   color: var(--color-success);
 }
 
-/* ---------- 7. Pricing: the passes as a rail of cards ---------- */
-.lp-rail {
-  margin-top: 40px;
-  text-align: left;
-}
-.lp-rail__nav {
-  display: none;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.lp-rail__nav button {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 2.5px solid var(--color-ink);
-  border-radius: 999px;
-  background: var(--color-surface);
-  color: var(--color-ink);
-  cursor: pointer;
-}
-.lp-rail__nav button:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-.lp-rail__nav svg {
-  width: 22px;
-  height: 22px;
-}
-.lp-rail__track {
-  --lp-rail-gap: 16px;
-  display: grid;
-  grid-auto-flow: column;
-  /* One card and a half on a phone: the half says « there is more ». */
-  grid-auto-columns: calc((100% - var(--lp-rail-gap)) / 1.5);
-  gap: var(--lp-rail-gap);
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-  padding: 4px 2px 18px;
-  scrollbar-width: thin;
-}
-.lp-rail__track > li {
-  min-width: 0;
-  scroll-snap-align: start;
-}
-.lp-rail__note {
-  margin-top: 14px;
-  font-weight: 700;
-  color: var(--color-ink-soft);
-}
-@media (min-width: 640px) {
-  .lp-rail__track {
-    grid-auto-columns: calc((100% - 2 * var(--lp-rail-gap)) / 2.5);
-  }
-}
-@media (min-width: 1024px) {
-  .lp-rail__nav {
-    display: flex;
-  }
-  .lp-rail__track {
-    --lp-rail-gap: 20px;
-    grid-auto-columns: calc((100% - 3 * var(--lp-rail-gap)) / 4);
-  }
-}
+/* ---------- The comparison table (/forfaits) ---------- */
 .lp-compare {
   margin-top: 28px;
   border-top: 2.5px solid var(--color-ink);
   text-align: left;
-}
-.lp-compare summary,
-.lp-faq summary {
-  display: flex;
-  align-items: center;
-  list-style: none;
-  cursor: pointer;
-}
-.lp-compare summary::-webkit-details-marker,
-.lp-faq summary::-webkit-details-marker {
-  display: none;
-}
-.lp-compare summary {
-  gap: 10px;
-  min-height: 60px;
-  font-weight: 700;
-  color: var(--color-primary);
-}
-.lp-compare summary svg,
-.lp-faq summary svg {
-  transition: rotate 0.25s var(--lp-ease);
-}
-.lp-compare[open] summary svg,
-.lp-faq details[open] summary svg {
-  rotate: 45deg;
 }
 .lp-compare__scroll {
   overflow-x: auto;
@@ -1989,6 +1898,169 @@ p.lp-hero__checks svg {
   flex: none;
 }
 
+/* ---------- /forfaits (lot 12) ---------- */
+.lp-plans {
+  padding-top: clamp(120px, 12vw, 160px);
+}
+.lp-plans__title {
+  max-width: 20ch;
+}
+/* The duration switch: two radios, a pill sliding under the checked one. */
+.lp-switch {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 28px auto 0;
+  padding: 4px;
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  background: var(--color-surface);
+}
+.lp-switch::before {
+  content: '';
+  position: absolute;
+  inset: 4px auto 4px 4px;
+  width: calc(50% - 4px);
+  border-radius: 999px;
+  background: var(--color-ink);
+  transition: translate 0.25s ease;
+}
+.lp-switch:has(#duree-mois:checked)::before {
+  translate: 100% 0;
+}
+.lp-switch__opt {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  padding: 0 clamp(14px, 3vw, 26px);
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.lp-switch__opt input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.lp-switch__opt:has(input:checked) {
+  color: var(--color-surface);
+}
+.lp-switch__opt:has(input:focus-visible) {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+/* Where :has() is unknown, the pill and both groups simply stay visible. */
+@supports not selector(:has(*)) {
+  .lp-switch::before {
+    display: none;
+  }
+}
+
+/* The cards: one column on a phone, two from 640, four from 1024. */
+.lp-plans__grid {
+  display: grid;
+  gap: 18px;
+  margin-top: 36px;
+  text-align: left;
+}
+@media (min-width: 640px) {
+  .lp-plans__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .lp-plans__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.lp-plans:has(#duree-mois:checked) .lp-plans__grid[data-tab='court'],
+.lp-plans:has(#duree-court:checked) .lp-plans__grid[data-tab='mois'] {
+  display: none;
+}
+.lp-plans__card {
+  height: 100%;
+}
+.lp-plans__rest {
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ink-soft);
+}
+.lp-plans__trust {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 22px;
+  margin-top: 32px;
+  padding: 16px 20px;
+  border: 2px solid var(--color-ink);
+  border-radius: 16px;
+  background: var(--color-surface);
+  font-size: 15px;
+  font-weight: 700;
+}
+.lp-plans__trust li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.lp-plans__trust svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--color-success);
+}
+.lp-plans__end {
+  padding-block: 0;
+}
+.lp-plans__box {
+  max-width: 760px;
+  margin-inline: auto;
+  padding: clamp(20px, 3vw, 32px);
+  border: 2.5px solid var(--color-ink);
+  border-radius: 18px;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  box-shadow: var(--shadow-press);
+}
+.lp-plans__box h2 {
+  font: 700 clamp(26px, 1.2vw + 20px, 34px) / 1.15 var(--lp-hand);
+}
+.lp-plans__box p {
+  margin-top: 10px;
+  font-size: clamp(17px, 0.3vw + 16px, 19px);
+  line-height: 1.5;
+}
+/* The comparison table: its first column stays put while the rest scrolls. */
+.lp-compare caption {
+  padding: 12px 0;
+  text-align: left;
+  font-weight: 700;
+  color: var(--color-ink-soft);
+}
+.lp-compare__scroll:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.lp-compare table {
+  min-width: 860px;
+}
+.lp-compare thead th {
+  vertical-align: bottom;
+  font-size: 14px;
+}
+.lp-compare th[scope='row'],
+.lp-compare thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 160px;
+  background: var(--color-bg);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html:has(.lp) {
     scroll-behavior: auto;
@@ -2001,9 +2073,6 @@ p.lp-hero__checks svg {
     animation-delay: 0s !important;
     transition-duration: 0.01ms !important;
     transition-delay: 0s !important;
-  }
-  .lp-rail__track {
-    scroll-behavior: auto;
   }
   .lp-marquee__track {
     animation: none !important;
