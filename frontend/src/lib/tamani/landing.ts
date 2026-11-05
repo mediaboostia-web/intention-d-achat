@@ -12,15 +12,29 @@ import {
   unlimitedCard,
   type CardFeature,
 } from './billing-view';
+import { SHOP_COUNTRIES } from './countries';
 import { PASS_IDS, PLANS, type PlanId } from './plans';
 
-export const LANDING_TITLE = 'Tamani : demande à ta communauté WhatsApp avant de commander';
+export const LANDING_TITLE = "Tamani : sache quoi commander avant d'acheter ton stock";
 export const LANDING_DESCRIPTION =
-  "Partage un lien sur WhatsApp, tes clients répondent en moins de 30 secondes et Tamani te dit combien commander. Pour grossistes et importateurs. 3 jours d'essai gratuit.";
+  "Partage un lien produit sur WhatsApp, TikTok ou Facebook. Tes clients disent ce qu'ils veulent en 30 s, Tamani te dit quoi commander. Essai gratuit.";
 export const LANDING_SLOGAN = 'Ta communauté parle. Tu sais quoi acheter.';
-const SHARE_TITLE = "Tamani : sache combien commander avant d'acheter";
+const SHARE_TITLE = LANDING_TITLE;
 const SHARE_DESCRIPTION =
-  'Partage un lien sur WhatsApp. Tes clients répondent en moins de 30 secondes. Tamani te dit combien commander.';
+  'Partage un lien sur WhatsApp, TikTok ou Facebook. Tes clients répondent en moins de 30 secondes. Tamani te dit quoi commander.';
+
+/**
+ * The menu of the public pages (lot 12, porteur's words). Sections are
+ * /#anchors so the same menu works from /forfaits.
+ */
+export const LANDING_NAV: readonly { href: string; label: string }[] = [
+  { href: '/#comment-ca-marche', label: 'Comment ça marche' },
+  { href: '/#fonctionnalites', label: 'Fonctionnalités' },
+  { href: '/#benefices', label: 'Bénéfices' },
+  { href: '/forfaits', label: 'Forfaits' },
+  { href: '/#faq', label: 'FAQ' },
+  { href: '/#contact', label: 'Contact' },
+];
 
 export type LandingLinkName = 'whatsappContact' | 'community' | 'facebook' | 'instagram' | 'tiktok';
 
@@ -53,21 +67,46 @@ export const LANDING_VIDEO: LandingVideo | null = null;
 
 const { TRIAL } = PLANS;
 
+/** "A, B et C". */
+function frenchList(items: readonly string[]): string {
+  return items.length < 2
+    ? (items[0] ?? '')
+    : `${items.slice(0, -1).join(', ')} et ${items[items.length - 1]}`;
+}
+
+/** How to pay, the same on the home page and on /forfaits. */
+export const PAY_ANSWER =
+  "Par mobile money ou par carte, pour un pass de 7, 14 ou 30 jours payé d'avance. Rien n'est prélevé automatiquement : trois jours avant la fin, Tamani te prévient.";
+
+/**
+ * The home page questions (lot 12, spec §5.9): each answer comes first and
+ * stays short, the shape search engines and AI answers quote.
+ */
 export const LANDING_FAQ: readonly { question: string; answer: string }[] = [
+  {
+    question: "C'est quoi, Tamani ?",
+    answer:
+      "Tamani est un outil pour les grossistes et les vendeurs en ligne d'Afrique francophone. Tu partages un lien produit sur WhatsApp, TikTok ou Facebook, et tes clients disent en moins de 30 secondes ce qu'ils veulent acheter. Tamani te dit combien commander, et à qui livrer.",
+  },
   {
     question: 'Mes clients doivent-ils installer une application ?',
     answer:
-      "Non. Le lien s'ouvre dans le navigateur du téléphone, directement depuis WhatsApp. Pas de compte, pas de mot de passe. Répondre prend moins de 30 secondes.",
+      "Non. Le lien s'ouvre dans le navigateur du téléphone. Ton client choisit la quantité et son quartier, puis laisse son numéro s'il accepte que tu le recontactes. Il n'a ni compte à créer, ni application à télécharger.",
   },
   {
     question: 'Où est-ce que je peux partager le lien ?',
     answer:
-      'Partout où on peut coller un lien : groupes et statuts WhatsApp, Telegram, Facebook, Instagram, TikTok, Messenger, SMS, et même tes publicités Facebook et Instagram.',
+      "Partout où sont tes clients : groupes et statut WhatsApp, lives et bio TikTok, groupes et pages Facebook, Instagram, Telegram, Messenger, SMS, et même tes publicités. Avec un pass, tu crées un lien par groupe pour savoir lequel t'apporte des clients.",
   },
   {
-    question: 'Mes clients voient-ils les réponses des autres ?',
+    question: 'Comment tester un produit avant de le commander en gros ?',
     answer:
-      'Non. Chacun ne voit que sa propre réponse. Les numéros ne sont visibles que par ta boutique.',
+      "Crée le produit dans Tamani en indiquant qu'il arrive bientôt, puis partage le lien. Les réponses te montrent combien de clients sont intéressés, et pour quelle quantité. Tu commandes ensuite la bonne quantité, pas un carton au hasard.",
+  },
+  {
+    question: "Puis-je vendre un produit que je n'ai pas encore en stock ?",
+    answer:
+      "Oui. Indique que le produit arrive bientôt. Tes clients disent ce qu'ils veulent, tu commandes chez ton fournisseur ce qui est demandé, puis tu livres. C'est le principe de la précommande, sans site web.",
   },
   {
     question: 'Comment Tamani calcule-t-il la quantité à commander ?',
@@ -75,18 +114,23 @@ export const LANDING_FAQ: readonly { question: string; answer: string }[] = [
       "Tout le monde n'achète pas ce qu'il annonce. Tamani applique donc un coefficient : 0,7 pour un revendeur, 0,5 pour un usager. Tu peux les changer, et avec un pass, Tamani les apprend de tes vraies ventes. Le calcul est toujours affiché.",
   },
   {
+    question: 'Mes clients voient-ils les réponses des autres ?',
+    answer:
+      'Non. Chacun ne voit que sa propre réponse. Les numéros ne sont visibles que par ta boutique.',
+  },
+  {
     question: "L'essai gratuit, comment ça marche ?",
-    answer: `Ta boutique a ${TRIAL.durationDays} jours ou ${TRIAL.includedResponses} réponses, la première limite atteinte, pour une campagne, sans carte bancaire. Tu as le verdict et les numéros de tes clients. Ensuite, tes nouvelles réponses t'attendent : tu les ouvres en prenant un pass.`,
+    answer: `Tu as ${TRIAL.durationDays} jours pour essayer, jusqu'à ${TRIAL.includedResponses} réponses, avec une campagne, sans carte bancaire. Tu vois les numéros de tes clients et l'avis sur la quantité à commander. Ensuite, tu choisis un pass si tu veux continuer.`,
   },
   {
-    question: 'Que se passe-t-il si je dépasse les réponses de mon pass ?',
+    question: 'Que se passe-t-il quand mon pass se termine ?',
     answer:
-      "Aucune réponse n'est perdue, et tes clients ne voient aucun blocage. Les réponses en plus sont gardées : tu les vois dès que tu prends un autre pass, qui garde aussi les réponses non utilisées.",
+      'Ton lien continue de marcher. Tes clients peuvent toujours répondre, et leurs réponses sont gardées. Pour voir les nouvelles réponses et les numéros, il suffit de reprendre un pass.',
   },
+  { question: 'Comment je paie ?', answer: PAY_ANSWER },
   {
-    question: 'Comment je paie ?',
-    answer:
-      "Par mobile money ou par carte, pour un pass de 7, 14 ou 30 jours payé d'avance. Rien n'est prélevé automatiquement : trois jours avant la fin, Tamani te prévient.",
+    question: 'Dans quels pays marche Tamani ?',
+    answer: `Tamani marche dans ${SHOP_COUNTRIES.length} pays d'Afrique francophone : ${frenchList(SHOP_COUNTRIES.map((c) => c.label))}. Ta boutique affiche ses prix dans la monnaie de ton pays.`,
   },
 ];
 
@@ -156,15 +200,30 @@ export function pickWeighted(weights: readonly number[], r: number): number {
   return weights.length - 1;
 }
 
+/**
+ * The value a counting number shows at t in [0, 1] of its run: an ease-out
+ * (fast start, gentle landing), rounded, never past the target.
+ */
+export function countFrame(target: number, t: number): number {
+  const k = Math.min(1, Math.max(0, t));
+  return Math.min(target, Math.round(target * (1 - (1 - k) ** 3)));
+}
+
 export function clampPercent(n: number): number {
   return Math.min(100, Math.max(0, n));
 }
 
-const trimBase = (appUrl: string) => appUrl.replace(/\/+$/, '');
+export const trimBase = (appUrl: string) => appUrl.replace(/\/+$/, '');
 
 /** schema.org graph of the home page: who we are, what we sell, the questions. */
-export function landingJsonLd(appUrl: string): Record<string, unknown> {
+export function landingJsonLd(
+  appUrl: string,
+  links: LandingLinks = LANDING_LINKS,
+): Record<string, unknown> {
   const base = trimBase(appUrl);
+  const sameAs = [links.facebook, links.instagram, links.tiktok].filter((l): l is string =>
+    Boolean(l),
+  );
   const home = `${base}/`;
   const org = { '@id': `${base}/#organisation` };
   return {
@@ -177,6 +236,14 @@ export function landingJsonLd(appUrl: string): Record<string, unknown> {
         url: home,
         logo: `${base}/brand/tamani-logo.svg`,
         slogan: LANDING_SLOGAN,
+        contactPoint: {
+          '@type': 'ContactPoint',
+          contactType: 'customer support',
+          email: LANDING_CONTACT_EMAIL,
+          availableLanguage: 'fr',
+          ...(links.whatsappContact && { url: links.whatsappContact }),
+        },
+        ...(sameAs.length > 0 && { sameAs }),
       },
       {
         '@type': 'WebSite',
@@ -194,14 +261,15 @@ export function landingJsonLd(appUrl: string): Record<string, unknown> {
         operatingSystem: 'Web, Android, iOS',
         inLanguage: 'fr',
         description:
-          'Les grossistes et importateurs partagent un lien sur WhatsApp, Telegram ou Facebook. Leur communauté dit en moins de 30 secondes qui veut quoi et combien, et Tamani conseille la quantité à commander.',
+          "Les grossistes et les vendeurs en ligne partagent un lien produit sur WhatsApp, TikTok ou Facebook. Leurs clients disent en moins de 30 secondes ce qu'ils veulent et combien, et Tamani conseille la quantité à commander.",
         publisher: org,
-        offers: (['TRIAL', ...PASS_IDS] as const).map((id) => ({
-          '@type': 'Offer',
-          name: PLANS[id].label,
-          price: String(PLANS[id].priceXof ?? 0),
+        offers: {
+          '@type': 'AggregateOffer',
           priceCurrency: 'XOF',
-        })),
+          lowPrice: String(PLANS.TRIAL.priceXof ?? 0),
+          highPrice: String(Math.max(...PASS_IDS.map((id) => PLANS[id].priceXof ?? 0))),
+          offerCount: PASS_IDS.length + 1,
+        },
       },
       {
         '@type': 'FAQPage',

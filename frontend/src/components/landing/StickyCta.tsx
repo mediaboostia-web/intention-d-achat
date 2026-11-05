@@ -5,7 +5,7 @@ import { Button } from '@/components/ui';
 
 /**
  * On a phone, the sign-up button follows once the hero's own has scrolled
- * away; it steps aside over the prices, the community call and the footer,
+ * away; it steps aside over the community call, the last call and the footer,
  * which carry their own.
  */
 export function StickyCta() {
@@ -14,7 +14,7 @@ export function StickyCta() {
   useEffect(() => {
     const hero = document.getElementById('lp-hero-cta');
     if (!hero) return;
-    const covers = ['tarifs', 'communaute', 'lp-footer'].flatMap((id) => {
+    const covers = ['communaute', 'final', 'contact'].flatMap((id) => {
       const el = document.getElementById(id);
       return el ? [el] : [];
     });

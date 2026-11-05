@@ -20,6 +20,7 @@ export function AuthForm({
   children,
   before,
   after,
+  switchLink,
 }: {
   title: string;
   note?: ReactNode;
@@ -33,10 +34,13 @@ export function AuthForm({
   /** Above the fields, then « ou avec ton e-mail ». */
   before?: ReactNode;
   after?: ReactNode;
+  /** The other way in (« Déjà un compte ? »), right under the title (lot 12). */
+  switchLink?: ReactNode;
 }) {
   return (
     <>
       <AuthTitle title={title} note={note} />
+      {switchLink && <div className="mt-4">{switchLink}</div>}
       {before && (
         <div className="mt-8 flex flex-col gap-5">
           {before}

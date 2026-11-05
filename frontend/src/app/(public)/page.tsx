@@ -4,10 +4,10 @@ import { BeforeAfter } from '@/components/landing/BeforeAfter';
 import { Community } from '@/components/landing/Community';
 import { Faq } from '@/components/landing/Faq';
 import { Film } from '@/components/landing/Film';
+import { FinalCta } from '@/components/landing/FinalCta';
 import { Hero } from '@/components/landing/Hero';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { LandingNav } from '@/components/landing/LandingNav';
-import { Pricing } from '@/components/landing/Pricing';
 import { Problem } from '@/components/landing/Problem';
 import { Solution } from '@/components/landing/Solution';
 import { Steps } from '@/components/landing/Steps';
@@ -22,7 +22,7 @@ export function generateMetadata(): Metadata {
 
 /**
  * The public home page (lot 9a, mockup docs/brand/mockups/2026-10-25-page-accueil-v3.html):
- * the porteur's ten sections, in their order.
+ * the porteur's sections, in their order (rewritten in lot 12; the prices live on /forfaits).
  */
 export default function HomePage() {
   // `<` escaped so the graph can never close its <script> early.
@@ -43,9 +43,9 @@ export default function HomePage() {
         <Solution />
         <Steps />
         <BeforeAfter />
-        <Pricing />
         <Community />
         <Faq />
+        <FinalCta />
       </main>
       <LandingFooter />
       <StickyCta />

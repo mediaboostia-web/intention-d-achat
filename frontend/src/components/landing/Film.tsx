@@ -7,9 +7,10 @@ export function Film({ video = LANDING_VIDEO }: { video?: LandingVideo | null })
   return (
     <section id="film" className="lp-panel lp-panel--cover lp-film" aria-labelledby="lp-film-title">
       <div className="lp-wrap">
-        <h2 id="lp-film-title">Tamani en 90&nbsp;secondes</h2>
+        <h2 id="lp-film-title">Regarde Tamani en action</h2>
         <p className="lp-film__sub">
-          Le lien, les réponses, le verdict. Avec sous-titres : pas besoin du son.
+          En 90 secondes, un grossiste crée un produit, partage le lien dans son groupe WhatsApp,
+          puis voit arriver les réponses de ses clients avec la quantité à commander.
         </p>
         <div className="lp-film__frame">
           <FilmPlayer

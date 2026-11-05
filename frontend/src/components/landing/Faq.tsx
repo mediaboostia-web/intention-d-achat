@@ -1,18 +1,33 @@
 import { Button, Icon } from '@/components/ui';
 import { LANDING_FAQ, LANDING_LINKS, type LandingLinks } from '@/lib/tamani/landing';
 
-/** 9. Questions: the same as the page's FAQPage structured data. */
-export function Faq({ links = LANDING_LINKS }: { links?: LandingLinks }) {
+type Question = { question: string; answer: string };
+
+/**
+ * Questions: the same as the page's FAQPage structured data. The home page
+ * shows LANDING_FAQ; /forfaits passes its own.
+ */
+export function Faq({
+  links = LANDING_LINKS,
+  items = LANDING_FAQ,
+  id = 'faq',
+  title = 'Tes questions, nos réponses',
+}: {
+  links?: LandingLinks;
+  items?: readonly Question[];
+  id?: string;
+  title?: string;
+}) {
   return (
-    <section id="questions" className="lp-section" aria-labelledby="lp-faq-title">
+    <section id={id} className="lp-section" aria-labelledby={`${id}-title`}>
       <div className="lp-wrap">
         <div className="lp-center">
-          <h2 id="lp-faq-title" className="lp-h2">
-            Tes questions.
+          <h2 id={`${id}-title`} className="lp-h2">
+            {title}
           </h2>
         </div>
         <div className="lp-faq">
-          {LANDING_FAQ.map((q) => (
+          {items.map((q) => (
             <details key={q.question}>
               <summary>
                 {q.question}

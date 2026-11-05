@@ -4,37 +4,52 @@ import { Orbit } from './Orbit';
 const GAINS: readonly { icon: IconName; title: string; text: string }[] = [
   {
     icon: 'clock',
-    title: 'Moins de 30 secondes',
-    text: 'Tes clients répondent sans compte et sans application.',
+    title: 'Tes clients répondent en moins de 30 secondes',
+    text: "Ils touchent le lien, choisissent la quantité, et c'est fait. Pas d'application à installer, pas de compte à créer.",
+  },
+  {
+    icon: 'user',
+    title: 'Tu sais qui veut quoi, combien et où',
+    text: "Chaque réponse te donne le produit, la quantité, le quartier de livraison et le numéro. Le client accepte d'abord que tu le recontactes.",
   },
   {
     icon: 'link',
-    title: 'Tout au même endroit',
-    text: 'De WhatsApp comme de TikTok, les réponses se rangent toutes seules.',
+    title: "Tu sais quel canal t'apporte des clients",
+    text: 'Tu crées un lien par groupe ou par réseau, et tu vois enfin si tes clients viennent de WhatsApp, de TikTok ou de Facebook.',
+  },
+  {
+    icon: 'home',
+    title: 'Pas besoin de site web',
+    text: 'Ton produit a sa page, prête à partager. Rien à construire, rien à payer en plus.',
+  },
+  {
+    icon: 'eye',
+    title: 'Ton client voit ce qui est disponible',
+    text: '« Disponible maintenant » ou « bientôt », et, si tu veux, le nombre de pièces en stock.',
   },
   {
     icon: 'check',
-    title: 'Le bon chiffre',
-    text: 'Tamani te dit combien commander, et te montre le calcul.',
+    title: 'Tamani te dit combien commander',
+    text: 'À partir des réponses, Tamani calcule une quantité réaliste et te donne un avis clair avant que tu commandes.',
   },
 ];
 
-/** 4. The solution: one link everywhere; each network buzzes as it feeds Tamani. */
+/** 4. Features: one link for every client; each network buzzes as it feeds Tamani. */
 export function Solution() {
   return (
     <section
-      id="solution"
+      id="fonctionnalites"
       className="lp-panel lp-panel--wash lp-section"
       aria-labelledby="lp-orbit-title"
     >
       <div className="lp-wrap">
         <div className="lp-center">
           <h2 id="lp-orbit-title" className="lp-h2">
-            Un seul lien. Partout où sont tes clients.
+            Un seul lien pour tous tes clients
           </h2>
           <p className="lp-lead">
-            Avec Tamani, tu demandes à tes clients avant d&apos;acheter. Colle ton lien dans tes
-            groupes, tes statuts, tes pages ou tes pubs : chaque réponse arrive chez toi.
+            Un produit, un lien. Tu le partages partout où sont tes clients, et toutes les réponses
+            arrivent au même endroit.
           </p>
         </div>
         <Orbit />
@@ -52,9 +67,8 @@ export function Solution() {
           ))}
         </ul>
         <div className="lp-cta-row">
-          <p>Tes clients sont déjà dans tes groupes.</p>
           <Button href="/signup" size="lg" className="lp-press">
-            Créer mon lien gratuit
+            Essayer gratuitement
           </Button>
         </div>
       </div>

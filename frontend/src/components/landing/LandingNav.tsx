@@ -5,16 +5,9 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Button, Icon, Logo } from '@/components/ui';
 import { useInstall } from '@/components/app/use-install';
 import { INSTALL_COPY, type InstallState } from '@/lib/tamani/install';
-import { LANDING_LINKS, navStep, type LandingLinks } from '@/lib/tamani/landing';
+import { LANDING_LINKS, LANDING_NAV, navStep, type LandingLinks } from '@/lib/tamani/landing';
 import { Illustration } from './Illustration';
 import { PlatformLogo } from './PlatformLogo';
-
-const SECTIONS = [
-  { href: '#comment-ca-marche', label: 'Comment ça marche' },
-  { href: '#avant-apres', label: 'Avant / après' },
-  { href: '#tarifs', label: 'Tarifs' },
-  { href: '#questions', label: 'Questions' },
-] as const;
 
 /** « Installer l'application » in the phone menu, or the iPhone steps; nothing elsewhere. */
 export function DrawerInstall({
@@ -58,7 +51,14 @@ export function DrawerInstall({
  * « Commencer gratuitement », then « Se connecter ». Above them, two drawn
  * cards open the support and the WhatsApp group (porteur, 2026-10-30).
  */
-export function LandingNav({ links = LANDING_LINKS }: { links?: LandingLinks }) {
+export function LandingNav({
+  links = LANDING_LINKS,
+  current = '/',
+}: {
+  links?: LandingLinks;
+  /** The page showing the bar: its own entry is marked aria-current="page". */
+  current?: '/' | '/forfaits';
+}) {
   const help = [
     ...(links.whatsappContact
       ? [
@@ -85,11 +85,37 @@ export function LandingNav({ links = LANDING_LINKS }: { links?: LandingLinks }) 
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  // On the home page, the section in view: its menu entry gets underlined.
+  const [active, setActive] = useState<string | null>(null);
+  const here = (href: string) => ({
+    ...(href === current && { 'aria-current': 'page' as const }),
+    ...(href === active && { 'data-active': 'true' }),
+  });
   const barRef = useRef<HTMLElement>(null);
   const menuRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openRef = useRef(false);
+
+  useEffect(() => {
+    if (current !== '/' || !('IntersectionObserver' in window)) return;
+    const sections = LANDING_NAV.flatMap((n) => {
+      const el = n.href.startsWith('/#') ? document.getElementById(n.href.slice(2)) : null;
+      return el ? [{ href: n.href, el }] : [];
+    });
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const hit = sections.find((x) => x.el === e.target);
+          if (hit && e.isIntersecting) setActive(hit.href);
+        }
+      },
+      // A thin band across the middle of the screen: the section crossing it is « here ».
+      { rootMargin: '-45% 0px -50% 0px' },
+    );
+    sections.forEach((x) => io.observe(x.el));
+    return () => io.disconnect();
+  }, [current]);
 
   useEffect(() => {
     openRef.current = open;
@@ -118,7 +144,7 @@ export function LandingNav({ links = LANDING_LINKS }: { links?: LandingLinks }) 
   }, []);
 
   // While the drawer is open: focus inside it, Tab kept in it, Escape closes,
-  // the page under it does not scroll, and a window grown past 1000px (where
+  // the page under it does not scroll, and a window grown past 1120px (where
   // the bar shows every link) closes it.
   useEffect(() => {
     if (!open) return;
@@ -145,7 +171,7 @@ export function LandingNav({ links = LANDING_LINKS }: { links?: LandingLinks }) 
         first.focus();
       }
     };
-    const wide = window.matchMedia('(min-width: 1000px)');
+    const wide = window.matchMedia('(min-width: 1120px)');
     const onWide = () => {
       if (wide.matches) setOpen(false);
     };
@@ -177,10 +203,10 @@ export function LandingNav({ links = LANDING_LINKS }: { links?: LandingLinks }) 
             <Logo size={34} />
           </Link>
           <nav className="lp-nav__links" aria-label="Sections de la page">
-            {SECTIONS.map((s) => (
-              <a key={s.href} href={s.href}>
+            {LANDING_NAV.map((s) => (
+              <Link key={s.href} href={s.href} {...here(s.href)}>
                 {s.label}
-              </a>
+              </Link>
             ))}
           </nav>
           <div className="lp-nav__end">
@@ -238,16 +264,17 @@ export function LandingNav({ links = LANDING_LINKS }: { links?: LandingLinks }) 
             </button>
           </div>
           <nav className="lp-drawer__links" aria-label="Sections de la page">
-            {SECTIONS.map((s, i) => (
-              <a
+            {LANDING_NAV.map((s, i) => (
+              <Link
                 key={s.href}
                 href={s.href}
                 onClick={() => setOpen(false)}
                 style={{ '--i': i } as CSSProperties}
+                {...here(s.href)}
               >
                 {s.label}
                 <Icon name="chevron-right" />
-              </a>
+              </Link>
             ))}
           </nav>
           {help.length > 0 && (
@@ -269,7 +296,7 @@ export function LandingNav({ links = LANDING_LINKS }: { links?: LandingLinks }) 
             </ul>
           )}
           <DrawerInstall state={installState} onInstall={() => void install()} />
-          <div className="lp-drawer__end" style={{ '--i': SECTIONS.length } as CSSProperties}>
+          <div className="lp-drawer__end" style={{ '--i': LANDING_NAV.length } as CSSProperties}>
             <Button href="/signup" size="lg" className="w-full">
               Commencer gratuitement
             </Button>
