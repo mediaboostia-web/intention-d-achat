@@ -10,6 +10,7 @@ import {
   LANDING_REASSURANCE,
   LANDING_SIGNUP_HREF,
   LANDING_SIGNUP_LABEL,
+  LANDING_NAV_CTA_LABEL,
   LANDING_TITLE,
   clampPercent,
   countFrame,
@@ -302,6 +303,7 @@ describe('the launch mode (copy brief §2.3, §4.2)', () => {
     expect(LANDING_LAUNCH_MODE).toBe('waitlist');
     expect(LANDING_SIGNUP_HREF).toBe('/liste-attente');
     expect(LANDING_SIGNUP_LABEL).toBe("Rejoindre la liste d'attente");
+    expect(LANDING_NAV_CTA_LABEL).toBe("Liste d'attente");
     expect(LANDING_FINAL_LABEL).toBe("Rejoindre gratuitement la liste d'attente");
     expect(LANDING_PLAN_LABEL).toBe("Être prévenu à l'ouverture");
     expect(LANDING_REASSURANCE).toBe(

@@ -347,10 +347,11 @@ html:has(.lp) {
     display: inline-flex;
   }
 }
-/* The six entries of the menu (lot 12) fit in the bar from 1120 px, pushed
+/* The six entries of the menu (lot 12) fit in the bar from 1280 px (the bar's
+   full 1180 px, since the copy brief's longer entries, 2026-11-06), pushed
    right next to the sign-in; below, they stay in the drawer. Centring them
    (lot 9a, four entries) made them run into « Se connecter ». */
-@media (min-width: 1120px) {
+@media (min-width: 1280px) {
   .lp-nav__links {
     display: flex;
     gap: 0;
@@ -581,8 +582,8 @@ button.lp-drawer__install {
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
 }
-/* The drawer lives as long as its menu button does (below 1120 px). */
-@media (min-width: 1120px) {
+/* The drawer lives as long as its menu button does (below 1280 px). */
+@media (min-width: 1280px) {
   .lp-drawer {
     display: none;
   }
@@ -622,6 +623,8 @@ button.lp-drawer__install {
 }
 .lp-hero__title > span {
   display: block;
+  /* « Teste l'intérêt / de tes clients »: never one word alone on a line. */
+  text-wrap: balance;
 }
 .lp-hero__l2 {
   position: relative;

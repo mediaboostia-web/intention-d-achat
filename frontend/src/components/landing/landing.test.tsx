@@ -9,6 +9,8 @@ import {
   LANDING_LINKS,
   LANDING_NAV,
   LANDING_VIDEO,
+  LANDING_NAV_CTA_LABEL,
+  LANDING_SIGNUP_LABEL,
   filmLength,
   type LandingLinks,
 } from '@/lib/tamani/landing';
@@ -156,7 +158,12 @@ describe('LandingNav', () => {
     expect(out).toMatch(
       /<a [^>]*class="[^"]*lp-nav__cta[^"]*"[^>]*href="\/liste-attente"|<a [^>]*href="\/liste-attente"[^>]*class="[^"]*lp-nav__cta/,
     );
+    // The bar's button carries the short label on one line; the drawer's, the full one.
+    const barCta = out.match(/<a [^>]*class="[^"]*lp-nav__cta[^"]*"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? '';
+    expect(barCta).toContain(`>${LANDING_NAV_CTA_LABEL.replace("'", '&#x27;')}<`);
+    expect(barCta).toContain('whitespace-nowrap');
     const drawer = out.slice(out.indexOf('id="lp-menu"'));
+    expect(drawer).toContain(LANDING_SIGNUP_LABEL.replace("'", '&#x27;'));
     const hrefs = [...drawer.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
     expect(hrefs).toEqual([
       ...LANDING_NAV.map((n) => n.href),
@@ -566,22 +573,23 @@ describe('motion that invites, never in the way', () => {
   });
 
   // Recette 2026-11-05: six entries centred in the bar ran into « Se connecter » at 1280 px.
+  // Recette 2026-11-06: the brief's longer entries and button need the full 1180 px bar.
   it('the bar shows its six entries only where they fit, never centred over the sign-in', () => {
     expect(css).not.toMatch(/\.lp-nav__links\s*\{[^}]*left:\s*50%/);
     expect(css).toMatch(
-      /@media \(min-width: 1120px\)\s*\{\s*\.lp-nav__links\s*\{\s*display:\s*flex[\s\S]*?\.lp-nav__menu\s*\{\s*display:\s*none/,
+      /@media \(min-width: 1280px\)\s*\{\s*\.lp-nav__links\s*\{\s*display:\s*flex[\s\S]*?\.lp-nav__menu\s*\{\s*display:\s*none/,
     );
   });
 
-  it('the drawer exists wherever the menu button shows (below 1120 px)', () => {
+  it('the drawer exists wherever the menu button shows (below 1280 px)', () => {
     // Hidden from 1000 px while the button stayed until 1119 px, a tap showed
     // nothing and locked the page's scroll.
     expect(css).not.toMatch(
       /@media \(min-width: 1000px\)\s*\{\s*\.lp-drawer\s*\{\s*display:\s*none/,
     );
-    expect(css).toMatch(/@media \(min-width: 1120px\)\s*\{\s*\.lp-drawer\s*\{\s*display:\s*none/);
+    expect(css).toMatch(/@media \(min-width: 1280px\)\s*\{\s*\.lp-drawer\s*\{\s*display:\s*none/);
     const nav = readFileSync(path.join(__dirname, 'LandingNav.tsx'), 'utf8');
-    expect(nav).toContain("matchMedia('(min-width: 1120px)')");
+    expect(nav).toContain("matchMedia('(min-width: 1280px)')");
     expect(nav).not.toContain("matchMedia('(min-width: 1000px)')");
   });
 
