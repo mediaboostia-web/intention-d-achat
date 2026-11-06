@@ -14,10 +14,13 @@ import { SignOutButton } from './SignOutButton';
 export function AdminShell({
   email,
   role,
+  unread = 0,
   children,
 }: {
   email: string;
   role: string;
+  /** What is new in the notifications for this admin (lot 13a). */
+  unread?: number;
   children: ReactNode;
 }) {
   const who = (
@@ -37,7 +40,7 @@ export function AdminShell({
             </Link>
             <SignOutButton className="lg:hidden" />
           </div>
-          <AdminNav />
+          <AdminNav unread={unread} />
           <div className="mt-auto hidden space-y-2 lg:block">
             <div className="rounded-control bg-admin-bg p-3">{who}</div>
             <SignOutButton className="w-full" />
