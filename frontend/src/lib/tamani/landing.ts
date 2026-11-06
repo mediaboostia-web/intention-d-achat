@@ -39,6 +39,12 @@ export const LANDING_NAV: readonly { href: string; label: string }[] = [
   { href: '/#contact', label: 'Contact' },
 ];
 
+/** The computer bar keeps three of them (porteur, 2026-11-06); the phone's drawer keeps all six. */
+const BAR_HREFS = new Set(['/#comment-ca-marche', '/#fonctionnalites', '/forfaits']);
+export const LANDING_BAR_NAV: readonly { href: string; label: string }[] = LANDING_NAV.filter((n) =>
+  BAR_HREFS.has(n.href),
+);
+
 export type LandingLinkName = 'whatsappContact' | 'community' | 'facebook' | 'instagram' | 'tiktok';
 
 /**
@@ -64,7 +70,6 @@ const LAUNCH: Record<
   {
     href: string;
     label: string;
-    navLabel: string;
     finalLabel: string;
     finalNote: string;
     planLabel: string;
@@ -74,7 +79,6 @@ const LAUNCH: Record<
   waitlist: {
     href: WAITLIST_PATH,
     label: "Rejoindre la liste d'attente",
-    navLabel: "Liste d'attente",
     finalLabel: "Rejoindre gratuitement la liste d'attente",
     finalNote: "Sans engagement. Nous te prévenons à l'ouverture.",
     planLabel: "Être prévenu à l'ouverture",
@@ -83,7 +87,6 @@ const LAUNCH: Record<
   open: {
     href: '/signup',
     label: 'Créer mon compte gratuit',
-    navLabel: 'Créer mon compte',
     finalLabel: 'Créer mon compte gratuit',
     finalNote: 'Sans carte bancaire.',
     planLabel: 'Choisir ce pass',
@@ -95,8 +98,6 @@ const launch = LAUNCH[LANDING_LAUNCH_MODE];
 /** Where every sign-up button of the public site leads, and what it says. */
 export const LANDING_SIGNUP_HREF: string = launch.href;
 export const LANDING_SIGNUP_LABEL: string = launch.label;
-/** The menu bar's button: short, on one line, beside the six entries and « Se connecter ». */
-export const LANDING_NAV_CTA_LABEL: string = launch.navLabel;
 /** The last call's button, a little longer. */
 export const LANDING_FINAL_LABEL: string = launch.finalLabel;
 /** The line under it. */

@@ -9,7 +9,7 @@ import {
   LANDING_LINKS,
   LANDING_NAV,
   LANDING_VIDEO,
-  LANDING_NAV_CTA_LABEL,
+  LANDING_BAR_NAV,
   LANDING_SIGNUP_LABEL,
   filmLength,
   type LandingLinks,
@@ -130,6 +130,19 @@ describe('LandingNav', () => {
     for (const n of LANDING_NAV) expect(text(<LandingNav />)).toContain(n.label);
   });
 
+  it('on a computer the bar keeps three entries and the two buttons; the drawer keeps all six', () => {
+    const out = html(<LandingNav />);
+    const bar = out.match(/<nav class="lp-nav__links"[\s\S]*?<\/nav>/)?.[0] ?? '';
+    expect([...bar.matchAll(/href="([^"]+)"/g)].map((m) => m[1])).toEqual([
+      '/#comment-ca-marche',
+      '/#fonctionnalites',
+      '/forfaits',
+    ]);
+    for (const n of LANDING_BAR_NAV) expect(bar).toContain(`>${n.label}<`);
+    const drawer = out.slice(out.indexOf('id="lp-menu"'));
+    for (const n of LANDING_NAV) expect(drawer).toContain(`href="${n.href}"`);
+  });
+
   it('marks Forfaits as the current page on /forfaits', () => {
     expect(html(<LandingNav />)).not.toContain('aria-current="page"');
     const out = html(<LandingNav current="/forfaits" />);
@@ -158,9 +171,9 @@ describe('LandingNav', () => {
     expect(out).toMatch(
       /<a [^>]*class="[^"]*lp-nav__cta[^"]*"[^>]*href="\/liste-attente"|<a [^>]*href="\/liste-attente"[^>]*class="[^"]*lp-nav__cta/,
     );
-    // The bar's button carries the short label on one line; the drawer's, the full one.
+    // The bar's button says the whole call on one line, like the drawer's.
     const barCta = out.match(/<a [^>]*class="[^"]*lp-nav__cta[^"]*"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? '';
-    expect(barCta).toContain(`>${LANDING_NAV_CTA_LABEL.replace("'", '&#x27;')}<`);
+    expect(barCta).toContain(`>${LANDING_SIGNUP_LABEL.replace("'", '&#x27;')}<`);
     expect(barCta).toContain('whitespace-nowrap');
     const drawer = out.slice(out.indexOf('id="lp-menu"'));
     expect(drawer).toContain(LANDING_SIGNUP_LABEL.replace("'", '&#x27;'));
@@ -240,12 +253,13 @@ describe('Hero', () => {
     expect(out.match(/<h1/g)).toHaveLength(1);
     const h1 = out.match(/<h1[\s\S]*?<\/h1>/)?.[0] ?? '';
     expect(text(<div dangerouslySetInnerHTML={{ __html: h1 }} />).trim()).toBe(
-      "Teste l'intérêt de tes clients avant de commander ton stock.",
+      'Teste la demande avant de commander ton stock.',
     );
     const t = text(<Hero />);
     expect(t).toContain('Pour les grossistes, importateurs et vendeurs en ligne');
+    // Porteur 2026-11-06: the promise and its line, short.
     expect(t).toContain(
-      "Crée une fiche pour ton produit, partage son lien sur WhatsApp, TikTok, Facebook ou tes autres canaux. Tes clients indiquent ce qu'ils souhaitent et en quelle quantité. Tamani rassemble les réponses et t'aide à estimer ce que tu peux prévoir auprès de ton fournisseur.",
+      "Partage un lien sur WhatsApp, TikTok ou Facebook. Tes clients disent ce qu'ils veulent et combien, et Tamani estime la quantité à prévoir.",
     );
     expect(t).toContain("Gratuit · Sans engagement · Nous te prévenons à l'ouverture.");
     expect(t).toContain("Rejoindre la liste d'attente");
@@ -334,6 +348,10 @@ describe('Problem', () => {
     );
     const list = out.match(/<ul class="lp-pains"[\s\S]*?<\/ul>/)?.[0] ?? '';
     expect(list.match(/<li/g)).toHaveLength(4);
+    // A big number behind each card, hidden from screen readers.
+    expect(
+      list.match(/<span class="lp-pains__num" aria-hidden="true">0[1-4]<\/span>/g),
+    ).toHaveLength(4);
     for (const title of [
       'Ton argent peut rester bloqué dans les invendus.',
       'Les demandes se dispersent dans tes messages.',
@@ -365,6 +383,17 @@ describe('Solution', () => {
     // One main button per screen: here the way to the steps.
     expect(t).toContain('Découvrir comment ça marche');
     expect(html(<Solution />)).toContain('href="/#comment-ca-marche"');
+  });
+
+  // No phone mockup (porteur, lot 9a): a drawing of the answers coming in sits beside the list.
+  it('lists the five benefits in order beside the drawing of the answers coming in', () => {
+    const out = html(<Solution />);
+    const list = out.match(/<ol class="lp-feat__list"[\s\S]*?<\/ol>/)?.[0] ?? '';
+    expect(list.match(/<li/g)).toHaveLength(5);
+    expect(
+      list.match(/<span class="lp-feat__num" aria-hidden="true">0[1-5]<\/span>/g),
+    ).toHaveLength(5);
+    expect(out).toContain('%2Faccueil%2Finscription.webp');
   });
 
   it('the orbit lists the 8 networks with their real logos', () => {
@@ -460,6 +489,15 @@ describe('Faq', () => {
     expect(t).not.toContain('Écris-nous sur WhatsApp');
     expect(text(<Faq links={ALL_LINKS} />)).toContain('Écris-nous sur WhatsApp');
   });
+
+  it('sets the title and the help beside the questions, each question numbered', () => {
+    const out = html(<Faq links={ALL_LINKS} />);
+    expect(out).toContain('class="lp-faqs__side"');
+    expect(out).toContain('%2Faccueil%2Fmenu-support.webp');
+    expect(out.match(/<span class="lp-faq__num" aria-hidden="true">\d{2}<\/span>/g)).toHaveLength(
+      LANDING_FAQ.length,
+    );
+  });
 });
 
 describe('FinalCta', () => {
@@ -543,9 +581,16 @@ describe('motion that invites, never in the way', () => {
 
   it('the hero title words are spans for the stagger, the h1 still reads as one sentence', () => {
     const h1 = html(<Hero />).match(/<h1[\s\S]*?<\/h1>/)?.[0] ?? '';
-    expect(h1.match(/class="lp-word"/g)).toHaveLength(10);
+    expect(h1.match(/class="lp-word"/g)).toHaveLength(8);
     expect(text(<div dangerouslySetInnerHTML={{ __html: h1 }} />).trim()).toBe(
-      "Teste l'intérêt de tes clients avant de commander ton stock.",
+      'Teste la demande avant de commander ton stock.',
+    );
+  });
+
+  // Porteur 2026-11-06: the hero's two buttons stand side by side, the same height.
+  it('the hero buttons stay on one row from 560 px', () => {
+    expect(css).toMatch(
+      /@media \(min-width: 560px\)\s*\{\s*\.lp-hero__ctas\s*\{[^}]*flex-wrap:\s*nowrap/,
     );
   });
 
@@ -573,23 +618,23 @@ describe('motion that invites, never in the way', () => {
   });
 
   // Recette 2026-11-05: six entries centred in the bar ran into « Se connecter » at 1280 px.
-  // Recette 2026-11-06: the brief's longer entries and button need the full 1180 px bar.
+  // Porteur 2026-11-06: three entries in the bar, so they fit again from 1120 px.
   it('the bar shows its six entries only where they fit, never centred over the sign-in', () => {
     expect(css).not.toMatch(/\.lp-nav__links\s*\{[^}]*left:\s*50%/);
     expect(css).toMatch(
-      /@media \(min-width: 1280px\)\s*\{\s*\.lp-nav__links\s*\{\s*display:\s*flex[\s\S]*?\.lp-nav__menu\s*\{\s*display:\s*none/,
+      /@media \(min-width: 1120px\)\s*\{\s*\.lp-nav__links\s*\{\s*display:\s*flex[\s\S]*?\.lp-nav__menu\s*\{\s*display:\s*none/,
     );
   });
 
-  it('the drawer exists wherever the menu button shows (below 1280 px)', () => {
+  it('the drawer exists wherever the menu button shows (below 1120 px)', () => {
     // Hidden from 1000 px while the button stayed until 1119 px, a tap showed
     // nothing and locked the page's scroll.
     expect(css).not.toMatch(
       /@media \(min-width: 1000px\)\s*\{\s*\.lp-drawer\s*\{\s*display:\s*none/,
     );
-    expect(css).toMatch(/@media \(min-width: 1280px\)\s*\{\s*\.lp-drawer\s*\{\s*display:\s*none/);
+    expect(css).toMatch(/@media \(min-width: 1120px\)\s*\{\s*\.lp-drawer\s*\{\s*display:\s*none/);
     const nav = readFileSync(path.join(__dirname, 'LandingNav.tsx'), 'utf8');
-    expect(nav).toContain("matchMedia('(min-width: 1280px)')");
+    expect(nav).toContain("matchMedia('(min-width: 1120px)')");
     expect(nav).not.toContain("matchMedia('(min-width: 1000px)')");
   });
 

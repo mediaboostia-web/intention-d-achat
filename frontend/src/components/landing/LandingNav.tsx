@@ -6,11 +6,11 @@ import { Button, Icon, Logo } from '@/components/ui';
 import { useInstall } from '@/components/app/use-install';
 import { INSTALL_COPY, type InstallState } from '@/lib/tamani/install';
 import {
+  LANDING_BAR_NAV,
   LANDING_LINKS,
   LANDING_NAV,
   navStep,
   type LandingLinks,
-  LANDING_NAV_CTA_LABEL,
   LANDING_SIGNUP_HREF,
   LANDING_SIGNUP_LABEL,
 } from '@/lib/tamani/landing';
@@ -152,7 +152,7 @@ export function LandingNav({
   }, []);
 
   // While the drawer is open: focus inside it, Tab kept in it, Escape closes,
-  // the page under it does not scroll, and a window grown past 1280px (where
+  // the page under it does not scroll, and a window grown past 1120px (where
   // the bar shows every link) closes it.
   useEffect(() => {
     if (!open) return;
@@ -179,7 +179,7 @@ export function LandingNav({
         first.focus();
       }
     };
-    const wide = window.matchMedia('(min-width: 1280px)');
+    const wide = window.matchMedia('(min-width: 1120px)');
     const onWide = () => {
       if (wide.matches) setOpen(false);
     };
@@ -211,7 +211,7 @@ export function LandingNav({
             <Logo size={34} />
           </Link>
           <nav className="lp-nav__links" aria-label="Sections de la page">
-            {LANDING_NAV.map((s) => (
+            {LANDING_BAR_NAV.map((s) => (
               <Link key={s.href} href={s.href} {...here(s.href)}>
                 {s.label}
               </Link>
@@ -225,7 +225,7 @@ export function LandingNav({
               href={LANDING_SIGNUP_HREF}
               className="lp-nav__cta min-h-11 rounded-[12px] bg-ink px-[18px] text-[15px] whitespace-nowrap"
             >
-              {LANDING_NAV_CTA_LABEL}
+              {LANDING_SIGNUP_LABEL}
             </Button>
             <button
               ref={menuRef}

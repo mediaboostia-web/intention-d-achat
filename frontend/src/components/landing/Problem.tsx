@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { Icon, type IconName } from '@/components/ui';
+import { twoDigits } from './content';
 import { Illustration } from './Illustration';
 import { InView } from './InView';
 
@@ -26,7 +27,11 @@ const PAINS: readonly { icon: IconName; title: string; text: string }[] = [
   },
 ];
 
-/** 3. The problem before the order (copy brief §5.5): four situations. */
+/**
+ * 3. The problem before the order (copy brief §5.5). From 960 px the four
+ * situations climb down a big circle in a zig-zag, each with its figure
+ * behind it; the words and the drawing sit beside them.
+ */
 export function Problem() {
   return (
     <section id="probleme" className="lp-section" aria-labelledby="lp-pain-title">
@@ -42,29 +47,32 @@ export function Problem() {
               quantité à acheter.
             </p>
           </div>
+          <InView as="ul" className="lp-pains" threshold={0.15}>
+            {PAINS.map((p, i) => (
+              <li key={p.title} className="lp-pains__card" style={{ '--i': i } as CSSProperties}>
+                <span className="lp-pains__num" aria-hidden="true">
+                  {twoDigits(i + 1)}
+                </span>
+                <span className="lp-tile-ic" aria-hidden="true">
+                  <Icon name={p.icon} />
+                </span>
+                <h3>{p.title}</h3>
+                <p>{p.text}</p>
+              </li>
+            ))}
+          </InView>
           <div className="lp-pain__art">
             <Illustration
               name="probleme"
               alt="La grossiste assise sur un carton, soucieuse, au milieu de piles de cartons qui ne se vendent pas."
-              sizes="(min-width: 960px) 520px, 100vw"
+              sizes="(min-width: 960px) 480px, 100vw"
               ink
             />
+            <p className="lp-pain__punch">
+              Et si tu pouvais recueillir ces demandes avant de passer ta commande ?
+            </p>
           </div>
         </div>
-        <InView as="ul" className="lp-pains" threshold={0.2}>
-          {PAINS.map((p, i) => (
-            <li key={p.title} className="lp-pains__card" style={{ '--i': i } as CSSProperties}>
-              <span className="lp-tile-ic" aria-hidden="true">
-                <Icon name={p.icon} />
-              </span>
-              <h3>{p.title}</h3>
-              <p>{p.text}</p>
-            </li>
-          ))}
-        </InView>
-        <p className="lp-pain__punch">
-          Et si tu pouvais recueillir ces demandes avant de passer ta commande ?
-        </p>
       </div>
     </section>
   );

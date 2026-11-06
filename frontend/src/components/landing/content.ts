@@ -24,6 +24,9 @@ export const LANDING_IMAGES = {
 
 export type LandingImageName = keyof typeof LANDING_IMAGES;
 
+/** « 01 », « 02 »…: the big figure behind a numbered card (problem, features, questions). */
+export const twoDigits = (n: number): string => String(n).padStart(2, '0');
+
 /** Where the link opens, in the marquee under the hero. */
 export const MARQUEE: readonly { slug: PlatformSlug; label: string }[] = [
   { slug: 'whatsapp', label: 'WhatsApp' },

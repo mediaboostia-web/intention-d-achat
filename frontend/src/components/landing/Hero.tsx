@@ -10,8 +10,8 @@ import {
   LANDING_SIGNUP_LABEL,
 } from '@/lib/tamani/landing';
 
-// The copy brief's promise (§5.2), split by hand so no short word stays alone.
-const LINE_1 = "Teste l'intérêt de tes clients";
+// The promise, shortened by the porteur (2026-11-06) from the copy brief's §5.2.
+const LINE_1 = 'Teste la demande';
 const LINE_2 = 'avant de commander ton stock.';
 
 /** Each word its own span, so the title rises word by word (landing.css). */
@@ -73,10 +73,8 @@ export function Hero() {
               </span>
             </h1>
             <p className="lp-hero__sub">
-              Crée une fiche pour ton produit, partage son lien sur WhatsApp, TikTok, Facebook ou
-              tes autres canaux. Tes clients indiquent ce qu&apos;ils souhaitent et en quelle
-              quantité. Tamani rassemble les réponses et t&apos;aide à estimer ce que tu peux
-              prévoir auprès de ton fournisseur.
+              Partage un lien sur WhatsApp, TikTok ou Facebook. Tes clients disent ce qu&apos;ils
+              veulent et combien, et Tamani estime la quantité à prévoir.
             </p>
             <div className="lp-hero__ctas lp-btn-row">
               <Button

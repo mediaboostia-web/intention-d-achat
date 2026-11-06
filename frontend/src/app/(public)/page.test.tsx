@@ -62,7 +62,7 @@ describe('/ (the home page)', () => {
     expect(ctas.length).toBeGreaterThanOrEqual(6);
     for (const a of ctas)
       expect(text(<div dangerouslySetInnerHTML={{ __html: a }} />)).toMatch(
-        /Rejoindre (gratuitement )?la liste d'attente|^Liste d'attente$/,
+        /Rejoindre (gratuitement )?la liste d'attente/,
       );
     expect(text(<HomePage />)).not.toContain('Essayer gratuitement');
   });

@@ -10,7 +10,7 @@ import {
   LANDING_REASSURANCE,
   LANDING_SIGNUP_HREF,
   LANDING_SIGNUP_LABEL,
-  LANDING_NAV_CTA_LABEL,
+  LANDING_BAR_NAV,
   LANDING_TITLE,
   clampPercent,
   countFrame,
@@ -229,6 +229,14 @@ describe('landing copy', () => {
 });
 
 describe('the menu, the titles and the questions of the new site', () => {
+  it('LANDING_BAR_NAV keeps three of them for the computer bar (porteur, 2026-11-06)', () => {
+    expect(LANDING_BAR_NAV.map((n) => n.label)).toEqual([
+      'Comment ça marche',
+      'Fonctionnalités',
+      'Tarifs',
+    ]);
+  });
+
   it('LANDING_NAV lists the six menu entries, sections as /#anchors', () => {
     expect(LANDING_NAV.map((n) => [n.href, n.label])).toEqual([
       ['/#comment-ca-marche', 'Comment ça marche'],
@@ -303,7 +311,6 @@ describe('the launch mode (copy brief §2.3, §4.2)', () => {
     expect(LANDING_LAUNCH_MODE).toBe('waitlist');
     expect(LANDING_SIGNUP_HREF).toBe('/liste-attente');
     expect(LANDING_SIGNUP_LABEL).toBe("Rejoindre la liste d'attente");
-    expect(LANDING_NAV_CTA_LABEL).toBe("Liste d'attente");
     expect(LANDING_FINAL_LABEL).toBe("Rejoindre gratuitement la liste d'attente");
     expect(LANDING_PLAN_LABEL).toBe("Être prévenu à l'ouverture");
     expect(LANDING_REASSURANCE).toBe(

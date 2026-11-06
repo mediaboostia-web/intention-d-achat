@@ -1,4 +1,6 @@
 import { Button, Icon, type IconName } from '@/components/ui';
+import { twoDigits } from './content';
+import { Illustration } from './Illustration';
 import { Orbit } from './Orbit';
 
 const GAINS: readonly { icon: IconName; title: string; text: string }[] = [
@@ -29,7 +31,12 @@ const GAINS: readonly { icon: IconName; title: string; text: string }[] = [
   },
 ];
 
-/** 4. The solution (copy brief §5.6): one product link, every answer in one place. */
+/**
+ * 4. The solution (copy brief §5.6): one product link, every answer in one
+ * place. Under the orbit, the five benefits are numbered beside the drawing of
+ * the answers coming in, kept in view while they scroll by (no phone mockup:
+ * the porteur's rule since lot 9a).
+ */
 export function Solution() {
   return (
     <section
@@ -49,19 +56,32 @@ export function Solution() {
           </p>
         </div>
         <Orbit />
-        <ul className="lp-gains">
-          {GAINS.map((g) => (
-            <li key={g.title}>
-              <span className="lp-tile-ic" aria-hidden="true">
-                <Icon name={g.icon} />
-              </span>
-              <div>
-                <b>{g.title}</b>
-                <p>{g.text}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div className="lp-feat">
+          <div className="lp-feat__art">
+            <Illustration
+              name="inscription"
+              alt="La grossiste assise sur ses cartons lit sur son téléphone les messages de ses clients, chacun depuis son propre lieu."
+              sizes="(min-width: 960px) 380px, 300px"
+              ink
+            />
+          </div>
+          <ol className="lp-feat__list">
+            {GAINS.map((g, i) => (
+              <li key={g.title}>
+                <span className="lp-feat__num" aria-hidden="true">
+                  {twoDigits(i + 1)}
+                </span>
+                <span className="lp-tile-ic" aria-hidden="true">
+                  <Icon name={g.icon} />
+                </span>
+                <div>
+                  <h3>{g.title}</h3>
+                  <p>{g.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
         <div className="lp-cta-row">
           <Button href="/#comment-ca-marche" size="lg" variant="secondary" className="lp-press">
             Découvrir comment ça marche
