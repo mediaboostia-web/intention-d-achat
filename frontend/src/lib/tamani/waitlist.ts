@@ -1,8 +1,12 @@
 // The pre-launch waitlist (lot 14): what a seller fills in to reserve a
 // place, and the words around it. Shared with the browser.
+import type { Metadata } from 'next';
 import { z } from 'zod';
 
 export const WAITLIST_PATH = '/liste-attente';
+
+// Kept here, not imported from landing.ts, which points its buttons at this page.
+const trimBase = (appUrl: string) => appUrl.replace(/\/+$/, '');
 
 export const WAITLIST_CHANNELS = [
   'CHAINE_WHATSAPP',
@@ -62,3 +66,33 @@ export const WaitlistInput = z
   })
   .refine((v) => v.phone !== null || v.email !== null, { message: 'contact', path: ['phone'] });
 export type WaitlistInput = z.infer<typeof WaitlistInput>;
+
+export const WAITLIST_TITLE = "Tamani : réserve ta place sur la liste d'attente";
+export const WAITLIST_DESCRIPTION =
+  "Tes abonnés WhatsApp, TikTok et Facebook te disent ce qu'ils veulent et combien, avant que tu commandes ton stock. Réserve ta place parmi les premiers vendeurs.";
+
+export function waitlistMetadata(appUrl: string): Metadata {
+  const url = `${trimBase(appUrl)}${WAITLIST_PATH}`;
+  return {
+    title: { absolute: WAITLIST_TITLE },
+    description: WAITLIST_DESCRIPTION,
+    alternates: { canonical: url },
+    robots: { index: true, follow: true },
+    openGraph: {
+      type: 'website',
+      siteName: 'Tamani',
+      locale: 'fr_FR',
+      url,
+      title: WAITLIST_TITLE,
+      description: WAITLIST_DESCRIPTION,
+      images: [
+        { url: `${trimBase(appUrl)}/brand/og-default.png`, width: 1200, height: 630, alt: '' },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: WAITLIST_TITLE,
+      description: WAITLIST_DESCRIPTION,
+    },
+  };
+}
