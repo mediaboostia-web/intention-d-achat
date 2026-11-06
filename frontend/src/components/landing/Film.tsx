@@ -9,8 +9,8 @@ export function Film({ video = LANDING_VIDEO }: { video?: LandingVideo | null })
       <div className="lp-wrap">
         <h2 id="lp-film-title">Regarde Tamani en action</h2>
         <p className="lp-film__sub">
-          En 90 secondes, un grossiste crée un produit, partage le lien dans son groupe WhatsApp,
-          puis voit arriver les réponses de ses clients avec la quantité à commander.
+          En une minute, une grossiste crée un produit, partage son lien avec ses clients, puis voit
+          arriver leurs réponses et l&apos;avis sur la quantité à commander.
         </p>
         <div className="lp-film__frame">
           <FilmPlayer
