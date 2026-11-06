@@ -17,8 +17,8 @@ export function Film({ video = LANDING_VIDEO }: { video?: LandingVideo | null })
             video={video}
             poster={
               <Illustration
-                name="video-affiche"
-                alt="La grossiste envoie son lien ; ses clients répondent depuis le marché, leur moto ou leur boutique."
+                name="film-miniature"
+                alt="Une commerçante sourit dans sa boutique, à côté du titre « Teste l’intérêt de tes clients avant de commander ton stock »."
                 sizes="(min-width: 1024px) 980px, 100vw"
                 fill
               />

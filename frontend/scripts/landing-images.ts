@@ -18,6 +18,7 @@ const TARGET = path.resolve(FRONTEND, 'public/accueil');
 const NAMES = [
   'hero',
   'video-affiche',
+  'film-miniature',
   'probleme',
   'etape-1',
   'etape-2',

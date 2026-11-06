@@ -289,7 +289,9 @@ describe('Film', () => {
     expect(out).toContain('aria-label="Voir la démonstration, 1 minute"');
     expect(out).toContain('>1 min</p>');
     expect(out).not.toContain('<video');
-    expect(out).toContain('%2Faccueil%2Fvideo-affiche.webp');
+    // The poster is the film's own cover (C01 miniature), with the centre left free for the button.
+    expect(out).toContain('%2Faccueil%2Ffilm-miniature.webp');
+    expect(out).toContain('alt="Une commerçante sourit dans sa boutique');
   });
 
   it('plays the presentation film, whose MP4 and French captions are in public/', () => {
