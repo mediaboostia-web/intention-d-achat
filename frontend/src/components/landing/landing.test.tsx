@@ -457,6 +457,7 @@ describe('motion that invites, never in the way', () => {
       '.lp-plans',
       '.lp-count',
       '.lp-pains',
+      '.lp-wait__seal',
     ]) {
       expect(reduced, cls).toContain(cls);
     }
