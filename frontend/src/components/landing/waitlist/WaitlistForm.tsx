@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useRef, useState, type FormEvent } from 'react';
+import { useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
 import { Button, Input, PhoneInput } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
+import { SHOP_COUNTRIES } from '@/lib/tamani/countries';
 import { phoneCountryChoices } from '@/lib/tamani/phone-countries';
 import {
   WAITLIST_CHANNELS,
@@ -16,13 +17,31 @@ import { WaitlistThanks } from './WaitlistThanks';
 type Place = { position: number; firstName: string };
 type FieldErrors = Partial<Record<'firstName' | 'contact' | 'email' | 'consent', string>>;
 
+const OWN_COUNTRIES = new Set(SHOP_COUNTRIES.map((c) => c.code));
+const noSubscription = () => () => {};
+/** False on the server and while the page hydrates, true once it runs in the browser. */
+const useHydrated = () =>
+  useSyncExternalStore(
+    noSubscription,
+    () => true,
+    () => false,
+  );
+
 /**
  * The waitlist form (lot 14): first name, WhatsApp or e-mail, where they
  * sell, the consent. Checked here first, then on the server, which also
  * reads the number. The ?src= tag of the page's address goes along.
  */
 export function WaitlistForm({ appUrl, community }: { appUrl: string; community: string | null }) {
-  const countries = useMemo(() => phoneCountryChoices('BJ'), []);
+  // The other countries' names come from the engine's Intl data, which Node
+  // and the browsers do not share: the server sends Tamani's own (fixed
+  // names), the browser adds the rest once the page is live.
+  const hydrated = useHydrated();
+  const allCountries = useMemo(() => phoneCountryChoices('BJ'), []);
+  const countries = useMemo(
+    () => (hydrated ? allCountries : allCountries.filter((c) => OWN_COUNTRIES.has(c.code))),
+    [hydrated, allCountries],
+  );
   const busy = useRef(false);
   const [firstName, setFirstName] = useState('');
   const [country, setCountry] = useState('BJ');

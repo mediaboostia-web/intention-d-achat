@@ -24,6 +24,7 @@ Built 2026-11-06 for the marketing launch ([spec](../superpowers/specs/2026-11-0
   - « Où vends-tu ? » chips (`WAITLIST_CHANNELS`);
   - the consent box;
   - the honeypot `website` (`.lp-wait__trap`, off-screen, `aria-hidden`, `tabIndex -1`).
+- **The countries:** the server HTML lists only Tamani's own countries (fixed labels); the browser adds the others once the page is live (`useHydrated`). Their names come from `Intl.DisplayNames`, which Node and the browsers do not share: listing them on the server broke the hydration of the static page (recette, 2026-11-06).
 - **The check:** the form runs `WaitlistInput` itself first, then sends through `api()`. It reads `?src=` from `window.location` at send time, so the static page needs no `useSearchParams` Suspense.
 - **After sending:** [WaitlistThanks](../../frontend/src/components/landing/waitlist/WaitlistThanks.tsx) shows:
   - the place;

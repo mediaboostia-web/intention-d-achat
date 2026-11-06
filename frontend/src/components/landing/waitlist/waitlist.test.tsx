@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { html, text } from '@/components/ui/test-html';
+import { SHOP_COUNTRIES } from '@/lib/tamani/countries';
 import { WaitlistForm } from './WaitlistForm';
 import { WaitlistThanks, inviteHref } from './WaitlistThanks';
 
@@ -25,6 +26,16 @@ describe('WaitlistForm', () => {
   it('offers Benin first for the number', () => {
     const options = out.match(/<option [^>]*value="([A-Z]{2})"/g) ?? [];
     expect(options[0]).toContain('value="BJ"');
+  });
+
+  // The other countries' names come from the engine's Intl data, which Node
+  // and the browsers do not share (« Hong Kong »): listing them on the server
+  // broke the hydration of the static page.
+  it('sends only the Tamani countries, whose names are fixed, in the server HTML', () => {
+    const codes = [...out.matchAll(/<option [^>]*value="([A-Z]{2})"/g)].map((m) => m[1]);
+    const own = new Set(SHOP_COUNTRIES.map((c) => c.code));
+    expect(codes).toHaveLength(own.size);
+    expect(codes.every((c) => own.has(c ?? ''))).toBe(true);
   });
 
   it('hides the field only a bot fills from people and from the keyboard', () => {
