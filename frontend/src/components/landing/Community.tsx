@@ -1,5 +1,10 @@
 import { Button } from '@/components/ui';
-import { LANDING_LINKS, type LandingLinks } from '@/lib/tamani/landing';
+import {
+  LANDING_LINKS,
+  type LandingLinks,
+  LANDING_SIGNUP_HREF,
+  LANDING_SIGNUP_LABEL,
+} from '@/lib/tamani/landing';
 import { Illustration } from './Illustration';
 
 /**
@@ -36,8 +41,8 @@ export function Community({ links = LANDING_LINKS }: { links?: LandingLinks }) {
                 Rejoindre le groupe
               </Button>
             ) : (
-              <Button href="/signup" size="lg" className="lp-press bg-accent text-ink">
-                Essayer gratuitement
+              <Button href={LANDING_SIGNUP_HREF} size="lg" className="lp-press bg-accent text-ink">
+                {LANDING_SIGNUP_LABEL}
               </Button>
             )}
           </div>

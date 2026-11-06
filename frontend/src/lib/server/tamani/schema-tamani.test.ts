@@ -262,12 +262,27 @@ describe('Tamani core schema (lot 3)', () => {
     const names = readdirSync(resolve(PRISMA, 'migrations'))
       .filter((n) => !n.endsWith('.toml'))
       .sort();
-    expect(names.at(-1)).toBe('9h_marketing_spend');
+    expect(names).toContain('9h_marketing_spend');
     const sql = readFileSync(
       resolve(PRISMA, 'migrations/9h_marketing_spend/migration.sql'),
       'utf8',
     );
     expect(sql).toMatch(/CREATE TABLE "MarketingSpend"/);
+    expect(sql).not.toMatch(/\bDROP\b|ALTER TABLE/);
+  });
+
+  it('keeps the waitlist as migration 9j_waitlist (lot 14)', () => {
+    const block = modelBlock('WaitlistEntry');
+    expect(field(block, 'firstName String')).toBe(true);
+    expect(field(block, 'phone String? @unique')).toBe(true);
+    expect(field(block, 'email String? @unique')).toBe(true);
+    expect(field(block, 'channels String[]')).toBe(true);
+    expect(field(block, 'source String?')).toBe(true);
+    expect(field(block, 'consentAt DateTime')).toBe(true);
+    const sql = readFileSync(resolve(PRISMA, 'migrations/9j_waitlist/migration.sql'), 'utf8');
+    expect(sql).toMatch(/CREATE TABLE "WaitlistEntry"/);
+    expect(sql).toMatch(/CREATE UNIQUE INDEX "WaitlistEntry_phone_key"/);
+    expect(sql).toMatch(/CREATE UNIQUE INDEX "WaitlistEntry_email_key"/);
     expect(sql).not.toMatch(/\bDROP\b|ALTER TABLE/);
   });
 

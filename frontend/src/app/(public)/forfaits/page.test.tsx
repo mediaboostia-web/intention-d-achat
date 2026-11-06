@@ -62,15 +62,16 @@ describe('/forfaits', () => {
     const court = tab('court');
     const trial = court.slice(0, court.indexOf('Pass Semaine</h3>'));
     expect(trial.match(/data-included="false"/g)).toHaveLength(3);
-    expect(trial).toContain('Commencer gratuitement');
-    expect(trial).toContain('href="/signup"');
+    expect(trial).toContain('Réserver ma place');
+    expect(trial).toContain('href="/liste-attente"');
     const week = court.slice(
       court.indexOf('Pass Semaine</h3>'),
       court.indexOf('Pass 2 Semaines</h3>'),
     );
     expect(week.match(/data-included="true"/g)).toHaveLength(4);
     expect(week).toContain('Et tout le reste est inclus');
-    expect(week).toContain('Choisir ce pass');
+    expect(week).toContain('Réserver ma place');
+    expect(out).not.toContain('href="/signup"');
   });
 
   it('the reassurance band and the « Et quand mon pass se termine ? » box', () => {

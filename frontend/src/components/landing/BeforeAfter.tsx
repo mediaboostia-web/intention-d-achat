@@ -3,6 +3,7 @@ import { CompareSlider } from './CompareSlider';
 import { EXAMPLE } from './content';
 import { CountUp } from './CountUp';
 import { Illustration } from './Illustration';
+import { LANDING_SIGNUP_HREF, LANDING_SIGNUP_LABEL } from '@/lib/tamani/landing';
 
 const BEFORE = [
   'Des dizaines de messages pour des renseignements, et peu de ventes',
@@ -93,8 +94,8 @@ export function BeforeAfter() {
           </div>
         </div>
         <div className="lp-cta-row">
-          <Button href="/signup" size="lg" className="lp-press">
-            Essayer gratuitement
+          <Button href={LANDING_SIGNUP_HREF} size="lg" className="lp-press">
+            {LANDING_SIGNUP_LABEL}
           </Button>
         </div>
       </div>

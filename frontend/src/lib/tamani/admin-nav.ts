@@ -4,6 +4,7 @@ export const ADMIN_HOME = '/support-admin';
 
 export const ADMIN_NAV = [
   { href: ADMIN_HOME, label: 'Tableau de bord' },
+  { href: `${ADMIN_HOME}/liste-attente`, label: "Liste d'attente" },
   { href: `${ADMIN_HOME}/boutiques`, label: 'Boutiques' },
   { href: `${ADMIN_HOME}/utilisateurs`, label: 'Utilisateurs' },
   { href: `${ADMIN_HOME}/journal`, label: 'Journal' },

@@ -5,7 +5,14 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Button, Icon, Logo } from '@/components/ui';
 import { useInstall } from '@/components/app/use-install';
 import { INSTALL_COPY, type InstallState } from '@/lib/tamani/install';
-import { LANDING_LINKS, LANDING_NAV, navStep, type LandingLinks } from '@/lib/tamani/landing';
+import {
+  LANDING_LINKS,
+  LANDING_NAV,
+  navStep,
+  type LandingLinks,
+  LANDING_SIGNUP_HREF,
+  LANDING_SIGNUP_LABEL,
+} from '@/lib/tamani/landing';
 import { Illustration } from './Illustration';
 import { PlatformLogo } from './PlatformLogo';
 
@@ -57,7 +64,7 @@ export function LandingNav({
 }: {
   links?: LandingLinks;
   /** The page showing the bar: its own entry is marked aria-current="page". */
-  current?: '/' | '/forfaits';
+  current?: '/' | '/forfaits' | '/liste-attente';
 }) {
   const help = [
     ...(links.whatsappContact
@@ -214,10 +221,10 @@ export function LandingNav({
               Se connecter
             </Link>
             <Button
-              href="/signup"
+              href={LANDING_SIGNUP_HREF}
               className="lp-nav__cta min-h-11 rounded-[12px] bg-ink px-[18px] text-[15px]"
             >
-              Essayer gratuitement
+              {LANDING_SIGNUP_LABEL}
             </Button>
             <button
               ref={menuRef}
@@ -297,8 +304,8 @@ export function LandingNav({
           )}
           <DrawerInstall state={installState} onInstall={() => void install()} />
           <div className="lp-drawer__end" style={{ '--i': LANDING_NAV.length } as CSSProperties}>
-            <Button href="/signup" size="lg" className="w-full">
-              Commencer gratuitement
+            <Button href={LANDING_SIGNUP_HREF} size="lg" className="w-full">
+              {LANDING_SIGNUP_LABEL}
             </Button>
             <p>
               Déjà un compte ?{' '}

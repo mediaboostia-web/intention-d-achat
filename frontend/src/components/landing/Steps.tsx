@@ -2,6 +2,7 @@ import { Button, Stamp } from '@/components/ui';
 import { EXAMPLE, type LandingImageName } from './content';
 import { Illustration } from './Illustration';
 import { InView } from './InView';
+import { LANDING_SIGNUP_HREF, LANDING_SIGNUP_LABEL } from '@/lib/tamani/landing';
 
 const STEPS: readonly { image: LandingImageName; alt: string; title: string; text: string }[] = [
   {
@@ -82,8 +83,8 @@ export function Steps() {
           ))}
         </InView>
         <div className="lp-cta-row">
-          <Button href="/signup" size="lg" className="lp-press">
-            Créer mon premier produit
+          <Button href={LANDING_SIGNUP_HREF} size="lg" className="lp-press">
+            {LANDING_SIGNUP_LABEL}
           </Button>
         </div>
       </div>

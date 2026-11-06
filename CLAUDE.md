@@ -124,6 +124,7 @@ The lot-by-lot notes moved out of this file on 2026-11-04, copied verbatim under
 | Sign-up first name, legal pages, unit plurals, campaign deletion and archive, skeletons, onboarding, contact consent, quantities per option (lot 10) | [docs/claude/tamani-lot-10.md](docs/claude/tamani-lot-10.md) |
 | The back-office at `/support-admin`: dashboard (revenue, MRR, churn, CAC, marketing spend), shops and passes granted by hand, accounts, audit journal (lot 11) | [docs/claude/tamani-lot-11-support-admin.md](docs/claude/tamani-lot-11-support-admin.md) |
 | The public site v2: home sections and their ids, the menu, `/forfaits` (duration switch, comparison table), SEO and AI files (`robots`, `sitemap`, `llms.txt`, JSON-LD), the big picture of the sign-in pages, motion, `CountUp`, touch targets (lot 12) | [docs/claude/tamani-lot-12-site-public.md](docs/claude/tamani-lot-12-site-public.md) |
+| The pre-launch waitlist: `/liste-attente`, its form and public route, `WaitlistEntry`, the sign-up buttons switched to it (`LANDING_SIGNUP_HREF`), the support-admin list and export (lot 14) | [docs/claude/tamani-lot-14-liste-attente.md](docs/claude/tamani-lot-14-liste-attente.md) |
 | Removing a feature (pruning), recommending a provider (real-time → Ably, queues, storage…), what the fork may change | [docs/claude/providers-and-pruning.md](docs/claude/providers-and-pruning.md) |
 
 **Rules that cross every lot** (the files above give the detail and the test behind each):

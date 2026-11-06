@@ -14,6 +14,7 @@ import {
 } from './billing-view';
 import { SHOP_COUNTRIES } from './countries';
 import { PASS_IDS, PLANS, type PlanId } from './plans';
+import { WAITLIST_PATH } from './waitlist';
 
 export const LANDING_TITLE = "Tamani : sache quoi commander avant d'acheter ton stock";
 export const LANDING_DESCRIPTION =
@@ -44,6 +45,14 @@ export type LandingLinkName = 'whatsappContact' | 'community' | 'facebook' | 'in
  * community the WhatsApp group invite.
  */
 export type LandingLinks = Readonly<Record<LandingLinkName, string | null>>;
+
+/**
+ * Where every sign-up button of the public site leads, and what it says.
+ * Before launch, the waitlist (lot 14); at launch, '/signup' and
+ * « Essayer gratuitement » again. Sign-up itself stays open at /signup.
+ */
+export const LANDING_SIGNUP_HREF: string = WAITLIST_PATH;
+export const LANDING_SIGNUP_LABEL = 'Réserver ma place';
 
 export const LANDING_LINKS: LandingLinks = {
   whatsappContact: 'https://wa.me/2290195831126',

@@ -9,6 +9,8 @@ import {
   LANDING_SLOGAN,
   type LandingLinkName,
   type LandingLinks,
+  LANDING_SIGNUP_HREF,
+  LANDING_SIGNUP_LABEL,
 } from '@/lib/tamani/landing';
 import { InView } from './InView';
 import { PlatformLogo } from './PlatformLogo';
@@ -91,7 +93,7 @@ export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks 
             <h3>Ton compte</h3>
             <ul>
               <li>
-                <Link href="/signup">Créer un compte</Link>
+                <Link href={LANDING_SIGNUP_HREF}>{LANDING_SIGNUP_LABEL}</Link>
               </li>
               <li>
                 <Link href="/login">Se connecter</Link>

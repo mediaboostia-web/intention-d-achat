@@ -1,13 +1,19 @@
 import type { CSSProperties } from 'react';
 import { Button, OfferCard } from '@/components/ui';
-import { LANDING_LINKS, type LandingLinks, type PricingOffer } from '@/lib/tamani/landing';
+import {
+  LANDING_LINKS,
+  type LandingLinks,
+  type PricingOffer,
+  LANDING_SIGNUP_HREF,
+  LANDING_SIGNUP_LABEL,
+} from '@/lib/tamani/landing';
 import { FORFAITS_TABS, forfaitOffers } from '@/lib/tamani/landing-forfaits';
 
 function CardAction({ offer, links }: { offer: PricingOffer; links: LandingLinks }) {
   if (offer.id === 'TRIAL')
     return (
-      <Button href="/signup" className="lp-press lp-go w-full">
-        Commencer gratuitement
+      <Button href={LANDING_SIGNUP_HREF} className="lp-press lp-go w-full">
+        {LANDING_SIGNUP_LABEL}
       </Button>
     );
   if (offer.id === 'UNLIMITED')
@@ -26,11 +32,11 @@ function CardAction({ offer, links }: { offer: PricingOffer; links: LandingLinks
     <>
       <p className="lp-plans__rest">Et tout le reste est inclus</p>
       <Button
-        href="/signup"
+        href={LANDING_SIGNUP_HREF}
         variant={offer.badge ? 'primary' : 'secondary'}
         className={offer.badge ? 'lp-press lp-go w-full' : 'w-full'}
       >
-        Choisir ce pass
+        {LANDING_SIGNUP_LABEL}
       </Button>
     </>
   );
