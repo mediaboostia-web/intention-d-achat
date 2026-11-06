@@ -5,6 +5,7 @@ import { Illustration } from './Illustration';
 import { InView } from './InView';
 import { PlatformLogo } from './PlatformLogo';
 import { PLANS } from '@/lib/tamani/plans';
+import { LANDING_SIGNUP_HREF, LANDING_SIGNUP_LABEL } from '@/lib/tamani/landing';
 
 const { TRIAL } = PLANS;
 
@@ -77,12 +78,12 @@ export function Hero() {
             </p>
             <div className="lp-hero__ctas lp-btn-row">
               <Button
-                href="/signup"
+                href={LANDING_SIGNUP_HREF}
                 size="lg"
                 id="lp-hero-cta"
                 className="lp-press lp-go lp-shine lp-nudge"
               >
-                Essayer gratuitement
+                {LANDING_SIGNUP_LABEL}
                 <Icon name="chevron-right" />
               </Button>
               <Button href="/#comment-ca-marche" size="lg" variant="secondary">

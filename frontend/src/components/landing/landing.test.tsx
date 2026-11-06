@@ -107,7 +107,7 @@ describe('the landing sections', () => {
 describe('LandingNav', () => {
   it('links to the six menu entries, sign-in and sign-up', () => {
     const out = html(<LandingNav />);
-    for (const href of [...LANDING_NAV.map((n) => n.href), '/login', '/signup']) {
+    for (const href of [...LANDING_NAV.map((n) => n.href), '/login', '/liste-attente']) {
       expect(out).toContain(`href="${href}"`);
     }
     for (const n of LANDING_NAV) expect(text(<LandingNav />)).toContain(n.label);
@@ -139,7 +139,7 @@ describe('LandingNav', () => {
       /<a [^>]*class="lp-nav__login"[^>]*href="\/login"|<a [^>]*href="\/login"[^>]*class="lp-nav__login"/,
     );
     expect(out).toMatch(
-      /<a [^>]*class="[^"]*lp-nav__cta[^"]*"[^>]*href="\/signup"|<a [^>]*href="\/signup"[^>]*class="[^"]*lp-nav__cta/,
+      /<a [^>]*class="[^"]*lp-nav__cta[^"]*"[^>]*href="\/liste-attente"|<a [^>]*href="\/liste-attente"[^>]*class="[^"]*lp-nav__cta/,
     );
     const drawer = out.slice(out.indexOf('id="lp-menu"'));
     const hrefs = [...drawer.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
@@ -147,10 +147,10 @@ describe('LandingNav', () => {
       ...LANDING_NAV.map((n) => n.href),
       LANDING_LINKS.whatsappContact,
       LANDING_LINKS.community,
-      '/signup',
+      '/liste-attente',
       '/login',
     ]);
-    expect(text(<LandingNav />)).toContain('Commencer gratuitement');
+    expect(text(<LandingNav />)).toContain('Réserver ma place');
     expect(text(<LandingNav />)).toContain('Déjà un compte ? Se connecter');
     // The links come in one after the other.
     expect(drawer.match(/style="--i:\d"/g)).toHaveLength(LANDING_NAV.length + 1);
@@ -225,7 +225,7 @@ describe('Hero', () => {
     );
     expect(t).toContain("3 jours d'essai · sans carte bancaire · paiement par Mobile Money");
     expect(out).toMatch(
-      /<a [^>]*href="\/signup"[^>]*id="lp-hero-cta"|<a [^>]*id="lp-hero-cta"[^>]*href="\/signup"/,
+      /<a [^>]*href="\/liste-attente"[^>]*id="lp-hero-cta"|<a [^>]*id="lp-hero-cta"[^>]*href="\/liste-attente"/,
     );
     expect(out).toContain('href="/#comment-ca-marche"');
     expect(t).toContain('Voir comment ça marche');
@@ -305,7 +305,7 @@ describe('Solution', () => {
     }
     expect(t).toContain('Bio, vidéos et lives');
     expect(t).toContain('Groupes, pages et lives');
-    expect(html(<Solution />)).toContain('href="/signup"');
+    expect(html(<Solution />)).toContain('href="/liste-attente"');
   });
 
   it('the orbit lists the 8 networks with their real logos', () => {
@@ -331,8 +331,8 @@ describe('Steps', () => {
       expect(t).toContain(s);
     const out = html(<Steps />);
     expect(out.match(/<li/g)).toHaveLength(3);
-    expect(t).toContain('Créer mon premier produit');
-    expect(out).toContain('href="/signup"');
+    expect(t).toContain('Réserver ma place');
+    expect(out).toContain('href="/liste-attente"');
     expect(t).toContain('Commande ≈120 cartons');
   });
 });
@@ -389,7 +389,7 @@ describe('Community', () => {
     const out = html(<Community links={NO_LINKS} />);
     expect(out).not.toContain('chat.whatsapp.com');
     expect(text(<Community links={NO_LINKS} />)).not.toContain('Rejoindre le groupe');
-    expect(out).toContain('href="/signup"');
+    expect(out).toContain('href="/liste-attente"');
   });
 });
 
@@ -408,11 +408,11 @@ describe('FinalCta', () => {
   it('closes the page on the trial', () => {
     const t = text(<FinalCta />);
     expect(t).toContain("Ton prochain stock, commande-le en sachant qui va l'acheter.");
-    expect(t).toContain('Essayer gratuitement');
+    expect(t).toContain('Réserver ma place');
     expect(t).toContain(
       `${TRIAL.durationDays} jours · ${TRIAL.includedResponses} réponses · sans carte bancaire`,
     );
-    expect(html(<FinalCta />)).toContain('href="/signup"');
+    expect(html(<FinalCta />)).toContain('href="/liste-attente"');
   });
 });
 
@@ -423,7 +423,7 @@ describe('LandingFooter', () => {
     expect(text(<LandingFooter links={ALL_LINKS} />)).toContain(
       'Une question ? Écris-nous sur WhatsApp',
     );
-    for (const href of ['/forfaits', '/#comment-ca-marche', '/#faq', '/login', '/signup']) {
+    for (const href of ['/forfaits', '/#comment-ca-marche', '/#faq', '/login', '/liste-attente']) {
       expect(out).toContain(`href="${href}"`);
     }
     expect(out).toContain(`href="mailto:${LANDING_CONTACT_EMAIL}"`);

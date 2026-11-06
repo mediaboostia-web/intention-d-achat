@@ -1,5 +1,6 @@
 import { Button, Icon, type IconName } from '@/components/ui';
 import { Orbit } from './Orbit';
+import { LANDING_SIGNUP_HREF, LANDING_SIGNUP_LABEL } from '@/lib/tamani/landing';
 
 const GAINS: readonly { icon: IconName; title: string; text: string }[] = [
   {
@@ -67,8 +68,8 @@ export function Solution() {
           ))}
         </ul>
         <div className="lp-cta-row">
-          <Button href="/signup" size="lg" className="lp-press">
-            Essayer gratuitement
+          <Button href={LANDING_SIGNUP_HREF} size="lg" className="lp-press">
+            {LANDING_SIGNUP_LABEL}
           </Button>
         </div>
       </div>

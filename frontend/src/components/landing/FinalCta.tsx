@@ -1,6 +1,7 @@
 import { Button, Icon } from '@/components/ui';
 import { PLANS } from '@/lib/tamani/plans';
 import { InView } from './InView';
+import { LANDING_SIGNUP_HREF, LANDING_SIGNUP_LABEL } from '@/lib/tamani/landing';
 
 const { TRIAL } = PLANS;
 
@@ -19,8 +20,8 @@ export function FinalCta() {
           Ton prochain stock, commande-le en sachant qui va l&apos;acheter.
         </h2>
         <div className="lp-final__cta">
-          <Button href="/signup" size="lg" className="lp-press lp-go">
-            Essayer gratuitement
+          <Button href={LANDING_SIGNUP_HREF} size="lg" className="lp-press lp-go">
+            {LANDING_SIGNUP_LABEL}
             <Icon name="chevron-right" />
           </Button>
         </div>
