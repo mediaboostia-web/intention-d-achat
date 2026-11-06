@@ -67,6 +67,29 @@ export const WaitlistInput = z
   .refine((v) => v.phone !== null || v.email !== null, { message: 'contact', path: ['phone'] });
 export type WaitlistInput = z.infer<typeof WaitlistInput>;
 
+/** One seller on the list, as the support-admin shows it. */
+export interface WaitlistRow {
+  id: string;
+  /** Rank of arrival, 1 for the first. */
+  position: number;
+  firstName: string;
+  /** Written out (« +229 01 97 00 00 00 »), or null. */
+  phone: string | null;
+  email: string | null;
+  channels: string[];
+  source: string | null;
+  createdAt: string;
+}
+
+export interface WaitlistStats {
+  total: number;
+  thisWeek: number;
+  bySource: { source: string | null; count: number }[];
+}
+
+export const waitlistChannelsText = (channels: readonly string[]) =>
+  channels.map(waitlistChannelLabel).join(', ');
+
 export const WAITLIST_TITLE = "Tamani : réserve ta place sur la liste d'attente";
 export const WAITLIST_DESCRIPTION =
   "Tes abonnés WhatsApp, TikTok et Facebook te disent ce qu'ils veulent et combien, avant que tu commandes ton stock. Réserve ta place parmi les premiers vendeurs.";
