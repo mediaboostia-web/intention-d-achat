@@ -7,6 +7,7 @@
 export const runtime = 'nodejs';
 
 import 'server-only';
+import { createHash } from 'node:crypto';
 import type { NextRequest } from 'next/server';
 import { makeRequestContext, withRequestContext } from '@/lib/server/observability/request-context';
 import { prisma } from '@/lib/server/prisma';
@@ -19,9 +20,6 @@ import { WaitlistInput } from '@/lib/tamani/waitlist';
 
 export async function POST(req: NextRequest) {
   return withRequestContext(makeRequestContext(req.headers), async () => {
-    const limited = await enforcePublicRateLimit(req, 'waitlist', 'form');
-    if (limited) return limited;
-
     const parsed = WaitlistInput.safeParse(await readJson(req));
     if (!parsed.success) return validationFailed();
     const { website, phone, country, email, firstName, channels, source } = parsed.data;
@@ -30,6 +28,15 @@ export async function POST(req: NextRequest) {
 
     const e164 = phone ? normalizePhone(phone, shopCountry(country)) : null;
     if (phone && !e164) return tamaniError('INVALID_PHONE', 400);
+
+    // 30 tries per contact and 600 per address in 10 minutes: one mobile
+    // operator's address carries many sellers. The contact is hashed.
+    const contact = createHash('sha256')
+      .update(e164 ?? email ?? '')
+      .digest('hex')
+      .slice(0, 24);
+    const limited = await enforcePublicRateLimit(req, 'waitlist', contact);
+    if (limited) return limited;
 
     const place = await joinWaitlist(
       prisma,

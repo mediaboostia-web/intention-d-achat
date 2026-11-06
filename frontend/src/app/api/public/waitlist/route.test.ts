@@ -95,6 +95,18 @@ describe('POST /api/public/waitlist', () => {
     expect(last).toBe(429);
   });
 
+  // Mobile operators put many subscribers behind one public address: after a
+  // video, many sellers reserve from the same one within minutes.
+  it('lets many sellers in from one operator address', async () => {
+    const ip = '41.82.7.7';
+    const statuses: number[] = [];
+    for (let i = 0; i < 40; i++) {
+      const body = { ...BODY, phone: '', email: `vendeuse${i}@test.local` };
+      statuses.push((await POST(post(body, ip))).status);
+    }
+    expect(statuses.filter((s) => s !== 200)).toEqual([]);
+  });
+
   it('never writes the number or the e-mail in a log', async () => {
     const spies = (['info', 'warn', 'error', 'debug'] as const).map((k) => vi.spyOn(log, k));
     prismaMock.waitlistEntry.create.mockRejectedValueOnce(new Error('database down'));

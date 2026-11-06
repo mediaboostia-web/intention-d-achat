@@ -42,7 +42,7 @@ Built 2026-11-06 for the marketing launch ([spec](../superpowers/specs/2026-11-0
   - `consent: true`.
 - **`waitlist.ts` does not import `landing.ts`** (it keeps its own `trimBase`): `landing.ts` imports `WAITLIST_PATH`.
 - **`POST /api/public/waitlist`:**
-  - no CSRF, `enforcePublicRateLimit(req, 'waitlist', 'form')`;
+  - no CSRF; `enforcePublicRateLimit(req, 'waitlist', <hash of the contact>)` after the parse: 30 tries per contact and 600 per address in 10 minutes, because one mobile operator's address carries many sellers (a fixed key capped an address at 30);
   - `normalizePhone(phone, shopCountry(country))`, an unreadable number → 400 `INVALID_PHONE`;
   - the honeypot → 200 `{ position: 0 }` and no write;
   - it answers with the first name just typed, never the stored one, so a contact does not reveal whose it is;
