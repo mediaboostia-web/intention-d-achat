@@ -36,7 +36,7 @@ export function FilmPlayer({ video, poster }: { video: LandingVideo | null; post
       <button
         type="button"
         className="lp-film__play"
-        aria-label={`Lancer la vidéo de présentation, ${length.spoken}`}
+        aria-label={`Voir la démonstration, ${length.spoken}`}
         onClick={() => (video ? setPlaying(true) : setSoon(true))}
       >
         <svg viewBox="0 0 12 12" aria-hidden="true">

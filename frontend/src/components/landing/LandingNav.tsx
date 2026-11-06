@@ -6,6 +6,7 @@ import { Button, Icon, Logo } from '@/components/ui';
 import { useInstall } from '@/components/app/use-install';
 import { INSTALL_COPY, type InstallState } from '@/lib/tamani/install';
 import {
+  LANDING_BAR_NAV,
   LANDING_LINKS,
   LANDING_NAV,
   navStep,
@@ -72,7 +73,7 @@ export function LandingNav({
           {
             href: links.whatsappContact,
             image: 'menu-support' as const,
-            title: 'Écrire au support',
+            title: "Besoin d'aide ?",
             line: 'Une vraie personne te répond sur WhatsApp.',
           },
         ]
@@ -82,8 +83,8 @@ export function LandingNav({
           {
             href: links.community,
             image: 'menu-groupe' as const,
-            title: 'Rejoindre le groupe',
-            line: 'Les astuces des grossistes qui utilisent Tamani.',
+            title: 'Rejoindre la communauté',
+            line: 'Des conseils et des échanges entre vendeurs.',
           },
         ]
       : []),
@@ -210,7 +211,7 @@ export function LandingNav({
             <Logo size={34} />
           </Link>
           <nav className="lp-nav__links" aria-label="Sections de la page">
-            {LANDING_NAV.map((s) => (
+            {LANDING_BAR_NAV.map((s) => (
               <Link key={s.href} href={s.href} {...here(s.href)}>
                 {s.label}
               </Link>
@@ -222,7 +223,7 @@ export function LandingNav({
             </Link>
             <Button
               href={LANDING_SIGNUP_HREF}
-              className="lp-nav__cta min-h-11 rounded-[12px] bg-ink px-[18px] text-[15px]"
+              className="lp-nav__cta min-h-11 rounded-[12px] bg-ink px-[18px] text-[15px] whitespace-nowrap"
             >
               {LANDING_SIGNUP_LABEL}
             </Button>

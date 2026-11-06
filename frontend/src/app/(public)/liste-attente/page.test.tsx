@@ -23,21 +23,50 @@ describe('/liste-attente', () => {
     expect(out).toContain('id="film"');
     expect(out).toContain('id="contenu"');
     const t = text(await WaitlistPage());
-    expect(t).toContain('Sache qui veut acheter, avant de commander ton stock.');
-    expect(t).toContain('Ce qui change pour toi');
+    expect(t).toContain(
+      'Prépare tes prochaines commandes avec une meilleure visibilité sur la demande.',
+    );
+    expect(t).toContain('Accès à venir · vendeurs et commerçants');
+    expect(t).toContain("C'est gratuit. Sans engagement. Aucune carte bancaire demandée.");
+    expect(t).toContain('Ce que tu découvriras avec Tamani');
+    for (const line of [
+      'Créer une fiche produit et son lien de partage.',
+      'Recueillir les quantités souhaitées par tes clients.',
+      'Retrouver les réponses au même endroit.',
+      'Consulter une estimation pour préparer ton approvisionnement.',
+    ]) {
+      expect(t).toContain(line);
+    }
+    expect(t).toContain('Voir comment fonctionne Tamani');
+    expect(out).toContain('href="/#comment-ca-marche"');
+    // Copy brief §2.5 and §7: no unmeasured time, no strong promise.
+    expect(t).not.toContain('30 secondes');
+    expect(t).not.toContain('Fini le stock qui dort');
+  });
+
+  it('has the copy brief title and description (§9.4)', () => {
+    const m = generateMetadata();
+    expect(m.title).toEqual({
+      absolute: "Liste d'attente Tamani | Accès pour les vendeurs en ligne",
+    });
+    expect(m.description).toBe(
+      "Rejoins gratuitement la liste d'attente Tamani. Sois prévenu à l'ouverture et découvre comment tester la demande avant de commander ton stock.",
+    );
   });
 
   it('shows the counter only from 50 sellers', async () => {
-    expect(text(await WaitlistPage())).not.toContain('ont déjà réservé');
+    expect(text(await WaitlistPage())).not.toContain('sont déjà inscrits');
     vi.mocked(waitlistCount).mockResolvedValue(50);
-    expect(text(await WaitlistPage())).toContain('50 vendeurs ont déjà réservé leur place');
+    expect(text(await WaitlistPage())).toContain(
+      "50 vendeurs sont déjà inscrits sur la liste d'attente",
+    );
   });
 
   it('still builds when the database cannot be reached', async () => {
     vi.mocked(waitlistCount).mockRejectedValue(new Error("Can't reach database server"));
     const t = text(await WaitlistPage());
-    expect(t).toContain('Réserve ta place');
-    expect(t).not.toContain('ont déjà réservé');
+    expect(t).toContain("Rejoins la liste d'attente");
+    expect(t).not.toContain('sont déjà inscrits');
   });
 
   it('has its own canonical address', () => {

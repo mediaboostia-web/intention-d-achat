@@ -8,7 +8,7 @@ import { WaitlistForm } from '@/components/landing/waitlist/WaitlistForm';
 import { log } from '@/lib/server/observability/log';
 import { prisma } from '@/lib/server/prisma';
 import { waitlistCount } from '@/lib/server/tamani/waitlist';
-import { LANDING_LINKS, LANDING_VIDEO } from '@/lib/tamani/landing';
+import { LANDING_FINAL_LABEL, LANDING_LINKS, LANDING_VIDEO } from '@/lib/tamani/landing';
 import { WAITLIST_COUNTER_FROM, WAITLIST_PATH, waitlistMetadata } from '@/lib/tamani/waitlist';
 
 const appUrl = () => process.env.APP_URL ?? 'http://localhost:3000';
@@ -20,22 +20,12 @@ export function generateMetadata(): Metadata {
   return waitlistMetadata(appUrl());
 }
 
-const BENEFITS: readonly { icon: IconName; title: string; text: string }[] = [
-  {
-    icon: 'box',
-    title: 'Tu sais qui achète, avant de commander',
-    text: 'Tes abonnés touchent « Je veux » et disent combien. Tamani te dit quelle quantité commander.',
-  },
-  {
-    icon: 'link',
-    title: 'Un lien qui marche partout',
-    text: 'Dans ta chaîne WhatsApp, ton statut, sur TikTok, en live ou sur Facebook. Sans site web, sans appli pour tes clients.',
-  },
-  {
-    icon: 'whatsapp',
-    title: 'Les acheteurs prêts, avec leur WhatsApp',
-    text: "Tu écris seulement à ceux qui veulent vraiment acheter. Fini les « c'est combien ? » sans suite.",
-  },
+// Copy brief §7: what the seller will find, nothing the product does not do.
+const DISCOVER: readonly { icon: IconName; line: string }[] = [
+  { icon: 'link', line: 'Créer une fiche produit et son lien de partage.' },
+  { icon: 'box', line: 'Recueillir les quantités souhaitées par tes clients.' },
+  { icon: 'rows', line: 'Retrouver les réponses au même endroit.' },
+  { icon: 'eye', line: 'Consulter une estimation pour préparer ton approvisionnement.' },
 ];
 
 async function sellersOnList(): Promise<number> {
@@ -71,19 +61,25 @@ export default async function WaitlistPage() {
                 <span className="lp-pill__ic" aria-hidden="true">
                   <Icon name="clock" className="size-[18px]" />
                 </span>
-                Liste d&apos;attente : les premiers vendeurs entrent en premier
+                Accès à venir · vendeurs et commerçants
               </p>
               <h1 id="lp-wait-title" className="lp-wait__title">
-                Sache qui veut acheter, avant de commander ton stock.
+                Prépare tes prochaines commandes avec une meilleure visibilité sur la demande.
               </h1>
               <p className="lp-wait__sub">
-                Tes abonnés WhatsApp, TikTok et Facebook te disent ce qu&apos;ils veulent et
-                combien, en moins de 30 secondes. Réserve ta place parmi les premiers vendeurs.
+                Tu vends sur WhatsApp, TikTok, Facebook ou dans une boutique ? Rejoins la liste
+                d&apos;attente de Tamani. Nous te préviendrons lorsque les accès seront ouverts pour
+                que tu puisses découvrir l&apos;outil et recueillir les intentions d&apos;achat de
+                tes clients avant de commander ton stock.
+              </p>
+              <p className="lp-wait__free">
+                <Icon name="check" />
+                C&apos;est gratuit. Sans engagement. Aucune carte bancaire demandée.
               </p>
               {count >= WAITLIST_COUNTER_FROM && (
                 <p className="lp-wait__count">
                   <Icon name="people" />
-                  {count} vendeurs ont déjà réservé leur place
+                  {count} vendeurs sont déjà inscrits sur la liste d&apos;attente
                 </p>
               )}
             </div>
@@ -99,34 +95,39 @@ export default async function WaitlistPage() {
           <div className="lp-wrap">
             <div className="lp-center">
               <h2 id="lp-wait-why" className="lp-h2">
-                Ce qui change pour toi
+                Ce que tu découvriras avec Tamani
               </h2>
             </div>
             <ul className="lp-wait__benefits">
-              {BENEFITS.map((b) => (
-                <li key={b.title} className="lp-wait__benefit">
+              {DISCOVER.map((b) => (
+                <li key={b.line} className="lp-wait__benefit">
                   <span className="lp-wait__benefit-ic" aria-hidden="true">
                     <Icon name={b.icon} className="size-6" />
                   </span>
-                  <h3>{b.title}</h3>
-                  <p>{b.text}</p>
+                  <p className="lp-wait__benefit-line">{b.line}</p>
                 </li>
               ))}
             </ul>
+            <div className="lp-btn-row lp-wait__end-cta">
+              <Button href="/#comment-ca-marche" variant="secondary" size="lg">
+                Voir comment fonctionne Tamani
+              </Button>
+            </div>
           </div>
         </section>
 
         <section className="lp-section lp-wait__end" aria-labelledby="lp-wait-end">
           <div className="lp-wrap lp-center">
             <h2 id="lp-wait-end" className="lp-h2">
-              Fini le stock qui dort.
+              Sois prévenu à l&apos;ouverture.
             </h2>
             <p className="lp-lead">
-              Réserve ta place maintenant : on t&apos;écrit dès que ton accès est prêt.
+              L&apos;inscription est gratuite et sans engagement. Nous t&apos;écrirons au sujet de
+              l&apos;ouverture de Tamani, par le moyen de contact que tu as accepté.
             </p>
             <div className="lp-btn-row lp-wait__end-cta">
               <Button href="#reserver" size="lg" className="lp-press lp-go">
-                Réserver ma place
+                {LANDING_FINAL_LABEL}
                 <Icon name="chevron-right" />
               </Button>
             </div>

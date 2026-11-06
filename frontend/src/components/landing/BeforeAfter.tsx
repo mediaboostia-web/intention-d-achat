@@ -1,27 +1,28 @@
 import { Button, Icon } from '@/components/ui';
 import { CompareSlider } from './CompareSlider';
-import { EXAMPLE } from './content';
-import { CountUp } from './CountUp';
 import { Illustration } from './Illustration';
 import { LANDING_SIGNUP_HREF, LANDING_SIGNUP_LABEL } from '@/lib/tamani/landing';
 
 const BEFORE = [
-  'Des dizaines de messages pour des renseignements, et peu de ventes',
-  'Tu commandes ton stock sans savoir qui va payer',
-  "Tu ne sais pas quel groupe ou quel réseau t'apporte des clients",
-  'Tu ne sais pas quels produits vont partir',
-  "De l'argent bloqué dans des invendus",
+  'Les demandes arrivent dans plusieurs conversations.',
+  'Tu estimes les quantités à commander avec peu d’informations.',
+  'Tu as du mal à comparer les réponses de tes différents groupes.',
+  'Tu retrouves difficilement les informations utiles pour recontacter les clients.',
 ];
 const AFTER = [
-  'Une liste de clients prêts à être livrés',
-  "Tu testes un produit auprès de tes clients avant d'en commander un carton",
-  "Tu vois quels canaux t'apportent vraiment des clients",
-  'Tu sais quels produits partent, et lesquels attendre',
-  'Ton argent reste dans ta poche, pas dans ton stock',
+  'Les réponses liées à un produit sont regroupées.',
+  'Tu visualises les quantités souhaitées.',
+  'Tu peux distinguer les canaux grâce aux liens par groupe inclus dans les pass concernés.',
+  'Tu retrouves les informations des clients ayant accepté d’être recontactés.',
+  'Tu disposes d’une estimation pour préparer ton approvisionnement.',
 ];
 const SIZES = '(min-width: 1180px) 1100px, 100vw';
 
-/** 6. Benefits: before / after, the same depot, the same arrival. */
+/**
+ * 6. Benefits (copy brief §5.8): before / with Tamani, the same depot. No
+ * money example: nothing proves one, so the page tells none (§2.4). The two
+ * lists overlap the bottom of the pictures (porteur, 2026-11-06).
+ */
 export function BeforeAfter() {
   return (
     <section
@@ -30,69 +31,70 @@ export function BeforeAfter() {
       aria-labelledby="lp-ba-title"
     >
       <div className="lp-wrap">
-        <div className="lp-center">
+        <div className="lp-split">
           <h2 id="lp-ba-title" className="lp-h2">
-            Tu vends comme avant. En mieux.
+            Tu gardes tes habitudes de vente. Tu gagnes en visibilité.
           </h2>
           <p className="lp-lead">
-            Tamani ne change pas ta façon de travailler. Il t&apos;évite de perdre ton temps et ton
-            argent.
+            Tamani s&apos;ajoute à tes canaux habituels pour t&apos;aider à centraliser les demandes
+            et à mieux préparer tes achats.
           </p>
         </div>
-        <CompareSlider
-          label="Comparer le dépôt avant et avec Tamani"
-          before={
-            <Illustration
-              name="avant"
-              alt="Avant : le dépôt déborde de cartons invendus et la grossiste est inquiète."
-              sizes={SIZES}
-              fill
-              className="object-cover"
-            />
-          }
-          after={
-            <Illustration
-              name="apres"
-              alt="Avec Tamani : le dépôt est rangé, les cartons partent en livraison et la grossiste sourit."
-              sizes={SIZES}
-              fill
-              className="object-cover"
-            />
-          }
-        />
-        <p className="lp-ba__example">
-          Exemple : sans Tamani, <CountUp value={EXAMPLE.ordered} /> cartons commandés et{' '}
-          <CountUp value={EXAMPLE.unsold} /> invendus, soit{' '}
-          <span className="lp-hl">
-            <CountUp value={EXAMPLE.blockedAmount} unit="money" />
-          </span>{' '}
-          bloqués. Avec Tamani, <CountUp value={EXAMPLE.advised} /> cartons : ceux que tes clients
-          ont demandés.
-        </p>
-        <div className="lp-vs">
-          <div className="lp-vs__col lp-vs__col--before">
-            <h3>Avant</h3>
-            <ul>
-              {BEFORE.map((line) => (
-                <li key={line}>
-                  <Icon name="close" />
-                  {line}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="lp-vs__col lp-vs__col--after">
-            <h3>Après</h3>
-            <ul>
-              {AFTER.map((line) => (
-                <li key={line}>
-                  <Icon name="check" />
-                  {line}
-                </li>
-              ))}
-            </ul>
+        <div className="lp-ba-stack">
+          <CompareSlider
+            label="Comparer le dépôt avant et avec Tamani"
+            before={
+              <Illustration
+                name="avant"
+                alt="Avant : le dépôt déborde de cartons invendus et la grossiste est inquiète."
+                sizes={SIZES}
+                fill
+                className="object-cover"
+              />
+            }
+            after={
+              <Illustration
+                name="apres"
+                alt="Avec Tamani : le dépôt est rangé, les cartons partent en livraison et la grossiste sourit."
+                sizes={SIZES}
+                fill
+                className="object-cover"
+              />
+            }
+          />
+          <div className="lp-vs">
+            <div className="lp-vs__col lp-vs__col--before">
+              <h3>Avant</h3>
+              <ul>
+                {BEFORE.map((line) => (
+                  <li key={line}>
+                    <Icon name="close" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="lp-vs__col lp-vs__col--after">
+              <h3>Avec Tamani</h3>
+              <ul>
+                {AFTER.map((line) => (
+                  <li key={line}>
+                    <Icon name="check" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
+        <p className="lp-ba__example">
+          <Icon name="eye" />
+          <span>
+            <b>Une intention d’achat n’est pas une vente garantie.</b> Tamani t&apos;apporte des
+            informations pour mieux décider ; la confirmation de la commande et la vente restent
+            entre le commerçant et son client.
+          </span>
+        </p>
         <div className="lp-cta-row">
           <Button href={LANDING_SIGNUP_HREF} size="lg" className="lp-press">
             {LANDING_SIGNUP_LABEL}

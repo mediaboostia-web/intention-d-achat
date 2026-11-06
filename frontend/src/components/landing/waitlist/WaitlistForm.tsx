@@ -4,6 +4,7 @@ import { useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 
 import { Button, Input, PhoneInput } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
+import Link from 'next/link';
 import { SHOP_COUNTRIES } from '@/lib/tamani/countries';
 import { phoneCountryChoices } from '@/lib/tamani/phone-countries';
 import {
@@ -80,11 +81,18 @@ export function WaitlistForm({ appUrl, community }: { appUrl: string; community:
       const next: FieldErrors = {};
       for (const issue of check.error.issues) {
         const key = issue.path[0];
-        if (key === 'firstName') next.firstName = 'Écris ton prénom (40 lettres au plus).';
-        else if (key === 'phone') next.contact = 'Laisse ton WhatsApp ou ton e-mail.';
-        else if (key === 'email') next.email = "Cet e-mail n'est pas valide.";
+        // Copy brief §7.1; the rules themselves are WaitlistInput's, unchanged.
+        if (key === 'firstName')
+          next.firstName = firstName.trim()
+            ? 'Écris ton prénom en 40 lettres au plus.'
+            : 'Ce champ est nécessaire pour envoyer ta demande.';
+        else if (key === 'phone')
+          next.contact = phone.trim()
+            ? "Vérifie l'indicatif du pays et le numéro saisi."
+            : 'Ce champ est nécessaire pour envoyer ta demande : laisse ton numéro WhatsApp ou ton adresse e-mail.';
+        else if (key === 'email') next.email = 'Vérifie le format de ton adresse e-mail.';
         else if (key === 'consent')
-          next.consent = 'Coche la case pour que l’on puisse te prévenir.';
+          next.consent = 'Pour recevoir un message de lancement, donne ton accord de contact.';
       }
       setErrors(next);
       return;
@@ -111,10 +119,11 @@ export function WaitlistForm({ appUrl, community }: { appUrl: string; community:
       aria-labelledby="lp-wait-form-title"
     >
       <h2 id="lp-wait-form-title" className="lp-wait__form-title">
-        Réserve ta place
+        Rejoins la liste d&apos;attente
       </h2>
       <p className="lp-wait__form-sub">
-        Gratuit. 30 secondes. On te prévient dès l&apos;ouverture.
+        Laisse un moyen de contact valide. Nous t&apos;écrirons au sujet de l&apos;ouverture de
+        Tamani si tu nous y autorises.
       </p>
 
       <Input
@@ -128,8 +137,8 @@ export function WaitlistForm({ appUrl, community }: { appUrl: string; community:
       />
       <PhoneInput
         id="wait-phone"
-        label="Ton WhatsApp"
-        hint="Ou ton e-mail juste en dessous."
+        label="Ton numéro WhatsApp"
+        hint="Ou ton adresse e-mail juste en dessous."
         countries={countries}
         country={country}
         onCountryChange={setCountry}
@@ -140,7 +149,7 @@ export function WaitlistForm({ appUrl, community }: { appUrl: string; community:
       />
       <Input
         id="wait-email"
-        label="Ton e-mail (si tu préfères)"
+        label="Ton adresse e-mail (facultative si le numéro WhatsApp est renseigné)"
         type="email"
         autoComplete="email"
         inputMode="email"
@@ -177,7 +186,8 @@ export function WaitlistForm({ appUrl, community }: { appUrl: string; community:
           onChange={(e) => setConsent(e.target.checked)}
         />
         <span>
-          J&apos;accepte que Tamani me contacte sur WhatsApp ou par e-mail pour le lancement.
+          J&apos;accepte que l&apos;équipe Tamani me contacte au sujet du lancement sur WhatsApp ou
+          par e-mail, selon les coordonnées que j&apos;ai fournies.
         </span>
       </label>
       {errors.consent && (
@@ -200,8 +210,12 @@ export function WaitlistForm({ appUrl, community }: { appUrl: string; community:
       </div>
 
       <Button type="submit" size="lg" disabled={sending} className="lp-press lp-go w-full">
-        Réserver ma place
+        Rejoindre gratuitement la liste d&apos;attente
       </Button>
+      <p className="lp-wait__micro">
+        Nous utiliserons tes coordonnées uniquement selon le consentement donné et les informations
+        de la <Link href="/confidentialite">politique de confidentialité</Link>.
+      </p>
       {failure && (
         <p role="alert" className="lp-wait__error">
           {failure}

@@ -4,14 +4,15 @@ import { EXAMPLE, MARQUEE } from './content';
 import { Illustration } from './Illustration';
 import { InView } from './InView';
 import { PlatformLogo } from './PlatformLogo';
-import { PLANS } from '@/lib/tamani/plans';
-import { LANDING_SIGNUP_HREF, LANDING_SIGNUP_LABEL } from '@/lib/tamani/landing';
+import {
+  LANDING_REASSURANCE,
+  LANDING_SIGNUP_HREF,
+  LANDING_SIGNUP_LABEL,
+} from '@/lib/tamani/landing';
 
-const { TRIAL } = PLANS;
-
-// The break falls after « seulement »: « ce que » never stays alone on a line.
-const LINE_1 = 'Commande seulement';
-const LINE_2 = 'ce que tes clients vont acheter.';
+// The promise, shortened by the porteur (2026-11-06) from the copy brief's §5.2.
+const LINE_1 = 'Teste la demande';
+const LINE_2 = 'avant de commander ton stock.';
 
 /** Each word its own span, so the title rises word by word (landing.css). */
 function words(line: string, from: number) {
@@ -72,9 +73,8 @@ export function Hero() {
               </span>
             </h1>
             <p className="lp-hero__sub">
-              Partage un lien sur WhatsApp, TikTok ou Facebook. En moins de 30 secondes, tes clients
-              disent ce qu&apos;ils veulent et combien. Tamani te dit quoi commander, et à qui
-              livrer.
+              Partage un lien sur WhatsApp, TikTok ou Facebook. Tes clients disent ce qu&apos;ils
+              veulent et combien, et Tamani estime la quantité à prévoir.
             </p>
             <div className="lp-hero__ctas lp-btn-row">
               <Button
@@ -92,27 +92,24 @@ export function Hero() {
             </div>
             <p className="lp-hero__checks">
               <Icon name="check" />
-              <span>
-                {TRIAL.durationDays} jours d&apos;essai · sans carte bancaire · paiement par Mobile
-                Money
-              </span>
+              <span>{LANDING_REASSURANCE}</span>
             </p>
           </div>
           <div className="lp-hero__art">
             <Illustration
               name="hero"
-              alt="Une grossiste devant son dépôt, son téléphone à la main. Les réponses de ses clients arrivent en petites bulles jaunes."
+              alt="Commerçante consultant sur son téléphone les réponses reçues pour un produit avant de préparer sa commande de stock."
               sizes="(min-width: 960px) 560px, 100vw"
               ink
               preload
             />
             <p className="sr-only">
-              Exemple : d&apos;après les réponses, Tamani conseille de commander environ{' '}
+              Exemple : d&apos;après les réponses, Tamani estime une demande d&apos;environ{' '}
               {EXAMPLE.advised} cartons.
             </p>
             <div className="lp-hero__stamp" aria-hidden="true">
               <Stamp
-                word="Commande"
+                word="Demande"
                 figure={`≈${EXAMPLE.advised}`}
                 unit="cartons"
                 tone="success"
@@ -123,7 +120,7 @@ export function Hero() {
         </div>
 
         <div className="lp-strip">
-          <p>Ton lien marche partout où sont tes clients.</p>
+          <p>Partage ton lien là où tes clients sont déjà.</p>
           <div className="lp-marquee">
             <div className="lp-marquee__track">
               <PlatformList />

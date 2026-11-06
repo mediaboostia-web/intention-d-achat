@@ -90,9 +90,9 @@ export interface WaitlistStats {
 export const waitlistChannelsText = (channels: readonly string[]) =>
   channels.map(waitlistChannelLabel).join(', ');
 
-export const WAITLIST_TITLE = "Tamani : réserve ta place sur la liste d'attente";
+export const WAITLIST_TITLE = "Liste d'attente Tamani | Accès pour les vendeurs en ligne";
 export const WAITLIST_DESCRIPTION =
-  "Tes abonnés WhatsApp, TikTok et Facebook te disent ce qu'ils veulent et combien, avant que tu commandes ton stock. Réserve ta place parmi les premiers vendeurs.";
+  "Rejoins gratuitement la liste d'attente Tamani. Sois prévenu à l'ouverture et découvre comment tester la demande avant de commander ton stock.";
 
 export function waitlistMetadata(appUrl: string): Metadata {
   const url = `${trimBase(appUrl)}${WAITLIST_PATH}`;

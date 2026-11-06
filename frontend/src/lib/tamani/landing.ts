@@ -16,13 +16,15 @@ import { SHOP_COUNTRIES } from './countries';
 import { PASS_IDS, PLANS, type PlanId } from './plans';
 import { WAITLIST_PATH } from './waitlist';
 
-export const LANDING_TITLE = "Tamani : sache quoi commander avant d'acheter ton stock";
+// The words of the copy brief (copywriting and SEO brief, 2026-11-06): an
+// intention is never a sale, the advice is an estimate.
+export const LANDING_TITLE = 'Tamani | Teste la demande avant de commander ton stock';
 export const LANDING_DESCRIPTION =
-  "Partage un lien produit sur WhatsApp, TikTok ou Facebook. Tes clients disent ce qu'ils veulent en 30 s, Tamani te dit quoi commander. Essai gratuit.";
+  "Recueille les intentions d'achat avec un lien à partager sur WhatsApp, TikTok ou Facebook. Estime les quantités à prévoir avant ton approvisionnement.";
 export const LANDING_SLOGAN = 'Ta communauté parle. Tu sais quoi acheter.';
-const SHARE_TITLE = LANDING_TITLE;
+const SHARE_TITLE = "Teste l'intérêt de tes clients avant de commander ton stock | Tamani";
 const SHARE_DESCRIPTION =
-  'Partage un lien sur WhatsApp, TikTok ou Facebook. Tes clients répondent en moins de 30 secondes. Tamani te dit quoi commander.';
+  'Partage un lien produit, recueille les demandes et estime les quantités à prévoir avec Tamani.';
 
 /**
  * The menu of the public pages (lot 12, porteur's words). Sections are
@@ -31,11 +33,17 @@ const SHARE_DESCRIPTION =
 export const LANDING_NAV: readonly { href: string; label: string }[] = [
   { href: '/#comment-ca-marche', label: 'Comment ça marche' },
   { href: '/#fonctionnalites', label: 'Fonctionnalités' },
-  { href: '/#benefices', label: 'Bénéfices' },
-  { href: '/forfaits', label: 'Forfaits' },
-  { href: '/#faq', label: 'FAQ' },
+  { href: '/#benefices', label: 'Avantages' },
+  { href: '/forfaits', label: 'Tarifs' },
+  { href: '/#faq', label: 'Questions fréquentes' },
   { href: '/#contact', label: 'Contact' },
 ];
+
+/** The computer bar keeps three of them (porteur, 2026-11-06); the phone's drawer keeps all six. */
+const BAR_HREFS = new Set(['/#comment-ca-marche', '/#fonctionnalites', '/forfaits']);
+export const LANDING_BAR_NAV: readonly { href: string; label: string }[] = LANDING_NAV.filter((n) =>
+  BAR_HREFS.has(n.href),
+);
 
 export type LandingLinkName = 'whatsappContact' | 'community' | 'facebook' | 'instagram' | 'tiktok';
 
@@ -46,13 +54,58 @@ export type LandingLinkName = 'whatsappContact' | 'community' | 'facebook' | 'in
  */
 export type LandingLinks = Readonly<Record<LandingLinkName, string | null>>;
 
+const { TRIAL } = PLANS;
+
+export type LaunchMode = 'waitlist' | 'open';
+
 /**
- * Where every sign-up button of the public site leads, and what it says.
- * Before launch, the waitlist (lot 14); at launch, '/signup' and
- * « Essayer gratuitement » again. Sign-up itself stays open at /signup.
+ * The one switch of the public site's buttons (copy brief §2.3, §4.2): the
+ * waitlist until the porteur says sign-up is open, then 'open'. Sign-up
+ * itself stays reachable at /signup.
  */
-export const LANDING_SIGNUP_HREF: string = WAITLIST_PATH;
-export const LANDING_SIGNUP_LABEL = 'Réserver ma place';
+export const LANDING_LAUNCH_MODE: LaunchMode = 'waitlist';
+
+const LAUNCH: Record<
+  LaunchMode,
+  {
+    href: string;
+    label: string;
+    finalLabel: string;
+    finalNote: string;
+    planLabel: string;
+    reassurance: string;
+  }
+> = {
+  waitlist: {
+    href: WAITLIST_PATH,
+    label: "Rejoindre la liste d'attente",
+    finalLabel: "Rejoindre gratuitement la liste d'attente",
+    finalNote: "Sans engagement. Nous te prévenons à l'ouverture.",
+    planLabel: "Être prévenu à l'ouverture",
+    reassurance: "Gratuit · Sans engagement · Nous te prévenons à l'ouverture.",
+  },
+  open: {
+    href: '/signup',
+    label: 'Créer mon compte gratuit',
+    finalLabel: 'Créer mon compte gratuit',
+    finalNote: 'Sans carte bancaire.',
+    planLabel: 'Choisir ce pass',
+    reassurance: `${TRIAL.durationDays} jours ou ${TRIAL.includedResponses} réponses · Sans carte bancaire.`,
+  },
+};
+const launch = LAUNCH[LANDING_LAUNCH_MODE];
+
+/** Where every sign-up button of the public site leads, and what it says. */
+export const LANDING_SIGNUP_HREF: string = launch.href;
+export const LANDING_SIGNUP_LABEL: string = launch.label;
+/** The last call's button, a little longer. */
+export const LANDING_FINAL_LABEL: string = launch.finalLabel;
+/** The line under it. */
+export const LANDING_FINAL_NOTE: string = launch.finalNote;
+/** The pricing cards' button. */
+export const LANDING_PLAN_LABEL: string = launch.planLabel;
+/** The line under the hero's buttons. */
+export const LANDING_REASSURANCE: string = launch.reassurance;
 
 export const LANDING_LINKS: LandingLinks = {
   whatsappContact: 'https://wa.me/2290195831126',
@@ -92,8 +145,6 @@ export function filmLength(seconds: number): { label: string; spoken: string } {
   };
 }
 
-const { TRIAL } = PLANS;
-
 /** "A, B et C". */
 function frenchList(items: readonly string[]): string {
   return items.length < 2
@@ -106,58 +157,56 @@ export const PAY_ANSWER =
   "Par mobile money ou par carte, pour un pass de 7, 14 ou 30 jours payé d'avance. Rien n'est prélevé automatiquement : trois jours avant la fin, Tamani te prévient.";
 
 /**
- * The home page questions (lot 12, spec §5.9): each answer comes first and
+ * The home page questions (copy brief §5.10): each answer comes first and
  * stays short, the shape search engines and AI answers quote.
  */
 export const LANDING_FAQ: readonly { question: string; answer: string }[] = [
   {
     question: "C'est quoi, Tamani ?",
     answer:
-      "Tamani est un outil pour les grossistes et les vendeurs en ligne d'Afrique francophone. Tu partages un lien produit sur WhatsApp, TikTok ou Facebook, et tes clients disent en moins de 30 secondes ce qu'ils veulent acheter. Tamani te dit combien commander, et à qui livrer.",
+      "Tamani est un outil web destiné aux grossistes, importateurs et vendeurs en ligne. Tu crées une fiche produit, tu partages son lien et tes clients indiquent ce qu'ils souhaitent acheter. Tamani centralise les réponses et t'aide à estimer la quantité à prévoir avant de commander ton stock.",
   },
   {
     question: 'Mes clients doivent-ils installer une application ?',
     answer:
-      "Non. Le lien s'ouvre dans le navigateur du téléphone. Ton client choisit la quantité et son quartier, puis laisse son numéro s'il accepte que tu le recontactes. Il n'a ni compte à créer, ni application à télécharger.",
+      "Non. Tes clients ouvrent le lien dans le navigateur de leur téléphone. Ils n'ont pas besoin de créer un compte ni de télécharger une application pour répondre.",
   },
   {
-    question: 'Où est-ce que je peux partager le lien ?',
+    question: 'Où puis-je partager mon lien ?',
     answer:
-      "Partout où sont tes clients : groupes et statut WhatsApp, lives et bio TikTok, groupes et pages Facebook, Instagram, Telegram, Messenger, SMS, et même tes publicités. Avec un pass, tu crées un lien par groupe pour savoir lequel t'apporte des clients.",
+      'Tu peux partager ton lien sur les canaux que tu utilises déjà, notamment WhatsApp, Facebook, TikTok, Instagram, Telegram, Messenger et par SMS. Les pass payants incluent la possibilité de créer un lien distinct par groupe.',
   },
   {
-    question: 'Comment tester un produit avant de le commander en gros ?',
+    question: "Puis-je tester l'intérêt pour un produit qui n'est pas encore en stock ?",
     answer:
-      "Crée le produit dans Tamani en indiquant qu'il arrive bientôt, puis partage le lien. Les réponses te montrent combien de clients sont intéressés, et pour quelle quantité. Tu commandes ensuite la bonne quantité, pas un carton au hasard.",
+      "Oui. Tu peux indiquer que le produit arrive bientôt, partager son lien et recueillir les intentions d'achat avant de passer commande auprès de ton fournisseur.",
   },
   {
-    question: "Puis-je vendre un produit que je n'ai pas encore en stock ?",
+    question: "Une intention d'achat garantit-elle une vente ?",
     answer:
-      "Oui. Indique que le produit arrive bientôt. Tes clients disent ce qu'ils veulent, tu commandes chez ton fournisseur ce qui est demandé, puis tu livres. C'est le principe de la précommande, sans site web.",
+      "Non. Une intention indique qu'une personne est intéressée, mais elle ne garantit pas qu'elle achètera. La quantité conseillée par Tamani est une aide à la décision, pas une promesse de vente. Tu peux ensuite recontacter les personnes qui ont accepté et confirmer avec elles.",
   },
   {
-    question: 'Comment Tamani calcule-t-il la quantité à commander ?',
+    question: 'Comment Tamani estime-t-il la quantité à commander ?',
     answer:
-      "Tout le monde n'achète pas ce qu'il annonce. Tamani applique donc un coefficient : 0,7 pour un revendeur, 0,5 pour un usager. Tu peux les changer, et avec un pass, Tamani les apprend de tes vraies ventes. Le calcul est toujours affiché.",
+      'Tamani applique des coefficients aux réponses, car toutes les intentions ne deviennent pas des ventes. Par défaut : 0,7 pour un revendeur et 0,5 pour un usager final. Tu peux les modifier. Avec un pass, Tamani peut les ajuster à partir de tes ventes réelles. La quantité affichée reste une estimation.',
   },
   {
-    question: 'Mes clients voient-ils les réponses des autres ?',
+    question: 'Les numéros de mes clients sont-ils visibles par tout le monde ?',
     answer:
-      'Non. Chacun ne voit que sa propre réponse. Les numéros ne sont visibles que par ta boutique.',
+      "Non. Les autres clients ne voient pas les réponses de ta boutique. Les coordonnées d'un répondant ne sont accessibles à ta boutique que si cette personne a accepté d'être recontactée.",
   },
   {
-    question: "L'essai gratuit, comment ça marche ?",
-    answer: `Tu as ${TRIAL.durationDays} jours pour essayer, jusqu'à ${TRIAL.includedResponses} réponses, avec une campagne, sans carte bancaire. Tu vois les numéros de tes clients et l'avis sur la quantité à commander. Ensuite, tu choisis un pass si tu veux continuer.`,
+    question: 'Dans quels pays Tamani est-il disponible ?',
+    answer: `Tamani est prévu pour ${SHOP_COUNTRIES.length} pays d'Afrique francophone : ${frenchList(SHOP_COUNTRIES.map((c) => c.label))}. La boutique affiche les prix dans la monnaie de son pays.`,
   },
   {
-    question: 'Que se passe-t-il quand mon pass se termine ?',
-    answer:
-      'Ton lien continue de marcher. Tes clients peuvent toujours répondre, et leurs réponses sont gardées. Pour voir les nouvelles réponses et les numéros, il suffit de reprendre un pass.',
+    question: 'Comment essayer Tamani ?',
+    answer: `Pour l'instant, tu peux rejoindre la liste d'attente pour être prévenu à l'ouverture. Quand l'accès sera ouvert, l'essai gratuit durera ${TRIAL.durationDays} jours ou ${TRIAL.includedResponses} réponses, selon la première limite atteinte, pour une campagne et sans carte bancaire.`,
   },
-  { question: 'Comment je paie ?', answer: PAY_ANSWER },
   {
-    question: 'Dans quels pays marche Tamani ?',
-    answer: `Tamani marche dans ${SHOP_COUNTRIES.length} pays d'Afrique francophone : ${frenchList(SHOP_COUNTRIES.map((c) => c.label))}. Ta boutique affiche ses prix dans la monnaie de ton pays.`,
+    question: "Comment contacter l'équipe Tamani ?",
+    answer: `Écris à l'équipe avec le bouton WhatsApp du site, ou envoie un e-mail à ${LANDING_CONTACT_EMAIL}.`,
   },
 ];
 
@@ -285,10 +334,10 @@ export function landingJsonLd(
         name: 'Tamani',
         url: home,
         applicationCategory: 'BusinessApplication',
-        operatingSystem: 'Web, Android, iOS',
+        operatingSystem: 'Web',
         inLanguage: 'fr',
         description:
-          "Les grossistes et les vendeurs en ligne partagent un lien produit sur WhatsApp, TikTok ou Facebook. Leurs clients disent en moins de 30 secondes ce qu'ils veulent et combien, et Tamani conseille la quantité à commander.",
+          "Un outil web pour les grossistes, importateurs et vendeurs en ligne : un lien produit à partager sur WhatsApp, TikTok ou Facebook recueille les intentions d'achat des clients, et Tamani estime la quantité à prévoir avant de commander le stock.",
         publisher: org,
         offers: {
           '@type': 'AggregateOffer',

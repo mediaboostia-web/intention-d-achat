@@ -97,7 +97,7 @@ describe('planFeatures', () => {
     const week = planFeatures('WEEK');
     expect(week.map((f) => f.label)).toEqual([
       'Campagnes illimitées',
-      'Tes clients répondent en moins de 30 secondes',
+      'Tes clients répondent sans appli ni compte',
       'La quantité à commander et le verdict',
       'Les numéros des intéressés et WhatsApp',
       'Les commandes et les livraisons par quartier',

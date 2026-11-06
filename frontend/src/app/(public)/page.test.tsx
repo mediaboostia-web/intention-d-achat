@@ -61,7 +61,9 @@ describe('/ (the home page)', () => {
     const ctas = out.match(/<a [^>]*href="\/liste-attente"[^>]*>[\s\S]*?<\/a>/g) ?? [];
     expect(ctas.length).toBeGreaterThanOrEqual(6);
     for (const a of ctas)
-      expect(text(<div dangerouslySetInnerHTML={{ __html: a }} />)).toContain('Réserver ma place');
+      expect(text(<div dangerouslySetInnerHTML={{ __html: a }} />)).toMatch(
+        /Rejoindre (gratuitement )?la liste d'attente/,
+      );
     expect(text(<HomePage />)).not.toContain('Essayer gratuitement');
   });
 

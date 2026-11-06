@@ -1,13 +1,16 @@
 // What the home page shows that is not shared with other screens: its
 // illustrations, the platforms of the marquee, the networks of the orbit and
 // the running example.
-import { formatMoney } from '@/lib/tamani/currency';
 import type { PlatformSlug } from './platform-paths';
 
 /** The porteur's ChatGPT illustrations, as public/accueil/<name>.webp (pnpm landing:images). */
 export const LANDING_IMAGES = {
   hero: { width: 1254, height: 1254 },
   'video-affiche': { width: 1536, height: 1024 },
+  // The C01 film's cover (Tamani-video/studio, c01-miniature.html), without a play badge.
+  'film-miniature': { width: 1600, height: 900 },
+  // A real screen of the app (demo shop « Aïcha Tendances », no personal data), in the features' phone.
+  'app-resultats': { width: 1170, height: 2532 },
   probleme: { width: 1536, height: 1024 },
   'etape-1': { width: 1254, height: 1254 },
   'etape-2': { width: 1254, height: 1254 },
@@ -22,6 +25,9 @@ export const LANDING_IMAGES = {
 } as const;
 
 export type LandingImageName = keyof typeof LANDING_IMAGES;
+
+/** « 01 », « 02 »…: the big figure behind a numbered card (problem, features, questions). */
+export const twoDigits = (n: number): string => String(n).padStart(2, '0');
 
 /** Where the link opens, in the marquee under the hero. */
 export const MARQUEE: readonly { slug: PlatformSlug; label: string }[] = [
@@ -132,17 +138,8 @@ export const ORBIT_NETWORKS: readonly OrbitNetwork[] = [
 /** Numbers glued together, never split across two lines. */
 export const unbroken = (s: string) => s.replace(/ /g, '\u202f');
 
-const UNSOLD = 190;
-const CARTON_PRICE = 10_000;
-
-/** The one example the whole page tells (porteur's request: no pile of examples). */
-export const EXAMPLE = {
-  ordered: 300,
-  unsold: UNSOLD,
-  advised: 120,
-  cartonPriceText: unbroken(formatMoney(CARTON_PRICE, 'XOF')),
-  /** The money sleeping in the unsold cartons, in FCFA. */
-  blockedAmount: UNSOLD * CARTON_PRICE,
-  /** "1 900 000 FCFA" */
-  blocked: unbroken(formatMoney(UNSOLD * CARTON_PRICE, 'XOF')),
-} as const;
+/**
+ * The demand the illustrations' stamp shows, said to be an example. The money
+ * example (300 cartons, 190 unsold) is gone: nothing proved it (copy brief §2.4).
+ */
+export const EXAMPLE = { advised: 120 } as const;
