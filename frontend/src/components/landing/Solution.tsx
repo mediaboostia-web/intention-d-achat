@@ -33,9 +33,9 @@ const GAINS: readonly { icon: IconName; title: string; text: string }[] = [
 
 /**
  * 4. The solution (copy brief §5.6): one product link, every answer in one
- * place. Under the orbit, the five benefits are numbered beside the drawing of
- * the answers coming in, kept in view while they scroll by (no phone mockup:
- * the porteur's rule since lot 9a).
+ * place. Under the orbit, the five benefits are numbered beside a phone that
+ * shows a real screen of the app: the only phone of the page (the porteur
+ * lifted his lot 9a rule for this one, 2026-11-06).
  */
 export function Solution() {
   return (
@@ -57,14 +57,18 @@ export function Solution() {
         </div>
         <Orbit />
         <div className="lp-feat">
-          <div className="lp-feat__art">
-            <Illustration
-              name="inscription"
-              alt="La grossiste assise sur ses cartons lit sur son téléphone les messages de ses clients, chacun depuis son propre lieu."
-              sizes="(min-width: 960px) 380px, 300px"
-              ink
-            />
-          </div>
+          <figure className="lp-feat__art">
+            <div className="lp-phone">
+              <div className="lp-phone__screen">
+                <Illustration
+                  name="app-resultats"
+                  alt="L'écran Résultats d'une campagne dans Tamani : la communauté demande environ 70 pièces, d'après 39 réponses."
+                  sizes="(min-width: 960px) 290px, 66vw"
+                />
+              </div>
+            </div>
+            <figcaption>Écran réel · données de démonstration</figcaption>
+          </figure>
           <ol className="lp-feat__list">
             {GAINS.map((g, i) => (
               <li key={g.title}>

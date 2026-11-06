@@ -9,6 +9,8 @@ export const LANDING_IMAGES = {
   'video-affiche': { width: 1536, height: 1024 },
   // The C01 film's cover (Tamani-video/studio, c01-miniature.html), without a play badge.
   'film-miniature': { width: 1600, height: 900 },
+  // A real screen of the app (demo shop « Aïcha Tendances », no personal data), in the features' phone.
+  'app-resultats': { width: 1170, height: 2532 },
   probleme: { width: 1536, height: 1024 },
   'etape-1': { width: 1254, height: 1254 },
   'etape-2': { width: 1254, height: 1254 },

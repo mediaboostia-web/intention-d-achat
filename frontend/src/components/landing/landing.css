@@ -1220,8 +1220,8 @@ button.lp-drawer__install {
     translate: -50% -50%;
   }
 }
-/* The five benefits, numbered, beside the drawing of the answers coming in,
-   which stays in view while they scroll by (porteur, 2026-11-06). */
+/* The five benefits, numbered, beside a phone that shows a real screen of the app
+   (porteur, 2026-11-06: the page's only phone). */
 .lp-feat {
   display: grid;
   gap: 40px;
@@ -1235,29 +1235,54 @@ button.lp-drawer__install {
     align-items: center;
   }
 }
-/* No sticky and no isolation here: either would cut the drawing off the page,
-   whose white must multiply onto the paper (lp-ink). */
 .lp-feat__art {
   position: relative;
+  isolation: isolate;
   display: grid;
   justify-items: center;
+  gap: 18px;
+  padding-top: 12px;
 }
-/* A big white circle under the drawing: painted first, the drawing (positioned after it) lies on it. */
+/* The yellow sun behind the phone. */
 .lp-feat__art::before {
   content: '';
   position: absolute;
-  top: 50%;
+  z-index: -1;
+  top: 14%;
   left: 50%;
-  width: min(440px, 100%);
+  width: min(400px, 92%);
   aspect-ratio: 1;
-  translate: -50% -50%;
+  translate: -50% 0;
+  border: 2.5px solid var(--color-ink);
   border-radius: 50%;
+  background: var(--color-accent);
+}
+.lp-phone {
+  width: min(290px, 66vw);
+  padding: 9px;
+  border-radius: 42px;
+  background: var(--color-ink);
+  box-shadow: 10px 10px 0 color-mix(in srgb, var(--color-ink) 24%, transparent);
+  rotate: -3deg;
+}
+.lp-phone__screen {
+  aspect-ratio: 1170 / 2532;
+  overflow: hidden;
+  border-radius: 33px;
   background: var(--color-surface);
 }
-.lp-feat__art img {
-  position: relative;
-  width: min(380px, 80vw);
+.lp-phone__screen img {
+  display: block;
+  width: 100%;
   height: auto;
+}
+.lp-feat__art figcaption {
+  padding: 5px 14px;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: 13px;
+  font-weight: 700;
 }
 .lp-feat__list li {
   display: grid;
@@ -1587,94 +1612,137 @@ button.lp-drawer__install {
   color: var(--color-success);
 }
 
-/* ---------- 8. Join the community ---------- */
+/* ---------- 8. Join the community: one card on the blue panel, the drawing fading
+   in on the right, a dark band at the bottom (porteur's Atozom reference, 2026-11-06). ---------- */
 .lp-club {
-  padding-block: clamp(60px, 7vw, 100px);
+  padding-block: clamp(48px, 6vw, 88px);
 }
-.lp-club__in {
+.lp-club__card {
+  position: relative;
+  overflow: hidden;
   display: grid;
-  gap: 44px;
-  align-items: center;
+  border: 2.5px solid var(--color-ink);
+  border-radius: var(--radius-sheet);
+  background-color: var(--color-surface);
+  background-image: var(--lp-squares);
+  background-size: 18px 18px;
+  color: var(--color-ink);
+  box-shadow: 8px 8px 0 rgb(16 32 74 / 0.45);
 }
-@media (min-width: 960px) {
-  .lp-club__in {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 64px;
+.lp-club__art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* On a phone the drawing sits on top and fades into the card. */
+.lp-club__art {
+  height: clamp(200px, 52vw, 300px);
+  -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent);
+  mask-image: linear-gradient(180deg, #000 70%, transparent);
+}
+.lp-club__body {
+  position: relative;
+  padding: 8px clamp(20px, 4vw, 48px) 24px;
+}
+@media (min-width: 900px) {
+  .lp-club__card {
+    min-height: 520px;
+  }
+  /* From 900 px it fills the right side and fades in from the left. */
+  .lp-club__art {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 56%;
+    height: auto;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 40%);
+    mask-image: linear-gradient(90deg, transparent, #000 40%);
+  }
+  .lp-club__body {
+    max-width: 48%;
+    padding: clamp(36px, 4vw, 56px) 0 28px clamp(32px, 4vw, 56px);
   }
 }
 .lp-club h2 {
-  max-width: 17ch;
-  font: 700 clamp(36px, 2.6vw + 22px, 58px) / 1.05 var(--lp-hand);
+  max-width: 15ch;
+  font: 700 clamp(36px, 2.4vw + 22px, 56px) / 1.02 var(--lp-hand);
+  color: var(--color-primary);
   text-wrap: balance;
 }
+.lp-club h2 span {
+  display: block;
+  font-weight: 400;
+  font-size: 0.72em;
+  color: var(--color-ink);
+}
 .lp-club__text {
-  margin-top: 16px;
-  max-width: 46ch;
-  font-size: clamp(17px, 0.4vw + 15.5px, 19px);
-  color: rgb(255 255 255 / 0.9);
+  margin-top: 14px;
+  max-width: 44ch;
+  font-size: clamp(16px, 0.3vw + 15px, 18px);
+  line-height: 1.5;
+  color: var(--color-ink-soft);
 }
 .lp-club__list {
   display: grid;
-  gap: 10px;
-  margin-top: 22px;
+  gap: 8px;
+  margin-top: 18px;
 }
 .lp-club__list li {
   display: flex;
   gap: 10px;
-  align-items: flex-start;
+  align-items: center;
   font-weight: 700;
+  line-height: 1.35;
+}
+.lp-club__list span {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--color-ink);
+  border-radius: 50%;
+  background: var(--color-accent);
 }
 .lp-club__list svg {
-  margin-top: 1px;
-  color: var(--color-accent);
+  width: 15px;
+  height: 15px;
 }
 .lp-club__ctas {
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
-  margin-top: 30px;
+  margin-top: 24px;
 }
 .lp-club__small {
-  margin-top: 14px;
+  margin-top: 10px;
   font-size: 15px;
-  color: rgb(255 255 255 / 0.82);
+  font-weight: 700;
+  color: var(--color-ink-soft);
 }
-.lp-club__photo {
+/* The dark band at the bottom, over the drawing. */
+.lp-club__bar {
   position: relative;
-  justify-self: center;
-  width: 100%;
-  max-width: 560px;
-  padding: 12px 12px 16px;
-  border: 2.5px solid var(--color-ink);
-  border-radius: var(--radius-case);
-  background: var(--color-surface);
-  color: var(--color-ink);
-  rotate: 1.6deg;
-  box-shadow: 8px 8px 0 rgb(16 32 74 / 0.4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+  margin: 0 clamp(12px, 2.4vw, 28px) clamp(12px, 2.4vw, 28px);
+  padding: 14px clamp(18px, 3vw, 32px);
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: var(--color-surface);
 }
-.lp-club__photo::before {
-  content: '';
-  position: absolute;
-  top: -14px;
-  left: 50%;
-  z-index: 1;
-  width: 110px;
-  height: 26px;
-  translate: -50% 0;
-  rotate: -3deg;
-  background: rgb(255 204 31 / 0.85);
-  border: 1px solid rgb(16 32 74 / 0.15);
+.lp-club__bar p {
+  font: 700 clamp(18px, 0.6vw + 15px, 22px) / 1.2 var(--lp-hand);
 }
-.lp-club__photo img {
-  width: 100%;
-  height: auto;
-  border-radius: 2px;
-}
-.lp-club__photo p {
-  margin-top: 12px;
-  font: 700 21px / 1.2 var(--lp-hand);
-  color: var(--color-primary);
-  text-align: center;
+@media (max-width: 559px) {
+  .lp-club__bar {
+    border-radius: 18px;
+  }
 }
 
 /* ---------- 9. Questions: from 960 px the title, a big « ? » and the way to a real

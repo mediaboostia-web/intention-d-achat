@@ -77,8 +77,15 @@ describe('the landing sections', () => {
     expect([...at].sort((a, b) => a - b)).toEqual(at);
   });
 
-  it('draw no phone mockup and no price grid', () => {
-    expect(page).not.toMatch(/dphone|device__|lp-phone/);
+  // Porteur, lot 9a: no phone mockups everywhere. 2026-11-06: one, in the features, with a real screen.
+  it('draw one phone only, in the features, and no price grid', () => {
+    expect(page).not.toMatch(/dphone|device__/);
+    expect(page.match(/class="lp-phone"/g)).toHaveLength(1);
+    const features = page.slice(
+      page.indexOf('id="fonctionnalites"'),
+      page.indexOf('id="comment-ca-marche"'),
+    );
+    expect(features).toContain('class="lp-phone"');
     expect(page).not.toContain('lp-rail');
     expect(page).not.toContain('id="tarifs"');
   });
@@ -385,15 +392,15 @@ describe('Solution', () => {
     expect(html(<Solution />)).toContain('href="/#comment-ca-marche"');
   });
 
-  // No phone mockup (porteur, lot 9a): a drawing of the answers coming in sits beside the list.
-  it('lists the five benefits in order beside the drawing of the answers coming in', () => {
+  it('lists the five benefits in order beside a phone showing a real screen, marked as demo data', () => {
     const out = html(<Solution />);
     const list = out.match(/<ol class="lp-feat__list"[\s\S]*?<\/ol>/)?.[0] ?? '';
     expect(list.match(/<li/g)).toHaveLength(5);
     expect(
       list.match(/<span class="lp-feat__num" aria-hidden="true">0[1-5]<\/span>/g),
     ).toHaveLength(5);
-    expect(out).toContain('%2Faccueil%2Finscription.webp');
+    expect(out).toContain('%2Faccueil%2Fapp-resultats.webp');
+    expect(text(<Solution />)).toContain('Écran réel · données de démonstration');
   });
 
   it('the orbit lists the 8 networks with their real logos', () => {
@@ -470,6 +477,27 @@ describe('Community', () => {
     expect(t).toContain('Rejoindre le groupe WhatsApp');
     expect(t).toContain('Participation gratuite.');
     expect(html(<Community links={ALL_LINKS} />)).toContain('href="https://chat.whatsapp.com/abc"');
+  });
+
+  // Porteur 2026-11-06, after his Atozom reference: one card, the drawing fading in on the
+  // right, four things to do in the group, a dark band at the bottom.
+  it('is one card: what the group is for, the drawing, and the band with the logo', () => {
+    const out = html(<Community links={ALL_LINKS} />);
+    const t = text(<Community links={ALL_LINKS} />);
+    expect(out).toContain('class="lp-club__card"');
+    const list = out.match(/<ul class="lp-club__list"[\s\S]*?<\/ul>/)?.[0] ?? '';
+    expect(list.match(/<li/g)).toHaveLength(4);
+    for (const line of [
+      'Pose tes questions aux autres vendeurs.',
+      'Échange des conseils de vente.',
+      'Découvre des tutoriels.',
+      'Partage tes expériences sur WhatsApp, TikTok et Facebook.',
+    ]) {
+      expect(t).toContain(line);
+    }
+    expect(out).toContain('%2Faccueil%2Fcommunaute.webp');
+    const band = out.match(/<div class="lp-club__bar"[\s\S]*?<\/div>/)?.[0] ?? '';
+    expect(band).toContain('Entre vendeurs, on s&#x27;entraide.');
   });
 
   it('without the link, no group button: the sign-up instead, so no button leads nowhere', () => {
