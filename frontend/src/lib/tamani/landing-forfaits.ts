@@ -7,7 +7,7 @@ import type { Metadata } from 'next';
 import { formatPrice } from '@/lib/utils';
 import { planFeatures, type CardFeature } from './billing-view';
 import { formatMoney } from './currency';
-import { PAY_ANSWER, pricingOffers, trimBase, type PricingOffer } from './landing';
+import { pricingOffers, trimBase, type PricingOffer } from './landing';
 import { PASS_IDS, PLANS, type PlanId } from './plans';
 
 export type DurationTab = 'court' | 'mois';
@@ -49,17 +49,36 @@ export function cardLines(id: PlanId): CardFeature[] {
   return keep.flatMap((label) => all.filter((f) => f.label === label));
 }
 
-const TALK = 'Parlons-en';
-const UNLIMITED_FOR = 'Pour les grossistes qui postent tous les jours dans de grands groupes.';
+const TALK = 'Sur demande';
+
+/** Who each offer is for, in the copy brief's words (§6.2). The shop space keeps its own. */
+const FORFAITS_FOR_WHO: Partial<Record<PlanId, string>> = {
+  TRIAL: 'Pour découvrir Tamani sur une première campagne.',
+  WEEK: 'Pour tester un arrivage ou recueillir des demandes sur une courte période.',
+  TWO_WEEKS:
+    'Pour suivre les demandes pendant deux semaines et préparer ton prochain approvisionnement.',
+  MONTH: 'Pour gérer tes campagnes et suivre les demandes pendant tout un mois.',
+  MONTH_PLUS: 'Pour les boutiques et communautés qui recueillent un volume important de demandes.',
+  MONTH_MAX: 'Pour les vendeurs qui recueillent un volume élevé de réponses.',
+  UNLIMITED: 'Pour les grossistes qui publient régulièrement dans de grandes communautés.',
+};
 
 /** The seven cards of the page, with its own prices and short lines. */
 export function forfaitOffers(): PricingOffer[] {
   return pricingOffers().map((o) => ({
     ...o,
     ...(o.id === 'TRIAL' && { price: formatMoney(PLANS.TRIAL.priceXof ?? 0, 'XOF') }),
-    ...(o.id === 'UNLIMITED' && { price: TALK, forWho: UNLIMITED_FOR }),
+    ...(o.id === 'UNLIMITED' && { price: TALK }),
+    forWho: FORFAITS_FOR_WHO[o.id] ?? o.forWho,
     features: cardLines(o.id),
   }));
+}
+
+/** Every line a paid pass opens (copy brief §6.3), from PLANS. */
+export function paidPassLines(): string[] {
+  return planFeatures('WEEK')
+    .filter((f) => f.included)
+    .map((f) => f.label);
 }
 
 const COLUMNS = ['TRIAL', ...PASS_IDS, 'UNLIMITED'] as const;
@@ -101,32 +120,51 @@ export function compareRows(): { label: string; cells: (string | boolean)[] }[] 
   return [...head, ...rows];
 }
 
-/** The pricing questions (spec §6.5), the lot 8 rules in plain words. */
+const { TRIAL } = PLANS;
+
+/**
+ * The pricing questions (copy brief §6.5), said as the CGU and lot 8 say
+ * them: grace, waiting answers and unused ones. No claim about payment fees.
+ */
 export const FORFAITS_FAQ: readonly { question: string; answer: string }[] = [
-  { question: 'Comment je paie ?', answer: PAY_ANSWER },
   {
-    question: 'Le pass se renouvelle-t-il tout seul ?',
+    question: 'Comment payer mon pass ?',
     answer:
-      "Non. Rien n'est prélevé automatiquement. Tamani te prévient 3 jours avant la fin, puis tu as encore 3 jours de grâce pour reprendre un pass. Sans nouveau pass, ton lien continue de marcher et les nouvelles réponses sont gardées.",
+      "Le paiement se fait à l'avance par Mobile Money ou carte, via SasPay, pour un pass de 7, 14 ou 30 jours.",
   },
   {
-    question: "Que se passe-t-il si j'utilise toutes mes réponses ?",
+    question: 'Le pass se renouvelle-t-il automatiquement ?',
     answer:
-      "Aucune réponse n'est perdue et tes clients ne voient aucun blocage. Les nouvelles réponses sont gardées en attente. Prends un autre pass : il démarre tout de suite, ouvre les réponses en attente et garde tes réponses non utilisées.",
+      "Non. Aucun montant n'est prélevé automatiquement. Tamani te prévient 3 jours avant la fin de ton pass, pour te laisser le temps de décider si tu en reprends un.",
+  },
+  {
+    question: 'Que se passe-t-il à la fin de mon pass ?',
+    answer:
+      "Tu gardes les fonctions de ton pass pendant 3 jours de grâce. Tes liens continuent de fonctionner : les nouvelles réponses sont gardées en attente et s'ouvrent quand tu prends un pass. Une fois le pass terminé, grâce comprise, ses réponses non utilisées sont perdues.",
+  },
+  {
+    question: "Que se passe-t-il si j'atteins mon quota de réponses ?",
+    answer:
+      "Tes clients peuvent toujours répondre. Les nouvelles réponses sont gardées en attente et s'ouvrent quand tu prends un nouveau pass.",
   },
   {
     question: 'Puis-je changer de pass ?',
     answer:
-      'Oui. À tout moment, tu peux prendre un autre pass, plus petit ou plus grand. Il démarre tout de suite et garde les réponses non utilisées du pass en cours.',
+      'Oui. Tu peux prendre un autre pass à tout moment, plus petit ou plus grand. Il démarre tout de suite et, pris avant la fin du pass en cours, il garde tes réponses non utilisées.',
+  },
+  {
+    question: "L'essai gratuit demande-t-il une carte bancaire ?",
+    answer: `Non. L'essai gratuit ne demande pas de carte bancaire. Il prend fin après ${TRIAL.durationDays} jours ou ${TRIAL.includedResponses} réponses, selon la première limite atteinte, et permet une campagne à la fois.`,
   },
 ];
 
-const FORFAITS_TITLE = 'Forfaits Tamani : prix des pass et essai gratuit';
+const FORFAITS_TITLE = 'Tarifs Tamani | Forfaits pour grossistes et vendeurs en ligne';
 
 function forfaitsDescription(): string {
-  const lowest = Math.min(...PASS_IDS.map((id) => PLANS[id].priceXof ?? 0));
-  const { durationDays, includedResponses } = PLANS.TRIAL;
-  return `Pass dès ${formatMoney(lowest, 'XOF')}, sans renouvellement automatique, payé par Mobile Money. Essai gratuit ${durationDays} jours, ${includedResponses} réponses.`;
+  const prices = PASS_IDS.map((id) => PLANS[id].priceXof ?? 0);
+  const days = [...new Set(PASS_IDS.map((id) => PLANS[id].durationDays))];
+  const durations = `${days.slice(0, -1).join(', ')} ou ${days[days.length - 1]} jours`;
+  return `Compare les forfaits Tamani : ${durations}, de ${formatMoney(Math.min(...prices), 'XOF')} à ${formatMoney(Math.max(...prices), 'XOF')}, ou illimité sur demande. Aucun renouvellement automatique.`;
 }
 
 export function forfaitsMetadata(appUrl: string): Metadata {

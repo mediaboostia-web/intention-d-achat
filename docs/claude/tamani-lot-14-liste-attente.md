@@ -9,10 +9,12 @@ Built 2026-11-06 for the marketing launch ([spec](../superpowers/specs/2026-11-0
 [app/(public)/liste-attente/page.tsx](../../frontend/src/app/(public)/liste-attente/page.tsx) is async, rebuilt every 10 minutes (`revalidate = 600`), with its own metadata (`waitlistMetadata`) and a sitemap entry. In order:
 1. the promise, with the form beside it from 960 px and under it on a phone (`#reserver`);
 2. `Film` (`#film`);
-3. three benefits;
+3. « Ce que tu découvriras avec Tamani » (four lines) and « Voir comment fonctionne Tamani » to `/#comment-ca-marche`;
 4. a closing button back to `#reserver`.
 
-`LandingNav current="/liste-attente"` marks the page. The counter « N vendeurs ont déjà réservé leur place » shows only from `WAITLIST_COUNTER_FROM` (50). When the count fails (database unreachable at build), the page builds without it and logs the error code only.
+The words are the copy brief's §7 (lot 16): a pre-registration, never an account. No « 30 secondes », no « Fini le stock qui dort ».
+
+`LandingNav current="/liste-attente"` marks the page. The counter « N vendeurs sont déjà inscrits sur la liste d'attente » shows only from `WAITLIST_COUNTER_FROM` (50). When the count fails (database unreachable at build), the page builds without it and logs the error code only.
 
 ### The form
 
@@ -58,12 +60,18 @@ Built 2026-11-06 for the marketing launch ([spec](../superpowers/specs/2026-11-0
 
 ### The site before launch
 
-`LANDING_SIGNUP_HREF` (`/liste-attente`) and `LANDING_SIGNUP_LABEL` (« Réserver ma place ») in [landing.ts](../../frontend/src/lib/tamani/landing.ts) drive every sign-up button of the public site:
+`LANDING_LAUNCH_MODE` (`'waitlist'` or `'open'`) in [landing.ts](../../frontend/src/lib/tamani/landing.ts) picks every call to action of the public site from one table (lot 16):
+- `LANDING_SIGNUP_HREF` and `LANDING_SIGNUP_LABEL` (« Rejoindre la liste d'attente » / « Créer mon compte gratuit »);
+- `LANDING_FINAL_LABEL` and `LANDING_FINAL_NOTE` (`FinalCta` and the waitlist page's last button);
+- `LANDING_PLAN_LABEL` (« Être prévenu à l'ouverture » / « Choisir ce pass ») on the `/forfaits` cards;
+- `LANDING_REASSURANCE` under the hero.
+
+They drive:
 - `Hero`, `FinalCta`, `Steps`, `Solution`, `BeforeAfter`, `Community` (no group);
 - `StickyCta`, `LandingNav` (bar and drawer), `LandingFooter`;
 - the `/forfaits` cards.
 
-`/signup` still works by its own address, and sign-in stays. **At launch:** set the two constants back to `/signup` and « Essayer gratuitement »; the tests in `landing.test.tsx` and the page tests follow the constants' words.
+`/signup` still works by its own address, and sign-in stays. **At launch:** set `LANDING_LAUNCH_MODE` to `'open'`; the tests in `landing.test.tsx` and the page tests follow the constants' words.
 
 ### The support-admin
 

@@ -22,11 +22,11 @@ export function Community({ links = LANDING_LINKS }: { links?: LandingLinks }) {
     >
       <div className="lp-wrap lp-club__in">
         <div>
-          <h2 id="lp-club-title">Rejoins la communauté des vendeurs Tamani</h2>
+          <h2 id="lp-club-title">Entre vendeurs, partageons ce qui fonctionne.</h2>
           <p className="lp-club__text">
-            Un groupe WhatsApp de vendeurs qui partagent ce qui marche : des astuces pour vendre sur
-            WhatsApp, TikTok et Facebook, les tutoriels Tamani, des idées pour faire grandir ton
-            audience et des recommandations entre vendeurs.
+            Rejoins la communauté WhatsApp des vendeurs Tamani. Tu peux y échanger des conseils,
+            découvrir des tutoriels et partager tes expériences de vente sur WhatsApp, TikTok et
+            Facebook.
           </p>
           <div className="lp-club__ctas lp-btn-row">
             {group ? (
@@ -38,7 +38,7 @@ export function Community({ links = LANDING_LINKS }: { links?: LandingLinks }) {
                 rel="noopener"
                 className="lp-press"
               >
-                Rejoindre le groupe
+                Rejoindre le groupe WhatsApp
               </Button>
             ) : (
               <Button href={LANDING_SIGNUP_HREF} size="lg" className="lp-press bg-accent text-ink">
@@ -46,7 +46,7 @@ export function Community({ links = LANDING_LINKS }: { links?: LandingLinks }) {
               </Button>
             )}
           </div>
-          <p className="lp-club__small">C&apos;est gratuit.</p>
+          <p className="lp-club__small">Participation gratuite.</p>
         </div>
         <div className="lp-club__photo">
           <Illustration

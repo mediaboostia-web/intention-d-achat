@@ -72,7 +72,7 @@ export function LandingNav({
           {
             href: links.whatsappContact,
             image: 'menu-support' as const,
-            title: 'Écrire au support',
+            title: "Besoin d'aide ?",
             line: 'Une vraie personne te répond sur WhatsApp.',
           },
         ]
@@ -82,8 +82,8 @@ export function LandingNav({
           {
             href: links.community,
             image: 'menu-groupe' as const,
-            title: 'Rejoindre le groupe',
-            line: 'Les astuces des grossistes qui utilisent Tamani.',
+            title: 'Rejoindre la communauté',
+            line: 'Des conseils et des échanges entre vendeurs.',
           },
         ]
       : []),

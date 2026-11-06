@@ -7,10 +7,10 @@ export function Film({ video = LANDING_VIDEO }: { video?: LandingVideo | null })
   return (
     <section id="film" className="lp-panel lp-panel--cover lp-film" aria-labelledby="lp-film-title">
       <div className="lp-wrap">
-        <h2 id="lp-film-title">Regarde Tamani en action</h2>
+        <h2 id="lp-film-title">Découvre Tamani en action.</h2>
         <p className="lp-film__sub">
-          En une minute, une grossiste crée un produit, partage son lien avec ses clients, puis voit
-          arriver leurs réponses et l&apos;avis sur la quantité à commander.
+          En quelques étapes, découvre comment créer une fiche produit, partager son lien et
+          consulter les réponses de tes clients.
         </p>
         <div className="lp-film__frame">
           <FilmPlayer

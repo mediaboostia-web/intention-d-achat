@@ -4,16 +4,21 @@ import {
   LANDING_LINKS,
   type LandingLinks,
   type PricingOffer,
+  LANDING_LAUNCH_MODE,
+  LANDING_PLAN_LABEL,
   LANDING_SIGNUP_HREF,
   LANDING_SIGNUP_LABEL,
 } from '@/lib/tamani/landing';
+
+// Waitlist mode: every card says « Être prévenu à l'ouverture » (copy brief §6.2).
+const TRIAL_LABEL = LANDING_LAUNCH_MODE === 'waitlist' ? LANDING_PLAN_LABEL : LANDING_SIGNUP_LABEL;
 import { FORFAITS_TABS, forfaitOffers } from '@/lib/tamani/landing-forfaits';
 
 function CardAction({ offer, links }: { offer: PricingOffer; links: LandingLinks }) {
   if (offer.id === 'TRIAL')
     return (
       <Button href={LANDING_SIGNUP_HREF} className="lp-press lp-go w-full">
-        {LANDING_SIGNUP_LABEL}
+        {TRIAL_LABEL}
       </Button>
     );
   if (offer.id === 'UNLIMITED')
@@ -25,7 +30,7 @@ function CardAction({ offer, links }: { offer: PricingOffer; links: LandingLinks
         target="_blank"
         rel="noopener noreferrer"
       >
-        Nous écrire sur WhatsApp
+        Demander les informations sur WhatsApp
       </Button>
     ) : null;
   return (
@@ -36,7 +41,7 @@ function CardAction({ offer, links }: { offer: PricingOffer; links: LandingLinks
         variant={offer.badge ? 'primary' : 'secondary'}
         className={offer.badge ? 'lp-press lp-go w-full' : 'w-full'}
       >
-        {LANDING_SIGNUP_LABEL}
+        {LANDING_PLAN_LABEL}
       </Button>
     </>
   );

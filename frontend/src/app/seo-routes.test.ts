@@ -74,6 +74,8 @@ describe('llms.txt', () => {
     ]) {
       expect(body).toContain(url);
     }
-    expect(body).toContain('moins de 30 secondes');
+    // Copy brief §2.5: the answer time was never measured.
+    expect(body).not.toContain('30 secondes');
+    expect(body).toContain('sans application ni compte');
   });
 });

@@ -11,7 +11,7 @@ export function Faq({
   links = LANDING_LINKS,
   items = LANDING_FAQ,
   id = 'faq',
-  title = 'Tes questions, nos réponses',
+  title = 'Questions fréquentes',
 }: {
   links?: LandingLinks;
   items?: readonly Question[];

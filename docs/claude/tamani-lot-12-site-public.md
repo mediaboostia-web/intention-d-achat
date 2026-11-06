@@ -29,12 +29,12 @@ The porteur's rewrite of the public site on 2026-11-05 ([spec](../superpowers/sp
   - `PlanGrid` holds the `OfferCard`s; the badged card gets the primary button.
   - `CompareTable` scrolls sideways in a focusable `role="region"` frame, with a sticky first column.
 
-  The box « Et quand mon pass se termine ? » says campaigns are never cut when a pass ends.
+  Under the cards: the reassurance band, the box « Inclus dans les pass payants » (`paidPassLines()`, every included line of `planFeatures('WEEK')`), then « Et quand mon pass se termine ? », worded as the CGU say it: 3 days of grace, new answers kept waiting, unused answers lost once the pass and its grace are over. In waitlist mode a notice above the cards says access is on a waitlist, with no date.
 - **Plan words and money** — `landing-forfaits.ts` may write « Gratuit » because `no-old-plan-words.test.ts` skips files starting with `landing`; it formats every amount with `formatMoney`. Only `components/landing/` and `lib/tamani/landing.ts` may write « FCFA » (`no-fcfa-literal.test.ts`).
 - **SEO and AI** — `landingMetadata` and `landingJsonLd`:
   - Organization with `contactPoint` and `sameAs`, listing only the non-null `LANDING_LINKS`;
   - SoftwareApplication with an XOF `AggregateOffer`;
-  - FAQPage built from `LANDING_FAQ` (11 questions).
+  - FAQPage built from `LANDING_FAQ` (10 questions).
 
   The other files:
   - [robots.ts](../../frontend/src/app/robots.ts) disallows `/app`, `/admin` and `/api`, and never names `/support-admin`: its layout carries `noindex`, which a disallowed page would hide from crawlers, and naming it would publish the address (the spec's §8.5 line was overruled at the final review);
@@ -61,4 +61,10 @@ The porteur's rewrite of the public site on 2026-11-05 ([spec](../superpowers/sp
   - **Scroll frames**: a scroll frame that contains `sr-only` text must be positioned (`position: relative`). Otherwise the absolute `sr-only` spans escape the clip and widen the phone layout (the table pushed `/forfaits` to 794 px).
   - **Hero title**: it is split by hand after « seulement », so « ce que » never stays alone on a line.
 - **The presentation film (lot 15, 2026-11-06)** — `LANDING_VIDEO` in `landing.ts` points to [frontend/public/video/tamani-presentation.mp4](../../frontend/public/video/) (C01 « Le jour de la commande », 16:9, 61 s, H.264 1080p with faststart, about 12.6 MB) and its French captions `tamani-presentation.vtt`. `FilmPlayer` renders the `<video>` only after the click (`preload="none"`), so the home page never downloads it on load; before, the poster is the `video-affiche` illustration. The button's length comes from `filmLength(seconds)`: « 1 min » on screen, « 1 minute » in its `aria-label`, so a new film only changes `seconds`. A test checks that the MP4 (bytes `ftyp`) and the VTT (`WEBVTT`) are really in `public/`. The film's sources (Flow clips, the ElevenLabs voice, the motion layer) live outside the repo, in `Documents/Tamani-video/` (studio `motion/films/c01.html`, `scripts/c01-build.mjs`, `scripts/c01-sound.mjs`); the raw `frontend/public/Video motion tamani/` folder is git-excluded.
+- **The copy brief (lot 16, 2026-11-06)** — the porteur's « Cahier des charges copywriting SEO Tamani » is in the code: home sections, `/forfaits`, `/liste-attente`, login and legal metadata, `llms.txt`. Its rules, each pinned by a test:
+  - no unmeasured time (« moins de 30 secondes » is gone from the public pages and `llms.txt`; it stays in the CGU, the popup preview and the share message, outside the brief);
+  - an intention is never a sale: the FAQ says « Non. … pas une promesse de vente », and `BeforeAfter` ends on that caution instead of the old FCFA example;
+  - no fee claim (« frais affichés avant validation » is not written until it is checked);
+  - the titles and descriptions of §9.4: `LANDING_TITLE`, `FORFAITS_TITLE`, `WAITLIST_TITLE`, `LEGAL_SEO` in [legal.ts](../../frontend/src/lib/tamani/legal.ts) (each legal page keeps its own visible title), and `/login` with `robots: { index: false, follow: true }` and no sitemap entry;
+  - the canonical stays on `APP_URL`: `tamani.app` is not assumed.
 - **Still to come from the porteur** — the domain (`APP_URL`) and the Facebook, Instagram and TikTok links (`LANDING_LINKS`, `null` hides them and keeps them out of `sameAs`). The admin sign-in by e-mail code is lot 11c (spec §10), after the lot 11b PR.

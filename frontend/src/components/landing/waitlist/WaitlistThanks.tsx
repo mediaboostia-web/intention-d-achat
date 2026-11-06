@@ -4,11 +4,11 @@ import { WAITLIST_PATH } from '@/lib/tamani/waitlist';
 /** The invitation a seller sends to another seller, with the page's link. */
 export function inviteHref(appUrl: string): string {
   const url = `${appUrl.replace(/\/+$/, '')}${WAITLIST_PATH}?src=parrainage`;
-  const text = `Je viens de réserver ma place sur Tamani : nos abonnés disent ce qu'ils veulent acheter avant qu'on commande le stock. Réserve la tienne : ${url}`;
+  const text = `Je viens de m'inscrire sur la liste d'attente de Tamani, un outil pour recueillir les intentions d'achat de nos clients avant de commander le stock. Inscris-toi aussi : ${url}`;
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
 
-/** After the form: the place, then two ways to bring someone along. */
+/** After the form (copy brief §7.1): the request is saved, then two ways to bring someone along. */
 export function WaitlistThanks({
   firstName,
   position,
@@ -25,11 +25,11 @@ export function WaitlistThanks({
       <span className="lp-wait__seal" aria-hidden="true">
         <Icon name="check" className="size-7" />
       </span>
-      <p className="lp-wait__done">Ta place est réservée, {firstName} !</p>
+      <p className="lp-wait__done">Merci {firstName} ! Ta demande a bien été enregistrée.</p>
       {position > 0 && <p className="lp-wait__rank">Tu es n° {position}</p>}
       <p className="lp-wait__next">
-        On t&apos;écrit dès que ton accès est prêt. En attendant, invite une vendeuse que tu connais
-        : vous testerez Tamani ensemble.
+        Nous te préviendrons à l&apos;ouverture de Tamani. En attendant, tu peux inviter
+        d&apos;autres vendeurs que tu connais.
       </p>
       <div className="lp-wait__share">
         <Button
@@ -40,7 +40,7 @@ export function WaitlistThanks({
           rel="noopener"
           className="w-full"
         >
-          Inviter une vendeuse sur WhatsApp
+          Inviter un vendeur sur WhatsApp
         </Button>
         {community && (
           <Button
@@ -51,7 +51,7 @@ export function WaitlistThanks({
             rel="noopener"
             className="w-full"
           >
-            Rejoindre le groupe des vendeurs
+            Rejoindre le groupe WhatsApp
           </Button>
         )}
       </div>

@@ -1,41 +1,35 @@
 import { Button, Icon, type IconName } from '@/components/ui';
 import { Orbit } from './Orbit';
-import { LANDING_SIGNUP_HREF, LANDING_SIGNUP_LABEL } from '@/lib/tamani/landing';
 
 const GAINS: readonly { icon: IconName; title: string; text: string }[] = [
   {
-    icon: 'clock',
-    title: 'Tes clients répondent en moins de 30 secondes',
-    text: "Ils touchent le lien, choisissent la quantité, et c'est fait. Pas d'application à installer, pas de compte à créer.",
+    icon: 'box',
+    title: 'Tu recueilles les quantités souhaitées.',
+    text: 'Les clients indiquent ce qu’ils veulent et en quelle quantité. Tu retrouves les réponses au même endroit.',
   },
   {
     icon: 'user',
-    title: 'Tu sais qui veut quoi, combien et où',
-    text: "Chaque réponse te donne le produit, la quantité, le quartier de livraison et le numéro. Le client accepte d'abord que tu le recontactes.",
+    title: 'Tu identifies les clients qui acceptent d’être recontactés.',
+    text: 'Les coordonnées sont accessibles à ta boutique lorsque le client donne son accord pour être recontacté.',
   },
   {
     icon: 'link',
-    title: "Tu sais quel canal t'apporte des clients",
-    text: 'Tu crées un lien par groupe ou par réseau, et tu vois enfin si tes clients viennent de WhatsApp, de TikTok ou de Facebook.',
-  },
-  {
-    icon: 'home',
-    title: 'Pas besoin de site web',
-    text: 'Ton produit a sa page, prête à partager. Rien à construire, rien à payer en plus.',
-  },
-  {
-    icon: 'eye',
-    title: 'Ton client voit ce qui est disponible',
-    text: '« Disponible maintenant » ou « bientôt », et, si tu veux, le nombre de pièces en stock.',
+    title: 'Tu compares tes canaux.',
+    text: 'Avec les pass qui incluent les liens par groupe, tu peux distinguer les réponses provenant de différents groupes ou réseaux.',
   },
   {
     icon: 'check',
-    title: 'Tamani te dit combien commander',
-    text: 'À partir des réponses, Tamani calcule une quantité réaliste et te donne un avis clair avant que tu commandes.',
+    title: 'Tu prépares ton approvisionnement avec une estimation.',
+    text: 'Tamani calcule une quantité conseillée à partir des réponses et affiche un avis pour t’aider à décider. Cette estimation ne garantit pas les ventes.',
+  },
+  {
+    icon: 'home',
+    title: 'Tu n’imposes pas d’application à tes clients.',
+    text: 'Ils ouvrent le lien dans le navigateur de leur téléphone. Ils n’ont pas besoin de créer un compte ni de télécharger une application.',
   },
 ];
 
-/** 4. Features: one link for every client; each network buzzes as it feeds Tamani. */
+/** 4. The solution (copy brief §5.6): one product link, every answer in one place. */
 export function Solution() {
   return (
     <section
@@ -46,11 +40,12 @@ export function Solution() {
       <div className="lp-wrap">
         <div className="lp-center">
           <h2 id="lp-orbit-title" className="lp-h2">
-            Un seul lien pour tous tes clients
+            Un lien produit. Des demandes regroupées au même endroit.
           </h2>
           <p className="lp-lead">
-            Un produit, un lien. Tu le partages partout où sont tes clients, et toutes les réponses
-            arrivent au même endroit.
+            Avec Tamani, tu présentes ton produit sur une page simple et tu partages le lien avec ta
+            communauté. Les réponses sont centralisées dans ton espace pour t&apos;aider à
+            comprendre ce que les clients souhaitent.
           </p>
         </div>
         <Orbit />
@@ -68,8 +63,8 @@ export function Solution() {
           ))}
         </ul>
         <div className="lp-cta-row">
-          <Button href={LANDING_SIGNUP_HREF} size="lg" className="lp-press">
-            {LANDING_SIGNUP_LABEL}
+          <Button href="/#comment-ca-marche" size="lg" variant="secondary" className="lp-press">
+            Découvrir comment ça marche
           </Button>
         </div>
       </div>

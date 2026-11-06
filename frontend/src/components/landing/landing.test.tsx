@@ -12,7 +12,6 @@ import {
   filmLength,
   type LandingLinks,
 } from '@/lib/tamani/landing';
-import { PLANS } from '@/lib/tamani/plans';
 import { BeforeAfter } from './BeforeAfter';
 import { Community } from './Community';
 import { ORBIT_NETWORKS } from './content';
@@ -57,7 +56,6 @@ const sections = [
   <LandingFooter key="footer" />,
 ];
 const page = html(<>{sections}</>);
-const { TRIAL } = PLANS;
 
 describe('the landing sections', () => {
   it("come in the porteur's order", () => {
@@ -83,11 +81,26 @@ describe('the landing sections', () => {
     expect(page).not.toContain('id="tarifs"');
   });
 
-  it('say under 30 seconds and never 5 seconds, without em or en dash', () => {
+  it('promise no answer time nobody measured, without em or en dash (copy brief §2.5)', () => {
     const t = text(<>{sections}</>);
-    expect(t).toContain('moins de 30 secondes');
-    expect(t).not.toMatch(/5 secondes/);
+    expect(t).not.toMatch(/30 secondes|5 secondes/);
     expect(t).not.toMatch(/[–—]/);
+  });
+
+  it('never sell an intention as a sale, a sure quantity or no unsold stock (copy brief §2.2)', () => {
+    const t = text(<>{sections}</>);
+    expect(t).not.toMatch(
+      /prêts? à payer|prêts à être livrés|exactement quoi commander|plus les invendus|reste dans ta poche|seulement ce que tes clients vont acheter/i,
+    );
+    expect(t).not.toMatch(/300 cartons|190 invendus|1\s900\s000/);
+  });
+
+  it('send every sign-up button to the waitlist and say so (launch mode « waitlist »)', () => {
+    const t = text(<>{sections}</>);
+    expect(t).not.toContain('Réserver ma place');
+    expect(t).not.toContain('Commencer à utiliser Tamani maintenant');
+    expect(t).toContain("Rejoindre la liste d'attente");
+    expect(page).not.toContain('href="/signup"');
   });
 
   it('name TikTok and Facebook, not only WhatsApp', () => {
@@ -152,7 +165,7 @@ describe('LandingNav', () => {
       '/liste-attente',
       '/login',
     ]);
-    expect(text(<LandingNav />)).toContain('Réserver ma place');
+    expect(text(<LandingNav />)).toContain("Rejoindre la liste d'attente");
     expect(text(<LandingNav />)).toContain('Déjà un compte ? Se connecter');
     // The links come in one after the other.
     expect(drawer.match(/style="--i:\d"/g)).toHaveLength(LANDING_NAV.length + 1);
@@ -164,9 +177,11 @@ describe('LandingNav', () => {
       return out.slice(out.indexOf('id="lp-menu"'));
     };
     const full = drawer(ALL_LINKS);
-    expect(full).toContain('Écrire au support');
+    expect(full).toContain('Besoin d&#x27;aide ?');
+    expect(full).toContain('Une vraie personne te répond sur WhatsApp.');
     expect(full).toContain('href="https://wa.me/221770000000"');
-    expect(full).toContain('Rejoindre le groupe');
+    expect(full).toContain('Rejoindre la communauté');
+    expect(full).toContain('Des conseils et des échanges entre vendeurs.');
     expect(full).toContain('href="https://chat.whatsapp.com/abc"');
     // Each card carries its drawing; the title says it all, so the drawing is decorative.
     const cards = full.match(/<li>[\s\S]*?<\/li>/g) ?? [];
@@ -174,8 +189,8 @@ describe('LandingNav', () => {
     expect(cards[0]).toMatch(/<img [^>]*alt=""[^>]*%2Faccueil%2Fmenu-support\.webp/);
     expect(cards[1]).toMatch(/<img [^>]*alt=""[^>]*%2Faccueil%2Fmenu-groupe\.webp/);
     const none = drawer(NO_LINKS);
-    expect(none).not.toContain('Écrire au support');
-    expect(none).not.toContain('Rejoindre le groupe');
+    expect(none).not.toContain('Besoin d&#x27;aide ?');
+    expect(none).not.toContain('Rejoindre la communauté');
   });
 
   // 2026-10-30: the menu offers to install Tamani where the browser can.
@@ -213,29 +228,36 @@ describe('LandingNav', () => {
 });
 
 describe('Hero', () => {
-  it('says the promise in one h1, the trial reassurance under the buttons', () => {
+  it('says the promise in one h1, the waitlist reassurance under the buttons', () => {
     const out = html(<Hero />);
     expect(out.match(/<h1/g)).toHaveLength(1);
     const h1 = out.match(/<h1[\s\S]*?<\/h1>/)?.[0] ?? '';
     expect(text(<div dangerouslySetInnerHTML={{ __html: h1 }} />).trim()).toBe(
-      'Commande seulement ce que tes clients vont acheter.',
+      "Teste l'intérêt de tes clients avant de commander ton stock.",
     );
     const t = text(<Hero />);
     expect(t).toContain('Pour les grossistes, importateurs et vendeurs en ligne');
     expect(t).toContain(
-      "Partage un lien sur WhatsApp, TikTok ou Facebook. En moins de 30 secondes, tes clients disent ce qu'ils veulent et combien. Tamani te dit quoi commander, et à qui livrer.",
+      "Crée une fiche pour ton produit, partage son lien sur WhatsApp, TikTok, Facebook ou tes autres canaux. Tes clients indiquent ce qu'ils souhaitent et en quelle quantité. Tamani rassemble les réponses et t'aide à estimer ce que tu peux prévoir auprès de ton fournisseur.",
     );
-    expect(t).toContain("3 jours d'essai · sans carte bancaire · paiement par Mobile Money");
+    expect(t).toContain("Gratuit · Sans engagement · Nous te prévenons à l'ouverture.");
+    expect(t).toContain("Rejoindre la liste d'attente");
     expect(out).toMatch(
       /<a [^>]*href="\/liste-attente"[^>]*id="lp-hero-cta"|<a [^>]*id="lp-hero-cta"[^>]*href="\/liste-attente"/,
     );
     expect(out).toContain('href="/#comment-ca-marche"');
     expect(t).toContain('Voir comment ça marche');
-    expect(t).toContain('Ton lien marche partout où sont tes clients.');
+    expect(t).toContain('Partage ton lien là où tes clients sont déjà.');
+    expect(out).toContain(
+      'alt="Commerçante consultant sur son téléphone les réponses reçues pour un produit avant de préparer sa commande de stock."',
+    );
   });
 
-  it('stamps the running example on the illustration', () => {
-    expect(text(<Hero />)).toContain('Commande ≈120 cartons');
+  it('stamps an example of the advice on the illustration, said to be an example', () => {
+    expect(text(<Hero />)).toContain('Demande ≈120 cartons');
+    expect(text(<Hero />)).toContain(
+      "Exemple : d'après les réponses, Tamani estime une demande d'environ 120 cartons.",
+    );
   });
 
   it('lists the platforms twice for a seamless loop, the copy hidden from screen readers', () => {
@@ -245,26 +267,26 @@ describe('Hero', () => {
     expect(text(<Hero />).match(/Telegram/g)).toHaveLength(2);
   });
 
-  it('promises the 3-day trial, not a free plan', () => {
+  it('before launch, opens no account: no trial to start now, no free account', () => {
     const t = text(<Hero />);
-    expect(t).toContain("3 jours d'essai");
+    expect(t).not.toContain("jours d'essai");
     expect(t).not.toContain('Gratuit pour commencer');
     expect(t).not.toContain('compte gratuit');
   });
 });
 
 describe('Film', () => {
-  it('is titled « Regarde Tamani en action » and describes the one-minute film', () => {
+  it('is titled « Découvre Tamani en action. » and says what the film shows', () => {
     const t = text(<Film />);
-    expect(t).toContain('Regarde Tamani en action');
+    expect(t).toContain('Découvre Tamani en action.');
     expect(t).toContain(
-      "En une minute, une grossiste crée un produit, partage son lien avec ses clients, puis voit arriver leurs réponses et l'avis sur la quantité à commander.",
+      'En quelques étapes, découvre comment créer une fiche produit, partager son lien et consulter les réponses de tes clients.',
     );
   });
 
   it('shows the poster and a play button with the real length; the <video> waits for the click', () => {
     const out = html(<Film />);
-    expect(out).toContain('aria-label="Lancer la vidéo de présentation, 1 minute"');
+    expect(out).toContain('aria-label="Voir la démonstration, 1 minute"');
     expect(out).toContain('>1 min</p>');
     expect(out).not.toContain('<video');
     expect(out).toContain('%2Faccueil%2Fvideo-affiche.webp');
@@ -292,43 +314,48 @@ describe('filmLength', () => {
 });
 
 describe('Problem', () => {
-  it('lists the five situations Tamani helps avoid', () => {
+  it('tells the four situations of the copy brief (§5.5)', () => {
     const out = html(<Problem />);
     const t = text(<Problem />);
-    expect(t).toContain('Tu reconnais ces situations ?');
-    expect(t).toContain("Ce sont les galères que Tamani t'aide à éviter.");
+    expect(t).toContain(
+      'Avant de commander, tu aimerais savoir ce que tes clients veulent vraiment.',
+    );
+    expect(t).toContain(
+      'Tu publies tes produits, les messages arrivent et les questions se multiplient.',
+    );
     const list = out.match(/<ul class="lp-pains"[\s\S]*?<\/ul>/)?.[0] ?? '';
-    expect(list.match(/<li/g)).toHaveLength(5);
+    expect(list.match(/<li/g)).toHaveLength(4);
     for (const title of [
-      "De l'argent qui dort dans ton stock",
-      'Trop de messages, pas assez de commandes',
-      'Le client ne sait pas ce qui reste',
-      'Commander gros sans savoir si ça va plaire',
-      'Tu ne connais pas vraiment tes clients',
+      'Ton argent peut rester bloqué dans les invendus.',
+      'Les demandes se dispersent dans tes messages.',
+      'Tu manques de visibilité avant de commander.',
+      'Tu ne sais pas toujours quel canal apporte les demandes.',
     ]) {
       expect(t).toContain(title);
     }
-    expect(t).toContain('Et si un seul lien réglait tout ça ?');
+    expect(t).toContain('Et si tu pouvais recueillir ces demandes avant de passer ta commande ?');
   });
 });
 
 describe('Solution', () => {
-  it('has the six points and the orbit names TikTok and Facebook lives', () => {
+  it('has the five benefits of the copy brief (§5.6) and the orbit names TikTok and Facebook lives', () => {
     const t = text(<Solution />);
-    expect(t).toContain('Un seul lien pour tous tes clients');
+    expect(t).toContain('Un lien produit. Des demandes regroupées au même endroit.');
     for (const title of [
-      'Tes clients répondent en moins de 30 secondes',
-      'Tu sais qui veut quoi, combien et où',
-      "Tu sais quel canal t'apporte des clients",
-      'Pas besoin de site web',
-      'Ton client voit ce qui est disponible',
-      'Tamani te dit combien commander',
+      'Tu recueilles les quantités souhaitées.',
+      'Tu identifies les clients qui acceptent d’être recontactés.',
+      'Tu compares tes canaux.',
+      'Tu prépares ton approvisionnement avec une estimation.',
+      'Tu n’imposes pas d’application à tes clients.',
     ]) {
       expect(t).toContain(title);
     }
+    expect(t).toContain('Cette estimation ne garantit pas les ventes.');
     expect(t).toContain('Bio, vidéos et lives');
     expect(t).toContain('Groupes, pages et lives');
-    expect(html(<Solution />)).toContain('href="/liste-attente"');
+    // One main button per screen: here the way to the steps.
+    expect(t).toContain('Découvrir comment ça marche');
+    expect(html(<Solution />)).toContain('href="/#comment-ca-marche"');
   });
 
   it('the orbit lists the 8 networks with their real logos', () => {
@@ -343,50 +370,48 @@ describe('Solution', () => {
 });
 
 describe('Steps', () => {
-  it('share a product in one minute, the CTA creates the first product', () => {
+  it('three steps to prepare the stock, the CTA leads to the waitlist', () => {
     const t = text(<Steps />);
-    expect(t).toContain('1 minute pour partager ton produit');
+    expect(t).toContain('Trois étapes pour mieux préparer ton stock.');
     for (const s of [
-      'Crée ton produit',
-      'Partage le lien en un clic',
-      'Reçois les réponses et prépare les commandes',
+      'Crée ta fiche produit.',
+      'Partage ton lien.',
+      'Consulte les réponses et prépare ta commande.',
     ])
       expect(t).toContain(s);
     const out = html(<Steps />);
     expect(out.match(/<li/g)).toHaveLength(3);
-    expect(t).toContain('Réserver ma place');
+    expect(t).toContain("Rejoindre la liste d'attente");
     expect(out).toContain('href="/liste-attente"');
-    expect(t).toContain('Commande ≈120 cartons');
+    expect(t).toContain('Demande ≈120 cartons');
   });
 });
 
 describe('BeforeAfter', () => {
-  it('lists the five before and after lines', () => {
+  it('lists the before and « avec Tamani » lines of the copy brief (§5.8)', () => {
     const t = text(<BeforeAfter />);
-    expect(t).toContain('Tu vends comme avant. En mieux.');
+    expect(t).toContain('Tu gardes tes habitudes de vente. Tu gagnes en visibilité.');
+    expect(t).toContain('Avec Tamani');
     for (const line of [
-      'Des dizaines de messages pour des renseignements, et peu de ventes',
-      'Tu commandes ton stock sans savoir qui va payer',
-      "Tu ne sais pas quel groupe ou quel réseau t'apporte des clients",
-      'Tu ne sais pas quels produits vont partir',
-      "De l'argent bloqué dans des invendus",
-      'Une liste de clients prêts à être livrés',
-      "Tu testes un produit auprès de tes clients avant d'en commander un carton",
-      "Tu vois quels canaux t'apportent vraiment des clients",
-      'Tu sais quels produits partent, et lesquels attendre',
-      'Ton argent reste dans ta poche, pas dans ton stock',
+      'Les demandes arrivent dans plusieurs conversations.',
+      'Tu estimes les quantités à commander avec peu d’informations.',
+      'Tu as du mal à comparer les réponses de tes différents groupes.',
+      'Tu retrouves difficilement les informations utiles pour recontacter les clients.',
+      'Les réponses liées à un produit sont regroupées.',
+      'Tu visualises les quantités souhaitées.',
+      'Tu peux distinguer les canaux grâce aux liens par groupe inclus dans les pass concernés.',
+      'Tu retrouves les informations des clients ayant accepté d’être recontactés.',
+      'Tu disposes d’une estimation pour préparer ton approvisionnement.',
     ]) {
       expect(t).toContain(line);
     }
   });
 
-  it('tells the running example and highlights the money', () => {
+  it('says that an intention is not a sale, and tells no money example', () => {
     const t = text(<BeforeAfter />);
-    expect(t).toContain('300 cartons commandés');
-    expect(t).toContain('190 invendus');
-    expect(t).toContain('120 cartons');
-    // Narrow no-break spaces: the amount never splits across two lines.
-    expect(html(<BeforeAfter />)).toContain('1 900 000 FCFA');
+    expect(t).toContain('Une intention d’achat n’est pas une vente garantie.');
+    expect(t).not.toMatch(/cartons commandés|invendus, soit/);
+    expect(html(<BeforeAfter />)).not.toContain('FCFA');
   });
 
   it('the slider is a labelled range over the two pictures', () => {
@@ -402,9 +427,10 @@ describe('BeforeAfter', () => {
 describe('Community', () => {
   it("invites to the sellers' WhatsApp group, free", () => {
     const t = text(<Community links={ALL_LINKS} />);
-    expect(t).toContain('Rejoins la communauté des vendeurs Tamani');
-    expect(t).toContain('Rejoindre le groupe');
-    expect(t).toContain("C'est gratuit.");
+    expect(t).toContain('Entre vendeurs, partageons ce qui fonctionne.');
+    expect(t).toContain('Rejoins la communauté WhatsApp des vendeurs Tamani.');
+    expect(t).toContain('Rejoindre le groupe WhatsApp');
+    expect(t).toContain('Participation gratuite.');
     expect(html(<Community links={ALL_LINKS} />)).toContain('href="https://chat.whatsapp.com/abc"');
   });
 
@@ -417,9 +443,9 @@ describe('Community', () => {
 });
 
 describe('Faq', () => {
-  it('is titled « Tes questions, nos réponses » and asks every LANDING_FAQ question', () => {
+  it('is titled « Questions fréquentes » and asks every LANDING_FAQ question', () => {
     const t = text(<Faq links={NO_LINKS} />);
-    expect(t).toContain('Tes questions, nos réponses');
+    expect(t).toContain('Questions fréquentes');
     for (const q of LANDING_FAQ) expect(t).toContain(q.question);
     expect(html(<Faq links={NO_LINKS} />).match(/<details/g)).toHaveLength(LANDING_FAQ.length);
     expect(t).not.toContain('Écris-nous sur WhatsApp');
@@ -428,13 +454,15 @@ describe('Faq', () => {
 });
 
 describe('FinalCta', () => {
-  it('closes the page on the trial', () => {
+  it('closes the page on the waitlist and the signature', () => {
     const t = text(<FinalCta />);
-    expect(t).toContain("Ton prochain stock, commande-le en sachant qui va l'acheter.");
-    expect(t).toContain('Réserver ma place');
+    expect(t).toContain('Prépare ta prochaine commande avec de meilleures informations.');
     expect(t).toContain(
-      `${TRIAL.durationDays} jours · ${TRIAL.includedResponses} réponses · sans carte bancaire`,
+      'Recueille les intentions de tes clients avant de commander. Partage ton lien, consulte les réponses et utilise l’estimation de Tamani pour préparer ton approvisionnement.',
     );
+    expect(t).toContain("Rejoindre gratuitement la liste d'attente");
+    expect(t).toContain("Sans engagement. Nous te prévenons à l'ouverture.");
+    expect(t).toContain('Tamani. Ta communauté parle. Tu sais quoi acheter.');
     expect(html(<FinalCta />)).toContain('href="/liste-attente"');
   });
 });
@@ -450,6 +478,18 @@ describe('LandingFooter', () => {
       expect(out).toContain(`href="${href}"`);
     }
     expect(out).toContain(`href="mailto:${LANDING_CONTACT_EMAIL}"`);
+    const t = text(<LandingFooter links={ALL_LINKS} />);
+    for (const label of [
+      'Avantages',
+      "Rejoindre la liste d'attente",
+      'Questions fréquentes',
+      'Communauté WhatsApp',
+      'Contacter le support',
+    ])
+      expect(t).toContain(label);
+    expect(t).toContain(
+      "Un outil de précommande et de collecte des intentions d'achat pour les grossistes, importateurs et vendeurs en ligne d'Afrique francophone.",
+    );
   });
 
   it("draws the whole wordmark: the svg's viewBox is the path's own", () => {
@@ -494,9 +534,9 @@ describe('motion that invites, never in the way', () => {
 
   it('the hero title words are spans for the stagger, the h1 still reads as one sentence', () => {
     const h1 = html(<Hero />).match(/<h1[\s\S]*?<\/h1>/)?.[0] ?? '';
-    expect(h1.match(/class="lp-word"/g)).toHaveLength(8);
+    expect(h1.match(/class="lp-word"/g)).toHaveLength(10);
     expect(text(<div dangerouslySetInnerHTML={{ __html: h1 }} />).trim()).toBe(
-      'Commande seulement ce que tes clients vont acheter.',
+      "Teste l'intérêt de tes clients avant de commander ton stock.",
     );
   });
 

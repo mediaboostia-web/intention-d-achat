@@ -7,7 +7,13 @@ import { DurationSwitch } from '@/components/landing/forfaits/DurationSwitch';
 import { PlanGrid } from '@/components/landing/forfaits/PlanGrid';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { LandingNav } from '@/components/landing/LandingNav';
-import { FORFAITS_FAQ, forfaitsJsonLd, forfaitsMetadata } from '@/lib/tamani/landing-forfaits';
+import { LANDING_LAUNCH_MODE } from '@/lib/tamani/landing';
+import {
+  FORFAITS_FAQ,
+  forfaitsJsonLd,
+  forfaitsMetadata,
+  paidPassLines,
+} from '@/lib/tamani/landing-forfaits';
 
 const appUrl = () => process.env.APP_URL ?? 'http://localhost:3000';
 
@@ -15,12 +21,13 @@ export function generateMetadata(): Metadata {
   return forfaitsMetadata(appUrl());
 }
 
+// Copy brief §6.4, without « frais affichés avant validation », not checked yet.
 const TRUST = [
-  'Paiement Mobile Money ou carte',
-  'Pas de renouvellement automatique',
-  "Ton lien ne s'arrête jamais",
-  'Réponses gardées après ton pass',
-  'Essai sans carte bancaire',
+  'Paiement par Mobile Money ou carte via SasPay',
+  'Paiement à l’avance',
+  'Aucun renouvellement automatique',
+  'Essai gratuit sans carte bancaire',
+  'Les liens produit continuent de fonctionner après la fin d’un pass',
 ];
 
 /**
@@ -45,13 +52,19 @@ export default function ForfaitsPage() {
           <div className="lp-wrap">
             <div className="lp-center">
               <h1 id="lp-plans-title" className="lp-h2 lp-plans__title">
-                Un forfait à la taille de ton activité
+                Des forfaits adaptés au volume de tes demandes.
               </h1>
               <p className="lp-lead">
-                Que tu postes un produit par mois ou dix par jour, choisis le pass qui suit ton
-                rythme. Tu paies une seule fois, par Mobile Money, sans abonnement qui se renouvelle
-                tout seul.
+                Commence par découvrir Tamani, puis choisis un pass selon la durée de ton activité
+                et le nombre de réponses que tu souhaites consulter. Les pass sont payés à l’avance
+                et ne se renouvellent pas automatiquement.
               </p>
+              {LANDING_LAUNCH_MODE === 'waitlist' && (
+                <p className="lp-plans__notice">
+                  L&apos;accès public est actuellement sur liste d&apos;attente. Inscris-toi pour
+                  être prévenu lorsque tu pourras utiliser Tamani.
+                </p>
+              )}
               <DurationSwitch />
             </div>
             <PlanGrid />
@@ -65,15 +78,26 @@ export default function ForfaitsPage() {
             </ul>
           </div>
         </section>
-        <section className="lp-section lp-plans__end" aria-labelledby="lp-end-title">
+        <section className="lp-section lp-plans__end" aria-labelledby="lp-paid-title">
           <div className="lp-wrap">
+            <div className="lp-plans__box lp-plans__box--paid">
+              <h2 id="lp-paid-title">Inclus dans les pass payants</h2>
+              <ul className="lp-plans__paid">
+                {paidPassLines().map((line) => (
+                  <li key={line}>
+                    <Icon name="check" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
             <div className="lp-plans__box">
               <h2 id="lp-end-title">Et quand mon pass se termine ?</h2>
               <p>
-                Tes campagnes continuent. Tes clients peuvent toujours répondre, et leurs réponses
-                sont gardées. Tu les retrouves, avec les numéros, dès que tu reprends un pass. Si tu
-                prends un nouveau pass avant la fin du précédent, tes réponses non utilisées
-                s&apos;ajoutent au nouveau.
+                Une période de grâce de 3 jours est prévue. Tes liens continuent de fonctionner et
+                les nouvelles réponses sont gardées en attente : elles s&apos;ouvrent quand tu
+                reprends un pass. Si tu prends un nouveau pass avant la fin du précédent, tu gardes
+                tes réponses non utilisées ; après la fin, grâce comprise, elles sont perdues.
               </p>
             </div>
           </div>
@@ -88,7 +112,7 @@ export default function ForfaitsPage() {
             <CompareTable />
           </div>
         </section>
-        <Faq items={FORFAITS_FAQ} id="questions-forfaits" title="Tes questions sur les forfaits" />
+        <Faq items={FORFAITS_FAQ} id="questions-forfaits" title="Questions sur les forfaits" />
       </main>
       <LandingFooter />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />

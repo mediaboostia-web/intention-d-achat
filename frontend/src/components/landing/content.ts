@@ -1,7 +1,6 @@
 // What the home page shows that is not shared with other screens: its
 // illustrations, the platforms of the marquee, the networks of the orbit and
 // the running example.
-import { formatMoney } from '@/lib/tamani/currency';
 import type { PlatformSlug } from './platform-paths';
 
 /** The porteur's ChatGPT illustrations, as public/accueil/<name>.webp (pnpm landing:images). */
@@ -132,17 +131,8 @@ export const ORBIT_NETWORKS: readonly OrbitNetwork[] = [
 /** Numbers glued together, never split across two lines. */
 export const unbroken = (s: string) => s.replace(/ /g, '\u202f');
 
-const UNSOLD = 190;
-const CARTON_PRICE = 10_000;
-
-/** The one example the whole page tells (porteur's request: no pile of examples). */
-export const EXAMPLE = {
-  ordered: 300,
-  unsold: UNSOLD,
-  advised: 120,
-  cartonPriceText: unbroken(formatMoney(CARTON_PRICE, 'XOF')),
-  /** The money sleeping in the unsold cartons, in FCFA. */
-  blockedAmount: UNSOLD * CARTON_PRICE,
-  /** "1 900 000 FCFA" */
-  blocked: unbroken(formatMoney(UNSOLD * CARTON_PRICE, 'XOF')),
-} as const;
+/**
+ * The demand the illustrations' stamp shows, said to be an example. The money
+ * example (300 cartons, 190 unsold) is gone: nothing proved it (copy brief §2.4).
+ */
+export const EXAMPLE = { advised: 120 } as const;

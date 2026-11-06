@@ -16,11 +16,25 @@ describe('WaitlistForm', () => {
     }
     const t = text(<WaitlistForm appUrl="https://tamani.app" community={null} />);
     expect(t).toContain('Ton prénom');
-    expect(t).toContain('Ton WhatsApp');
-    expect(t).toContain('Où vends-tu ?');
+    expect(t).toContain('Ton numéro WhatsApp');
+    expect(t).toContain('Ton adresse e-mail (facultative si le numéro WhatsApp est renseigné)');
+    expect(t).toContain('Où vends-tu ? (facultatif)');
     expect(t).toContain('Chaîne WhatsApp');
-    expect(t).toContain("J'accepte que Tamani me contacte");
-    expect(t).toContain('Réserver ma place');
+    // Copy brief §7: a pre-registration, not an account.
+    expect(t).toContain("Rejoins la liste d'attente");
+    expect(t).toContain(
+      "Laisse un moyen de contact valide. Nous t'écrirons au sujet de l'ouverture de Tamani si tu nous y autorises.",
+    );
+    expect(t).toContain(
+      "J'accepte que l'équipe Tamani me contacte au sujet du lancement sur WhatsApp ou par e-mail, selon les coordonnées que j'ai fournies.",
+    );
+    expect(t).toContain("Rejoindre gratuitement la liste d'attente");
+    expect(t).toContain(
+      'Nous utiliserons tes coordonnées uniquement selon le consentement donné et les informations de la politique de confidentialité',
+    );
+    expect(out).toContain('href="/confidentialite"');
+    expect(t).not.toContain('30 secondes');
+    expect(t).not.toContain('Réserver ma place');
   });
 
   it('offers Benin first for the number', () => {
@@ -56,7 +70,8 @@ describe('WaitlistThanks', () => {
       />
     );
     const t = text(view);
-    expect(t).toContain('Ta place est réservée, Awa !');
+    expect(t).toContain('Merci Awa ! Ta demande a bien été enregistrée.');
+    expect(t).toContain("Nous te préviendrons à l'ouverture de Tamani.");
     expect(t).toContain('Tu es n° 12');
     const out = html(view);
     expect(out).toContain('href="https://wa.me/?text=');
@@ -64,6 +79,10 @@ describe('WaitlistThanks', () => {
       encodeURIComponent('https://tamani.app/liste-attente?src=parrainage'),
     );
     expect(out).toContain('href="https://chat.whatsapp.com/abc"');
+    expect(t).toContain('Rejoindre le groupe WhatsApp');
+    expect(decodeURIComponent(inviteHref('https://tamani.app'))).toContain(
+      "Je viens de m'inscrire sur la liste d'attente de Tamani",
+    );
   });
 
   it('shows no rank for a bot and no group without its link', () => {

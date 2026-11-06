@@ -36,6 +36,30 @@ export interface LegalPageContent {
 const { email } = LEGAL_ENTITY;
 const WHERE = `${LEGAL_ENTITY.city}, ${LEGAL_ENTITY.country}`;
 
+/** What search engines read for each legal page (copy brief §9.4); the page keeps its own title. */
+export const LEGAL_SEO: Record<LegalSlug, { title: string; description: string }> = {
+  cgu: {
+    title: "Conditions générales d'utilisation | Tamani",
+    description:
+      "Consulte les conditions d'utilisation de Tamani, les règles des pass, les engagements des vendeurs et les modalités du service.",
+  },
+  confidentialite: {
+    title: 'Politique de confidentialité | Tamani',
+    description:
+      'Découvre quelles données Tamani collecte, pourquoi elles sont utilisées, combien de temps elles sont conservées et quels sont tes droits.',
+  },
+  securite: {
+    title: 'Sécurité des comptes et des données | Tamani',
+    description:
+      'Découvre les mesures décrites par Tamani pour protéger les comptes, les données des boutiques et les paiements.',
+  },
+  'mentions-legales': {
+    title: 'Mentions légales | Tamani',
+    description:
+      "Retrouve les informations relatives à l'éditeur, à la publication et à l'hébergement du site Tamani.",
+  },
+};
+
 export const LEGAL_PAGES: Record<LegalSlug, LegalPageContent> = {
   cgu: {
     path: '/cgu',
