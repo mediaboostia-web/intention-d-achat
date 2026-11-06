@@ -8,6 +8,8 @@ import {
   LANDING_FAQ,
   LANDING_LINKS,
   LANDING_NAV,
+  LANDING_VIDEO,
+  filmLength,
   type LandingLinks,
 } from '@/lib/tamani/landing';
 import { PLANS } from '@/lib/tamani/plans';
@@ -252,19 +254,40 @@ describe('Hero', () => {
 });
 
 describe('Film', () => {
-  it('is titled « Regarde Tamani en action » and describes the 90 seconds', () => {
+  it('is titled « Regarde Tamani en action » and describes the one-minute film', () => {
     const t = text(<Film />);
     expect(t).toContain('Regarde Tamani en action');
     expect(t).toContain(
-      'En 90 secondes, un grossiste crée un produit, partage le lien dans son groupe WhatsApp, puis voit arriver les réponses de ses clients avec la quantité à commander.',
+      "En une minute, une grossiste crée un produit, partage son lien avec ses clients, puis voit arriver leurs réponses et l'avis sur la quantité à commander.",
     );
   });
 
-  it('waits for the video: a play button and the poster, no <video>', () => {
+  it('shows the poster and a play button with the real length; the <video> waits for the click', () => {
     const out = html(<Film />);
-    expect(out).toContain('aria-label="Lancer la vidéo de présentation, 1 minute 30"');
+    expect(out).toContain('aria-label="Lancer la vidéo de présentation, 1 minute"');
+    expect(out).toContain('>1 min</p>');
     expect(out).not.toContain('<video');
     expect(out).toContain('%2Faccueil%2Fvideo-affiche.webp');
+  });
+
+  it('plays the presentation film, whose MP4 and French captions are in public/', () => {
+    expect(LANDING_VIDEO).not.toBeNull();
+    const video = LANDING_VIDEO!;
+    expect(video.src).toBe('/video/tamani-presentation.mp4');
+    expect(video.captions).toBe('/video/tamani-presentation.vtt');
+    const pub = path.resolve(__dirname, '../../../public');
+    expect(readFileSync(path.join(pub, video.src)).subarray(4, 8).toString('latin1')).toBe('ftyp');
+    expect(readFileSync(path.join(pub, video.captions!), 'utf8').startsWith('WEBVTT')).toBe(true);
+    expect(video.seconds).toBeGreaterThan(45);
+    expect(video.seconds).toBeLessThan(75);
+  });
+});
+
+describe('filmLength', () => {
+  it('says the length the way the play button shows and reads it', () => {
+    expect(filmLength(58)).toEqual({ label: '1 min', spoken: '1 minute' });
+    expect(filmLength(90)).toEqual({ label: '1 min 30', spoken: '1 minute 30' });
+    expect(filmLength(118)).toEqual({ label: '2 min', spoken: '2 minutes' });
   });
 });
 

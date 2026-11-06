@@ -69,10 +69,28 @@ export interface LandingVideo {
   src: string;
   /** French captions (WebVTT). */
   captions?: string;
+  /** Its length, shown on the play button. */
+  seconds: number;
 }
 
-/** The presentation video, once it exists (MP4 16:9, about 90 seconds). */
-export const LANDING_VIDEO: LandingVideo | null = null;
+/** The presentation film « Le jour de la commande » (C01, 16:9, porteur 2026-11-06). */
+export const LANDING_VIDEO: LandingVideo | null = {
+  src: '/video/tamani-presentation.mp4',
+  captions: '/video/tamani-presentation.vtt',
+  seconds: 61,
+};
+
+/** A film's length to the half minute: « 1 min » on the button, « 1 minute » read aloud. */
+export function filmLength(seconds: number): { label: string; spoken: string } {
+  const halves = Math.max(1, Math.round(seconds / 30));
+  const minutes = Math.floor(halves / 2);
+  const half = halves % 2 === 1;
+  if (minutes === 0) return { label: '30 s', spoken: '30 secondes' };
+  return {
+    label: `${minutes} min${half ? ' 30' : ''}`,
+    spoken: `${minutes} minute${minutes > 1 ? 's' : ''}${half ? ' 30' : ''}`,
+  };
+}
 
 const { TRIAL } = PLANS;
 
