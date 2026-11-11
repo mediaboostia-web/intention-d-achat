@@ -54,16 +54,19 @@ describe('/ (the home page)', () => {
     expect(m![1]).not.toContain('<');
   });
 
-  it('before launch, every sign-up button leads to the waitlist; sign-in stays (lot 14)', () => {
+  // Porteur 2026-11-08: sign-up is open again; the waitlist is one link, in the footer.
+  it('every sign-up button leads to sign-up; the waitlist is only in the footer', () => {
     const out = html(<HomePage />);
-    expect(out).not.toContain('href="/signup"');
     expect(out).toContain('href="/login"');
-    const ctas = out.match(/<a [^>]*href="\/liste-attente"[^>]*>[\s\S]*?<\/a>/g) ?? [];
+    const ctas = out.match(/<a [^>]*href="\/signup"[^>]*>[\s\S]*?<\/a>/g) ?? [];
     expect(ctas.length).toBeGreaterThanOrEqual(6);
     for (const a of ctas)
       expect(text(<div dangerouslySetInnerHTML={{ __html: a }} />)).toMatch(
-        /Rejoindre (gratuitement )?la liste d'attente/,
+        /Commencer gratuitement|Créer mon compte gratuit/,
       );
+    expect(out.match(/href="\/liste-attente"/g)).toHaveLength(1);
+    const footer = out.slice(out.indexOf('<footer'));
+    expect(footer).toContain('href="/liste-attente"');
     expect(text(<HomePage />)).not.toContain('Essayer gratuitement');
   });
 

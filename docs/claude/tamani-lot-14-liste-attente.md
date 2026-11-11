@@ -60,8 +60,8 @@ The words are the copy brief's §7 (lot 16): a pre-registration, never an accoun
 
 ### The site before launch
 
-`LANDING_LAUNCH_MODE` (`'waitlist'` or `'open'`) in [landing.ts](../../frontend/src/lib/tamani/landing.ts) picks every call to action of the public site from one table (lot 16):
-- `LANDING_SIGNUP_HREF` and `LANDING_SIGNUP_LABEL` (« Rejoindre la liste d'attente » / « Créer mon compte gratuit »);
+`LANDING_LAUNCH_MODE` (`'waitlist'` or `'open'`) in [landing.ts](../../frontend/src/lib/tamani/landing.ts) picks every call to action of the public site from one table (lot 16). **It is `'open'` since 2026-11-08 (porteur): the buttons lead to `/signup` again, and the waitlist keeps its page and one link, in the footer's « Compte » column (shown only while the sign-up link is not the waitlist itself). The FAQ answer « Comment essayer Tamani ? » follows the switch (`TRIAL_ANSWER`).**
+- `LANDING_SIGNUP_HREF` and `LANDING_SIGNUP_LABEL` (« Rejoindre la liste d'attente » / « Commencer gratuitement »);
 - `LANDING_FINAL_LABEL` and `LANDING_FINAL_NOTE` (`FinalCta` and the waitlist page's last button);
 - `LANDING_PLAN_LABEL` (« Être prévenu à l'ouverture » / « Choisir ce pass ») on the `/forfaits` cards;
 - `LANDING_REASSURANCE` under the hero.

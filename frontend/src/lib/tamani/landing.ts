@@ -60,10 +60,11 @@ export type LaunchMode = 'waitlist' | 'open';
 
 /**
  * The one switch of the public site's buttons (copy brief §2.3, §4.2): the
- * waitlist until the porteur says sign-up is open, then 'open'. Sign-up
+ * waitlist until the porteur says sign-up is open, then 'open' (porteur,
+ * 2026-11-08: open; the waitlist keeps its page and a footer link). Sign-up
  * itself stays reachable at /signup.
  */
-export const LANDING_LAUNCH_MODE: LaunchMode = 'waitlist';
+export const LANDING_LAUNCH_MODE: LaunchMode = 'open';
 
 const LAUNCH: Record<
   LaunchMode,
@@ -86,7 +87,7 @@ const LAUNCH: Record<
   },
   open: {
     href: '/signup',
-    label: 'Créer mon compte gratuit',
+    label: 'Commencer gratuitement',
     finalLabel: 'Créer mon compte gratuit',
     finalNote: 'Sans carte bancaire.',
     planLabel: 'Choisir ce pass',
@@ -94,6 +95,12 @@ const LAUNCH: Record<
   },
 };
 const launch = LAUNCH[LANDING_LAUNCH_MODE];
+
+/** « Comment essayer Tamani ? »: the answer follows the switch too. */
+const TRIAL_ANSWER: Record<LaunchMode, string> = {
+  waitlist: `Pour l'instant, tu peux rejoindre la liste d'attente pour être prévenu à l'ouverture. Quand l'accès sera ouvert, l'essai gratuit durera ${TRIAL.durationDays} jours ou ${TRIAL.includedResponses} réponses, selon la première limite atteinte, pour une campagne et sans carte bancaire.`,
+  open: `Crée ton compte : l'essai gratuit dure ${TRIAL.durationDays} jours ou ${TRIAL.includedResponses} réponses, selon la première limite atteinte, pour une campagne et sans carte bancaire.`,
+};
 
 /** Where every sign-up button of the public site leads, and what it says. */
 export const LANDING_SIGNUP_HREF: string = launch.href;
@@ -202,7 +209,7 @@ export const LANDING_FAQ: readonly { question: string; answer: string }[] = [
   },
   {
     question: 'Comment essayer Tamani ?',
-    answer: `Pour l'instant, tu peux rejoindre la liste d'attente pour être prévenu à l'ouverture. Quand l'accès sera ouvert, l'essai gratuit durera ${TRIAL.durationDays} jours ou ${TRIAL.includedResponses} réponses, selon la première limite atteinte, pour une campagne et sans carte bancaire.`,
+    answer: TRIAL_ANSWER[LANDING_LAUNCH_MODE],
   },
   {
     question: "Comment contacter l'équipe Tamani ?",
