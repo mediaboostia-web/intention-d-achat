@@ -6,6 +6,11 @@ import path from 'node:path';
 import { mockNextCookies, __cookieStore } from '@/test-utils/mock-cookies';
 
 mockNextCookies();
+const later = vi.hoisted(() => ({ after: vi.fn() }));
+vi.mock('next/server', async () => ({
+  ...(await vi.importActual<typeof import('next/server')>('next/server')),
+  after: later.after,
+}));
 vi.mock('@/lib/server/middleware', () => ({ requireAdmin: vi.fn(), requireSuperadmin: vi.fn() }));
 vi.mock('@/lib/server/middleware/rate-limit-by-userid', () => ({
   enforceAdminRateLimit: vi.fn(),
@@ -44,6 +49,7 @@ beforeEach(() => {
   vi.mocked(requireAdmin).mockReset().mockResolvedValue(ADMIN_CTX);
   vi.mocked(enforceAdminRateLimit).mockReset().mockResolvedValue(null);
   vi.mocked(logAdminAction).mockReset().mockResolvedValue(undefined);
+  later.after.mockClear();
   queue.enqueue.mockReset();
   queue.drainOne.mockReset().mockResolvedValue(true);
   vi.mocked(getEmailQueue)
@@ -61,12 +67,17 @@ describe('POST /api/admin-gate/code', () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ sent: true });
     expect(issueAdminCode).toHaveBeenCalledWith(prismaMock, queue, ADMIN_CTX.admin);
-    expect(queue.drainOne).toHaveBeenCalled();
+    // The send happens past the reply: the admin's screen does not wait for the provider.
+    expect(queue.drainOne).not.toHaveBeenCalled();
+    expect(later.after).toHaveBeenCalledTimes(1);
+    await (later.after.mock.calls[0]![0] as () => Promise<void>)();
+    expect(queue.drainOne).toHaveBeenCalledTimes(1);
   });
 
   it('still answers « sent » when the immediate send fails: the cron retries', async () => {
     queue.drainOne.mockRejectedValue(new Error('resend down'));
     expect((await post()).status).toBe(200);
+    await expect((later.after.mock.calls[0]![0] as () => Promise<void>)()).resolves.not.toThrow();
   });
 
   it('refuses without CSRF, without a session, and to a non-admin, sending nothing', async () => {
@@ -84,7 +95,7 @@ describe('POST /api/admin-gate/code', () => {
     const res = await post();
     expect(res.status).toBe(429);
     expect(await res.json()).toMatchObject({ error: 'ADMIN_CODE_TOO_MANY' });
-    expect(queue.drainOne).not.toHaveBeenCalled();
+    expect(later.after).not.toHaveBeenCalled();
   });
 
   it('503 when no e-mail can leave', async () => {
