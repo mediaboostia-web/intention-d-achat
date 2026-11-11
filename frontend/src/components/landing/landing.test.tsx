@@ -11,6 +11,7 @@ import {
   LANDING_VIDEO,
   LANDING_BAR_NAV,
   LANDING_SIGNUP_LABEL,
+  LANDING_REASSURANCE,
   filmLength,
   type LandingLinks,
 } from '@/lib/tamani/landing';
@@ -104,12 +105,12 @@ describe('the landing sections', () => {
     expect(t).not.toMatch(/300 cartons|190 invendus|1\s900\s000/);
   });
 
-  it('send every sign-up button to the waitlist and say so (launch mode « waitlist »)', () => {
+  it('send every sign-up button to sign-up and say so (launch mode « open »)', () => {
     const t = text(<>{sections}</>);
     expect(t).not.toContain('Réserver ma place');
     expect(t).not.toContain('Commencer à utiliser Tamani maintenant');
-    expect(t).toContain("Rejoindre la liste d'attente");
-    expect(page).not.toContain('href="/signup"');
+    expect(t).toContain('Commencer gratuitement');
+    expect(page).toContain('href="/signup"');
   });
 
   it('name TikTok and Facebook, not only WhatsApp', () => {
@@ -131,7 +132,7 @@ describe('the landing sections', () => {
 describe('LandingNav', () => {
   it('links to the six menu entries, sign-in and sign-up', () => {
     const out = html(<LandingNav />);
-    for (const href of [...LANDING_NAV.map((n) => n.href), '/login', '/liste-attente']) {
+    for (const href of [...LANDING_NAV.map((n) => n.href), '/login', '/signup']) {
       expect(out).toContain(`href="${href}"`);
     }
     for (const n of LANDING_NAV) expect(text(<LandingNav />)).toContain(n.label);
@@ -176,7 +177,7 @@ describe('LandingNav', () => {
       /<a [^>]*class="lp-nav__login"[^>]*href="\/login"|<a [^>]*href="\/login"[^>]*class="lp-nav__login"/,
     );
     expect(out).toMatch(
-      /<a [^>]*class="[^"]*lp-nav__cta[^"]*"[^>]*href="\/liste-attente"|<a [^>]*href="\/liste-attente"[^>]*class="[^"]*lp-nav__cta/,
+      /<a [^>]*class="[^"]*lp-nav__cta[^"]*"[^>]*href="\/signup"|<a [^>]*href="\/signup"[^>]*class="[^"]*lp-nav__cta/,
     );
     // The bar's button says the whole call on one line, like the drawer's.
     const barCta = out.match(/<a [^>]*class="[^"]*lp-nav__cta[^"]*"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? '';
@@ -189,10 +190,10 @@ describe('LandingNav', () => {
       ...LANDING_NAV.map((n) => n.href),
       LANDING_LINKS.whatsappContact,
       LANDING_LINKS.community,
-      '/liste-attente',
+      '/signup',
       '/login',
     ]);
-    expect(text(<LandingNav />)).toContain("Rejoindre la liste d'attente");
+    expect(text(<LandingNav />)).toContain('Commencer gratuitement');
     expect(text(<LandingNav />)).toContain('Déjà un compte ? Se connecter');
     // The links come in one after the other.
     expect(drawer.match(/style="--i:\d"/g)).toHaveLength(LANDING_NAV.length + 1);
@@ -255,7 +256,7 @@ describe('LandingNav', () => {
 });
 
 describe('Hero', () => {
-  it('says the promise in one h1, the waitlist reassurance under the buttons', () => {
+  it('says the promise in one h1, the trial reassurance under the buttons', () => {
     const out = html(<Hero />);
     expect(out.match(/<h1/g)).toHaveLength(1);
     const h1 = out.match(/<h1[\s\S]*?<\/h1>/)?.[0] ?? '';
@@ -268,10 +269,11 @@ describe('Hero', () => {
     expect(t).toContain(
       "Partage un lien sur WhatsApp, TikTok ou Facebook. Tes clients disent ce qu'ils veulent et combien, et Tamani estime la quantité à prévoir.",
     );
-    expect(t).toContain("Gratuit · Sans engagement · Nous te prévenons à l'ouverture.");
-    expect(t).toContain("Rejoindre la liste d'attente");
+    expect(t).toContain(LANDING_REASSURANCE);
+    expect(t).toContain('Sans carte bancaire.');
+    expect(t).toContain('Commencer gratuitement');
     expect(out).toMatch(
-      /<a [^>]*href="\/liste-attente"[^>]*id="lp-hero-cta"|<a [^>]*id="lp-hero-cta"[^>]*href="\/liste-attente"/,
+      /<a [^>]*href="\/signup"[^>]*id="lp-hero-cta"|<a [^>]*id="lp-hero-cta"[^>]*href="\/signup"/,
     );
     expect(out).toContain('href="/#comment-ca-marche"');
     expect(t).toContain('Voir comment ça marche');
@@ -295,7 +297,7 @@ describe('Hero', () => {
     expect(text(<Hero />).match(/Telegram/g)).toHaveLength(2);
   });
 
-  it('before launch, opens no account: no trial to start now, no free account', () => {
+  it('promises nothing the trial does not give', () => {
     const t = text(<Hero />);
     expect(t).not.toContain("jours d'essai");
     expect(t).not.toContain('Gratuit pour commencer');
@@ -415,7 +417,7 @@ describe('Solution', () => {
 });
 
 describe('Steps', () => {
-  it('three steps to prepare the stock, the CTA leads to the waitlist', () => {
+  it('three steps to prepare the stock, the CTA leads to sign-up', () => {
     const t = text(<Steps />);
     expect(t).toContain('Trois étapes pour mieux préparer ton stock.');
     for (const s of [
@@ -426,8 +428,8 @@ describe('Steps', () => {
       expect(t).toContain(s);
     const out = html(<Steps />);
     expect(out.match(/<li/g)).toHaveLength(3);
-    expect(t).toContain("Rejoindre la liste d'attente");
-    expect(out).toContain('href="/liste-attente"');
+    expect(t).toContain('Commencer gratuitement');
+    expect(out).toContain('href="/signup"');
     expect(t).toContain('Demande ≈120 cartons');
   });
 });
@@ -504,7 +506,7 @@ describe('Community', () => {
     const out = html(<Community links={NO_LINKS} />);
     expect(out).not.toContain('chat.whatsapp.com');
     expect(text(<Community links={NO_LINKS} />)).not.toContain('Rejoindre le groupe');
-    expect(out).toContain('href="/liste-attente"');
+    expect(out).toContain('href="/signup"');
   });
 });
 
@@ -529,16 +531,16 @@ describe('Faq', () => {
 });
 
 describe('FinalCta', () => {
-  it('closes the page on the waitlist and the signature', () => {
+  it('closes the page on sign-up and the signature', () => {
     const t = text(<FinalCta />);
     expect(t).toContain('Prépare ta prochaine commande avec de meilleures informations.');
     expect(t).toContain(
       'Recueille les intentions de tes clients avant de commander. Partage ton lien, consulte les réponses et utilise l’estimation de Tamani pour préparer ton approvisionnement.',
     );
-    expect(t).toContain("Rejoindre gratuitement la liste d'attente");
-    expect(t).toContain("Sans engagement. Nous te prévenons à l'ouverture.");
+    expect(t).toContain('Créer mon compte gratuit');
+    expect(t).toContain('Sans carte bancaire.');
     expect(t).toContain('Tamani. Ta communauté parle. Tu sais quoi acheter.');
-    expect(html(<FinalCta />)).toContain('href="/liste-attente"');
+    expect(html(<FinalCta />)).toContain('href="/signup"');
   });
 });
 
@@ -549,14 +551,23 @@ describe('LandingFooter', () => {
     expect(text(<LandingFooter links={ALL_LINKS} />)).toContain(
       'Une question ? Écris-nous sur WhatsApp',
     );
-    for (const href of ['/forfaits', '/#comment-ca-marche', '/#faq', '/login', '/liste-attente']) {
+    for (const href of [
+      '/forfaits',
+      '/#comment-ca-marche',
+      '/#faq',
+      '/login',
+      '/signup',
+      '/liste-attente',
+    ]) {
       expect(out).toContain(`href="${href}"`);
     }
     expect(out).toContain(`href="mailto:${LANDING_CONTACT_EMAIL}"`);
     const t = text(<LandingFooter links={ALL_LINKS} />);
     for (const label of [
       'Avantages',
-      "Rejoindre la liste d'attente",
+      'Commencer gratuitement',
+      // Porteur 2026-11-08: the waitlist keeps a link here, and only here.
+      "Liste d'attente",
       'Questions fréquentes',
       'Communauté WhatsApp',
       'Contacter le support',

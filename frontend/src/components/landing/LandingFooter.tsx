@@ -12,6 +12,7 @@ import {
   LANDING_SIGNUP_HREF,
   LANDING_SIGNUP_LABEL,
 } from '@/lib/tamani/landing';
+import { WAITLIST_PATH } from '@/lib/tamani/waitlist';
 import { InView } from './InView';
 import { PlatformLogo } from './PlatformLogo';
 import type { PlatformSlug } from './platform-paths';
@@ -101,6 +102,12 @@ export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks 
               <li>
                 <Link href={LANDING_SIGNUP_HREF}>{LANDING_SIGNUP_LABEL}</Link>
               </li>
+              {/* Porteur 2026-11-08: with sign-up open, the waitlist keeps this one link. */}
+              {LANDING_SIGNUP_HREF !== WAITLIST_PATH && (
+                <li>
+                  <Link href={WAITLIST_PATH}>Liste d&apos;attente</Link>
+                </li>
+              )}
             </ul>
           </nav>
           <nav aria-label="Aide">
