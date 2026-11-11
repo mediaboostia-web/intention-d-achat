@@ -24,7 +24,7 @@
 - Jamais d'e-mail, de téléphone ou de prénom dans un log.
 - Erreurs : `tamaniError(code, status)` avec un code de `TAMANI_ERRORS`, et ses mots dans `errorMessage()`.
 - Jetons uniquement, pas de palette Tailwind par défaut. Squelettes, jamais « Chargement… ».
-- Migration nommée avec une lettre : `9i_platform_settings`.
+- Migration nommée avec une lettre : `9k_platform_settings`.
 - Textes à l'écran en français simple, sans tiret long.
 
 ## Review Focus
@@ -41,7 +41,7 @@
 
 **Files:**
 - Modify : `frontend/prisma/schema.prisma` (modèles `PlatformSetting`, `AdminFeedSeen`, relation sur `User`)
-- Create : `frontend/prisma/migrations/9i_platform_settings/migration.sql`
+- Create : `frontend/prisma/migrations/9k_platform_settings/migration.sql`
 - Create : `frontend/src/lib/tamani/platform-settings.ts`, `frontend/src/lib/tamani/platform-settings.test.ts`
 - Create : `frontend/src/lib/server/tamani/platform-settings.ts`, `frontend/src/lib/server/tamani/platform-settings.test.ts`
 
@@ -221,7 +221,7 @@
 ### Task 5 : La recette, la documentation et la PR
 
 - [ ] **Step 1 : La barrière.** `pnpm format && pnpm lint && pnpm typecheck && pnpm test`, puis `pnpm build`.
-- [ ] **Step 2 : La migration sur Neon.** Appliquer `9i_platform_settings` (`migrate deploy` depuis `frontend/`, avec l'accord du porteur si l'outil le demande). Elle ne fait qu'ajouter deux tables.
+- [ ] **Step 2 : La migration sur Neon.** Appliquer `9k_platform_settings` (`migrate deploy` depuis `frontend/`, avec l'accord du porteur si l'outil le demande). Elle ne fait qu'ajouter deux tables.
 - [ ] **Step 3 : La recette** sur le build de production (`next start` sur le port 3001), avec le compte super-admin du porteur ou un compte de recette qu'il accepte, à 390 et 1280 px :
   - les Paramètres s'enregistrent, et l'accueil montre le nouveau lien après régénération ;
   - un admin s'ajoute puis se retire ;
