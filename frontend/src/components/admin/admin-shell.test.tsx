@@ -38,6 +38,33 @@ describe('AdminShell', () => {
   });
 });
 
+describe('the notifications badge (lot 13a)', () => {
+  const nav = (unread: number) => {
+    mockNextNavigation({ pathname: '/support-admin' });
+    return html(
+      <AuthProvider>
+        <AdminShell email="hullys@example.com" role="SUPERADMIN" unread={unread}>
+          <p>contenu</p>
+        </AdminShell>
+      </AuthProvider>,
+    );
+  };
+  const link = (out: string) =>
+    out.match(/<a [^>]*href="\/support-admin\/notifications"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? '';
+
+  it('shows how many are new on the Notifications link, with a spoken name', () => {
+    const a = link(nav(3));
+    expect(a).toContain('data-unread="3"');
+    expect(a).toContain('3 nouvelles notifications');
+  });
+
+  it('shows no badge when nothing is new', () => {
+    const a = link(nav(0));
+    expect(a).not.toContain('data-unread');
+    expect(a).not.toContain('nouvelle');
+  });
+});
+
 describe('/admin', () => {
   it('sends the old address to /support-admin', () => {
     expect(() => AdminRedirect()).toThrow('NEXT_REDIRECT /support-admin');

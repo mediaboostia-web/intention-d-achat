@@ -29,23 +29,26 @@ export function FilmPlayer({ video, poster }: { video: LandingVideo | null; post
     );
   }
 
-  const length = filmLength(video?.seconds ?? 60);
+  // No film yet: the planned minute. A film whose length nobody measured: no length.
+  const length = !video ? filmLength(60) : video.seconds ? filmLength(video.seconds) : null;
   return (
     <>
       {poster}
       <button
         type="button"
         className="lp-film__play"
-        aria-label={`Voir la démonstration, ${length.spoken}`}
+        aria-label={length ? `Voir la démonstration, ${length.spoken}` : 'Voir la démonstration'}
         onClick={() => (video ? setPlaying(true) : setSoon(true))}
       >
         <svg viewBox="0 0 12 12" aria-hidden="true">
           <path d="M1.5 0.8v10.4L11 6z" />
         </svg>
       </button>
-      <p className="lp-film__time" aria-hidden="true">
-        {length.label}
-      </p>
+      {length && (
+        <p className="lp-film__time" aria-hidden="true">
+          {length.label}
+        </p>
+      )}
       <p className="lp-film__soon" role="status" data-on={soon ? 'true' : 'false'}>
         {soon ? 'La vidéo de présentation arrive très bientôt.' : ''}
       </p>

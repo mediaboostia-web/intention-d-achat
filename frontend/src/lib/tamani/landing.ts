@@ -129,8 +129,8 @@ export interface LandingVideo {
   src: string;
   /** French captions (WebVTT). */
   captions?: string;
-  /** Its length, shown on the play button. */
-  seconds: number;
+  /** Its length, shown on the play button. Unknown for a film set in the Paramètres (lot 13a). */
+  seconds?: number;
 }
 
 /** The presentation film « Le jour de la commande » (C01, 16:9, porteur 2026-11-06). */
@@ -302,6 +302,7 @@ export const trimBase = (appUrl: string) => appUrl.replace(/\/+$/, '');
 export function landingJsonLd(
   appUrl: string,
   links: LandingLinks = LANDING_LINKS,
+  contactEmail: string = LANDING_CONTACT_EMAIL,
 ): Record<string, unknown> {
   const base = trimBase(appUrl);
   const sameAs = [links.facebook, links.instagram, links.tiktok].filter((l): l is string =>
@@ -322,7 +323,7 @@ export function landingJsonLd(
         contactPoint: {
           '@type': 'ContactPoint',
           contactType: 'customer support',
-          email: LANDING_CONTACT_EMAIL,
+          email: contactEmail,
           availableLanguage: 'fr',
           ...(links.whatsappContact && { url: links.whatsappContact }),
         },

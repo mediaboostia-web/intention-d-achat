@@ -816,3 +816,27 @@ Décisions du porteur, le 6 novembre :
 - Le formulaire demande le prénom, le WhatsApp ou l'e-mail, et où la personne vend.
 
 Le reste est dans le [cahier des charges](../specs/2026-11-06-tamani-liste-attente-design.md) et [docs/claude/tamani-lot-14-liste-attente.md](../../claude/tamani-lot-14-liste-attente.md).
+
+### Lot 17, 11b, 11c : ouverture du site et porte du support-admin (2026-11-08)
+
+Décisions du porteur, le 8 novembre :
+- Les boutons du site reviennent à l'inscription (« Se connecter », « Commencer gratuitement »). La liste d'attente garde sa page et un lien dans le pied de page.
+- Le nouveau look du support-admin (lot 11b) est fusionné.
+- Le support-admin a sa propre page de connexion, `/support-admin/connexion` : mot de passe, puis code envoyé par e-mail. La connexion des commerçants n'y donne plus accès.
+- Les fusions se font après les tests et la recette ; les migrations de la base et les envois d'e-mails réels restent soumis à son accord.
+
+### Lot 13 : Super-admin complet (2026-11-05, repris le 2026-11-08)
+
+Le porteur a demandé de terminer tous les chantiers avant le lancement : 13a (paramètres, admins, notifications), 13b (abonnements, codes promo), 13c (relances par e-mail), 13d (blog), puis couleur et taille par produit.
+
+Choix de l'agent, à vérifier (cahier des charges §13) :
+1. L'ordre 13a → 13b → 13c → 13d.
+2. Les notifications sont calculées à partir des données, sans toucher à l'inscription ni au paiement.
+3. Les liens et la vidéo du site se modifient dans les Paramètres ; le domaine reste un réglage Vercel.
+4. Un admin retiré redevient un compte normal, et personne ne se retire soi-même.
+5. Une réduction de 50 % au plus ; pour un pass gratuit, on l'attribue à la main.
+6. Un code promo n'est compté qu'au paiement réussi.
+7. 80 relances par jour au plus, une par personne et par semaine, toujours avec un lien de désabonnement.
+8. Le blog reste caché aux moteurs de recherche et aux menus jusqu'au feu vert du porteur.
+
+Détail : [cahier des charges](../specs/2026-11-05-tamani-super-admin-complet-design.md) et [docs/claude/tamani-lot-13-super-admin.md](../../claude/tamani-lot-13-super-admin.md).

@@ -2,14 +2,36 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { html, text } from '@/components/ui/test-html';
 import { planFeatures } from '@/lib/tamani/billing-view';
 import { FORFAITS_FAQ } from '@/lib/tamani/landing-forfaits';
+
+// The settings the page reads (lot 13a): a WhatsApp number of their own, so
+// the Illimité card shows it came from them and not from the constants.
+const { SETTINGS } = vi.hoisted(() => ({
+  SETTINGS: {
+    displayName: 'Tamani',
+    contactEmail: 'bonjour@tamani.app',
+    links: {
+      whatsappContact: 'https://wa.me/2290100000001',
+      community: null,
+      facebook: null,
+      instagram: null,
+      tiktok: null,
+    },
+    video: null,
+  },
+}));
+vi.mock('@/lib/server/prisma', () => ({ prisma: {} }));
+vi.mock('@/lib/server/tamani/platform-settings', () => ({
+  loadPlatformSettings: vi.fn(async () => SETTINGS),
+}));
+
 import ForfaitsPage, { generateMetadata } from './page';
 
 afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const out = html(<ForfaitsPage />);
-const t = text(<ForfaitsPage />);
+const out = html(await ForfaitsPage());
+const t = text(await ForfaitsPage());
 /** The cards of one tab, as rendered (each card holds its own <ul> of lines). */
 const tab = (id: 'court' | 'mois') => {
   const start = out.indexOf(`data-tab="${id}"`);
@@ -58,7 +80,14 @@ describe('/forfaits', () => {
     );
     expect(t).toContain('Sur demande');
     expect(t).toContain('Demander les informations sur WhatsApp');
-    expect(out).toContain('href="https://wa.me/2290195831126"');
+    const illimite = tab('mois').slice(tab('mois').indexOf('Pass Illimité</h3>'));
+    expect(illimite).toContain('href="https://wa.me/2290100000001"');
+    expect(out).not.toContain('wa.me/2290195831126');
+  });
+
+  it('writes the saved contact address in the footer', () => {
+    const foot = out.slice(out.indexOf('id="contact"'));
+    expect(foot).toContain('href="mailto:bonjour@tamani.app"');
   });
 
   it('the trial card greys out what it lacks, a pass card says the rest is included', () => {

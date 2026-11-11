@@ -12,6 +12,8 @@ import { Problem } from '@/components/landing/Problem';
 import { Solution } from '@/components/landing/Solution';
 import { Steps } from '@/components/landing/Steps';
 import { StickyCta } from '@/components/landing/StickyCta';
+import { prisma } from '@/lib/server/prisma';
+import { loadPlatformSettings } from '@/lib/server/tamani/platform-settings';
 import { landingJsonLd, landingMetadata } from '@/lib/tamani/landing';
 
 const appUrl = () => process.env.APP_URL ?? 'http://localhost:3000';
@@ -23,10 +25,15 @@ export function generateMetadata(): Metadata {
 /**
  * The public home page (lot 9a, mockup docs/brand/mockups/2026-10-25-page-accueil-v3.html):
  * the porteur's sections, in their order (rewritten in lot 12; the prices live on /forfaits).
+ * The links, the video and the contact address are the platform settings (lot 13a).
  */
-export default function HomePage() {
+export default async function HomePage() {
+  const { links, video, contactEmail } = await loadPlatformSettings(prisma);
   // `<` escaped so the graph can never close its <script> early.
-  const jsonLd = JSON.stringify(landingJsonLd(appUrl())).replace(/</g, '\\u003c');
+  const jsonLd = JSON.stringify(landingJsonLd(appUrl(), links, contactEmail)).replace(
+    /</g,
+    '\\u003c',
+  );
   return (
     <div className="lp">
       <a
@@ -35,19 +42,19 @@ export default function HomePage() {
       >
         Aller au contenu
       </a>
-      <LandingNav />
+      <LandingNav links={links} />
       <main id="contenu">
         <Hero />
-        <Film />
+        <Film video={video} />
         <Problem />
         <Solution />
         <Steps />
         <BeforeAfter />
-        <Community />
-        <Faq />
+        <Community links={links} />
+        <Faq links={links} />
         <FinalCta />
       </main>
-      <LandingFooter />
+      <LandingFooter links={links} contactEmail={contactEmail} />
       <StickyCta />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
     </div>

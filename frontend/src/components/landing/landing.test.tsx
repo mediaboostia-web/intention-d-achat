@@ -337,6 +337,14 @@ describe('Film', () => {
   });
 });
 
+describe('a film whose length nobody measured', () => {
+  it('shows no length on the play button, and reads none aloud', () => {
+    const out = html(<Film video={{ src: 'https://res.cloudinary.com/d/v.mp4' }} />);
+    expect(out).toContain('aria-label="Voir la démonstration"');
+    expect(out).not.toContain('lp-film__time');
+  });
+});
+
 describe('filmLength', () => {
   it('says the length the way the play button shows and reads it', () => {
     expect(filmLength(58)).toEqual({ label: '1 min', spoken: '1 minute' });
@@ -589,6 +597,12 @@ describe('LandingFooter', () => {
     const out = html(<LandingFooter links={ALL_LINKS} />);
     expect(out).toContain('href="https://facebook.com/tamani"');
     expect(out).toContain('href="https://tiktok.com/@tamani"');
+  });
+
+  it('writes the contact address it is given (lot 13a settings)', () => {
+    const out = html(<LandingFooter links={NO_LINKS} contactEmail="bonjour@tamani.app" />);
+    expect(out).toContain('href="mailto:bonjour@tamani.app"');
+    expect(out).not.toContain(`mailto:${LANDING_CONTACT_EMAIL}`);
   });
 });
 

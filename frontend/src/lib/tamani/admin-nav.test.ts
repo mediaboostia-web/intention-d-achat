@@ -4,19 +4,24 @@ import { ADMIN_HOME, ADMIN_NAV, adminGate, isAdminLinkActive } from './admin-nav
 describe('support-admin navigation', () => {
   it('lives at /support-admin (porteur, 2026-10-30), dashboard first', () => {
     expect(ADMIN_HOME).toBe('/support-admin');
+    // Lot 13a: Notifications second, Paramètres last (spec §11).
     expect(ADMIN_NAV.map((l) => l.href)).toEqual([
       '/support-admin',
+      '/support-admin/notifications',
       '/support-admin/liste-attente',
       '/support-admin/boutiques',
       '/support-admin/utilisateurs',
       '/support-admin/journal',
+      '/support-admin/parametres',
     ]);
     expect(ADMIN_NAV.map((l) => l.label)).toEqual([
       'Tableau de bord',
+      'Notifications',
       "Liste d'attente",
       'Boutiques',
       'Utilisateurs',
       'Journal',
+      'Paramètres',
     ]);
   });
 

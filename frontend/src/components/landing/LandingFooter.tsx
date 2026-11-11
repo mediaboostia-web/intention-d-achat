@@ -28,7 +28,13 @@ const SOCIALS: readonly { link: LandingLinkName; slug: PlatformSlug; label: stri
  * 10. The notebook's back cover: links, then the name written whole, then the
  * small print. The legal pages join the columns when they ship (lot 9).
  */
-export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks }) {
+export function LandingFooter({
+  links = LANDING_LINKS,
+  contactEmail = LANDING_CONTACT_EMAIL,
+}: {
+  links?: LandingLinks;
+  contactEmail?: string;
+}) {
   const socials = SOCIALS.flatMap((s) => {
     const href = links[s.link];
     return href ? [{ ...s, href }] : [];
@@ -39,7 +45,7 @@ export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks 
     ...(links.whatsappContact
       ? [{ href: links.whatsappContact, label: 'Contacter le support' }]
       : []),
-    { href: `mailto:${LANDING_CONTACT_EMAIL}`, label: LANDING_CONTACT_EMAIL },
+    { href: `mailto:${contactEmail}`, label: contactEmail },
   ];
 
   return (
