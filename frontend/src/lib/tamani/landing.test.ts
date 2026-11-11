@@ -216,7 +216,8 @@ describe('landing copy', () => {
 
   it('the FAQ answers how the free trial works', () => {
     const trial = LANDING_FAQ.find((q) => q.question === 'Comment essayer Tamani ?');
-    expect(trial?.answer).toContain("liste d'attente");
+    expect(trial?.answer).not.toContain("liste d'attente");
+    expect(trial?.answer).toContain('Crée ton compte');
     expect(trial?.answer).toContain(
       `${PLANS.TRIAL.durationDays} jours ou ${PLANS.TRIAL.includedResponses} réponses`,
     );
@@ -307,14 +308,15 @@ describe('the menu, the titles and the questions of the new site', () => {
 });
 
 describe('the launch mode (copy brief §2.3, §4.2)', () => {
-  it('is the waitlist until the porteur opens sign-up, and every button follows it', () => {
-    expect(LANDING_LAUNCH_MODE).toBe('waitlist');
-    expect(LANDING_SIGNUP_HREF).toBe('/liste-attente');
-    expect(LANDING_SIGNUP_LABEL).toBe("Rejoindre la liste d'attente");
-    expect(LANDING_FINAL_LABEL).toBe("Rejoindre gratuitement la liste d'attente");
-    expect(LANDING_PLAN_LABEL).toBe("Être prévenu à l'ouverture");
+  // Porteur 2026-11-08: sign-up is open; the waitlist keeps its page and a footer link.
+  it('is open, and every button follows it', () => {
+    expect(LANDING_LAUNCH_MODE).toBe('open');
+    expect(LANDING_SIGNUP_HREF).toBe('/signup');
+    expect(LANDING_SIGNUP_LABEL).toBe('Commencer gratuitement');
+    expect(LANDING_FINAL_LABEL).toBe('Créer mon compte gratuit');
+    expect(LANDING_PLAN_LABEL).toBe('Choisir ce pass');
     expect(LANDING_REASSURANCE).toBe(
-      "Gratuit · Sans engagement · Nous te prévenons à l'ouverture.",
+      `${PLANS.TRIAL.durationDays} jours ou ${PLANS.TRIAL.includedResponses} réponses · Sans carte bancaire.`,
     );
   });
 });

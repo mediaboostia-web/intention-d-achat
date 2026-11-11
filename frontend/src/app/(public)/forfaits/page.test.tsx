@@ -25,10 +25,8 @@ describe('/forfaits', () => {
     expect(t).toContain(
       'Commence par découvrir Tamani, puis choisis un pass selon la durée de ton activité et le nombre de réponses que tu souhaites consulter. Les pass sont payés à l’avance et ne se renouvellent pas automatiquement.',
     );
-    // Waitlist mode: the page says so above the cards, with no date.
-    expect(t).toContain(
-      "L'accès public est actuellement sur liste d'attente. Inscris-toi pour être prévenu lorsque tu pourras utiliser Tamani.",
-    );
+    // Open mode: no waitlist notice above the cards.
+    expect(t).not.toContain("L'accès public est actuellement sur liste d'attente.");
     const radios = out.match(/<input[^>]*type="radio"[^>]*>/g) ?? [];
     expect(radios).toHaveLength(2);
     expect(radios[0]).toContain('checked');
@@ -67,16 +65,16 @@ describe('/forfaits', () => {
     const court = tab('court');
     const trial = court.slice(0, court.indexOf('Pass Semaine</h3>'));
     expect(trial.match(/data-included="false"/g)).toHaveLength(3);
-    expect(trial).toContain('Être prévenu à l&#x27;ouverture');
-    expect(trial).toContain('href="/liste-attente"');
+    expect(trial).toContain('Commencer gratuitement');
+    expect(trial).toContain('href="/signup"');
     const week = court.slice(
       court.indexOf('Pass Semaine</h3>'),
       court.indexOf('Pass 2 Semaines</h3>'),
     );
     expect(week.match(/data-included="true"/g)).toHaveLength(4);
     expect(week).toContain('Et tout le reste est inclus');
-    expect(week).toContain('Être prévenu à l&#x27;ouverture');
-    expect(out).not.toContain('href="/signup"');
+    expect(week).toContain('Choisir ce pass');
+    expect(week).toContain('href="/signup"');
   });
 
   it('the reassurance band, what every paid pass includes and the « Et quand mon pass se termine ? » box', () => {
