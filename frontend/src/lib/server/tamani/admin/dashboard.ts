@@ -6,7 +6,16 @@ import type { AdminDashboard, AdminPayment } from '@/lib/tamani/admin-dashboard'
 import { PASS_IDS, PLANS, isPassId } from '@/lib/tamani/plans';
 import { effectivePlan } from '../subscription';
 import { countCampaigns } from './counts';
-import { cacOf, churnOf, coverages, monthRange, mrrOf, newPayers, type PassOrder } from './metrics';
+import {
+  cacOf,
+  churnOf,
+  coverages,
+  monthRange,
+  mrrOf,
+  newPayers,
+  revenueSeries,
+  type PassOrder,
+} from './metrics';
 
 type Db = Pick<
   PrismaClient,
@@ -60,7 +69,9 @@ export async function loadAdminDashboard(
     db.subscription.findMany({
       select: { organizationId: true, plan: true, currentPeriodEnd: true, graceUntil: true },
     }),
-    db.organization.findMany({ select: { id: true, businessType: true, salesChannel: true } }),
+    db.organization.findMany({
+      select: { id: true, businessType: true, salesChannel: true, country: true },
+    }),
     countCampaigns(db, {}, now),
     db.marketingSpend.findUnique({ where: { month }, select: { amount: true } }),
     db.user.count(),
@@ -123,6 +134,7 @@ export async function loadAdminDashboard(
   const byPlan: Record<string, number> = {};
   const byType: Record<string, number> = {};
   const byChannel: Record<string, number> = {};
+  const byCountry: Record<string, number> = {};
   let active = 0;
   for (const org of orgs) {
     const { plan } = effectivePlan(subByShop.get(org.id) ?? null, now);
@@ -131,6 +143,7 @@ export async function loadAdminDashboard(
     active += 1;
     bump(byType, org.businessType ?? 'NONE');
     bump(byChannel, org.salesChannel ?? 'NONE');
+    bump(byCountry, org.country);
   }
 
   const payers = newPayers(orders, range);
@@ -142,11 +155,12 @@ export async function loadAdminDashboard(
       last30Days,
       byPass,
       payments,
+      series: revenueSeries(paid, month),
     },
     mrr: mrrOf(subs, unlimited, now),
     churn: churnOf(coverages(orders), orders, range),
     cac: { spend: spent, payers, value: cacOf(spent, payers) },
-    shops: { total: orgs.length, active, byPlan, byType, byChannel },
+    shops: { total: orgs.length, active, byPlan, byType, byChannel, byCountry },
     campaigns,
     users: { total: users, suspended },
   };

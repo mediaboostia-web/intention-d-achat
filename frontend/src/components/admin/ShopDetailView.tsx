@@ -19,8 +19,8 @@ import { GrantPassForm } from './GrantPassForm';
 
 function Block({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="frame space-y-3 rounded-card bg-surface p-4">
-      <h2 className="font-hand text-2xl font-bold text-ink">{title}</h2>
+    <section className="admin-card space-y-3 p-4">
+      <h2 className="text-lg font-bold text-ink">{title}</h2>
       {children}
     </section>
   );
@@ -46,7 +46,7 @@ export function ShopDetailView({ shop, canEdit }: { shop: AdminShop; canEdit: bo
         ‹ Boutiques
       </Link>
       <header>
-        <h1 className="font-hand text-3xl font-bold break-words text-primary">{shop.name}</h1>
+        <h1 className="text-2xl font-bold break-words text-ink">{shop.name}</h1>
         <p className="text-ink-soft">
           {countryLabel(shop.country)} · créée le {dateLabel(shop.createdAt)} · /{shop.slug}
         </p>
@@ -99,7 +99,7 @@ export function ShopDetailView({ shop, canEdit }: { shop: AdminShop; canEdit: bo
       </Block>
 
       <section className="space-y-3">
-        <h2 className="font-hand text-2xl font-bold text-ink">Achats</h2>
+        <h2 className="text-lg font-bold text-ink">Achats</h2>
         {shop.purchases.length === 0 ? (
           <p className="text-ink-soft">Aucun achat.</p>
         ) : (

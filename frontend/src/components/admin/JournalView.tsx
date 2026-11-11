@@ -14,7 +14,7 @@ export function JournalView({ entries }: { entries: readonly JournalEntry[] }) {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-hand text-3xl font-bold text-primary">Journal</h1>
+        <h1 className="text-2xl font-bold text-ink">Journal</h1>
         <p className="text-ink-soft">
           Les {JOURNAL_SIZE_SHOWN} dernières actions du support, heure de Cotonou.
         </p>

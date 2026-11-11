@@ -34,7 +34,7 @@ export function UserDetailView({
       >
         ‹ Utilisateurs
       </Link>
-      <h1 className="font-hand text-3xl font-bold break-words text-primary">{user.email}</h1>
+      <h1 className="text-2xl font-bold break-words text-ink">{user.email}</h1>
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Fact label="Nom" value={user.name ?? '—'} />
         <Fact label="Rôle" value={userRoleLabel(user.role)} />
@@ -54,8 +54,8 @@ export function UserDetailView({
           }
         />
       </dl>
-      <section className="frame rounded-card bg-surface p-4">
-        <h2 className="mb-3 font-hand text-2xl font-bold text-ink">Modifier</h2>
+      <section className="admin-card p-4">
+        <h2 className="mb-3 text-lg font-bold text-ink">Modifier</h2>
         <UserActions user={user} viewer={viewer} />
       </section>
     </div>

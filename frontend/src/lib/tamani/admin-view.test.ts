@@ -6,15 +6,18 @@ import {
   channelLabel,
   churnText,
   countryLabel,
+  growthText,
   memberRoleLabel,
   orderStatusLabel,
   passLine,
   monthLabel,
+  ofMonth,
   percentText,
   planLabel,
   PLAN_ORDER,
   providerLabel,
   typeLabel,
+  withShares,
 } from './admin-view';
 
 describe('support-admin words', () => {
@@ -106,5 +109,52 @@ describe('shop card words', () => {
     expect(orderStatusLabel('PENDING')).toBe('En attente');
     expect(passLine('WEEK', true)).toBe('Pass Semaine (grâce)');
     expect(passLine('FREE', false)).toBe('Sans pass');
+  });
+});
+
+const SPACES = new RegExp(`[${String.fromCharCode(0xa0, 0x202f)}]`, 'g');
+const plain = (v: string) => v.replace(SPACES, ' ');
+
+describe('growthText', () => {
+  const months = (before: number, now: number) => [
+    { month: '2026-10', total: before },
+    { month: '2026-11', total: now },
+  ];
+
+  it('compares the month with the one before, up or down', () => {
+    expect(growthText(months(9200, 13_800))).toMatchObject({ tone: 'up' });
+    expect(plain(growthText(months(9200, 13_800))!.text)).toBe('+50 % vs octobre');
+    expect(plain(growthText(months(10_000, 7500))!.text)).toBe('−25 % vs octobre');
+    expect(growthText(months(10_000, 7500))!.tone).toBe('down');
+    expect(growthText(months(5000, 5000))!.tone).toBe('flat');
+  });
+
+  it('says nothing when the month before had no money (no division by zero)', () => {
+    expect(growthText(months(0, 13_800))).toBeNull();
+    expect(growthText([{ month: '2026-11', total: 100 }])).toBeNull();
+  });
+});
+
+describe('withShares', () => {
+  it('gives each row its share of the total, as a French percentage', () => {
+    const rows = withShares([
+      { key: 'BJ', label: 'Bénin', count: 4 },
+      { key: 'SN', label: 'Sénégal', count: 2 },
+    ]);
+    expect(rows.map((r) => plain(r.share))).toEqual(['66,7 %', '33,3 %']);
+    expect(rows.map((r) => r.ratio)).toEqual([1, 0.5]); // the bar, to scale on the largest
+  });
+
+  it('keeps an empty list empty', () => {
+    expect(withShares([])).toEqual([]);
+  });
+});
+
+describe('ofMonth', () => {
+  it('elides « de » before a vowel: d’avril, d’août, d’octobre', () => {
+    expect(ofMonth('2026-10')).toBe('d’octobre 2026');
+    expect(ofMonth('2026-08')).toBe('d’août 2026');
+    expect(ofMonth('2027-04')).toBe('d’avril 2027');
+    expect(ofMonth('2026-11')).toBe('de novembre 2026');
   });
 });

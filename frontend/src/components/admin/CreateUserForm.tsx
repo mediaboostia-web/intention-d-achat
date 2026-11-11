@@ -45,12 +45,8 @@ export function CreateUserForm() {
   }
 
   return (
-    <form
-      id="create-user"
-      onSubmit={submit}
-      className="frame space-y-3 rounded-card bg-surface p-4"
-    >
-      <h2 className="font-hand text-2xl font-bold text-ink">Ajouter un utilisateur</h2>
+    <form id="create-user" onSubmit={submit} className="admin-card space-y-3 p-4">
+      <h2 className="text-lg font-bold text-ink">Ajouter un utilisateur</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         <Input
           id="create-user-email"
@@ -81,7 +77,7 @@ export function CreateUserForm() {
           <Notice tone="info" title={`Compte créé : ${created.user.email}`}>
             <p>
               Mot de passe temporaire :{' '}
-              <code className="rounded-control bg-grid/60 px-2 py-1 font-bold select-all">
+              <code className="rounded-control bg-admin-soft px-2 py-1 font-bold select-all">
                 {created.temporaryPassword}
               </code>
             </p>

@@ -25,6 +25,11 @@
   --color-whatsapp-ink: #073b1f;
   --color-deep: #10204a;
   --color-deep-ink: #ffffff;
+  /* Support-admin violet (lot 11b): back-office pages only. */
+  --color-admin: #5b3fd6;
+  --color-admin-ink: #ffffff;
+  --color-admin-soft: #ece8fd;
+  --color-admin-bg: #f5f3fc;
 
   /* Type scale (px): 12 14 16 18 21 24 32 40 48 60. */
   --text-xs: 0.75rem;
@@ -105,6 +110,10 @@
   --color-neutral-verdict: #9ea8c4;
   --color-deep: #070d24;
   --color-deep-ink: #eef1fa;
+  --color-admin: #b6a6ff;
+  --color-admin-ink: #130f33;
+  --color-admin-soft: #2b2466;
+  --color-admin-bg: #100c2e;
   --shadow-press: 4px 4px 0 var(--color-deep);
 }
 
@@ -167,6 +176,24 @@
 }
 
 /* The ink outline of cards, buttons and fields. */
+/* Support-admin (lot 11b): white cards on the violet-tinted page, a hairline
+   and a soft violet shadow instead of the notebook's ink frame. */
+@utility admin-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-admin-soft);
+  border-radius: var(--radius-card);
+  box-shadow: 0 12px 32px -20px color-mix(in srgb, var(--color-admin) 55%, transparent);
+}
+
+@utility admin-field {
+  min-height: 3rem;
+  border: 1px solid var(--color-admin-soft);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  padding-inline: 1rem;
+  color: var(--color-ink);
+}
+
 @utility frame {
   border: 2.5px solid var(--color-ink);
 }
