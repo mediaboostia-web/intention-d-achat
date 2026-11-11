@@ -62,8 +62,20 @@ describe('proxy (protected pages)', () => {
     const proxy = await loadProxy('/app,/admin');
     const res = proxy(request('/support-admin/boutiques'));
     expect(res.status).toBe(303);
-    expect(res.headers.get('location')).toBe(
-      'http://localhost:3001/login?next=%2Fsupport-admin%2Fboutiques',
+    // Lot 11c: the back-office has its own sign-in page.
+    expect(res.headers.get('location')).toBe('http://localhost:3001/support-admin/connexion');
+    expect(proxy(request('/support-admin')).headers.get('location')).toBe(
+      'http://localhost:3001/support-admin/connexion',
+    );
+    // The door itself renders without a session: no redirect, no loop.
+    expect(proxy(request('/support-admin/connexion')).headers.get('location')).toBeNull();
+    // With a refresh cookie only, the door first gets a fresh session like any page.
+    expect(
+      proxy(request('/support-admin/connexion', { 'app-refresh': 'r' })).headers.get('location'),
+    ).toBe('http://localhost:3001/api/auth/refresh-and-return?next=%2Fsupport-admin%2Fconnexion');
+    // The shop space still goes to the shop's sign-in page.
+    expect(proxy(request('/app/plus')).headers.get('location')).toBe(
+      'http://localhost:3001/login?next=%2Fapp%2Fplus',
     );
     expect(proxy(request('/support-administrer')).headers.get('location')).toBeNull();
   });

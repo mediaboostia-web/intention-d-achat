@@ -164,7 +164,7 @@ describe('source invariants', () => {
   it("route source contains runtime='nodejs', requireAdmin('ADMIN'), enforceAdminRateLimit, CAPABILITIES_BY_ROLE, withRequestContext", () => {
     const src = fs.readFileSync(path.join(__dirname, 'route.ts'), 'utf8');
     expect(src).toMatch(/export\s+const\s+runtime\s*=\s*['"]nodejs['"]/);
-    expect(src).toContain("requireAdmin('ADMIN')");
+    expect(src).toContain("gatedAdmin('ADMIN')");
     expect(src).toContain('enforceAdminRateLimit');
     expect(src).toContain('CAPABILITIES_BY_ROLE');
     expect(src).toContain('withRequestContext');

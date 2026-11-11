@@ -34,6 +34,10 @@ describe('TAMANI_ERRORS', () => {
         'PAYMENT_PROVIDER_UNAVAILABLE',
         'PURCHASE_NOT_FOUND',
         'PUSH_NOT_CONFIGURED',
+        'ADMIN_GATE_REQUIRED',
+        'ADMIN_CODE_INVALID',
+        'ADMIN_CODE_TOO_MANY',
+        'ADMIN_CODE_UNAVAILABLE',
       ].sort(),
     );
   });

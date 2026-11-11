@@ -34,6 +34,10 @@ export const TAMANI_ERROR_CODES = [
   'PAYMENT_PROVIDER_UNAVAILABLE',
   'PURCHASE_NOT_FOUND',
   'PUSH_NOT_CONFIGURED',
+  'ADMIN_GATE_REQUIRED',
+  'ADMIN_CODE_INVALID',
+  'ADMIN_CODE_TOO_MANY',
+  'ADMIN_CODE_UNAVAILABLE',
 ] as const;
 
 const NETWORK = 'Pas de connexion au serveur. Vérifie ton réseau et réessaie.';
@@ -74,6 +78,10 @@ const MESSAGES: Record<string, string> = {
     'Le paiement est indisponible pour le moment. Réessaie dans quelques minutes.',
   PURCHASE_NOT_FOUND: 'Cet achat est introuvable.',
   PUSH_NOT_CONFIGURED: 'Les notifications sur le téléphone ne sont pas encore disponibles.',
+  ADMIN_GATE_REQUIRED: 'Ta session admin a expiré. Reconnecte-toi au Support-admin.',
+  ADMIN_CODE_INVALID: 'Ce code est faux ou a expiré. Demande un nouveau code.',
+  ADMIN_CODE_TOO_MANY: 'Trop de codes demandés. Réessaie dans 10 minutes.',
+  ADMIN_CODE_UNAVAILABLE: "L'envoi du code est indisponible pour le moment.",
   // Kit: auth
   INVALID_CREDENTIALS: 'Email ou mot de passe incorrect.',
   EMAIL_NOT_VERIFIED: "Confirme d'abord ton email avec le code reçu.",

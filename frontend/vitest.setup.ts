@@ -14,3 +14,6 @@ process.env.JWT_SECRET ||= 'vitest-fixture-jwt-secret-with-enough-entropy-for-te
 process.env.ENCRYPTION_KEY ||= 'aGVsbG8td29ybGQtdGhpcy1pcy0zMi1ieXRlcy1sb25n';
 process.env.COOKIE_PREFIX ||= 'app';
 process.env.NODE_ENV ||= 'test';
+// The support-admin door (lot 11c) is open in tests unless one closes it:
+// route tests mock requireAdmin and have no cookie jar.
+process.env.ADMIN_GATE ||= 'off';
