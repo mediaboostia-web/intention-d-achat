@@ -39,6 +39,10 @@ export const TAMANI_ERRORS = [
   'ADMIN_SELF_CHANGE',
   'ADMIN_LAST_SUPERADMIN',
   'ADMIN_NOT_FOUND',
+  'ADMIN_GATE_REQUIRED',
+  'ADMIN_CODE_INVALID',
+  'ADMIN_CODE_TOO_MANY',
+  'ADMIN_CODE_UNAVAILABLE',
 ] as const;
 
 export type TamaniErrorCode = (typeof TAMANI_ERRORS)[number];
@@ -77,6 +81,10 @@ const DEFAULT_MESSAGES: Record<TamaniErrorCode, string> = {
   ADMIN_SELF_CHANGE: 'Tu ne peux pas changer ton propre rôle : demande à un autre super-admin.',
   ADMIN_LAST_SUPERADMIN: "C'est le dernier super-admin : nomme d'abord quelqu'un d'autre.",
   ADMIN_NOT_FOUND: 'Ce compte est introuvable.',
+  ADMIN_GATE_REQUIRED: 'Entre ton code pour ouvrir le Support-admin.',
+  ADMIN_CODE_INVALID: 'Ce code est faux ou a expiré. Demande un nouveau code.',
+  ADMIN_CODE_TOO_MANY: 'Trop de codes demandés. Réessaie dans 10 minutes.',
+  ADMIN_CODE_UNAVAILABLE: "L'envoi du code est indisponible pour le moment.",
 };
 
 export function tamaniError(code: TamaniErrorCode, status: number, message?: string): NextResponse {

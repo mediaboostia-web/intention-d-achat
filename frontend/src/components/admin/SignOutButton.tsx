@@ -3,15 +3,20 @@
 import { useRouter } from 'next/navigation';
 import { Icon } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
+import { api } from '@/lib/api';
+import { ADMIN_DOOR } from '@/lib/tamani/admin-nav';
 import { cn } from '@/lib/utils';
 
-/** Ends the session, then the sign-in page. */
+/** Closes the support-admin door, ends the session, then the admin's sign-in page. */
 export function SignOutButton({ className }: { className?: string }) {
   const router = useRouter();
   const { logout, loggingOut } = useAuth();
   async function signOut() {
+    // The door first, while the CSRF token still exists. Sign-out goes on
+    // even if this call fails: the door cookie is useless without a session.
+    await api('/api/admin-gate/leave', { method: 'POST' }).catch(() => undefined);
     await logout();
-    router.replace('/login');
+    router.replace(ADMIN_DOOR);
   }
   return (
     <button

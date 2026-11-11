@@ -57,6 +57,10 @@ export const LINK_HOSTS = {
 
 type LinkField = keyof typeof LINK_HOSTS;
 
+/** The film shipped with the site: a file of public/video, by its plain name. */
+const SITE_FILE = /^\/video\/[a-z0-9][a-z0-9_-]*\.(mp4|webm|vtt)$/i;
+const SITE_FILE_FIELDS: readonly LinkField[] = ['videoUrl', 'captionsUrl'];
+
 function onHosts(value: string, hosts: readonly string[]): boolean {
   try {
     const url = new URL(value);
@@ -73,7 +77,13 @@ const link = (field: LinkField) =>
     .trim()
     .max(300)
     .transform((s) => (s === '' ? null : s))
-    .refine((s) => s === null || onHosts(s, LINK_HOSTS[field]), { message: `${field} host` })
+    .refine(
+      (s) =>
+        s === null ||
+        onHosts(s, LINK_HOSTS[field]) ||
+        (SITE_FILE_FIELDS.includes(field) && SITE_FILE.test(s)),
+      { message: `${field} host` },
+    )
     .nullable()
     .transform((s) => s ?? null);
 
@@ -103,7 +113,14 @@ export function settingsFromRow(row: PlatformSettingRow | null): PlatformSetting
       tiktok: row.tiktok,
     },
     video: row.videoUrl
-      ? { src: row.videoUrl, ...(row.captionsUrl ? { captions: row.captionsUrl } : {}) }
+      ? {
+          src: row.videoUrl,
+          ...(row.captionsUrl ? { captions: row.captionsUrl } : {}),
+          // Only the built-in film has a measured length.
+          ...(row.videoUrl === LANDING_VIDEO?.src && LANDING_VIDEO.seconds
+            ? { seconds: LANDING_VIDEO.seconds }
+            : {}),
+        }
       : null,
   };
 }

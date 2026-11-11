@@ -271,7 +271,7 @@ describe('Tamani core schema (lot 3)', () => {
     expect(sql).not.toMatch(/\bDROP\b|ALTER TABLE/);
   });
 
-  it('keeps the platform settings and the admin feed visits as migration 9i_platform_settings (lot 13a)', () => {
+  it('keeps the platform settings and the admin feed visits as migration 9k_platform_settings (lot 13a)', () => {
     const settings = modelBlock('PlatformSetting');
     expect(field(settings, 'id String @id @default("platform")')).toBe(true);
     for (const f of [
@@ -291,15 +291,30 @@ describe('Tamani core schema (lot 3)', () => {
     const names = readdirSync(resolve(PRISMA, 'migrations'))
       .filter((n) => !n.endsWith('.toml'))
       .sort();
-    expect(names.at(-1)).toBe('9i_platform_settings');
+    expect(names.at(-1)).toBe('9k_platform_settings');
     const sql = readFileSync(
-      resolve(PRISMA, 'migrations/9i_platform_settings/migration.sql'),
+      resolve(PRISMA, 'migrations/9k_platform_settings/migration.sql'),
       'utf8',
     );
     expect(sql).toMatch(/CREATE TABLE "PlatformSetting"/);
     expect(sql).toMatch(/CREATE TABLE "AdminFeedSeen"/);
     expect(sql).toMatch(/ON DELETE CASCADE/);
     expect(sql).not.toMatch(/\bDROP\b|ALTER TABLE "(?!AdminFeedSeen)/);
+  });
+
+  it('keeps the waitlist as migration 9j_waitlist (lot 14)', () => {
+    const block = modelBlock('WaitlistEntry');
+    expect(field(block, 'firstName String')).toBe(true);
+    expect(field(block, 'phone String? @unique')).toBe(true);
+    expect(field(block, 'email String? @unique')).toBe(true);
+    expect(field(block, 'channels String[]')).toBe(true);
+    expect(field(block, 'source String?')).toBe(true);
+    expect(field(block, 'consentAt DateTime')).toBe(true);
+    const sql = readFileSync(resolve(PRISMA, 'migrations/9j_waitlist/migration.sql'), 'utf8');
+    expect(sql).toMatch(/CREATE TABLE "WaitlistEntry"/);
+    expect(sql).toMatch(/CREATE UNIQUE INDEX "WaitlistEntry_phone_key"/);
+    expect(sql).toMatch(/CREATE UNIQUE INDEX "WaitlistEntry_email_key"/);
+    expect(sql).not.toMatch(/\bDROP\b|ALTER TABLE/);
   });
 
   it('migration folders sort as text in the order they were written', () => {

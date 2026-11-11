@@ -3,5 +3,7 @@
 # Then run typecheck across the workspace as a fast safety net (~2-3s).
 # Tests are NOT run here — they run in CI. To skip locally, use `git commit --no-verify`.
 
-pnpm exec lint-staged
+# --max-arg-length: a merge stages a hundred files, and Windows refuses a
+# command line longer than 8191 characters ("La ligne de commande est trop longue").
+pnpm exec lint-staged --max-arg-length 3000
 pnpm typecheck

@@ -81,6 +81,22 @@ describe('/ (the home page)', () => {
     expect(ld).not.toContain('<');
   });
 
+  // Porteur 2026-11-08: sign-up is open again; the waitlist is one link, in the footer.
+  it('every sign-up button leads to sign-up; the waitlist is only in the footer', async () => {
+    const out = html(await HomePage());
+    expect(out).toContain('href="/login"');
+    const ctas = out.match(/<a [^>]*href="\/signup"[^>]*>[\s\S]*?<\/a>/g) ?? [];
+    expect(ctas.length).toBeGreaterThanOrEqual(6);
+    for (const a of ctas)
+      expect(text(<div dangerouslySetInnerHTML={{ __html: a }} />)).toMatch(
+        /Commencer gratuitement|Créer mon compte gratuit/,
+      );
+    expect(out.match(/href="\/liste-attente"/g)).toHaveLength(1);
+    const footer = out.slice(out.indexOf('<footer'));
+    expect(footer).toContain('href="/liste-attente"');
+    expect(text(await HomePage())).not.toContain('Essayer gratuitement');
+  });
+
   it('generateMetadata reads APP_URL', () => {
     vi.stubEnv('APP_URL', 'https://tamani.app/');
     expect(generateMetadata().alternates?.canonical).toBe('https://tamani.app/');

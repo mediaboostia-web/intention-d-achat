@@ -38,6 +38,10 @@ export const TAMANI_ERROR_CODES = [
   'ADMIN_SELF_CHANGE',
   'ADMIN_LAST_SUPERADMIN',
   'ADMIN_NOT_FOUND',
+  'ADMIN_GATE_REQUIRED',
+  'ADMIN_CODE_INVALID',
+  'ADMIN_CODE_TOO_MANY',
+  'ADMIN_CODE_UNAVAILABLE',
 ] as const;
 
 const NETWORK = 'Pas de connexion au serveur. Vérifie ton réseau et réessaie.';
@@ -82,6 +86,10 @@ const MESSAGES: Record<string, string> = {
   ADMIN_SELF_CHANGE: 'Tu ne peux pas changer ton propre rôle : demande à un autre super-admin.',
   ADMIN_LAST_SUPERADMIN: "C'est le dernier super-admin : nomme d'abord quelqu'un d'autre.",
   ADMIN_NOT_FOUND: 'Ce compte est introuvable.',
+  ADMIN_GATE_REQUIRED: 'Ta session admin a expiré. Reconnecte-toi au Support-admin.',
+  ADMIN_CODE_INVALID: 'Ce code est faux ou a expiré. Demande un nouveau code.',
+  ADMIN_CODE_TOO_MANY: 'Trop de codes demandés. Réessaie dans 10 minutes.',
+  ADMIN_CODE_UNAVAILABLE: "L'envoi du code est indisponible pour le moment.",
   // Kit: auth
   INVALID_CREDENTIALS: 'Email ou mot de passe incorrect.',
   EMAIL_NOT_VERIFIED: "Confirme d'abord ton email avec le code reçu.",

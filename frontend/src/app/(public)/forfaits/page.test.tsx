@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { html, text } from '@/components/ui/test-html';
+import { planFeatures } from '@/lib/tamani/billing-view';
 import { FORFAITS_FAQ } from '@/lib/tamani/landing-forfaits';
 
 // The settings the page reads (lot 13a): a WhatsApp number of their own, so
@@ -42,10 +43,12 @@ const names = (s: string) => [...s.matchAll(/<h3[^>]*>(.*?)<\/h3>/g)].map((m) =>
 describe('/forfaits', () => {
   it('renders one h1, the switch with « Courte durée » checked, and both groups of cards', () => {
     expect(out.match(/<h1/g)).toHaveLength(1);
-    expect(t).toContain('Un forfait à la taille de ton activité');
+    expect(t).toContain('Des forfaits adaptés au volume de tes demandes.');
     expect(t).toContain(
-      'Que tu postes un produit par mois ou dix par jour, choisis le pass qui suit ton rythme.',
+      'Commence par découvrir Tamani, puis choisis un pass selon la durée de ton activité et le nombre de réponses que tu souhaites consulter. Les pass sont payés à l’avance et ne se renouvellent pas automatiquement.',
     );
+    // Open mode: no waitlist notice above the cards.
+    expect(t).not.toContain("L'accès public est actuellement sur liste d'attente.");
     const radios = out.match(/<input[^>]*type="radio"[^>]*>/g) ?? [];
     expect(radios).toHaveLength(2);
     expect(radios[0]).toContain('checked');
@@ -66,7 +69,7 @@ describe('/forfaits', () => {
     ]);
   });
 
-  it('Mois Max carries « Le meilleur prix par réponse », Illimité reads « Parlons-en » with a WhatsApp button', () => {
+  it('Mois Max carries « Le meilleur prix par réponse », Illimité reads « Sur demande » with a WhatsApp button', () => {
     const mois = tab('mois');
     expect(mois.match(/Le meilleur prix par réponse/g)).toHaveLength(1);
     expect(mois.indexOf('Le meilleur prix par réponse')).toBeLessThan(
@@ -75,8 +78,8 @@ describe('/forfaits', () => {
     expect(mois.indexOf('Le meilleur prix par réponse')).toBeGreaterThan(
       mois.indexOf('Pass Mois Plus</h3>'),
     );
-    expect(t).toContain('Parlons-en');
-    expect(t).toContain('Nous écrire sur WhatsApp');
+    expect(t).toContain('Sur demande');
+    expect(t).toContain('Demander les informations sur WhatsApp');
     const illimite = tab('mois').slice(tab('mois').indexOf('Pass Illimité</h3>'));
     expect(illimite).toContain('href="https://wa.me/2290100000001"');
     expect(out).not.toContain('wa.me/2290195831126');
@@ -100,22 +103,24 @@ describe('/forfaits', () => {
     expect(week.match(/data-included="true"/g)).toHaveLength(4);
     expect(week).toContain('Et tout le reste est inclus');
     expect(week).toContain('Choisir ce pass');
+    expect(week).toContain('href="/signup"');
   });
 
-  it('the reassurance band and the « Et quand mon pass se termine ? » box', () => {
+  it('the reassurance band, what every paid pass includes and the « Et quand mon pass se termine ? » box', () => {
     for (const line of [
-      'Paiement Mobile Money ou carte',
-      'Pas de renouvellement automatique',
-      "Ton lien ne s'arrête jamais",
-      'Réponses gardées après ton pass',
-      'Essai sans carte bancaire',
+      'Paiement par Mobile Money ou carte via SasPay',
+      'Paiement à l’avance',
+      'Aucun renouvellement automatique',
+      'Essai gratuit sans carte bancaire',
+      'Les liens produit continuent de fonctionner après la fin d’un pass',
     ]) {
       expect(t).toContain(line);
     }
+    expect(t).toContain('Inclus dans les pass payants');
+    for (const f of planFeatures('WEEK').filter((x) => x.included)) expect(t).toContain(f.label);
     expect(t).toContain('Et quand mon pass se termine ?');
-    expect(t).toContain(
-      'Tes campagnes continuent. Tes clients peuvent toujours répondre, et leurs réponses sont gardées.',
-    );
+    expect(t).toContain('Une période de grâce de 3 jours est prévue.');
+    expect(t).not.toContain('Réponses gardées après ton pass');
   });
 
   it('the comparison table: a caption, a header row of the seven offers, row headers', () => {

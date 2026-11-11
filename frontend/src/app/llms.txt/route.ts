@@ -15,7 +15,7 @@ export function GET(): Response {
     `> ${intro}`,
     '',
     "Pour les grossistes, importateurs et vendeurs en ligne d'Afrique francophone.",
-    'Les clients répondent en moins de 30 secondes, sans application ni compte.',
+    'Les clients répondent depuis le lien, sans application ni compte.',
     '',
     '## Pages',
     '',

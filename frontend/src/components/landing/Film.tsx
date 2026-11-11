@@ -7,18 +7,18 @@ export function Film({ video = LANDING_VIDEO }: { video?: LandingVideo | null })
   return (
     <section id="film" className="lp-panel lp-panel--cover lp-film" aria-labelledby="lp-film-title">
       <div className="lp-wrap">
-        <h2 id="lp-film-title">Regarde Tamani en action</h2>
+        <h2 id="lp-film-title">Découvre Tamani en action.</h2>
         <p className="lp-film__sub">
-          En 90 secondes, un grossiste crée un produit, partage le lien dans son groupe WhatsApp,
-          puis voit arriver les réponses de ses clients avec la quantité à commander.
+          En quelques étapes, découvre comment créer une fiche produit, partager son lien et
+          consulter les réponses de tes clients.
         </p>
         <div className="lp-film__frame">
           <FilmPlayer
             video={video}
             poster={
               <Illustration
-                name="video-affiche"
-                alt="La grossiste envoie son lien ; ses clients répondent depuis le marché, leur moto ou leur boutique."
+                name="film-miniature"
+                alt="Une commerçante sourit dans sa boutique, à côté du titre « Teste l’intérêt de tes clients avant de commander ton stock »."
                 sizes="(min-width: 1024px) 980px, 100vw"
                 fill
               />

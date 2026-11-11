@@ -8,9 +8,13 @@ import {
   LANDING_FAQ,
   LANDING_LINKS,
   LANDING_NAV,
+  LANDING_VIDEO,
+  LANDING_BAR_NAV,
+  LANDING_SIGNUP_LABEL,
+  LANDING_REASSURANCE,
+  filmLength,
   type LandingLinks,
 } from '@/lib/tamani/landing';
-import { PLANS } from '@/lib/tamani/plans';
 import { BeforeAfter } from './BeforeAfter';
 import { Community } from './Community';
 import { ORBIT_NETWORKS } from './content';
@@ -55,7 +59,6 @@ const sections = [
   <LandingFooter key="footer" />,
 ];
 const page = html(<>{sections}</>);
-const { TRIAL } = PLANS;
 
 describe('the landing sections', () => {
   it("come in the porteur's order", () => {
@@ -75,17 +78,39 @@ describe('the landing sections', () => {
     expect([...at].sort((a, b) => a - b)).toEqual(at);
   });
 
-  it('draw no phone mockup and no price grid', () => {
-    expect(page).not.toMatch(/dphone|device__|lp-phone/);
+  // Porteur, lot 9a: no phone mockups everywhere. 2026-11-06: one, in the features, with a real screen.
+  it('draw one phone only, in the features, and no price grid', () => {
+    expect(page).not.toMatch(/dphone|device__/);
+    expect(page.match(/class="lp-phone"/g)).toHaveLength(1);
+    const features = page.slice(
+      page.indexOf('id="fonctionnalites"'),
+      page.indexOf('id="comment-ca-marche"'),
+    );
+    expect(features).toContain('class="lp-phone"');
     expect(page).not.toContain('lp-rail');
     expect(page).not.toContain('id="tarifs"');
   });
 
-  it('say under 30 seconds and never 5 seconds, without em or en dash', () => {
+  it('promise no answer time nobody measured, without em or en dash (copy brief §2.5)', () => {
     const t = text(<>{sections}</>);
-    expect(t).toContain('moins de 30 secondes');
-    expect(t).not.toMatch(/5 secondes/);
+    expect(t).not.toMatch(/30 secondes|5 secondes/);
     expect(t).not.toMatch(/[–—]/);
+  });
+
+  it('never sell an intention as a sale, a sure quantity or no unsold stock (copy brief §2.2)', () => {
+    const t = text(<>{sections}</>);
+    expect(t).not.toMatch(
+      /prêts? à payer|prêts à être livrés|exactement quoi commander|plus les invendus|reste dans ta poche|seulement ce que tes clients vont acheter/i,
+    );
+    expect(t).not.toMatch(/300 cartons|190 invendus|1\s900\s000/);
+  });
+
+  it('send every sign-up button to sign-up and say so (launch mode « open »)', () => {
+    const t = text(<>{sections}</>);
+    expect(t).not.toContain('Réserver ma place');
+    expect(t).not.toContain('Commencer à utiliser Tamani maintenant');
+    expect(t).toContain('Commencer gratuitement');
+    expect(page).toContain('href="/signup"');
   });
 
   it('name TikTok and Facebook, not only WhatsApp', () => {
@@ -111,6 +136,19 @@ describe('LandingNav', () => {
       expect(out).toContain(`href="${href}"`);
     }
     for (const n of LANDING_NAV) expect(text(<LandingNav />)).toContain(n.label);
+  });
+
+  it('on a computer the bar keeps three entries and the two buttons; the drawer keeps all six', () => {
+    const out = html(<LandingNav />);
+    const bar = out.match(/<nav class="lp-nav__links"[\s\S]*?<\/nav>/)?.[0] ?? '';
+    expect([...bar.matchAll(/href="([^"]+)"/g)].map((m) => m[1])).toEqual([
+      '/#comment-ca-marche',
+      '/#fonctionnalites',
+      '/forfaits',
+    ]);
+    for (const n of LANDING_BAR_NAV) expect(bar).toContain(`>${n.label}<`);
+    const drawer = out.slice(out.indexOf('id="lp-menu"'));
+    for (const n of LANDING_NAV) expect(drawer).toContain(`href="${n.href}"`);
   });
 
   it('marks Forfaits as the current page on /forfaits', () => {
@@ -141,7 +179,12 @@ describe('LandingNav', () => {
     expect(out).toMatch(
       /<a [^>]*class="[^"]*lp-nav__cta[^"]*"[^>]*href="\/signup"|<a [^>]*href="\/signup"[^>]*class="[^"]*lp-nav__cta/,
     );
+    // The bar's button says the whole call on one line, like the drawer's.
+    const barCta = out.match(/<a [^>]*class="[^"]*lp-nav__cta[^"]*"[^>]*>[\s\S]*?<\/a>/)?.[0] ?? '';
+    expect(barCta).toContain(`>${LANDING_SIGNUP_LABEL.replace("'", '&#x27;')}<`);
+    expect(barCta).toContain('whitespace-nowrap');
     const drawer = out.slice(out.indexOf('id="lp-menu"'));
+    expect(drawer).toContain(LANDING_SIGNUP_LABEL.replace("'", '&#x27;'));
     const hrefs = [...drawer.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
     expect(hrefs).toEqual([
       ...LANDING_NAV.map((n) => n.href),
@@ -162,9 +205,11 @@ describe('LandingNav', () => {
       return out.slice(out.indexOf('id="lp-menu"'));
     };
     const full = drawer(ALL_LINKS);
-    expect(full).toContain('Écrire au support');
+    expect(full).toContain('Besoin d&#x27;aide ?');
+    expect(full).toContain('Une vraie personne te répond sur WhatsApp.');
     expect(full).toContain('href="https://wa.me/221770000000"');
-    expect(full).toContain('Rejoindre le groupe');
+    expect(full).toContain('Rejoindre la communauté');
+    expect(full).toContain('Des conseils et des échanges entre vendeurs.');
     expect(full).toContain('href="https://chat.whatsapp.com/abc"');
     // Each card carries its drawing; the title says it all, so the drawing is decorative.
     const cards = full.match(/<li>[\s\S]*?<\/li>/g) ?? [];
@@ -172,8 +217,8 @@ describe('LandingNav', () => {
     expect(cards[0]).toMatch(/<img [^>]*alt=""[^>]*%2Faccueil%2Fmenu-support\.webp/);
     expect(cards[1]).toMatch(/<img [^>]*alt=""[^>]*%2Faccueil%2Fmenu-groupe\.webp/);
     const none = drawer(NO_LINKS);
-    expect(none).not.toContain('Écrire au support');
-    expect(none).not.toContain('Rejoindre le groupe');
+    expect(none).not.toContain('Besoin d&#x27;aide ?');
+    expect(none).not.toContain('Rejoindre la communauté');
   });
 
   // 2026-10-30: the menu offers to install Tamani where the browser can.
@@ -216,24 +261,33 @@ describe('Hero', () => {
     expect(out.match(/<h1/g)).toHaveLength(1);
     const h1 = out.match(/<h1[\s\S]*?<\/h1>/)?.[0] ?? '';
     expect(text(<div dangerouslySetInnerHTML={{ __html: h1 }} />).trim()).toBe(
-      'Commande seulement ce que tes clients vont acheter.',
+      'Teste la demande avant de commander ton stock.',
     );
     const t = text(<Hero />);
     expect(t).toContain('Pour les grossistes, importateurs et vendeurs en ligne');
+    // Porteur 2026-11-06: the promise and its line, short.
     expect(t).toContain(
-      "Partage un lien sur WhatsApp, TikTok ou Facebook. En moins de 30 secondes, tes clients disent ce qu'ils veulent et combien. Tamani te dit quoi commander, et à qui livrer.",
+      "Partage un lien sur WhatsApp, TikTok ou Facebook. Tes clients disent ce qu'ils veulent et combien, et Tamani estime la quantité à prévoir.",
     );
-    expect(t).toContain("3 jours d'essai · sans carte bancaire · paiement par Mobile Money");
+    expect(t).toContain(LANDING_REASSURANCE);
+    expect(t).toContain('Sans carte bancaire.');
+    expect(t).toContain('Commencer gratuitement');
     expect(out).toMatch(
       /<a [^>]*href="\/signup"[^>]*id="lp-hero-cta"|<a [^>]*id="lp-hero-cta"[^>]*href="\/signup"/,
     );
     expect(out).toContain('href="/#comment-ca-marche"');
     expect(t).toContain('Voir comment ça marche');
-    expect(t).toContain('Ton lien marche partout où sont tes clients.');
+    expect(t).toContain('Partage ton lien là où tes clients sont déjà.');
+    expect(out).toContain(
+      'alt="Commerçante consultant sur son téléphone les réponses reçues pour un produit avant de préparer sa commande de stock."',
+    );
   });
 
-  it('stamps the running example on the illustration', () => {
-    expect(text(<Hero />)).toContain('Commande ≈120 cartons');
+  it('stamps an example of the advice on the illustration, said to be an example', () => {
+    expect(text(<Hero />)).toContain('Demande ≈120 cartons');
+    expect(text(<Hero />)).toContain(
+      "Exemple : d'après les réponses, Tamani estime une demande d'environ 120 cartons.",
+    );
   });
 
   it('lists the platforms twice for a seamless loop, the copy hidden from screen readers', () => {
@@ -243,69 +297,120 @@ describe('Hero', () => {
     expect(text(<Hero />).match(/Telegram/g)).toHaveLength(2);
   });
 
-  it('promises the 3-day trial, not a free plan', () => {
+  it('promises nothing the trial does not give', () => {
     const t = text(<Hero />);
-    expect(t).toContain("3 jours d'essai");
+    expect(t).not.toContain("jours d'essai");
     expect(t).not.toContain('Gratuit pour commencer');
     expect(t).not.toContain('compte gratuit');
   });
 });
 
 describe('Film', () => {
-  it('is titled « Regarde Tamani en action » and describes the 90 seconds', () => {
+  it('is titled « Découvre Tamani en action. » and says what the film shows', () => {
     const t = text(<Film />);
-    expect(t).toContain('Regarde Tamani en action');
+    expect(t).toContain('Découvre Tamani en action.');
     expect(t).toContain(
-      'En 90 secondes, un grossiste crée un produit, partage le lien dans son groupe WhatsApp, puis voit arriver les réponses de ses clients avec la quantité à commander.',
+      'En quelques étapes, découvre comment créer une fiche produit, partager son lien et consulter les réponses de tes clients.',
     );
   });
 
-  it('waits for the video: a play button and the poster, no <video>', () => {
+  it('shows the poster and a play button with the real length; the <video> waits for the click', () => {
     const out = html(<Film />);
-    expect(out).toContain('aria-label="Lancer la vidéo de présentation, 1 minute 30"');
+    expect(out).toContain('aria-label="Voir la démonstration, 1 minute"');
+    expect(out).toContain('>1 min</p>');
     expect(out).not.toContain('<video');
-    expect(out).toContain('%2Faccueil%2Fvideo-affiche.webp');
+    // The poster is the film's own cover (C01 miniature), with the centre left free for the button.
+    expect(out).toContain('%2Faccueil%2Ffilm-miniature.webp');
+    expect(out).toContain('alt="Une commerçante sourit dans sa boutique');
+  });
+
+  it('plays the presentation film, whose MP4 and French captions are in public/', () => {
+    expect(LANDING_VIDEO).not.toBeNull();
+    const video = LANDING_VIDEO!;
+    expect(video.src).toBe('/video/tamani-presentation.mp4');
+    expect(video.captions).toBe('/video/tamani-presentation.vtt');
+    const pub = path.resolve(__dirname, '../../../public');
+    expect(readFileSync(path.join(pub, video.src)).subarray(4, 8).toString('latin1')).toBe('ftyp');
+    expect(readFileSync(path.join(pub, video.captions!), 'utf8').startsWith('WEBVTT')).toBe(true);
+    expect(video.seconds).toBeGreaterThan(45);
+    expect(video.seconds).toBeLessThan(75);
+  });
+});
+
+describe('a film whose length nobody measured', () => {
+  it('shows no length on the play button, and reads none aloud', () => {
+    const out = html(<Film video={{ src: 'https://res.cloudinary.com/d/v.mp4' }} />);
+    expect(out).toContain('aria-label="Voir la démonstration"');
+    expect(out).not.toContain('lp-film__time');
+  });
+});
+
+describe('filmLength', () => {
+  it('says the length the way the play button shows and reads it', () => {
+    expect(filmLength(58)).toEqual({ label: '1 min', spoken: '1 minute' });
+    expect(filmLength(90)).toEqual({ label: '1 min 30', spoken: '1 minute 30' });
+    expect(filmLength(118)).toEqual({ label: '2 min', spoken: '2 minutes' });
   });
 });
 
 describe('Problem', () => {
-  it('lists the five situations Tamani helps avoid', () => {
+  it('tells the four situations of the copy brief (§5.5)', () => {
     const out = html(<Problem />);
     const t = text(<Problem />);
-    expect(t).toContain('Tu reconnais ces situations ?');
-    expect(t).toContain("Ce sont les galères que Tamani t'aide à éviter.");
+    expect(t).toContain(
+      'Avant de commander, tu aimerais savoir ce que tes clients veulent vraiment.',
+    );
+    expect(t).toContain(
+      'Tu publies tes produits, les messages arrivent et les questions se multiplient.',
+    );
     const list = out.match(/<ul class="lp-pains"[\s\S]*?<\/ul>/)?.[0] ?? '';
-    expect(list.match(/<li/g)).toHaveLength(5);
+    expect(list.match(/<li/g)).toHaveLength(4);
+    // A big number behind each card, hidden from screen readers.
+    expect(
+      list.match(/<span class="lp-pains__num" aria-hidden="true">0[1-4]<\/span>/g),
+    ).toHaveLength(4);
     for (const title of [
-      "De l'argent qui dort dans ton stock",
-      'Trop de messages, pas assez de commandes',
-      'Le client ne sait pas ce qui reste',
-      'Commander gros sans savoir si ça va plaire',
-      'Tu ne connais pas vraiment tes clients',
+      'Ton argent peut rester bloqué dans les invendus.',
+      'Les demandes se dispersent dans tes messages.',
+      'Tu manques de visibilité avant de commander.',
+      'Tu ne sais pas toujours quel canal apporte les demandes.',
     ]) {
       expect(t).toContain(title);
     }
-    expect(t).toContain('Et si un seul lien réglait tout ça ?');
+    expect(t).toContain('Et si tu pouvais recueillir ces demandes avant de passer ta commande ?');
   });
 });
 
 describe('Solution', () => {
-  it('has the six points and the orbit names TikTok and Facebook lives', () => {
+  it('has the five benefits of the copy brief (§5.6) and the orbit names TikTok and Facebook lives', () => {
     const t = text(<Solution />);
-    expect(t).toContain('Un seul lien pour tous tes clients');
+    expect(t).toContain('Un lien produit. Des demandes regroupées au même endroit.');
     for (const title of [
-      'Tes clients répondent en moins de 30 secondes',
-      'Tu sais qui veut quoi, combien et où',
-      "Tu sais quel canal t'apporte des clients",
-      'Pas besoin de site web',
-      'Ton client voit ce qui est disponible',
-      'Tamani te dit combien commander',
+      'Tu recueilles les quantités souhaitées.',
+      'Tu identifies les clients qui acceptent d’être recontactés.',
+      'Tu compares tes canaux.',
+      'Tu prépares ton approvisionnement avec une estimation.',
+      'Tu n’imposes pas d’application à tes clients.',
     ]) {
       expect(t).toContain(title);
     }
+    expect(t).toContain('Cette estimation ne garantit pas les ventes.');
     expect(t).toContain('Bio, vidéos et lives');
     expect(t).toContain('Groupes, pages et lives');
-    expect(html(<Solution />)).toContain('href="/signup"');
+    // One main button per screen: here the way to the steps.
+    expect(t).toContain('Découvrir comment ça marche');
+    expect(html(<Solution />)).toContain('href="/#comment-ca-marche"');
+  });
+
+  it('lists the five benefits in order beside a phone showing a real screen, marked as demo data', () => {
+    const out = html(<Solution />);
+    const list = out.match(/<ol class="lp-feat__list"[\s\S]*?<\/ol>/)?.[0] ?? '';
+    expect(list.match(/<li/g)).toHaveLength(5);
+    expect(
+      list.match(/<span class="lp-feat__num" aria-hidden="true">0[1-5]<\/span>/g),
+    ).toHaveLength(5);
+    expect(out).toContain('%2Faccueil%2Fapp-resultats.webp');
+    expect(text(<Solution />)).toContain('Écran réel · données de démonstration');
   });
 
   it('the orbit lists the 8 networks with their real logos', () => {
@@ -320,50 +425,48 @@ describe('Solution', () => {
 });
 
 describe('Steps', () => {
-  it('share a product in one minute, the CTA creates the first product', () => {
+  it('three steps to prepare the stock, the CTA leads to sign-up', () => {
     const t = text(<Steps />);
-    expect(t).toContain('1 minute pour partager ton produit');
+    expect(t).toContain('Trois étapes pour mieux préparer ton stock.');
     for (const s of [
-      'Crée ton produit',
-      'Partage le lien en un clic',
-      'Reçois les réponses et prépare les commandes',
+      'Crée ta fiche produit.',
+      'Partage ton lien.',
+      'Consulte les réponses et prépare ta commande.',
     ])
       expect(t).toContain(s);
     const out = html(<Steps />);
     expect(out.match(/<li/g)).toHaveLength(3);
-    expect(t).toContain('Créer mon premier produit');
+    expect(t).toContain('Commencer gratuitement');
     expect(out).toContain('href="/signup"');
-    expect(t).toContain('Commande ≈120 cartons');
+    expect(t).toContain('Demande ≈120 cartons');
   });
 });
 
 describe('BeforeAfter', () => {
-  it('lists the five before and after lines', () => {
+  it('lists the before and « avec Tamani » lines of the copy brief (§5.8)', () => {
     const t = text(<BeforeAfter />);
-    expect(t).toContain('Tu vends comme avant. En mieux.');
+    expect(t).toContain('Tu gardes tes habitudes de vente. Tu gagnes en visibilité.');
+    expect(t).toContain('Avec Tamani');
     for (const line of [
-      'Des dizaines de messages pour des renseignements, et peu de ventes',
-      'Tu commandes ton stock sans savoir qui va payer',
-      "Tu ne sais pas quel groupe ou quel réseau t'apporte des clients",
-      'Tu ne sais pas quels produits vont partir',
-      "De l'argent bloqué dans des invendus",
-      'Une liste de clients prêts à être livrés',
-      "Tu testes un produit auprès de tes clients avant d'en commander un carton",
-      "Tu vois quels canaux t'apportent vraiment des clients",
-      'Tu sais quels produits partent, et lesquels attendre',
-      'Ton argent reste dans ta poche, pas dans ton stock',
+      'Les demandes arrivent dans plusieurs conversations.',
+      'Tu estimes les quantités à commander avec peu d’informations.',
+      'Tu as du mal à comparer les réponses de tes différents groupes.',
+      'Tu retrouves difficilement les informations utiles pour recontacter les clients.',
+      'Les réponses liées à un produit sont regroupées.',
+      'Tu visualises les quantités souhaitées.',
+      'Tu peux distinguer les canaux grâce aux liens par groupe inclus dans les pass concernés.',
+      'Tu retrouves les informations des clients ayant accepté d’être recontactés.',
+      'Tu disposes d’une estimation pour préparer ton approvisionnement.',
     ]) {
       expect(t).toContain(line);
     }
   });
 
-  it('tells the running example and highlights the money', () => {
+  it('says that an intention is not a sale, and tells no money example', () => {
     const t = text(<BeforeAfter />);
-    expect(t).toContain('300 cartons commandés');
-    expect(t).toContain('190 invendus');
-    expect(t).toContain('120 cartons');
-    // Narrow no-break spaces: the amount never splits across two lines.
-    expect(html(<BeforeAfter />)).toContain('1 900 000 FCFA');
+    expect(t).toContain('Une intention d’achat n’est pas une vente garantie.');
+    expect(t).not.toMatch(/cartons commandés|invendus, soit/);
+    expect(html(<BeforeAfter />)).not.toContain('FCFA');
   });
 
   it('the slider is a labelled range over the two pictures', () => {
@@ -379,10 +482,32 @@ describe('BeforeAfter', () => {
 describe('Community', () => {
   it("invites to the sellers' WhatsApp group, free", () => {
     const t = text(<Community links={ALL_LINKS} />);
-    expect(t).toContain('Rejoins la communauté des vendeurs Tamani');
-    expect(t).toContain('Rejoindre le groupe');
-    expect(t).toContain("C'est gratuit.");
+    expect(t).toContain('Entre vendeurs, partageons ce qui fonctionne.');
+    expect(t).toContain('Rejoins la communauté WhatsApp des vendeurs Tamani.');
+    expect(t).toContain('Rejoindre le groupe WhatsApp');
+    expect(t).toContain('Participation gratuite.');
     expect(html(<Community links={ALL_LINKS} />)).toContain('href="https://chat.whatsapp.com/abc"');
+  });
+
+  // Porteur 2026-11-06, after his Atozom reference: one card, the drawing fading in on the
+  // right, four things to do in the group, a dark band at the bottom.
+  it('is one card: what the group is for, the drawing, and the band with the logo', () => {
+    const out = html(<Community links={ALL_LINKS} />);
+    const t = text(<Community links={ALL_LINKS} />);
+    expect(out).toContain('class="lp-club__card"');
+    const list = out.match(/<ul class="lp-club__list"[\s\S]*?<\/ul>/)?.[0] ?? '';
+    expect(list.match(/<li/g)).toHaveLength(4);
+    for (const line of [
+      'Pose tes questions aux autres vendeurs.',
+      'Échange des conseils de vente.',
+      'Découvre des tutoriels.',
+      'Partage tes expériences sur WhatsApp, TikTok et Facebook.',
+    ]) {
+      expect(t).toContain(line);
+    }
+    expect(out).toContain('%2Faccueil%2Fcommunaute.webp');
+    const band = out.match(/<div class="lp-club__bar"[\s\S]*?<\/div>/)?.[0] ?? '';
+    expect(band).toContain('Entre vendeurs, on s&#x27;entraide.');
   });
 
   it('without the link, no group button: the sign-up instead, so no button leads nowhere', () => {
@@ -394,24 +519,35 @@ describe('Community', () => {
 });
 
 describe('Faq', () => {
-  it('is titled « Tes questions, nos réponses » and asks every LANDING_FAQ question', () => {
+  it('is titled « Questions fréquentes » and asks every LANDING_FAQ question', () => {
     const t = text(<Faq links={NO_LINKS} />);
-    expect(t).toContain('Tes questions, nos réponses');
+    expect(t).toContain('Questions fréquentes');
     for (const q of LANDING_FAQ) expect(t).toContain(q.question);
     expect(html(<Faq links={NO_LINKS} />).match(/<details/g)).toHaveLength(LANDING_FAQ.length);
     expect(t).not.toContain('Écris-nous sur WhatsApp');
     expect(text(<Faq links={ALL_LINKS} />)).toContain('Écris-nous sur WhatsApp');
   });
+
+  it('sets the title and the help beside the questions, each question numbered', () => {
+    const out = html(<Faq links={ALL_LINKS} />);
+    expect(out).toContain('class="lp-faqs__side"');
+    expect(out).toContain('%2Faccueil%2Fmenu-support.webp');
+    expect(out.match(/<span class="lp-faq__num" aria-hidden="true">\d{2}<\/span>/g)).toHaveLength(
+      LANDING_FAQ.length,
+    );
+  });
 });
 
 describe('FinalCta', () => {
-  it('closes the page on the trial', () => {
+  it('closes the page on sign-up and the signature', () => {
     const t = text(<FinalCta />);
-    expect(t).toContain("Ton prochain stock, commande-le en sachant qui va l'acheter.");
-    expect(t).toContain('Essayer gratuitement');
+    expect(t).toContain('Prépare ta prochaine commande avec de meilleures informations.');
     expect(t).toContain(
-      `${TRIAL.durationDays} jours · ${TRIAL.includedResponses} réponses · sans carte bancaire`,
+      'Recueille les intentions de tes clients avant de commander. Partage ton lien, consulte les réponses et utilise l’estimation de Tamani pour préparer ton approvisionnement.',
     );
+    expect(t).toContain('Créer mon compte gratuit');
+    expect(t).toContain('Sans carte bancaire.');
+    expect(t).toContain('Tamani. Ta communauté parle. Tu sais quoi acheter.');
     expect(html(<FinalCta />)).toContain('href="/signup"');
   });
 });
@@ -423,10 +559,31 @@ describe('LandingFooter', () => {
     expect(text(<LandingFooter links={ALL_LINKS} />)).toContain(
       'Une question ? Écris-nous sur WhatsApp',
     );
-    for (const href of ['/forfaits', '/#comment-ca-marche', '/#faq', '/login', '/signup']) {
+    for (const href of [
+      '/forfaits',
+      '/#comment-ca-marche',
+      '/#faq',
+      '/login',
+      '/signup',
+      '/liste-attente',
+    ]) {
       expect(out).toContain(`href="${href}"`);
     }
     expect(out).toContain(`href="mailto:${LANDING_CONTACT_EMAIL}"`);
+    const t = text(<LandingFooter links={ALL_LINKS} />);
+    for (const label of [
+      'Avantages',
+      'Commencer gratuitement',
+      // Porteur 2026-11-08: the waitlist keeps a link here, and only here.
+      "Liste d'attente",
+      'Questions fréquentes',
+      'Communauté WhatsApp',
+      'Contacter le support',
+    ])
+      expect(t).toContain(label);
+    expect(t).toContain(
+      "Un outil de précommande et de collecte des intentions d'achat pour les grossistes, importateurs et vendeurs en ligne d'Afrique francophone.",
+    );
   });
 
   it("draws the whole wordmark: the svg's viewBox is the path's own", () => {
@@ -463,6 +620,7 @@ describe('motion that invites, never in the way', () => {
       '.lp-plans',
       '.lp-count',
       '.lp-pains',
+      '.lp-wait__seal',
     ]) {
       expect(reduced, cls).toContain(cls);
     }
@@ -478,7 +636,14 @@ describe('motion that invites, never in the way', () => {
     const h1 = html(<Hero />).match(/<h1[\s\S]*?<\/h1>/)?.[0] ?? '';
     expect(h1.match(/class="lp-word"/g)).toHaveLength(8);
     expect(text(<div dangerouslySetInnerHTML={{ __html: h1 }} />).trim()).toBe(
-      'Commande seulement ce que tes clients vont acheter.',
+      'Teste la demande avant de commander ton stock.',
+    );
+  });
+
+  // Porteur 2026-11-06: the hero's two buttons stand side by side, the same height.
+  it('the hero buttons stay on one row from 560 px', () => {
+    expect(css).toMatch(
+      /@media \(min-width: 560px\)\s*\{\s*\.lp-hero__ctas\s*\{[^}]*flex-wrap:\s*nowrap/,
     );
   });
 
@@ -506,6 +671,7 @@ describe('motion that invites, never in the way', () => {
   });
 
   // Recette 2026-11-05: six entries centred in the bar ran into « Se connecter » at 1280 px.
+  // Porteur 2026-11-06: three entries in the bar, so they fit again from 1120 px.
   it('the bar shows its six entries only where they fit, never centred over the sign-in', () => {
     expect(css).not.toMatch(/\.lp-nav__links\s*\{[^}]*left:\s*50%/);
     expect(css).toMatch(

@@ -90,6 +90,10 @@ describe('platform settings', () => {
       ['instagram', 'https://instagram.com.evil.com/x'],
       ['tiktok', 'data:text/html,hi'],
       ['videoUrl', 'https://youtube.com/watch?v=1'],
+      ['videoUrl', '//evil.com/video/x.mp4'],
+      ['videoUrl', '/video/../api/auth/me'],
+      ['videoUrl', '/autre/tamani.mp4'],
+      ['captionsUrl', '/video/x.vtt?next=//evil.com'],
       ['contactEmail', 'pas-un-email'],
       ['displayName', ''],
       ['displayName', 'x'.repeat(41)],
@@ -100,6 +104,24 @@ describe('platform settings', () => {
         `${field}=${value}`,
       ).toBe(false);
     }
+  });
+
+  // The film shipped with the site lives in public/video: saving the settings
+  // untouched must not refuse it, and it keeps its real length.
+  it('accepts the built-in film and keeps its length; a hosted film has none', () => {
+    const builtIn = PlatformSettingsInput.safeParse({
+      ...VALID,
+      videoUrl: LANDING_VIDEO?.src,
+      captionsUrl: LANDING_VIDEO?.captions,
+    });
+    expect(builtIn.success).toBe(true);
+    expect(
+      settingsFromRow(
+        row({ videoUrl: LANDING_VIDEO!.src, captionsUrl: LANDING_VIDEO!.captions ?? null }),
+      ).video,
+    ).toEqual(LANDING_VIDEO);
+    const hosted = settingsFromRow(row({ videoUrl: 'https://res.cloudinary.com/d/v.mp4' })).video;
+    expect(hosted).not.toHaveProperty('seconds');
   });
 
   it('maps the form to the columns', () => {

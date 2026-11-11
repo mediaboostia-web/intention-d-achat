@@ -231,7 +231,7 @@ describe('source invariants', () => {
   it("route source contains runtime='nodejs', requireAdmin('ADMIN'), enforceAdminRateLimit, prisma.adminAction.findMany, withRequestContext", () => {
     const src = fs.readFileSync(path.join(__dirname, 'route.ts'), 'utf8');
     expect(src).toMatch(/export\s+const\s+runtime\s*=\s*['"]nodejs['"]/);
-    expect(src).toContain("requireAdmin('ADMIN')");
+    expect(src).toContain("gatedAdmin('ADMIN')");
     expect(src).toContain('enforceAdminRateLimit');
     expect(src).toContain('prisma.adminAction.findMany');
     expect(src).toContain('withRequestContext');

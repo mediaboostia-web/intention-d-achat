@@ -19,7 +19,7 @@ import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { verifyCsrf } from '@/lib/server/auth';
-import { requireSuperadmin } from '@/lib/server/middleware';
+import { gatedSuperadmin } from '@/lib/server/tamani/admin/gate';
 import { prisma } from '@/lib/server/prisma';
 import { logAdminAction } from '@/lib/server/admin/audit';
 import { enforceAdminRateLimit } from '@/lib/server/middleware/rate-limit-by-userid';
@@ -43,7 +43,7 @@ export async function PATCH(
     const csrfFail = verifyCsrf(req);
     if (csrfFail) return csrfFail;
 
-    const auth = await requireSuperadmin();
+    const auth = await gatedSuperadmin();
     if (auth instanceof NextResponse) return auth;
 
     const limited = await enforceAdminRateLimit(auth.admin.id);

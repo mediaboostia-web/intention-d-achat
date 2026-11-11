@@ -9,7 +9,10 @@ import {
   LANDING_SLOGAN,
   type LandingLinkName,
   type LandingLinks,
+  LANDING_SIGNUP_HREF,
+  LANDING_SIGNUP_LABEL,
 } from '@/lib/tamani/landing';
+import { WAITLIST_PATH } from '@/lib/tamani/waitlist';
 import { InView } from './InView';
 import { PlatformLogo } from './PlatformLogo';
 import type { PlatformSlug } from './platform-paths';
@@ -37,8 +40,11 @@ export function LandingFooter({
     return href ? [{ ...s, href }] : [];
   });
   const help = [
-    { href: '/#faq', label: 'FAQ' },
-    ...(links.community ? [{ href: links.community, label: 'Le groupe WhatsApp' }] : []),
+    { href: '/#faq', label: 'Questions fréquentes' },
+    ...(links.community ? [{ href: links.community, label: 'Communauté WhatsApp' }] : []),
+    ...(links.whatsappContact
+      ? [{ href: links.whatsappContact, label: 'Contacter le support' }]
+      : []),
     { href: `mailto:${contactEmail}`, label: contactEmail },
   ];
 
@@ -86,7 +92,7 @@ export function LandingFooter({
                 <a href="/#fonctionnalites">Fonctionnalités</a>
               </li>
               <li>
-                <a href="/#benefices">Bénéfices</a>
+                <a href="/#benefices">Avantages</a>
               </li>
               <li>
                 <Link href="/forfaits">Forfaits</Link>
@@ -94,14 +100,20 @@ export function LandingFooter({
             </ul>
           </nav>
           <nav aria-label="Compte">
-            <h3>Ton compte</h3>
+            <h3>Compte</h3>
             <ul>
-              <li>
-                <Link href="/signup">Créer un compte</Link>
-              </li>
               <li>
                 <Link href="/login">Se connecter</Link>
               </li>
+              <li>
+                <Link href={LANDING_SIGNUP_HREF}>{LANDING_SIGNUP_LABEL}</Link>
+              </li>
+              {/* Porteur 2026-11-08: with sign-up open, the waitlist keeps this one link. */}
+              {LANDING_SIGNUP_HREF !== WAITLIST_PATH && (
+                <li>
+                  <Link href={WAITLIST_PATH}>Liste d&apos;attente</Link>
+                </li>
+              )}
             </ul>
           </nav>
           <nav aria-label="Aide">
@@ -143,7 +155,10 @@ export function LandingFooter({
               </Link>
             ))}
           </nav>
-          <p>Fait pour les grossistes et vendeurs en ligne d&apos;Afrique francophone.</p>
+          <p>
+            Un outil de précommande et de collecte des intentions d&apos;achat pour les grossistes,
+            importateurs et vendeurs en ligne d&apos;Afrique francophone.
+          </p>
         </div>
       </div>
     </footer>

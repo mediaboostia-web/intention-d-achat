@@ -8,6 +8,7 @@ describe('support-admin navigation', () => {
     expect(ADMIN_NAV.map((l) => l.href)).toEqual([
       '/support-admin',
       '/support-admin/notifications',
+      '/support-admin/liste-attente',
       '/support-admin/boutiques',
       '/support-admin/utilisateurs',
       '/support-admin/journal',
@@ -16,6 +17,7 @@ describe('support-admin navigation', () => {
     expect(ADMIN_NAV.map((l) => l.label)).toEqual([
       'Tableau de bord',
       'Notifications',
+      "Liste d'attente",
       'Boutiques',
       'Utilisateurs',
       'Journal',

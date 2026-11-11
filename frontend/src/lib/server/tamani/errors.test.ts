@@ -38,6 +38,10 @@ describe('TAMANI_ERRORS', () => {
         'ADMIN_SELF_CHANGE',
         'ADMIN_LAST_SUPERADMIN',
         'ADMIN_NOT_FOUND',
+        'ADMIN_GATE_REQUIRED',
+        'ADMIN_CODE_INVALID',
+        'ADMIN_CODE_TOO_MANY',
+        'ADMIN_CODE_UNAVAILABLE',
       ].sort(),
     );
   });

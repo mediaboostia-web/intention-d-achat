@@ -808,3 +808,11 @@ Décisions de l'agent (spec §12) :
 2. Pour chaque tâche : TDD (test qui échoue, code, test qui passe), barrière, commit.
 3. En fin de lot : `pnpm build`, smoke test d'auth, revue, PR vers `main`, puis fusion après l'accord du porteur du projet.
 4. Toute divergence avec un contrat de ce document se corrige **ici d'abord**.
+
+### Lot 14 : Liste d'attente (2026-11-06)
+
+Décisions du porteur, le 6 novembre :
+- Avant le lancement, tous les boutons « Commencer » et « S'inscrire » du site mènent à `/liste-attente` et disent « Réserver ma place ». L'inscription reste ouverte par son lien direct.
+- Le formulaire demande le prénom, le WhatsApp ou l'e-mail, et où la personne vend.
+
+Le reste est dans le [cahier des charges](../specs/2026-11-06-tamani-liste-attente-design.md) et [docs/claude/tamani-lot-14-liste-attente.md](../../claude/tamani-lot-14-liste-attente.md).

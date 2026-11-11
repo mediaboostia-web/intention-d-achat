@@ -9,7 +9,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { verifyCsrf } from '@/lib/server/auth';
 import { logAdminAction } from '@/lib/server/admin/audit';
-import { requireAdmin, requireSuperadmin } from '@/lib/server/middleware';
+import { gatedAdmin, gatedSuperadmin } from '@/lib/server/tamani/admin/gate';
 import { enforceAdminRateLimit } from '@/lib/server/middleware/rate-limit-by-userid';
 import { makeRequestContext, withRequestContext } from '@/lib/server/observability/request-context';
 import { prisma } from '@/lib/server/prisma';
@@ -26,7 +26,7 @@ const AddBody = z.object({
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const ctx = makeRequestContext(req.headers);
   return withRequestContext(ctx, async () => {
-    const auth = await requireAdmin('ADMIN');
+    const auth = await gatedAdmin('ADMIN');
     if (auth instanceof NextResponse) return auth;
     const limited = await enforceAdminRateLimit(auth.admin.id);
     if (limited) return limited;
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   return withRequestContext(ctx, async () => {
     const csrfFail = verifyCsrf(req);
     if (csrfFail) return csrfFail;
-    const auth = await requireSuperadmin();
+    const auth = await gatedSuperadmin();
     if (auth instanceof NextResponse) return auth;
     const limited = await enforceAdminRateLimit(auth.admin.id);
     if (limited) return limited;

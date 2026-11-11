@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache';
 import { NextResponse, type NextRequest } from 'next/server';
 import { verifyCsrf } from '@/lib/server/auth';
 import { logAdminAction } from '@/lib/server/admin/audit';
-import { requireAdmin, requireSuperadmin } from '@/lib/server/middleware';
+import { gatedAdmin, gatedSuperadmin } from '@/lib/server/tamani/admin/gate';
 import { enforceAdminRateLimit } from '@/lib/server/middleware/rate-limit-by-userid';
 import { makeRequestContext, withRequestContext } from '@/lib/server/observability/request-context';
 import { prisma } from '@/lib/server/prisma';
@@ -30,7 +30,7 @@ const PUBLIC_PATHS = ['/', '/forfaits', '/llms.txt'] as const;
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const ctx = makeRequestContext(req.headers);
   return withRequestContext(ctx, async () => {
-    const auth = await requireAdmin('ADMIN');
+    const auth = await gatedAdmin('ADMIN');
     if (auth instanceof NextResponse) return auth;
 
     const limited = await enforceAdminRateLimit(auth.admin.id);
@@ -47,7 +47,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
     const csrfFail = verifyCsrf(req);
     if (csrfFail) return csrfFail;
 
-    const auth = await requireSuperadmin();
+    const auth = await gatedSuperadmin();
     if (auth instanceof NextResponse) return auth;
 
     const limited = await enforceAdminRateLimit(auth.admin.id);

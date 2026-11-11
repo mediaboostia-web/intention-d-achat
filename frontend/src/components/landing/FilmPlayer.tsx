@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import type { LandingVideo } from '@/lib/tamani/landing';
+import { filmLength, type LandingVideo } from '@/lib/tamani/landing';
 
 /** The play button over the poster; until the video exists it says it is coming. */
 export function FilmPlayer({ video, poster }: { video: LandingVideo | null; poster: ReactNode }) {
@@ -29,22 +29,26 @@ export function FilmPlayer({ video, poster }: { video: LandingVideo | null; post
     );
   }
 
+  // No film yet: the planned minute. A film whose length nobody measured: no length.
+  const length = !video ? filmLength(60) : video.seconds ? filmLength(video.seconds) : null;
   return (
     <>
       {poster}
       <button
         type="button"
         className="lp-film__play"
-        aria-label="Lancer la vidéo de présentation, 1 minute 30"
+        aria-label={length ? `Voir la démonstration, ${length.spoken}` : 'Voir la démonstration'}
         onClick={() => (video ? setPlaying(true) : setSoon(true))}
       >
         <svg viewBox="0 0 12 12" aria-hidden="true">
           <path d="M1.5 0.8v10.4L11 6z" />
         </svg>
       </button>
-      <p className="lp-film__time" aria-hidden="true">
-        1 min 30
-      </p>
+      {length && (
+        <p className="lp-film__time" aria-hidden="true">
+          {length.label}
+        </p>
+      )}
       <p className="lp-film__soon" role="status" data-on={soon ? 'true' : 'false'}>
         {soon ? 'La vidéo de présentation arrive très bientôt.' : ''}
       </p>
