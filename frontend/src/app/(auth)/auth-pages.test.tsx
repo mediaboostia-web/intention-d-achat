@@ -6,7 +6,7 @@ import { mockNextNavigation } from '@/test-utils/next-navigation';
 vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigation')).navigation);
 
 const { default: AuthLayout } = await import('./layout');
-const { default: LoginPage } = await import('./login/page');
+const { default: LoginPage, metadata: loginMetadata } = await import('./login/page');
 const { default: SignupPage } = await import('./signup/page');
 const { default: VerifyEmailPage } = await import('./verify-email/page');
 const { default: ForgotPasswordPage } = await import('./forgot-password/page');
@@ -40,6 +40,14 @@ describe('login', () => {
     const t = text(<LoginPage />);
     expect(t).toContain('Se connecter');
     expect(out.match(/shadow-press/g)).toHaveLength(1);
+  });
+
+  it('login has the copy brief title and description and stays out of search (§9.4, §9.7)', () => {
+    expect(loginMetadata.title).toEqual({ absolute: 'Connexion à Tamani | Espace commerçant' });
+    expect(loginMetadata.description).toBe(
+      'Connecte-toi à ton espace Tamani pour retrouver tes produits, campagnes et réponses clients.',
+    );
+    expect(loginMetadata.robots).toEqual({ index: false, follow: true });
   });
 
   it('login is titled « Se connecter », with the sign-up link right under the title', () => {

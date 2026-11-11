@@ -41,7 +41,7 @@ describe('robots.txt', () => {
 });
 
 describe('sitemap.xml', () => {
-  it('lists the home page, /forfaits, then the legal pages', () => {
+  it('lists the home page, /forfaits, the waitlist, then the legal pages', () => {
     vi.stubEnv('APP_URL', 'https://tamani.app');
     const legal = (path: string) => ({
       url: `https://tamani.app${path}`,
@@ -51,6 +51,7 @@ describe('sitemap.xml', () => {
     expect(sitemap()).toEqual([
       { url: 'https://tamani.app/', changeFrequency: 'weekly', priority: 1 },
       { url: 'https://tamani.app/forfaits', changeFrequency: 'monthly', priority: 0.9 },
+      { url: 'https://tamani.app/liste-attente', changeFrequency: 'weekly', priority: 0.9 },
       legal('/cgu'),
       legal('/confidentialite'),
       legal('/securite'),
@@ -73,6 +74,8 @@ describe('llms.txt', () => {
     ]) {
       expect(body).toContain(url);
     }
-    expect(body).toContain('moins de 30 secondes');
+    // Copy brief §2.5: the answer time was never measured.
+    expect(body).not.toContain('30 secondes');
+    expect(body).toContain('sans application ni compte');
   });
 });

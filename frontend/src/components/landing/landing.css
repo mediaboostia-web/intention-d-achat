@@ -347,7 +347,7 @@ html:has(.lp) {
     display: inline-flex;
   }
 }
-/* The six entries of the menu (lot 12) fit in the bar from 1120 px, pushed
+/* The bar keeps three entries (porteur, 2026-11-06) and fits them from 1120 px, pushed
    right next to the sign-in; below, they stay in the drawer. Centring them
    (lot 9a, four entries) made them run into « Se connecter ». */
 @media (min-width: 1120px) {
@@ -606,7 +606,7 @@ button.lp-drawer__install {
 }
 @media (min-width: 960px) {
   .lp-hero__grid {
-    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
     gap: 40px;
   }
 }
@@ -622,6 +622,8 @@ button.lp-drawer__install {
 }
 .lp-hero__title > span {
   display: block;
+  /* « Teste l'intérêt / de tes clients »: never one word alone on a line. */
+  text-wrap: balance;
 }
 .lp-hero__l2 {
   position: relative;
@@ -661,6 +663,17 @@ button.lp-drawer__install {
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 30px;
+}
+/* Porteur 2026-11-06: the two buttons stand side by side, the same height. */
+@media (min-width: 560px) {
+  .lp-hero__ctas {
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+  .lp-hero__ctas > a {
+    flex: 0 1 auto;
+    text-align: center;
+  }
 }
 .lp-hero__checks {
   display: flex;
@@ -880,23 +893,29 @@ button.lp-drawer__install {
   opacity: 1;
 }
 
-/* ---------- 3. What they live ---------- */
+/* ---------- 3. What they live: from 960 px the four situations zig-zag down a
+   big circle on the left, the words and the drawing on the right (porteur, 2026-11-06). ---------- */
 .lp-pain {
   display: grid;
-  gap: 36px;
-  align-items: center;
+  gap: 32px;
 }
 @media (min-width: 960px) {
   .lp-pain {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 64px;
-  }
-  .lp-pain__art {
-    grid-column: 1;
-    grid-row: 1;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+    grid-template-areas:
+      'cards text'
+      'cards art';
+    grid-template-rows: auto 1fr;
+    gap: 28px 56px;
   }
   .lp-pain__text {
-    grid-column: 2;
+    grid-area: text;
+  }
+  .lp-pains {
+    grid-area: cards;
+  }
+  .lp-pain__art {
+    grid-area: art;
   }
 }
 .lp-pain__art img {
@@ -927,12 +946,18 @@ button.lp-drawer__install {
   background: var(--color-grid);
   color: var(--color-primary);
 }
+/* The question that opens the next section: a yellow note pinned under the drawing. */
 .lp-pain__punch {
-  margin-top: 30px;
-  padding-top: 22px;
-  border-top: 2.5px solid var(--color-ink);
-  font: 700 clamp(22px, 1vw + 16px, 28px) / 1.3 var(--lp-text);
+  margin-top: 22px;
+  padding: 16px 20px;
+  border: 2px solid var(--color-ink);
+  border-radius: 16px;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  box-shadow: var(--shadow-press);
+  font: 700 clamp(19px, 0.6vw + 15px, 23px) / 1.3 var(--lp-text);
   text-wrap: balance;
+  rotate: -1deg;
 }
 
 /* ---------- 4. The solution: one link everywhere, each network buzzes as it feeds Tamani ---------- */
@@ -1195,35 +1220,117 @@ button.lp-drawer__install {
     translate: -50% -50%;
   }
 }
-.lp-gains {
+/* The five benefits, numbered, beside a phone that shows a real screen of the app
+   (porteur, 2026-11-06: the page's only phone). */
+.lp-feat {
   display: grid;
-  gap: 16px;
-  margin-top: 44px;
-}
-@media (min-width: 900px) {
-  .lp-gains {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 28px;
-  }
-}
-.lp-gains li {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
-  gap: 12px;
+  gap: 40px;
+  margin-top: clamp(48px, 6vw, 80px);
   align-items: start;
 }
-.lp-gains .lp-tile-ic {
+@media (min-width: 960px) {
+  .lp-feat {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 64px;
+    align-items: center;
+  }
+}
+.lp-feat__art {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  padding-top: 12px;
+}
+/* The yellow sun behind the phone. */
+.lp-feat__art::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 14%;
+  left: 50%;
+  width: min(400px, 92%);
+  aspect-ratio: 1;
+  translate: -50% 0;
+  border: 2.5px solid var(--color-ink);
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+.lp-phone {
+  width: min(290px, 66vw);
+  padding: 9px;
+  border-radius: 42px;
+  background: var(--color-ink);
+  box-shadow: 10px 10px 0 color-mix(in srgb, var(--color-ink) 24%, transparent);
+  rotate: -3deg;
+}
+.lp-phone__screen {
+  aspect-ratio: 1170 / 2532;
+  overflow: hidden;
+  border-radius: 33px;
+  background: var(--color-surface);
+}
+.lp-phone__screen img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.lp-feat__art figcaption {
+  padding: 5px 14px;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: 13px;
+  font-weight: 700;
+}
+.lp-feat__list li {
+  display: grid;
+  grid-template-columns: auto 44px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 24px 0;
+  border-bottom: 2px dashed color-mix(in srgb, var(--color-ink) 22%, transparent);
+}
+.lp-feat__list li:first-child {
+  padding-top: 4px;
+}
+.lp-feat__list li:last-child {
+  border-bottom: 0;
+}
+/* Each benefit's figure, big and drawn in outline; it fills in under the pointer. */
+.lp-feat__num {
+  min-width: 1.5em;
+  font: 400 clamp(40px, 2.4vw + 24px, 60px) / 0.9 var(--lp-sign);
+  color: transparent;
+  -webkit-text-stroke: 2px var(--color-primary);
+  transition: color 0.2s var(--lp-ease);
+}
+.lp-feat__list li:hover .lp-feat__num {
+  color: var(--color-accent);
+}
+.lp-feat__list .lp-tile-ic {
   border: 2px solid var(--color-ink);
   background: var(--color-surface);
 }
-.lp-gains b {
-  display: block;
-  font-size: 18px;
+.lp-feat__list h3 {
+  font-size: clamp(18px, 0.3vw + 17px, 20px);
+  font-weight: 700;
   line-height: 1.3;
 }
-.lp-gains p {
-  margin-top: 2px;
+.lp-feat__list p {
+  margin-top: 4px;
+  max-width: 52ch;
   color: var(--color-ink-soft);
+  line-height: 1.5;
+}
+@media (max-width: 559px) {
+  .lp-feat__list li {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .lp-feat__list .lp-tile-ic {
+    display: none;
+  }
 }
 
 /* ---------- 5. How it works ---------- */
@@ -1505,104 +1612,230 @@ button.lp-drawer__install {
   color: var(--color-success);
 }
 
-/* ---------- 8. Join the community ---------- */
+/* ---------- 8. Join the community: one card on the blue panel, the drawing fading
+   in on the right, a dark band at the bottom (porteur's Atozom reference, 2026-11-06). ---------- */
 .lp-club {
-  padding-block: clamp(60px, 7vw, 100px);
+  padding-block: clamp(48px, 6vw, 88px);
 }
-.lp-club__in {
+.lp-club__card {
+  position: relative;
+  overflow: hidden;
   display: grid;
-  gap: 44px;
-  align-items: center;
+  border: 2.5px solid var(--color-ink);
+  border-radius: var(--radius-sheet);
+  background-color: var(--color-surface);
+  background-image: var(--lp-squares);
+  background-size: 18px 18px;
+  color: var(--color-ink);
+  box-shadow: 8px 8px 0 rgb(16 32 74 / 0.45);
 }
-@media (min-width: 960px) {
-  .lp-club__in {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 64px;
+.lp-club__art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* On a phone the drawing sits on top and fades into the card. */
+.lp-club__art {
+  height: clamp(200px, 52vw, 300px);
+  -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent);
+  mask-image: linear-gradient(180deg, #000 70%, transparent);
+}
+.lp-club__body {
+  position: relative;
+  padding: 8px clamp(20px, 4vw, 48px) 24px;
+}
+@media (min-width: 900px) {
+  .lp-club__card {
+    min-height: 520px;
+  }
+  /* From 900 px it fills the right side and fades in from the left. */
+  .lp-club__art {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 56%;
+    height: auto;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 40%);
+    mask-image: linear-gradient(90deg, transparent, #000 40%);
+  }
+  .lp-club__body {
+    max-width: 48%;
+    padding: clamp(36px, 4vw, 56px) 0 28px clamp(32px, 4vw, 56px);
   }
 }
 .lp-club h2 {
-  max-width: 17ch;
-  font: 700 clamp(36px, 2.6vw + 22px, 58px) / 1.05 var(--lp-hand);
+  max-width: 15ch;
+  font: 700 clamp(36px, 2.4vw + 22px, 56px) / 1.02 var(--lp-hand);
+  color: var(--color-primary);
   text-wrap: balance;
 }
+.lp-club h2 span {
+  display: block;
+  font-weight: 400;
+  font-size: 0.72em;
+  color: var(--color-ink);
+}
 .lp-club__text {
-  margin-top: 16px;
-  max-width: 46ch;
-  font-size: clamp(17px, 0.4vw + 15.5px, 19px);
-  color: rgb(255 255 255 / 0.9);
+  margin-top: 14px;
+  max-width: 44ch;
+  font-size: clamp(16px, 0.3vw + 15px, 18px);
+  line-height: 1.5;
+  color: var(--color-ink-soft);
 }
 .lp-club__list {
   display: grid;
-  gap: 10px;
-  margin-top: 22px;
+  gap: 8px;
+  margin-top: 18px;
 }
 .lp-club__list li {
   display: flex;
   gap: 10px;
-  align-items: flex-start;
+  align-items: center;
   font-weight: 700;
+  line-height: 1.35;
+}
+.lp-club__list span {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--color-ink);
+  border-radius: 50%;
+  background: var(--color-accent);
 }
 .lp-club__list svg {
-  margin-top: 1px;
-  color: var(--color-accent);
+  width: 15px;
+  height: 15px;
 }
 .lp-club__ctas {
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
-  margin-top: 30px;
+  margin-top: 24px;
 }
 .lp-club__small {
-  margin-top: 14px;
+  margin-top: 10px;
   font-size: 15px;
-  color: rgb(255 255 255 / 0.82);
+  font-weight: 700;
+  color: var(--color-ink-soft);
 }
-.lp-club__photo {
+/* The dark band at the bottom, over the drawing. */
+.lp-club__bar {
   position: relative;
-  justify-self: center;
-  width: 100%;
-  max-width: 560px;
-  padding: 12px 12px 16px;
-  border: 2.5px solid var(--color-ink);
-  border-radius: var(--radius-case);
-  background: var(--color-surface);
-  color: var(--color-ink);
-  rotate: 1.6deg;
-  box-shadow: 8px 8px 0 rgb(16 32 74 / 0.4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+  margin: 0 clamp(12px, 2.4vw, 28px) clamp(12px, 2.4vw, 28px);
+  padding: 14px clamp(18px, 3vw, 32px);
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: var(--color-surface);
 }
-.lp-club__photo::before {
-  content: '';
-  position: absolute;
-  top: -14px;
-  left: 50%;
-  z-index: 1;
-  width: 110px;
-  height: 26px;
-  translate: -50% 0;
-  rotate: -3deg;
-  background: rgb(255 204 31 / 0.85);
-  border: 1px solid rgb(16 32 74 / 0.15);
+.lp-club__bar p {
+  font: 700 clamp(18px, 0.6vw + 15px, 22px) / 1.2 var(--lp-hand);
 }
-.lp-club__photo img {
-  width: 100%;
-  height: auto;
-  border-radius: 2px;
-}
-.lp-club__photo p {
-  margin-top: 12px;
-  font: 700 21px / 1.2 var(--lp-hand);
-  color: var(--color-primary);
-  text-align: center;
+@media (max-width: 559px) {
+  .lp-club__bar {
+    border-radius: 18px;
+  }
 }
 
-/* ---------- 9. Questions ---------- */
+/* ---------- 9. Questions: from 960 px the title, a big « ? » and the way to a real
+   person stay beside the numbered questions (porteur, 2026-11-06). ---------- */
+.lp-faqs {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+}
+@media (min-width: 960px) {
+  .lp-faqs {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 64px;
+    align-items: start;
+  }
+  .lp-faqs__side {
+    position: sticky;
+    top: 96px;
+  }
+}
+/* On a phone: the title, the questions, then the help. */
+@media (max-width: 959px) {
+  .lp-faqs__side {
+    display: contents;
+  }
+  .lp-faq {
+    order: 2;
+    margin-top: 28px;
+  }
+  .lp-faqs__help {
+    order: 3;
+  }
+}
+.lp-faqs__side {
+  position: relative;
+  isolation: isolate;
+}
+.lp-faqs__mark {
+  position: absolute;
+  z-index: -1;
+  top: -0.3em;
+  right: 2%;
+  font: 700 clamp(170px, 12vw + 90px, 280px) / 1 var(--lp-hand);
+  color: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  pointer-events: none;
+}
+.lp-faqs__side .lp-h2 {
+  max-width: 12ch;
+}
+.lp-faqs__help {
+  margin-top: 28px;
+  overflow: hidden;
+  border: 2.5px solid var(--color-ink);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-press);
+}
+.lp-faqs__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+.lp-faqs__help .lp-ask {
+  justify-content: space-between;
+  margin-top: 0;
+  padding: 14px 16px 16px;
+  border-top: 2px solid var(--color-ink);
+}
 .lp-faq {
-  max-width: 780px;
-  margin: 40px auto 0;
-  border-top: 2.5px solid var(--color-ink);
+  display: grid;
+  gap: 12px;
 }
 .lp-faq details {
-  border-bottom: 1.5px solid rgb(16 32 74 / 0.22);
+  border: 2px solid var(--color-ink);
+  border-radius: 16px;
+  background: var(--color-surface);
+  transition: box-shadow 0.2s var(--lp-ease);
+}
+.lp-faq details[open] {
+  box-shadow: var(--shadow-press);
+}
+.lp-faq__num {
+  flex: none;
+  min-width: 2ch;
+  font: 400 21px / 1 var(--lp-sign);
+  color: var(--color-primary);
+}
+.lp-faq__q {
+  flex: 1;
+  /* « ? » never alone on its line. */
+  text-wrap: pretty;
 }
 .lp-faq summary {
   display: flex;
@@ -1615,9 +1848,9 @@ button.lp-drawer__install {
 }
 .lp-faq summary {
   justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
   min-height: 64px;
-  padding: 14px 0;
+  padding: 12px 18px;
   font-size: 18px;
   font-weight: 700;
   line-height: 1.35;
@@ -1630,7 +1863,7 @@ button.lp-drawer__install {
 }
 .lp-faq details p {
   max-width: 62ch;
-  padding: 0 0 22px;
+  padding: 0 18px 20px calc(18px + 2ch + 14px);
   font-size: 17px;
   color: var(--color-ink-soft);
 }
@@ -1817,36 +2050,69 @@ p.lp-hero__checks svg {
   margin-top: 1px;
 }
 
-/* 3. The five situations: one column on a phone, two from 640, three from 1024. */
+/* 3. The four situations: one column on a phone, two from 640, a zig-zag down a circle from 960. */
 .lp-pain__text .lp-lead {
   margin-top: 12px;
 }
 .lp-pains {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  gap: 16px;
-  margin-top: 40px;
+  gap: 18px;
 }
-@media (min-width: 640px) {
+@media (min-width: 640px) and (max-width: 959px) {
   .lp-pains {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
   }
 }
-@media (min-width: 1024px) {
+@media (min-width: 960px) {
   .lp-pains {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+    padding-block: 8px;
+  }
+  /* The big circle the cards climb down (the porteur's reference). */
+  .lp-pains::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    left: -18%;
+    top: 50%;
+    width: 118%;
+    aspect-ratio: 1;
+    translate: 0 -50%;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--color-grid) 70%, var(--color-bg));
+  }
+  .lp-pains__card:nth-child(odd) {
+    margin-right: 12%;
+  }
+  .lp-pains__card:nth-child(even) {
+    margin-left: 12%;
   }
 }
 .lp-pains__card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr);
   gap: 6px 14px;
   align-content: start;
-  padding: 20px;
+  padding: 20px 22px;
   border: 2px solid var(--color-ink);
   border-radius: 16px;
   background: var(--color-surface);
   box-shadow: var(--shadow-press);
+}
+/* Its figure, big and faint behind the words. */
+.lp-pains__num {
+  position: absolute;
+  z-index: -1;
+  right: 12px;
+  bottom: -0.18em;
+  font: 400 clamp(86px, 6vw + 40px, 120px) / 1 var(--lp-sign);
+  color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  pointer-events: none;
 }
 .lp-pains__card .lp-tile-ic {
   grid-row: span 2;
@@ -1861,29 +2127,64 @@ p.lp-hero__checks svg {
   color: var(--color-ink-soft);
   line-height: 1.5;
 }
-.lp-pains + .lp-pain__punch {
-  text-align: center;
-  border-top: 0;
-  margin-top: 36px;
-  padding-top: 0;
-}
 
-/* 4. Six points: one column on a phone, two from 640, three from 900. */
-@media (min-width: 640px) and (max-width: 899px) {
-  .lp-gains {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 22px;
+/* A section header in two columns: the title left, its line right (porteur, 2026-11-06). */
+.lp-split {
+  display: grid;
+  gap: 4px;
+}
+.lp-split .lp-h2 {
+  max-width: 22ch;
+}
+@media (min-width: 960px) {
+  .lp-split {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+    gap: 56px;
+    align-items: end;
+  }
+  .lp-split .lp-lead {
+    margin-top: 0;
   }
 }
-
-/* 6. The running example under the slider. */
+.lp-ba-stack {
+  margin-top: 36px;
+}
+/* The two lists lean on the bottom of the pictures. */
+@media (min-width: 760px) {
+  .lp-ba-stack .lp-vs {
+    position: relative;
+    z-index: 3;
+    margin-top: -84px;
+    padding-inline: clamp(16px, 4vw, 56px);
+  }
+  .lp-ba-stack .lp-vs__col {
+    box-shadow: 6px 6px 0 color-mix(in srgb, var(--color-ink) 18%, transparent);
+  }
+  .lp-ba-stack .lp-vs__col--before {
+    background: var(--color-surface);
+  }
+}
+/* An intention is not a sale: said once, plainly, under the lists. */
 .lp-ba__example {
-  max-width: 62ch;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  max-width: 820px;
   margin: 28px auto 0;
-  text-align: center;
-  font-size: clamp(17px, 0.3vw + 16px, 19px);
+  padding: 16px 20px;
+  border: 2px solid var(--color-ink);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-accent) 24%, var(--color-surface));
+  font-size: clamp(16px, 0.3vw + 15px, 18px);
   line-height: 1.5;
   text-wrap: pretty;
+}
+.lp-ba__example svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  color: var(--color-primary);
 }
 
 /* 9. The last call. */
@@ -2058,6 +2359,46 @@ p.lp-hero__checks svg {
   margin-top: 10px;
   font-size: clamp(17px, 0.3vw + 16px, 19px);
   line-height: 1.5;
+}
+.lp-plans__box + .lp-plans__box {
+  margin-top: 20px;
+}
+/* What every paid pass opens: on paper, so the yellow box stays the one answer. */
+.lp-plans__box--paid {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+.lp-plans__paid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 10px 22px;
+  margin-top: 14px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.lp-plans__paid li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.lp-plans__paid svg {
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  flex: none;
+  color: var(--color-success);
+}
+/* Waitlist mode, above the cards: no date, just how to be told. */
+.lp-plans__notice {
+  max-width: 640px;
+  margin: 16px auto 0;
+  padding: 12px 16px;
+  border: 2px dashed var(--color-ink);
+  border-radius: 14px;
+  background: var(--color-surface);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.45;
 }
 /* The comparison table: its first column stays put while the rest scrolls. */
 .lp-compare caption {
@@ -2269,7 +2610,247 @@ p.lp-hero__checks svg {
   }
 }
 
+/* ── Lot 14: the waitlist page ─────────────────────────────────────────── */
+.lp-wait {
+  margin-top: 12px;
+  padding: clamp(108px, 9vw, 132px) 0 clamp(40px, 5vw, 72px);
+}
+.lp-wait__grid {
+  display: grid;
+  gap: 28px;
+  align-items: start;
+}
+@media (min-width: 960px) {
+  .lp-wait__grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 30rem);
+    gap: 48px;
+    align-items: center;
+  }
+}
+.lp-wait__title {
+  margin-top: 20px;
+  font: 700 clamp(40px, 3.6vw + 22px, 70px) / 1.02 var(--lp-hand);
+  letter-spacing: -0.012em;
+}
+.lp-wait__sub {
+  margin-top: 18px;
+  max-width: 36ch;
+  font-size: clamp(19px, 0.5vw + 16.5px, 22px);
+  line-height: 1.45;
+}
+.lp-wait__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  font-weight: 700;
+}
+.lp-wait__count svg {
+  width: 22px;
+  height: 22px;
+}
+.lp-wait__card {
+  scroll-margin-top: 96px;
+  padding: clamp(20px, 3vw, 28px);
+  border: 2.5px solid var(--color-ink);
+  border-radius: 20px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-press);
+}
+.lp-wait__form {
+  display: grid;
+  gap: 16px;
+}
+.lp-wait__form-title {
+  font: 700 clamp(28px, 1.2vw + 22px, 36px) / 1.1 var(--lp-hand);
+}
+.lp-wait__form-sub {
+  margin-top: -8px;
+  color: var(--color-ink-soft);
+}
+.lp-wait__channels {
+  display: grid;
+  gap: 10px;
+}
+.lp-wait__channels legend {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.lp-wait__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.lp-wait__chip {
+  position: relative;
+  cursor: pointer;
+}
+.lp-wait__chip input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.lp-wait__chip span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-weight: 700;
+  transition:
+    background 0.15s var(--lp-ease),
+    color 0.15s var(--lp-ease);
+}
+.lp-wait__chip input:checked + span {
+  background: var(--color-ink);
+  color: var(--color-surface);
+}
+.lp-wait__chip input:focus-visible + span {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+.lp-wait__consent {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  min-height: 44px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.lp-wait__consent input {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+  accent-color: var(--color-ink);
+}
+.lp-wait__error {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+.lp-wait__trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.lp-wait__thanks {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  text-align: center;
+}
+.lp-wait__seal {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 2.5px solid var(--color-ink);
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  animation: lp-stamp-in 0.52s cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
+}
+.lp-wait__done {
+  font: 700 clamp(28px, 1.2vw + 22px, 36px) / 1.1 var(--lp-hand);
+}
+.lp-wait__rank {
+  font: 400 clamp(30px, 2vw + 20px, 44px) / 1 var(--lp-sign);
+}
+.lp-wait__next {
+  max-width: 34ch;
+  color: var(--color-ink-soft);
+}
+.lp-wait__share {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+}
+.lp-wait__benefits {
+  display: grid;
+  gap: 16px;
+  margin-top: 32px;
+}
+@media (min-width: 640px) {
+  .lp-wait__benefits {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1080px) {
+  .lp-wait__benefits {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.lp-wait__benefit {
+  padding: 22px;
+  border: 2px solid var(--color-ink);
+  border-radius: 18px;
+  background: var(--color-surface);
+  box-shadow: 3px 3px 0 var(--color-ink);
+}
+.lp-wait__benefit h3 {
+  margin-top: 14px;
+  font: 700 clamp(20px, 0.6vw + 17px, 24px) / 1.2 var(--lp-text);
+}
+.lp-wait__benefit p {
+  margin-top: 8px;
+  color: var(--color-ink-soft);
+  line-height: 1.5;
+}
+.lp-wait__benefit .lp-wait__benefit-line {
+  margin-top: 14px;
+  color: var(--color-ink);
+  font: 700 clamp(18px, 0.4vw + 16px, 21px) / 1.3 var(--lp-text);
+}
+/* « C'est gratuit… » under the promise. */
+.lp-wait__free {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+  font-weight: 700;
+}
+.lp-wait__free svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  color: var(--color-success);
+}
+.lp-wait__micro {
+  margin-top: -4px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-ink-soft);
+}
+.lp-wait__micro a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.lp-wait__benefit-ic {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+.lp-wait__end-cta {
+  justify-content: center;
+  margin-top: 24px;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .lp-wait__seal {
+    animation: none;
+  }
   html:has(.lp) {
     scroll-behavior: auto;
   }

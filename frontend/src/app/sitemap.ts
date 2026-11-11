@@ -7,6 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: `${base}/`, changeFrequency: 'weekly', priority: 1 },
     { url: `${base}/forfaits`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${base}/liste-attente`, changeFrequency: 'weekly', priority: 0.9 },
     ...LEGAL_SLUGS.map((slug) => ({
       url: `${base}${LEGAL_PAGES[slug].path}`,
       changeFrequency: 'yearly' as const,

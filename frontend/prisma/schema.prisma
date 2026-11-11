@@ -578,3 +578,19 @@ model MarketingSpend {
   updatedById String
   updatedAt   DateTime @updatedAt
 }
+
+// Lot 14: the pre-launch waitlist. A seller reserves a place with a first
+// name and a WhatsApp number or an e-mail (at least one). `source` is the
+// tag of the video or message they came from (?src=…). No IP, no device.
+model WaitlistEntry {
+  id        String   @id @default(cuid())
+  firstName String
+  phone     String?  @unique // E.164, normalized on the server
+  email     String?  @unique // lower case
+  channels  String[] // CHAINE_WHATSAPP | GROUPE_WHATSAPP | TIKTOK | FACEBOOK | INSTAGRAM | BOUTIQUE
+  source    String?
+  consentAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

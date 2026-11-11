@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui';
+import { LANDING_SIGNUP_HREF, LANDING_SIGNUP_LABEL } from '@/lib/tamani/landing';
 
 /**
  * On a phone, the sign-up button follows once the hero's own has scrolled
@@ -33,8 +34,8 @@ export function StickyCta() {
 
   return (
     <div className="lp-sticky" data-on={on ? 'true' : 'false'} aria-hidden={!on}>
-      <Button href="/signup" size="lg" tabIndex={on ? 0 : -1}>
-        Essayer gratuitement
+      <Button href={LANDING_SIGNUP_HREF} size="lg" tabIndex={on ? 0 : -1}>
+        {LANDING_SIGNUP_LABEL}
       </Button>
     </div>
   );

@@ -6,12 +6,14 @@ describe('support-admin navigation', () => {
     expect(ADMIN_HOME).toBe('/support-admin');
     expect(ADMIN_NAV.map((l) => l.href)).toEqual([
       '/support-admin',
+      '/support-admin/liste-attente',
       '/support-admin/boutiques',
       '/support-admin/utilisateurs',
       '/support-admin/journal',
     ]);
     expect(ADMIN_NAV.map((l) => l.label)).toEqual([
       'Tableau de bord',
+      "Liste d'attente",
       'Boutiques',
       'Utilisateurs',
       'Journal',

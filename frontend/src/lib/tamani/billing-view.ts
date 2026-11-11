@@ -112,7 +112,7 @@ export function planFeatures(id: 'TRIAL' | 'UNLIMITED' | PassId): CardFeature[] 
           : `${maxActiveCampaigns} campagne${maxActiveCampaigns > 1 ? 's' : ''} à la fois`,
       included: true,
     },
-    { label: 'Tes clients répondent en moins de 30 secondes', included: true },
+    { label: 'Tes clients répondent sans appli ni compte', included: true },
     { label: 'La quantité à commander et le verdict', included: features.estimate },
     { label: 'Les numéros des intéressés et WhatsApp', included: features.respondentContacts },
     { label: 'Les commandes et les livraisons par quartier', included: true },

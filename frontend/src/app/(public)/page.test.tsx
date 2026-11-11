@@ -54,6 +54,19 @@ describe('/ (the home page)', () => {
     expect(m![1]).not.toContain('<');
   });
 
+  it('before launch, every sign-up button leads to the waitlist; sign-in stays (lot 14)', () => {
+    const out = html(<HomePage />);
+    expect(out).not.toContain('href="/signup"');
+    expect(out).toContain('href="/login"');
+    const ctas = out.match(/<a [^>]*href="\/liste-attente"[^>]*>[\s\S]*?<\/a>/g) ?? [];
+    expect(ctas.length).toBeGreaterThanOrEqual(6);
+    for (const a of ctas)
+      expect(text(<div dangerouslySetInnerHTML={{ __html: a }} />)).toMatch(
+        /Rejoindre (gratuitement )?la liste d'attente/,
+      );
+    expect(text(<HomePage />)).not.toContain('Essayer gratuitement');
+  });
+
   it('generateMetadata reads APP_URL', () => {
     vi.stubEnv('APP_URL', 'https://tamani.app/');
     expect(generateMetadata().alternates?.canonical).toBe('https://tamani.app/');

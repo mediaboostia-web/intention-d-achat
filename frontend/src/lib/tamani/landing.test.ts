@@ -2,8 +2,15 @@ import { describe, it, expect } from 'vitest';
 import {
   LANDING_DESCRIPTION,
   LANDING_FAQ,
+  LANDING_FINAL_LABEL,
+  LANDING_LAUNCH_MODE,
   LANDING_LINKS,
   LANDING_NAV,
+  LANDING_PLAN_LABEL,
+  LANDING_REASSURANCE,
+  LANDING_SIGNUP_HREF,
+  LANDING_SIGNUP_LABEL,
+  LANDING_BAR_NAV,
   LANDING_TITLE,
   clampPercent,
   countFrame,
@@ -193,9 +200,14 @@ describe('landing copy', () => {
     landingMetadata('https://x.y'),
   ]);
 
-  it('promises an answer in under 30 seconds, never 5 seconds', () => {
-    expect(copy).toContain('moins de 30 secondes');
-    expect(copy).not.toMatch(/5 secondes/);
+  it('promises no answer time it has not measured (copy brief §2.5)', () => {
+    expect(copy).not.toMatch(/30 secondes|5 secondes/);
+  });
+
+  it('never sells an intention as a sale, a sure quantity or no unsold stock (brief §2.2)', () => {
+    expect(copy).not.toMatch(
+      /prêts? à payer|prêts à être livrés|exactement quoi commander|plus les invendus|reste dans ta poche/i,
+    );
   });
 
   it('has no em or en dash', () => {
@@ -203,9 +215,11 @@ describe('landing copy', () => {
   });
 
   it('the FAQ answers how the free trial works', () => {
-    const trial = LANDING_FAQ.find((q) => q.question.startsWith("L'essai gratuit"));
-    expect(trial?.answer).toContain(`${PLANS.TRIAL.durationDays} jours`);
-    expect(trial?.answer).toContain(`${PLANS.TRIAL.includedResponses} réponses`);
+    const trial = LANDING_FAQ.find((q) => q.question === 'Comment essayer Tamani ?');
+    expect(trial?.answer).toContain("liste d'attente");
+    expect(trial?.answer).toContain(
+      `${PLANS.TRIAL.durationDays} jours ou ${PLANS.TRIAL.includedResponses} réponses`,
+    );
     expect(trial?.answer).toContain('sans carte bancaire');
   });
 
@@ -215,19 +229,30 @@ describe('landing copy', () => {
 });
 
 describe('the menu, the titles and the questions of the new site', () => {
+  it('LANDING_BAR_NAV keeps three of them for the computer bar (porteur, 2026-11-06)', () => {
+    expect(LANDING_BAR_NAV.map((n) => n.label)).toEqual([
+      'Comment ça marche',
+      'Fonctionnalités',
+      'Tarifs',
+    ]);
+  });
+
   it('LANDING_NAV lists the six menu entries, sections as /#anchors', () => {
     expect(LANDING_NAV.map((n) => [n.href, n.label])).toEqual([
       ['/#comment-ca-marche', 'Comment ça marche'],
       ['/#fonctionnalites', 'Fonctionnalités'],
-      ['/#benefices', 'Bénéfices'],
-      ['/forfaits', 'Forfaits'],
-      ['/#faq', 'FAQ'],
+      ['/#benefices', 'Avantages'],
+      ['/forfaits', 'Tarifs'],
+      ['/#faq', 'Questions fréquentes'],
       ['/#contact', 'Contact'],
     ]);
   });
 
   it('the title and description fit search results', () => {
-    expect(LANDING_TITLE).toBe("Tamani : sache quoi commander avant d'acheter ton stock");
+    expect(LANDING_TITLE).toBe('Tamani | Teste la demande avant de commander ton stock');
+    expect(LANDING_DESCRIPTION).toBe(
+      "Recueille les intentions d'achat avec un lien à partager sur WhatsApp, TikTok ou Facebook. Estime les quantités à prévoir avant ton approvisionnement.",
+    );
     expect(LANDING_TITLE.length).toBeLessThanOrEqual(60);
     expect(LANDING_DESCRIPTION.length).toBeLessThanOrEqual(160);
     for (const network of ['WhatsApp', 'TikTok', 'Facebook']) {
@@ -235,19 +260,18 @@ describe('the menu, the titles and the questions of the new site', () => {
     }
   });
 
-  it('the FAQ asks the eleven questions of the spec, each answer first and short', () => {
+  it('the FAQ asks the ten questions of the copy brief (§5.10), each answer first and short', () => {
     expect(LANDING_FAQ.map((q) => q.question)).toEqual([
       "C'est quoi, Tamani ?",
       'Mes clients doivent-ils installer une application ?',
-      'Où est-ce que je peux partager le lien ?',
-      'Comment tester un produit avant de le commander en gros ?',
-      "Puis-je vendre un produit que je n'ai pas encore en stock ?",
-      'Comment Tamani calcule-t-il la quantité à commander ?',
-      'Mes clients voient-ils les réponses des autres ?',
-      "L'essai gratuit, comment ça marche ?",
-      'Que se passe-t-il quand mon pass se termine ?',
-      'Comment je paie ?',
-      'Dans quels pays marche Tamani ?',
+      'Où puis-je partager mon lien ?',
+      "Puis-je tester l'intérêt pour un produit qui n'est pas encore en stock ?",
+      "Une intention d'achat garantit-elle une vente ?",
+      'Comment Tamani estime-t-il la quantité à commander ?',
+      'Les numéros de mes clients sont-ils visibles par tout le monde ?',
+      'Dans quels pays Tamani est-il disponible ?',
+      'Comment essayer Tamani ?',
+      "Comment contacter l'équipe Tamani ?",
     ]);
     for (const q of LANDING_FAQ) expect(words(q.answer), q.question).toBeLessThanOrEqual(70);
   });
@@ -257,9 +281,40 @@ describe('the menu, the titles and the questions of the new site', () => {
     for (const c of SHOP_COUNTRIES) expect(answer).toContain(c.label);
   });
 
+  it('an intention is not a sale, the advice an estimate, the contact page the real address', () => {
+    const answer = (start: string) => LANDING_FAQ.find((q) => q.question.startsWith(start))?.answer;
+    expect(answer("Une intention d'achat")).toMatch(/^Non. /);
+    expect(answer("Une intention d'achat")).toContain('pas une promesse de vente');
+    expect(answer('Comment Tamani estime')).toContain('0,7');
+    expect(answer('Comment Tamani estime')).toContain('reste une estimation');
+    expect(answer('Comment contacter')).toContain('hullysdesire@gmail.com');
+  });
+
+  it('shares the promise in Open Graph', () => {
+    const m = landingMetadata('https://tamani.app/');
+    expect(m.openGraph).toMatchObject({
+      title: "Teste l'intérêt de tes clients avant de commander ton stock | Tamani",
+      description:
+        'Partage un lien produit, recueille les demandes et estime les quantités à prévoir avec Tamani.',
+    });
+  });
+
   it('the JSON-LD links default to the porteur ones', () => {
     expect(landingJsonLd('https://tamani.app/')).toEqual(
       landingJsonLd('https://tamani.app/', LANDING_LINKS),
+    );
+  });
+});
+
+describe('the launch mode (copy brief §2.3, §4.2)', () => {
+  it('is the waitlist until the porteur opens sign-up, and every button follows it', () => {
+    expect(LANDING_LAUNCH_MODE).toBe('waitlist');
+    expect(LANDING_SIGNUP_HREF).toBe('/liste-attente');
+    expect(LANDING_SIGNUP_LABEL).toBe("Rejoindre la liste d'attente");
+    expect(LANDING_FINAL_LABEL).toBe("Rejoindre gratuitement la liste d'attente");
+    expect(LANDING_PLAN_LABEL).toBe("Être prévenu à l'ouverture");
+    expect(LANDING_REASSURANCE).toBe(
+      "Gratuit · Sans engagement · Nous te prévenons à l'ouverture.",
     );
   });
 });

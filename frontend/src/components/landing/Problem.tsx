@@ -1,37 +1,37 @@
 import type { CSSProperties } from 'react';
 import { Icon, type IconName } from '@/components/ui';
+import { twoDigits } from './content';
 import { Illustration } from './Illustration';
 import { InView } from './InView';
 
 const PAINS: readonly { icon: IconName; title: string; text: string }[] = [
   {
     icon: 'box',
-    title: "De l'argent qui dort dans ton stock",
-    text: "Tu commandes un carton entier, et une partie reste invendue pendant des semaines. C'est ton argent qui attend sur l'étagère.",
+    title: 'Ton argent peut rester bloqué dans les invendus.',
+    text: "Tu commandes une quantité importante sans connaître précisément l'intérêt de tes clients. Si une partie ne se vend pas, ton capital reste immobilisé dans le stock.",
   },
   {
     icon: 'bell',
-    title: 'Trop de messages, pas assez de commandes',
-    text: "Tu postes tes produits et tout le monde t'écrit : le prix, la taille, la livraison… Tu réponds toute la journée, et les clients prêts à payer se perdent dans la foule.",
+    title: 'Les demandes se dispersent dans tes messages.',
+    text: 'Prix, tailles, couleurs, disponibilité, livraison… Les conversations s’accumulent sur plusieurs groupes et réseaux. Retrouver les demandes devient difficile.',
   },
   {
     icon: 'search',
-    title: 'Le client ne sait pas ce qui reste',
-    text: "Il ne sait pas combien de pièces sont disponibles, ni ce qu'il peut vraiment commander. Alors il attend, ou il achète ailleurs.",
+    title: 'Tu manques de visibilité avant de commander.',
+    text: 'Tu envisages un nouvel arrivage, mais tu ne sais pas encore combien de personnes sont intéressées ni quelles quantités elles souhaitent.',
   },
   {
-    icon: 'receipt',
-    title: 'Commander gros sans savoir si ça va plaire',
-    text: "Avant une grosse commande, tu n'as aucun moyen simple de savoir si tes clients sont vraiment intéressés.",
-  },
-  {
-    icon: 'people',
-    title: 'Tu ne connais pas vraiment tes clients',
-    text: 'Qui achète souvent ? Qui commande et ne vient jamais chercher ? Sans liste, impossible de le savoir.',
+    icon: 'link',
+    title: 'Tu ne sais pas toujours quel canal apporte les demandes.',
+    text: 'Entre tes groupes WhatsApp, Facebook et TikTok, il peut être difficile de comparer les réponses reçues par canal.',
   },
 ];
 
-/** 3. What Tamani helps avoid: the five situations the porteur named (lot 12). */
+/**
+ * 3. The problem before the order (copy brief §5.5). From 960 px the four
+ * situations climb down a big circle in a zig-zag, each with its figure
+ * behind it; the words and the drawing sit beside them.
+ */
 export function Problem() {
   return (
     <section id="probleme" className="lp-section" aria-labelledby="lp-pain-title">
@@ -39,31 +39,40 @@ export function Problem() {
         <div className="lp-pain">
           <div className="lp-pain__text">
             <h2 id="lp-pain-title" className="lp-h2">
-              Tu reconnais ces situations ?
+              Avant de commander, tu aimerais savoir ce que tes clients veulent vraiment.
             </h2>
-            <p className="lp-lead">Ce sont les galères que Tamani t&apos;aide à éviter.</p>
+            <p className="lp-lead">
+              Tu publies tes produits, les messages arrivent et les questions se multiplient. Mais
+              au moment de passer commande auprès de ton fournisseur, tu dois encore estimer la
+              quantité à acheter.
+            </p>
           </div>
+          <InView as="ul" className="lp-pains" threshold={0.15}>
+            {PAINS.map((p, i) => (
+              <li key={p.title} className="lp-pains__card" style={{ '--i': i } as CSSProperties}>
+                <span className="lp-pains__num" aria-hidden="true">
+                  {twoDigits(i + 1)}
+                </span>
+                <span className="lp-tile-ic" aria-hidden="true">
+                  <Icon name={p.icon} />
+                </span>
+                <h3>{p.title}</h3>
+                <p>{p.text}</p>
+              </li>
+            ))}
+          </InView>
           <div className="lp-pain__art">
             <Illustration
               name="probleme"
               alt="La grossiste assise sur un carton, soucieuse, au milieu de piles de cartons qui ne se vendent pas."
-              sizes="(min-width: 960px) 520px, 100vw"
+              sizes="(min-width: 960px) 480px, 100vw"
               ink
             />
+            <p className="lp-pain__punch">
+              Et si tu pouvais recueillir ces demandes avant de passer ta commande ?
+            </p>
           </div>
         </div>
-        <InView as="ul" className="lp-pains" threshold={0.2}>
-          {PAINS.map((p, i) => (
-            <li key={p.title} className="lp-pains__card" style={{ '--i': i } as CSSProperties}>
-              <span className="lp-tile-ic" aria-hidden="true">
-                <Icon name={p.icon} />
-              </span>
-              <h3>{p.title}</h3>
-              <p>{p.text}</p>
-            </li>
-          ))}
-        </InView>
-        <p className="lp-pain__punch">Et si un seul lien réglait tout ça ?</p>
       </div>
     </section>
   );

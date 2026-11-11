@@ -9,6 +9,8 @@ import {
   LANDING_SLOGAN,
   type LandingLinkName,
   type LandingLinks,
+  LANDING_SIGNUP_HREF,
+  LANDING_SIGNUP_LABEL,
 } from '@/lib/tamani/landing';
 import { InView } from './InView';
 import { PlatformLogo } from './PlatformLogo';
@@ -31,8 +33,11 @@ export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks 
     return href ? [{ ...s, href }] : [];
   });
   const help = [
-    { href: '/#faq', label: 'FAQ' },
-    ...(links.community ? [{ href: links.community, label: 'Le groupe WhatsApp' }] : []),
+    { href: '/#faq', label: 'Questions fréquentes' },
+    ...(links.community ? [{ href: links.community, label: 'Communauté WhatsApp' }] : []),
+    ...(links.whatsappContact
+      ? [{ href: links.whatsappContact, label: 'Contacter le support' }]
+      : []),
     { href: `mailto:${LANDING_CONTACT_EMAIL}`, label: LANDING_CONTACT_EMAIL },
   ];
 
@@ -80,7 +85,7 @@ export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks 
                 <a href="/#fonctionnalites">Fonctionnalités</a>
               </li>
               <li>
-                <a href="/#benefices">Bénéfices</a>
+                <a href="/#benefices">Avantages</a>
               </li>
               <li>
                 <Link href="/forfaits">Forfaits</Link>
@@ -88,13 +93,13 @@ export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks 
             </ul>
           </nav>
           <nav aria-label="Compte">
-            <h3>Ton compte</h3>
+            <h3>Compte</h3>
             <ul>
               <li>
-                <Link href="/signup">Créer un compte</Link>
+                <Link href="/login">Se connecter</Link>
               </li>
               <li>
-                <Link href="/login">Se connecter</Link>
+                <Link href={LANDING_SIGNUP_HREF}>{LANDING_SIGNUP_LABEL}</Link>
               </li>
             </ul>
           </nav>
@@ -137,7 +142,10 @@ export function LandingFooter({ links = LANDING_LINKS }: { links?: LandingLinks 
               </Link>
             ))}
           </nav>
-          <p>Fait pour les grossistes et vendeurs en ligne d&apos;Afrique francophone.</p>
+          <p>
+            Un outil de précommande et de collecte des intentions d&apos;achat pour les grossistes,
+            importateurs et vendeurs en ligne d&apos;Afrique francophone.
+          </p>
         </div>
       </div>
     </footer>
