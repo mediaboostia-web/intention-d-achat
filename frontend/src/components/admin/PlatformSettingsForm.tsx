@@ -67,7 +67,7 @@ export function PlatformSettingsForm({ initial }: { initial: Values }) {
       {SETTINGS_GROUPS.map((group) => (
         <fieldset key={group.title} className="admin-card space-y-4 p-4">
           <legend className="float-left w-full text-lg font-bold text-ink">{group.title}</legend>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="clear-both grid gap-4 md:grid-cols-2">
             {group.fields.map((f) => (
               <Input
                 key={f.name}
