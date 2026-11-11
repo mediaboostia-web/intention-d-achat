@@ -4,7 +4,7 @@
 export const runtime = 'nodejs';
 
 import 'server-only';
-import { NextResponse, type NextRequest } from 'next/server';
+import { after, NextResponse, type NextRequest } from 'next/server';
 import { verifyCsrf } from '@/lib/server/auth';
 import { requireAdmin } from '@/lib/server/middleware';
 import { enforceAdminRateLimit } from '@/lib/server/middleware/rate-limit-by-userid';
@@ -32,9 +32,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const result = await issueAdminCode(prisma, queue, auth.admin);
     if (result === 'too-many') return tamaniError('ADMIN_CODE_TOO_MANY', 429);
 
-    // The queue is drained every minute; send this one now so the admin
-    // does not wait. A failure here is not one: the cron will retry.
-    await queue.drainOne().catch(() => false);
+    // The queue is drained every minute; send this one now, past the reply,
+    // so the admin waits neither for the cron nor for the provider. A
+    // failure here is not one: the cron will retry.
+    after(async () => {
+      await queue.drainOne().catch(() => false);
+    });
 
     return NextResponse.json({ sent: true }, { headers: { 'x-request-id': ctx.requestId } });
   });
