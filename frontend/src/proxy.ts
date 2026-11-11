@@ -25,6 +25,10 @@ const COOKIE_PREFIX = process.env.COOKIE_PREFIX || 'app';
 const ACCESS_COOKIE = `${COOKIE_PREFIX}-token`;
 const REFRESH_COOKIE = `${COOKIE_PREFIX}-refresh`;
 const LOGIN_PATH = process.env.AUTH_LOGIN_PATH || '/login';
+// The support-admin has its own sign-in page (lot 11c): it must render
+// without a session, and the back-office sends there, not to the shop's page.
+const ADMIN_PREFIX = '/support-admin';
+const ADMIN_DOOR = `${ADMIN_PREFIX}/connexion`;
 
 const LISTED_PREFIXES = (process.env.AUTH_PROTECTED_PREFIXES || '')
   .split(',')
@@ -51,9 +55,12 @@ export function proxy(req: NextRequest): NextResponse {
   const target = pathname + search;
 
   if (!req.cookies.get(REFRESH_COOKIE)?.value) {
+    // The door itself renders without a session: no redirect, no loop.
+    if (pathname === ADMIN_DOOR) return NextResponse.next();
     const url = req.nextUrl.clone();
-    url.pathname = LOGIN_PATH;
-    url.search = `?next=${encodeURIComponent(target)}`;
+    const admin = pathname === ADMIN_PREFIX || pathname.startsWith(`${ADMIN_PREFIX}/`);
+    url.pathname = admin ? ADMIN_DOOR : LOGIN_PATH;
+    url.search = admin ? '' : `?next=${encodeURIComponent(target)}`;
     return NextResponse.redirect(url, 303);
   }
 

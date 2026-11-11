@@ -35,6 +35,10 @@ export const TAMANI_ERRORS = [
   'PAYMENT_PROVIDER_UNAVAILABLE',
   'PURCHASE_NOT_FOUND',
   'PUSH_NOT_CONFIGURED',
+  'ADMIN_GATE_REQUIRED',
+  'ADMIN_CODE_INVALID',
+  'ADMIN_CODE_TOO_MANY',
+  'ADMIN_CODE_UNAVAILABLE',
 ] as const;
 
 export type TamaniErrorCode = (typeof TAMANI_ERRORS)[number];
@@ -69,6 +73,10 @@ const DEFAULT_MESSAGES: Record<TamaniErrorCode, string> = {
   PAYMENT_PROVIDER_UNAVAILABLE: 'Le paiement est indisponible pour le moment.',
   PURCHASE_NOT_FOUND: 'Cet achat est introuvable.',
   PUSH_NOT_CONFIGURED: 'Les notifications sur le téléphone ne sont pas encore disponibles.',
+  ADMIN_GATE_REQUIRED: 'Entre ton code pour ouvrir le Support-admin.',
+  ADMIN_CODE_INVALID: 'Ce code est faux ou a expiré. Demande un nouveau code.',
+  ADMIN_CODE_TOO_MANY: 'Trop de codes demandés. Réessaie dans 10 minutes.',
+  ADMIN_CODE_UNAVAILABLE: "L'envoi du code est indisponible pour le moment.",
 };
 
 export function tamaniError(code: TamaniErrorCode, status: number, message?: string): NextResponse {

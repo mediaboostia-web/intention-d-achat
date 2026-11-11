@@ -12,7 +12,7 @@ import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { verifyCsrf } from '@/lib/server/auth';
 import { logAdminAction } from '@/lib/server/admin/audit';
-import { requireAdmin } from '@/lib/server/middleware';
+import { gatedAdmin } from '@/lib/server/tamani/admin/gate';
 import { prisma } from '@/lib/server/prisma';
 import { enforceAdminRateLimit } from '@/lib/server/middleware/rate-limit-by-userid';
 import { makeRequestContext, withRequestContext } from '@/lib/server/observability/request-context';
@@ -34,7 +34,7 @@ export async function GET(
 ): Promise<NextResponse> {
   const reqCtx = makeRequestContext(req.headers);
   return withRequestContext(reqCtx, async () => {
-    const auth = await requireAdmin('ADMIN');
+    const auth = await gatedAdmin('ADMIN');
     if (auth instanceof NextResponse) return auth;
 
     const limited = await enforceAdminRateLimit(auth.admin.id);
@@ -66,7 +66,7 @@ export async function PATCH(
   return withRequestContext(reqCtx, async () => {
     const csrfFail = verifyCsrf(req);
     if (csrfFail) return csrfFail;
-    const auth = await requireAdmin('ADMIN');
+    const auth = await gatedAdmin('ADMIN');
     if (auth instanceof NextResponse) return auth;
     const limited = await enforceAdminRateLimit(auth.admin.id);
     if (limited) return limited;

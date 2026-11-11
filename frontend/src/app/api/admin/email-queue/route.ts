@@ -35,7 +35,7 @@ export const runtime = 'nodejs';
 import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import type { Prisma } from '@prisma/client';
-import { requireAdmin } from '@/lib/server/middleware';
+import { gatedAdmin } from '@/lib/server/tamani/admin/gate';
 import { enforceAdminRateLimit } from '@/lib/server/middleware/rate-limit-by-userid';
 import { prisma } from '@/lib/server/prisma';
 import {
@@ -65,7 +65,7 @@ interface EmailJobSummary {
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const ctx = makeRequestContext(req.headers);
   return withRequestContext(ctx, async () => {
-    const auth = await requireAdmin('ADMIN');
+    const auth = await gatedAdmin('ADMIN');
     if (auth instanceof NextResponse) return auth;
 
     const limited = await enforceAdminRateLimit(auth.admin.id);
