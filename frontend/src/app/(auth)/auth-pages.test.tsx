@@ -181,9 +181,21 @@ describe('layout', () => {
         'lg:h-[calc(100dvh-2rem)]',
       ]),
     );
-    expect(panel).toMatch(/<a [^>]*href="\/"[^>]*>[\s\S]*?Retour au site/);
     expect(out).toMatch(/class="[^"]*lg:grid-cols-\[/);
     expect(out).toContain('<p>page</p>');
+  });
+
+  // Porteur, 2026-11-12: no « Retour au site » button; the logo is the way back.
+  it('the logo leads back to the site, with no separate back button', () => {
+    for (const path of ['/login', '/signup']) {
+      const { panel } = panelOf(path);
+      expect(panel).not.toContain('Retour au site');
+      const home = panel.match(/<a [^>]*href="\/"[^>]*>[\s\S]*?<\/a>/g) ?? [];
+      expect(home).toHaveLength(1);
+      expect(home[0]).toContain('aria-label="Tamani, retour à l&#x27;accueil"');
+      expect(home[0]).toContain('<svg');
+      expect(home[0]).toMatch(/min-h-11/);
+    }
   });
 
   it('the sentence on the picture reads on a dark wash, in both themes', () => {
