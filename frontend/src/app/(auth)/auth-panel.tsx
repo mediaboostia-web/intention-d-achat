@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Illustration } from '@/components/landing/Illustration';
-import { Icon, Logo } from '@/components/ui';
+import { Logo } from '@/components/ui';
 
 // The picture of the sign-in pages (porteur, 2026-10-30, enlarged 2026-11-05
 // after the AMU capture): a band above the form on a phone, a big rounded
@@ -41,16 +41,14 @@ export function AuthPanel() {
         aria-hidden="true"
         className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-deep/90 via-deep/45 to-transparent"
       />
-      <div className="relative flex items-start justify-between gap-3">
-        <span className="rounded-control bg-surface px-2 py-1">
-          <Logo variant="lockup" size={28} />
-        </span>
+      {/* Porteur, 2026-11-12: the logo is the way back to the site, no separate button. */}
+      <div className="relative flex items-start">
         <Link
           href="/"
-          className="inline-flex min-h-11 items-center gap-1 rounded-full bg-surface px-4 text-sm font-bold text-ink shadow-press focus-visible:outline-accent"
+          aria-label="Tamani, retour à l'accueil"
+          className="inline-flex min-h-11 items-center rounded-control bg-surface px-2 py-1 focus-visible:outline-accent"
         >
-          <Icon name="chevron-left" className="size-4" />
-          Retour au site
+          <Logo variant="lockup" size={28} />
         </Link>
       </div>
       <div className="relative max-w-lg text-deep-ink">
