@@ -86,9 +86,14 @@ formats each have their own available quantity.
   `SaleOrder.totalAmount` = sum of lines; `unitPrice` = rounded average, kept for old
   readers. The picks store a frozen copy of each offer's qty and price, so editing the
   product never changes an answer or an order.
-- `Campaign.optionStock Json?`: `[{ option, count }]`. In stock: a hard cap per option,
-  the number the wholesaler wrote (not decremented by answers, which are intentions; he
-  updates it as he sells). Incoming: a planned count, no cap.
+- `Campaign.optionStock Json?`: `[{ option, count }]`. In stock: a hard cap per option.
+  **Stock goes down each time a client pays** (porteur, 2026-11-18): remaining =
+  the count the wholesaler wrote − the pieces of that option in the campaign's orders
+  marked paid and not cancelled. Computed, not stored, so un-paying or cancelling gives
+  the pieces back. Answers alone (intentions) do not lower it. The same rule applies to
+  `Campaign.stockQuantity` on a product without options. `SaleOrder.optionQuantities
+  Json?` keeps an order's split (copied from the answer, or set in the order form).
+  Incoming: a planned count, no cap.
 - `Campaign.shippingEnabled Boolean @default(false)`; `Response.fulfillment String?`
   (`PICKUP|DELIVERY|SHIPPING`) alongside `wantsDelivery` (kept in sync for old readers);
   `SaleOrder.fulfillment` accepts `SHIPPING`; the shipping place reuses
