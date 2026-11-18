@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { COMMON_UNITS, unitChoices } from './units';
+import { COMMON_UNITS, CUSTOM_UNIT, unitChoices, unitSelectValue } from './units';
 
 describe('unitChoices', () => {
   it("puts the shop's own units after the common ones without duplicates", () => {
@@ -28,5 +28,15 @@ describe('unitChoices', () => {
       'bidon de 20 L',
     ]);
     expect(unitChoices([])).toEqual([...COMMON_UNITS]);
+  });
+});
+
+describe('unitSelectValue', () => {
+  it('picks the listed unit, case aside, else the custom choice', () => {
+    const choices = unitChoices(['bidon de 20 L']);
+    expect(unitSelectValue('Carton', choices)).toBe('carton');
+    expect(unitSelectValue(' bidon de 20 L ', choices)).toBe('bidon de 20 L');
+    expect(unitSelectValue('bassine', choices)).toBe(CUSTOM_UNIT);
+    expect(unitSelectValue('', choices)).toBe(CUSTOM_UNIT);
   });
 });

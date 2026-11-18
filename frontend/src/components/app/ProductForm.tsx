@@ -1,13 +1,15 @@
 'use client';
 
-// A product, field by field in the spec's order (§5.2). The wholesale price
-// and the options stay folded until the wholesaler switches them on; values
+// A product, field by field in the spec's order (§5.2). The wholesale offers
+// (many since 2026-11-18) and the options stay folded until the wholesaler switches them on; values
 // are kept as typed and checked by productFormToBody on submit.
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Button, Input, Notice, Switch, Textarea } from '@/components/ui';
+import { Button, Input, Notice, Select, Switch, Textarea } from '@/components/ui';
 import { currencyLabel } from '@/lib/tamani/currency';
 import { parseCount, parseAmount } from '@/lib/tamani/fcfa-input';
+import type { Offer } from '@/lib/tamani/offers';
 import {
+  emptyOfferRow,
   emptyProductForm,
   productFormToBody,
   type ProductBody,
@@ -15,9 +17,10 @@ import {
   type ProductFormValues,
 } from '@/lib/tamani/product-form';
 import { formatPriceLine } from '@/lib/tamani/share-message';
-import { unitChoices } from '@/lib/tamani/units';
+import { CUSTOM_UNIT, unitChoices, unitSelectValue } from '@/lib/tamani/units';
 import { cn } from '@/lib/utils';
 import { ChipsInput } from './ChipsInput';
+import { OffersInput, offerFieldId } from './OffersInput';
 import { PhotoPicker } from './PhotoPicker';
 
 const FIELD_IDS: Record<keyof ProductFormValues, string> = {
@@ -25,13 +28,14 @@ const FIELD_IDS: Record<keyof ProductFormValues, string> = {
   photos: 'product-photos',
   unitPrice: 'product-unit-price',
   unitLabel: 'product-unit',
-  wholesalePrice: 'product-wholesale-price',
-  wholesaleMinQty: 'product-wholesale-min',
+  offers: offerFieldId(0, 'qty'),
   costPrice: 'product-cost',
   optionLabel: 'product-option-label',
   options: 'product-options',
   description: 'product-description',
 };
+
+const UNIT_CUSTOM_ID = 'product-unit-custom';
 
 const used = (s: string) => s.trim() !== '';
 
@@ -39,14 +43,17 @@ const used = (s: string) => s.trim() !== '';
 function pricePreview(v: ProductFormValues, wholesale: boolean, currency: string): string | null {
   const unitPrice = parseAmount(v.unitPrice);
   if (unitPrice === null) return null;
-  return formatPriceLine(
-    {
-      unitPrice,
-      wholesalePrice: wholesale ? parseAmount(v.wholesalePrice) : null,
-      wholesaleMinQty: wholesale ? parseCount(v.wholesaleMinQty, 2) : null,
-    },
-    currency,
-  );
+  const offers = wholesale
+    ? v.offers.flatMap((r): Offer[] => {
+        const qty = parseCount(r.qty, 2);
+        const price = parseAmount(r.price);
+        if (qty === null || price === null) return [];
+        return [
+          { kind: r.kind, qty, price, name: r.kind === 'PACK' ? r.name.trim() || null : null },
+        ];
+      })
+    : [];
+  return formatPriceLine({ unitPrice, offers }, currency);
 }
 
 export function ProductForm({
@@ -73,11 +80,17 @@ export function ProductForm({
   className?: string | undefined;
 }) {
   const [v, setV] = useState(initial);
-  const [wholesale, setWholesale] = useState(
-    used(initial.wholesalePrice) || used(initial.wholesaleMinQty),
-  );
+  const [wholesale, setWholesale] = useState(initial.offers.length > 0);
   const [hasOptions, setHasOptions] = useState(
     used(initial.optionLabel) || initial.options.length > 0,
+  );
+  const choices = unitChoices(units);
+  const unitOptions = [
+    ...choices.map((u) => ({ value: u, label: u })),
+    { value: CUSTOM_UNIT, label: 'Personnalisé…' },
+  ];
+  const [customUnit, setCustomUnit] = useState(
+    unitSelectValue(initial.unitLabel, choices) === CUSTOM_UNIT,
   );
   const [local, setLocal] = useState<ProductFormErrors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -102,7 +115,7 @@ export function ProductForm({
     e.preventDefault();
     const values: ProductFormValues = {
       ...v,
-      ...(wholesale ? {} : { wholesalePrice: '', wholesaleMinQty: '' }),
+      ...(wholesale ? {} : { offers: [] }),
       ...(hasOptions ? {} : { optionLabel: '', options: [] }),
     };
     const result = productFormToBody(values, currency);
@@ -111,7 +124,9 @@ export function ProductForm({
       const first = (Object.keys(FIELD_IDS) as Array<keyof ProductFormValues>).find(
         (f) => result.errors[f],
       );
-      if (first) requestAnimationFrame(() => document.getElementById(FIELD_IDS[first])?.focus());
+      const target =
+        first === 'unitLabel' && customUnit ? UNIT_CUSTOM_ID : first && FIELD_IDS[first];
+      if (target) requestAnimationFrame(() => document.getElementById(target)?.focus());
       return;
     }
     setLocal({});
@@ -164,38 +179,30 @@ export function ProductForm({
           error={errors.unitPrice}
           onChange={(e) => set('unitPrice', e.target.value)}
         />
-        <div>
-          <Input
+        <div className="flex flex-col gap-3">
+          <Select
             id={FIELD_IDS.unitLabel}
             label="Unité"
-            hint="Touche une unité, ou écris la tienne."
-            maxLength={30}
-            value={v.unitLabel}
-            error={errors.unitLabel}
-            onChange={(e) => set('unitLabel', e.target.value)}
+            options={unitOptions}
+            value={customUnit ? CUSTOM_UNIT : unitSelectValue(v.unitLabel, choices)}
+            error={customUnit ? undefined : errors.unitLabel}
+            onChange={(e) => {
+              const picked = e.target.value;
+              setCustomUnit(picked === CUSTOM_UNIT);
+              set('unitLabel', picked === CUSTOM_UNIT ? '' : picked);
+            }}
           />
-          <ul aria-label="Unités" className="mt-3 flex flex-wrap gap-2">
-            {unitChoices(units).map((u) => {
-              const on = v.unitLabel.trim().toLocaleLowerCase('fr') === u.toLocaleLowerCase('fr');
-              return (
-                <li key={u}>
-                  <button
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => set('unitLabel', u)}
-                    className={cn(
-                      'min-h-10 rounded-full border-2 px-3 text-sm font-bold',
-                      on
-                        ? 'border-ink bg-accent text-accent-ink'
-                        : 'border-grid bg-surface text-ink hover:border-ink',
-                    )}
-                  >
-                    {u}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          {customUnit && (
+            <Input
+              id={UNIT_CUSTOM_ID}
+              label="Ton unité"
+              placeholder="bassine, rouleau…"
+              maxLength={30}
+              value={v.unitLabel}
+              error={errors.unitLabel}
+              onChange={(e) => set('unitLabel', e.target.value)}
+            />
+          )}
         </div>
       </div>
 
@@ -204,29 +211,18 @@ export function ProductForm({
           id="product-wholesale"
           label="Je vends aussi en gros"
           checked={wholesale}
-          onChange={setWholesale}
+          onChange={(on) => {
+            setWholesale(on);
+            if (on && v.offers.length === 0) set('offers', [emptyOfferRow()]);
+          }}
         />
         {wholesale && (
-          <div className="grid gap-6 sm:grid-cols-2">
-            <Input
-              id={FIELD_IDS.wholesalePrice}
-              label={`Prix de gros (${money})`}
-              inputMode="numeric"
-              placeholder="6 000"
-              value={v.wholesalePrice}
-              error={errors.wholesalePrice}
-              onChange={(e) => set('wholesalePrice', e.target.value)}
-            />
-            <Input
-              id={FIELD_IDS.wholesaleMinQty}
-              label="À partir de (articles)"
-              inputMode="numeric"
-              placeholder="12"
-              value={v.wholesaleMinQty}
-              error={errors.wholesaleMinQty}
-              onChange={(e) => set('wholesaleMinQty', e.target.value)}
-            />
-          </div>
+          <OffersInput
+            rows={v.offers}
+            onChange={(offers) => set('offers', offers)}
+            currency={currency}
+            error={errors.offers}
+          />
         )}
         {preview && <p className="font-hand text-lg text-ink-muted">Sur WhatsApp : {preview}</p>}
       </div>

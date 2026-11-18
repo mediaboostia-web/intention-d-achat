@@ -29,6 +29,7 @@ export function publicLink(
     unitPrice: 7500,
     wholesalePrice: 6000,
     wholesaleMinQty: 12,
+    offers: [{ kind: 'FROM', qty: 12, price: 6000, name: null }],
     costPrice: 4100,
     photos: [],
     optionLabel: 'Couleur',
@@ -103,7 +104,10 @@ const BLANK = {
 };
 
 /** Wires prismaMock to in-memory tables; returns them for assertions. */
-export function fakePublicDb(link: Record<string, unknown> = publicLink()) {
+export function fakePublicDb(
+  link: Record<string, unknown> = publicLink(),
+  opts: { paidOrders?: Array<{ quantity: number; optionQuantities: unknown }> } = {},
+) {
   const responses: FakeResponse[] = [];
   const respondents: FakeRespondent[] = [];
   let seq = 0;
@@ -124,6 +128,8 @@ export function fakePublicDb(link: Record<string, unknown> = publicLink()) {
   }) =>
     where.id === 'zone_1' && where.organizationId === 'org_1' ? { id: 'zone_1' } : null) as never);
   prismaMock.subscription.findUnique.mockResolvedValue(null);
+  // The stock left reads the paid orders (2026-11-18).
+  prismaMock.saleOrder.findMany.mockResolvedValue((opts.paidOrders ?? []) as never);
 
   m.response!.findUnique!.mockImplementation(
     async ({ where }: { where: Record<string, Record<string, string>> }) => {

@@ -255,6 +255,30 @@ describe('Tamani core schema (lot 3)', () => {
     expect(sql).not.toMatch(/\bDROP\b|NOT NULL/);
   });
 
+  it('ships the wholesale offers, stock per option and shipping as migration 9l_wholesale_offers', () => {
+    expect(field(modelBlock('Product'), 'offers Json @default("[]")')).toBe(true);
+    expect(field(modelBlock('Response'), 'offerPicks Json?')).toBe(true);
+    expect(field(modelBlock('Response'), 'fulfillment String?')).toBe(true);
+    expect(field(modelBlock('SaleOrder'), 'offerPicks Json?')).toBe(true);
+    expect(field(modelBlock('SaleOrder'), 'optionQuantities Json?')).toBe(true);
+    expect(field(modelBlock('Campaign'), 'optionStock Json?')).toBe(true);
+    expect(field(modelBlock('Campaign'), 'shippingEnabled Boolean @default(false)')).toBe(true);
+    const names = readdirSync(resolve(PRISMA, 'migrations'))
+      .filter((n) => !n.endsWith('.toml'))
+      .sort();
+    expect(names.indexOf('9l_wholesale_offers')).toBe(names.indexOf('9k_platform_settings') + 1);
+    const sql = readFileSync(
+      resolve(PRISMA, 'migrations/9l_wholesale_offers/migration.sql'),
+      'utf8',
+    );
+    expect(sql).toMatch(/ALTER TABLE "Product" ADD COLUMN "offers" JSONB NOT NULL DEFAULT '\[\]';/);
+    expect(sql).toContain(
+      `jsonb_build_array(jsonb_build_object('kind', 'FROM', 'qty', "wholesaleMinQty", 'price', "wholesalePrice", 'name', NULL))`,
+    );
+    expect(sql).toContain(`WHERE "wholesalePrice" IS NOT NULL AND "wholesaleMinQty" IS NOT NULL`);
+    expect(sql).not.toMatch(/\bDROP\b/);
+  });
+
   it('keeps the monthly marketing spend as migration 9h_marketing_spend (lot 11)', () => {
     const block = modelBlock('MarketingSpend');
     expect(field(block, 'month       String   @id')).toBe(true);
@@ -291,7 +315,7 @@ describe('Tamani core schema (lot 3)', () => {
     const names = readdirSync(resolve(PRISMA, 'migrations'))
       .filter((n) => !n.endsWith('.toml'))
       .sort();
-    expect(names.at(-1)).toBe('9k_platform_settings');
+    expect(names.indexOf('9k_platform_settings')).toBe(names.indexOf('9j_waitlist') + 1);
     const sql = readFileSync(
       resolve(PRISMA, 'migrations/9k_platform_settings/migration.sql'),
       'utf8',

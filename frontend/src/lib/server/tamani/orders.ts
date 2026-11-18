@@ -3,6 +3,8 @@
 // « Oui » answer into an order. One order per answer: the unique
 // SaleOrder.responseId settles two taps at once.
 import 'server-only';
+import { Prisma } from '@prisma/client';
+import { picksText, picksTotal, readPicks } from '@/lib/tamani/offers';
 import { optionSplit, optionText } from '@/lib/tamani/option-split';
 import type { NextResponse } from 'next/server';
 import { BUYER_TYPES, type BuyerType } from '@/lib/tamani/labels';
@@ -82,21 +84,25 @@ export async function convertResponseToOrder(
       buyerType: true,
       quantity: true,
       wantsDelivery: true,
+      fulfillment: true,
       zoneId: true,
       deliveryPlace: true,
       option: true,
       optionQuantities: true,
+      offerPicks: true,
       campaign: {
         select: {
           productId: true,
           product: {
             select: {
               unitPrice: true,
+              offers: true,
               wholesalePrice: true,
               wholesaleMinQty: true,
               optionLabel: true,
             },
           },
+          organization: { select: { currency: true } },
         },
       },
       order: { select: { id: true } },
@@ -107,14 +113,31 @@ export async function convertResponseToOrder(
   if (answer.order) throw new OrderError('ORDER_ALREADY_EXISTS', 409);
 
   const buyerType = buyerTypeOf(answer.buyerType);
-  const quantity = answer.quantity !== null && answer.quantity > 0 ? answer.quantity : 1;
-  const unitPrice = orderUnitPrice(answer.campaign.product, buyerType, quantity);
-  const delivery = answer.wantsDelivery === true;
+  // The offers picked (2026-11-18) price the order; without them, the « dès » rule.
+  const picks = buyerType === 'RESELLER' ? readPicks(answer.offerPicks) : null;
+  const picked = picks ? picksTotal(picks) : null;
+  const quantity = picked
+    ? picked.pieces
+    : answer.quantity !== null && answer.quantity > 0
+      ? answer.quantity
+      : 1;
+  const totalAmount = picked
+    ? picked.amount
+    : orderTotal(orderUnitPrice(answer.campaign.product, buyerType, quantity), quantity);
+  if (totalAmount > MAX_ORDER_TOTAL) throw new OrderError('VALIDATION_FAILED', 400);
+  const unitPrice = picked
+    ? Math.round(totalAmount / quantity)
+    : orderUnitPrice(answer.campaign.product, buyerType, quantity);
+  const shipping = answer.fulfillment === 'SHIPPING';
+  const delivery = !shipping && answer.wantsDelivery === true;
   const place = delivery && answer.zoneId === null ? answer.deliveryPlace : null;
-  // What the round needs and the order has no field for: the size or colour, then where.
+  const split = optionSplit(answer);
+  // What the round needs and the order has no field for: the offers, the size or colour, then where.
   const notes = [
-    optionLine(answer.campaign.product.optionLabel, optionText(optionSplit(answer))),
+    picks ? `Offres : ${picksText(picks, answer.campaign.organization.currency)}` : null,
+    optionLine(answer.campaign.product.optionLabel, optionText(split)),
     place ? `Lieu : ${place}` : null,
+    shipping ? `Expédition : ${answer.deliveryPlace ?? 'lieu à demander'}` : null,
   ].filter((line) => line !== null);
   try {
     return await tx.saleOrder.create({
@@ -127,8 +150,13 @@ export async function convertResponseToOrder(
         buyerType,
         quantity,
         unitPrice,
-        totalAmount: orderTotal(unitPrice, quantity),
-        fulfillment: delivery ? 'DELIVERY' : 'PICKUP',
+        totalAmount,
+        fulfillment: shipping ? 'SHIPPING' : delivery ? 'DELIVERY' : 'PICKUP',
+        ...(picks && { offerPicks: picks as unknown as Prisma.InputJsonValue }),
+        ...(split.length > 0 &&
+          (answer.option != null || answer.optionQuantities != null) && {
+            optionQuantities: split as unknown as Prisma.InputJsonValue,
+          }),
         zoneId: delivery ? answer.zoneId : null,
         status: 'TO_CONFIRM',
         notes: notes.length > 0 ? notes.join('\n') : null,

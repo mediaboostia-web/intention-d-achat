@@ -393,6 +393,10 @@ model Product {
   photos          Json         @default("[]") // Cloudinary URLs
   optionLabel     String? // e.g. "Couleur"
   options         String[]     @default([])
+  // Wholesale offers (2026-11-18): [{ kind FROM|PACK, qty, price, name }]
+  // (lib/tamani/offers.ts). wholesalePrice/wholesaleMinQty are the old single
+  // offer, copied in by migration 9l and no longer read.
+  offers          Json         @default("[]")
   archivedAt      DateTime?
   campaigns       Campaign[]
   orders          SaleOrder[]
@@ -422,6 +426,10 @@ model Campaign {
   endsAt          DateTime?
   deliveryEnabled Boolean        @default(false)
   showLiveCounter Boolean        @default(true)
+  // Stock per option (2026-11-18): [{ option, count }]; the stock left drops
+  // with paid orders (lib/tamani/stock.ts).
+  optionStock     Json?
+  shippingEnabled Boolean        @default(false)
   shareTemplate   String
   status          String         @default("DRAFT") // DRAFT | ACTIVE | CLOSED | ARRIVED
   closedAt        DateTime?
@@ -499,11 +507,14 @@ model Response {
   // product's order; `quantity` holds the total, `option` the option when only
   // one is chosen. Null: no split (lib/tamani/option-split.ts).
   optionQuantities    Json?
+  // The wholesale offers picked (2026-11-18), a frozen copy (lib/tamani/offers.ts).
+  offerPicks          Json?
   timing              String?
   wantsDelivery       Boolean?
   zoneId              String?
   zone                DeliveryZone? @relation(fields: [zoneId], references: [id], onDelete: SetNull)
   deliveryPlace       String? // « Autre endroit » (lot 6b): a delivery outside the shop's zones
+  fulfillment         String? // PICKUP | DELIVERY | SHIPPING (2026-11-18); wantsDelivery kept in sync
   completedAt         DateTime?
   locked              Boolean       @default(false) // over the pass: kept « en attente » until a pass
   countedAt           DateTime? // lot 8: when the answer was counted in a pass (completion or unlock)
@@ -524,33 +535,35 @@ model Response {
 // frozen when the order is made; the status moves TO_CONFIRM → CONFIRMED →
 // FULFILLED (delivered or picked up), or CANCELLED before that.
 model SaleOrder {
-  id             String        @id @default(cuid())
-  organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  respondentId   String
-  respondent     Respondent    @relation(fields: [respondentId], references: [id], onDelete: Cascade)
-  productId      String
-  product        Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
-  campaignId     String?
-  campaign       Campaign?     @relation(fields: [campaignId], references: [id], onDelete: SetNull)
-  responseId     String?       @unique
-  response       Response?     @relation(fields: [responseId], references: [id], onDelete: SetNull)
-  buyerType      String // CONSUMER | RESELLER
-  quantity       Int
-  unitPrice      Int // FCFA, frozen when the order is made
-  totalAmount    Int // unitPrice × quantity
-  fulfillment    String // DELIVERY | PICKUP
-  zoneId         String?
-  zone           DeliveryZone? @relation(fields: [zoneId], references: [id], onDelete: SetNull)
-  status         String        @default("TO_CONFIRM") // TO_CONFIRM | CONFIRMED | FULFILLED | CANCELLED
-  paid           Boolean       @default(false)
-  paidAt         DateTime?
-  notes          String?
-  confirmedAt    DateTime?
-  fulfilledAt    DateTime?
-  cancelledAt    DateTime?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id               String        @id @default(cuid())
+  organizationId   String
+  organization     Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  respondentId     String
+  respondent       Respondent    @relation(fields: [respondentId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product       @relation(fields: [productId], references: [id], onDelete: Restrict)
+  campaignId       String?
+  campaign         Campaign?     @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  responseId       String?       @unique
+  response         Response?     @relation(fields: [responseId], references: [id], onDelete: SetNull)
+  buyerType        String // CONSUMER | RESELLER
+  quantity         Int
+  unitPrice        Int // FCFA, frozen when the order is made
+  totalAmount      Int // unitPrice × quantity
+  fulfillment      String // DELIVERY | PICKUP | SHIPPING
+  offerPicks       Json? // the wholesale offers picked, frozen (2026-11-18)
+  optionQuantities Json? // how many of each option: the stock left reads paid orders
+  zoneId           String?
+  zone             DeliveryZone? @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  status           String        @default("TO_CONFIRM") // TO_CONFIRM | CONFIRMED | FULFILLED | CANCELLED
+  paid             Boolean       @default(false)
+  paidAt           DateTime?
+  notes            String?
+  confirmedAt      DateTime?
+  fulfilledAt      DateTime?
+  cancelledAt      DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   @@index([organizationId, status])
   @@index([respondentId])

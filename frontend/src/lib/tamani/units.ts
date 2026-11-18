@@ -36,3 +36,13 @@ export function unitChoices(used: readonly string[]): string[] {
   }
   return out;
 }
+
+/** The dropdown's « Personnalisé… » choice: the unit is then typed in a field. */
+export const CUSTOM_UNIT = '__custom__';
+
+/** The choice a unit selects in the dropdown (case aside), else « Personnalisé… ». */
+export function unitSelectValue(unit: string, choices: readonly string[]): string {
+  const key = unit.trim().toLocaleLowerCase('fr');
+  if (!key) return CUSTOM_UNIT;
+  return choices.find((c) => c.toLocaleLowerCase('fr') === key) ?? CUSTOM_UNIT;
+}

@@ -25,8 +25,7 @@ const product: ShopProduct = {
   description: null,
   unitLabel: 'pièce',
   unitPrice: 7500,
-  wholesalePrice: 6000,
-  wholesaleMinQty: 12,
+  offers: [{ kind: 'FROM', qty: 12, price: 6000, name: null }],
   costPrice: 5000,
   photos: [PHOTO_1],
   optionLabel: null,
@@ -74,18 +73,30 @@ describe('ProductCard', () => {
 });
 
 describe('ProductForm', () => {
-  it('shows the units as chips, the current one pressed', () => {
+  it('shows the units in a dropdown, the current one selected, then Personnalisé', () => {
     const out = html(
       form({ initial: { ...emptyProductForm, unitLabel: 'carton' }, units: ['bidon de 20 L'] }),
     );
-    const chips =
-      out.match(/<button [^>]*aria-pressed="(?:true|false)"[^>]*>[^<]*<\/button>/g) ?? [];
-    const labels = chips.map((c) => c.replace(/<[^>]+>/g, ''));
-    expect(labels).toContain('pièce');
-    expect(labels).toContain('bidon de 20 L');
-    expect(chips.find((c) => c.endsWith('>carton</button>'))).toContain('aria-pressed="true"');
-    expect(chips.find((c) => c.endsWith('>pièce</button>'))).toContain('aria-pressed="false"');
-    expect(out).not.toContain('<datalist');
+    expect(tag(out, 'product-unit')).toMatch(/^<select /);
+    const options = (out.match(/<option [^>]*>[^<]*<\/option>/g) ?? []).map((o) =>
+      o.replace(/<[^>]+>/g, ''),
+    );
+    expect(options.slice(0, 2)).toEqual(['pièce', 'carton']);
+    expect(options).toContain('bidon de 20 L');
+    expect(options.at(-1)).toBe('Personnalisé…');
+    expect(out).toMatch(/<option value="carton" selected="">carton<\/option>/);
+    expect(out).not.toContain('id="product-unit-custom"');
+    expect(out).not.toContain('aria-pressed');
+  });
+
+  it('opens a unit of its own as Personnalisé with the text filled', () => {
+    const out = html(form({ initial: { ...emptyProductForm, unitLabel: 'bassine' } }));
+    expect(out).toMatch(/<option value="__custom__" selected="">Personnalisé…<\/option>/);
+    expect(tag(out, 'product-unit-custom')).toContain('value="bassine"');
+    expect(tag(out, 'product-unit-custom')).toContain('maxLength="30"');
+    expect(text(form({ initial: { ...emptyProductForm, unitLabel: 'bassine' } }))).toContain(
+      'Ton unité',
+    );
   });
 
   it('ProductForm labels the purchase price as never shown to clients', () => {
@@ -94,8 +105,6 @@ describe('ProductForm', () => {
     expect(tag(out, 'product-cost')).toContain('aria-describedby="product-cost-hint"');
     expect(text(form())).toContain('Pour calculer ton bénéfice. Jamais montré à tes clients.');
     expect(tag(out, 'product-unit-price')).toContain('inputMode="numeric"');
-    // The units are chips under the field (lot 5b), no longer a datalist.
-    expect(out).toContain('aria-label="Unités"');
   });
 
   it('keeps the field order of the spec', () => {
@@ -128,22 +137,36 @@ describe('ProductForm', () => {
 
   it('opens the wholesale and option sections only when they are used', () => {
     const closed = html(form({ initial: emptyProductForm }));
-    expect(tag(closed, 'product-wholesale-price')).toBe('');
+    expect(tag(closed, 'product-offer-0-price')).toBe('');
     expect(tag(closed, 'product-option-label')).toBe('');
 
     const open = html(
       form({
         initial: {
           ...emptyProductForm,
-          wholesalePrice: '6 000',
-          wholesaleMinQty: '12',
+          offers: [
+            { kind: 'FROM', qty: '12', price: '6 000', name: '' },
+            { kind: 'PACK', qty: '45', price: '175 000', name: 'Demi-lot' },
+          ],
           optionLabel: 'Couleur',
           options: ['Rouge'],
         },
       }),
     );
-    expect(tag(open, 'product-wholesale-price')).toContain('value="6 000"');
-    expect(tag(open, 'product-wholesale-min')).toContain('value="12"');
+    expect(tag(open, 'product-offer-0-price')).toContain('value="6 000"');
+    expect(tag(open, 'product-offer-0-qty')).toContain('value="12"');
+    expect(tag(open, 'product-offer-0-name')).toBe('');
+    expect(tag(open, 'product-offer-1-name')).toContain('value="Demi-lot"');
+    expect(
+      text(
+        form({
+          initial: {
+            ...emptyProductForm,
+            offers: [{ kind: 'PACK', qty: '45', price: '175 000', name: '' }],
+          },
+        }),
+      ),
+    ).toContain('Ajouter une offre');
     expect(tag(open, 'product-option-label')).toContain('value="Couleur"');
     expect(open).toContain('aria-label="Retirer Rouge"');
   });
@@ -154,8 +177,7 @@ describe('ProductForm', () => {
         initial: {
           ...emptyProductForm,
           unitPrice: '7.500',
-          wholesalePrice: '6000',
-          wholesaleMinQty: '12',
+          offers: [{ kind: 'FROM', qty: '12', price: '6000', name: '' }],
         },
       }),
     );
@@ -166,14 +188,13 @@ describe('ProductForm', () => {
         initial: {
           ...emptyProductForm,
           unitPrice: '7.500',
-          wholesalePrice: '6000',
-          wholesaleMinQty: '12',
+          offers: [{ kind: 'FROM', qty: '12', price: '6000', name: '' }],
         },
       }),
     );
     expect(gn).toContain('Sur WhatsApp : 7 500 FG (gros : 6 000 FG dès 12)');
     expect(gn).toContain("Prix à l'unité (FG)");
-    expect(gn).toContain('Prix de gros (FG)');
+    expect(gn).toContain('Prix par pièce (FG)');
     expect(gn).toContain("Prix d'achat (FG)");
     expect(gn).not.toContain('FCFA');
   });

@@ -201,6 +201,7 @@ describe('answersBody', () => {
       option: 'Rouge',
       timing: 'ON_ARRIVAL',
       wantsDelivery: true,
+      fulfillment: 'DELIVERY',
       zoneId: 'zone_1',
     });
   });
@@ -307,5 +308,140 @@ describe('progressIndex', () => {
         progressIndex,
       ),
     ).toEqual([0, 1, 1, 2, 3, 3, 4]);
+  });
+});
+
+describe('wholesale offers in the popup (2026-11-18)', () => {
+  const withOffers = (hasOptions: boolean) =>
+    initialPopupState({
+      deliveryEnabled: false,
+      shippingEnabled: true,
+      hasOptions,
+      memory: null,
+      campaignId: 'camp_1',
+    });
+  const picks = [
+    { offer: 0, count: 2 },
+    { offer: 'UNIT' as const, count: 3 },
+  ];
+
+  it('a reseller picks offers, splits the pieces by colour, then goes on', () => {
+    const steps = run(withOffers(true), [
+      { type: 'interest', interested: true },
+      { type: 'buyer', buyerType: 'RESELLER' },
+      { type: 'offers', picks, pieces: 27 },
+      {
+        type: 'quantity',
+        quantity: 27,
+        option: null,
+        optionQuantities: [
+          { option: 'Noir', quantity: 20 },
+          { option: 'Rouge', quantity: 7 },
+        ],
+      },
+      { type: 'timing', timing: 'ON_ARRIVAL' },
+      {
+        type: 'delivery',
+        wantsDelivery: true,
+        zoneId: null,
+        place: 'Lomé, Togo',
+        fulfillment: 'SHIPPING',
+      },
+    ]);
+    expect(steps.map((s) => s.step)).toEqual([
+      'buyer',
+      'quantity',
+      'split',
+      'timing',
+      'delivery',
+      'contact',
+    ]);
+    const last = steps.at(-1)!;
+    expect(last.answers).toMatchObject({
+      offerPicks: picks,
+      quantity: 27,
+      fulfillment: 'SHIPPING',
+      deliveryPlace: 'Lomé, Togo',
+      wantsDelivery: true,
+    });
+    expect(last.answers.optionQuantities).toHaveLength(2);
+  });
+
+  it('skips the split without options', () => {
+    const steps = run(withOffers(false), [
+      { type: 'interest', interested: true },
+      { type: 'buyer', buyerType: 'RESELLER' },
+      { type: 'offers', picks, pieces: 27 },
+    ]);
+    expect(steps.at(-1)!.step).toBe('timing');
+  });
+
+  it('new picks drop a split that no longer adds up', () => {
+    const [, , , split, back, again] = run(withOffers(true), [
+      { type: 'interest', interested: true },
+      { type: 'buyer', buyerType: 'RESELLER' },
+      { type: 'offers', picks, pieces: 27 },
+      {
+        type: 'quantity',
+        quantity: 27,
+        option: 'Noir',
+        optionQuantities: [{ option: 'Noir', quantity: 27 }],
+      },
+      { type: 'back' },
+      { type: 'offers', picks: [{ offer: 'UNIT', count: 5 }], pieces: 5 },
+    ]);
+    expect(split!.answers.optionQuantities).toHaveLength(1);
+    expect(back!.step).toBe('split');
+    expect(again!.answers).toMatchObject({ quantity: 5, optionQuantities: null, option: null });
+  });
+
+  it('« pour toi » forgets the offers', () => {
+    const [, , , consumer] = run(withOffers(false), [
+      { type: 'interest', interested: true },
+      { type: 'buyer', buyerType: 'RESELLER' },
+      { type: 'offers', picks, pieces: 27 },
+      { type: 'buyer', buyerType: 'CONSUMER' },
+    ]);
+    expect(consumer!.answers.offerPicks).toBeNull();
+  });
+
+  it('asks how to receive it when only shipping is on', () => {
+    const steps = run(withOffers(false), [
+      { type: 'interest', interested: true },
+      { type: 'buyer', buyerType: 'CONSUMER' },
+      { type: 'quantity', quantity: 2, option: null },
+      { type: 'timing', timing: 'ON_ARRIVAL' },
+    ]);
+    expect(steps.at(-1)!.step).toBe('delivery');
+  });
+
+  it('sends the picks and the way to receive it', () => {
+    expect(stepBody({ type: 'offers', picks, pieces: 27 })).toEqual({ offerPicks: picks });
+    expect(
+      stepBody({
+        type: 'delivery',
+        wantsDelivery: true,
+        zoneId: null,
+        place: 'Lomé, Togo',
+        fulfillment: 'SHIPPING',
+      }),
+    ).toEqual({
+      wantsDelivery: true,
+      zoneId: null,
+      deliveryPlace: 'Lomé, Togo',
+      fulfillment: 'SHIPPING',
+    });
+    const body = answersBody({
+      ...EMPTY_ANSWERS,
+      interested: true,
+      buyerType: 'RESELLER',
+      offerPicks: picks,
+      quantity: 27,
+      timing: 'ON_ARRIVAL',
+      wantsDelivery: false,
+      fulfillment: 'PICKUP',
+    });
+    expect(body).toMatchObject({ offerPicks: picks, fulfillment: 'PICKUP' });
+    expect(body.quantity).toBeUndefined();
   });
 });

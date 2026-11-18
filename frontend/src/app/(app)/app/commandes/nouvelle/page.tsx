@@ -50,8 +50,7 @@ export default function NewOrderPage() {
               name: p.name,
               unitLabel: p.unitLabel,
               unitPrice: p.unitPrice,
-              wholesalePrice: p.wholesalePrice,
-              wholesaleMinQty: p.wholesaleMinQty,
+              offers: p.offers,
             })),
             campaigns: campaigns.items.map((c) => ({
               id: c.id,

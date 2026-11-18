@@ -1,6 +1,6 @@
 // The ready-made WhatsApp message of a campaign (spec §5.2) and the price
 // and availability lines it is built from.
-import { formatMoney } from './currency';
+import { priceLine, type Offer } from './offers';
 import type { Availability } from './timing';
 
 export const DEFAULT_SHARE_TEMPLATE =
@@ -21,19 +21,14 @@ export function renderShareMessage(template: string, vars: ShareMessageVars): st
 
 /**
  * "7 500 FCFA (gros : 6 000 FCFA dès 12)", or the unit price alone, in the
- * shop's currency (lot 7b: "65 000 FG" in Guinea).
+ * shop's currency (lot 7b: "65 000 FG" in Guinea); many offers since
+ * 2026-11-18 (lib/tamani/offers.ts priceLine).
  */
 export function formatPriceLine(
-  p: {
-    unitPrice: number;
-    wholesalePrice: number | null;
-    wholesaleMinQty: number | null;
-  },
+  p: { unitPrice: number; offers: readonly Offer[] },
   currency: string,
 ): string {
-  const unit = formatMoney(p.unitPrice, currency);
-  if (p.wholesalePrice === null || p.wholesaleMinQty === null) return unit;
-  return `${unit} (gros : ${formatMoney(p.wholesalePrice, currency)} dès ${p.wholesaleMinQty})`;
+  return priceLine(p.unitPrice, p.offers, currency);
 }
 
 const DAY_MS = 86_400_000;

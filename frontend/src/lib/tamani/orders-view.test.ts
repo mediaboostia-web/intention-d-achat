@@ -144,3 +144,22 @@ describe('productQuantity and fulfillmentText', () => {
     expect(fulfillmentText('DELIVERY', null)).toBe('Livraison, sans quartier');
   });
 });
+
+describe('orders with many offers (2026-11-18)', () => {
+  const offers = [
+    { kind: 'FROM' as const, qty: 12, price: 16_000, name: null },
+    { kind: 'FROM' as const, qty: 50, price: 15_000, name: null },
+    { kind: 'PACK' as const, qty: 12, price: 150_000, name: null },
+  ];
+  it('gives a reseller the best « dès » price the quantity reaches', () => {
+    expect(orderUnitPrice({ unitPrice: 17_500, offers }, 'RESELLER', 60)).toBe(15_000);
+    expect(orderUnitPrice({ unitPrice: 17_500, offers }, 'RESELLER', 20)).toBe(16_000);
+    expect(orderUnitPrice({ unitPrice: 17_500, offers }, 'RESELLER', 5)).toBe(17_500);
+    expect(orderUnitPrice({ unitPrice: 17_500, offers }, 'CONSUMER', 60)).toBe(17_500);
+  });
+
+  it('says where a shipping goes', () => {
+    expect(fulfillmentText('SHIPPING', null, 'Lomé, Togo')).toBe('Expédition à Lomé, Togo');
+    expect(fulfillmentText('SHIPPING', null)).toBe('Expédition');
+  });
+});

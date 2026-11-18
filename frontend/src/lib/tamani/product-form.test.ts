@@ -3,15 +3,15 @@ import {
   emptyProductForm,
   productFormToBody,
   productToForm,
+  type ProductFormValues,
   type ShopProduct,
 } from './product-form';
 
-const filled = {
+const filled: ProductFormValues = {
   ...emptyProductForm,
   name: ' Marmites inox 5 L ',
   unitPrice: '7 500',
-  wholesalePrice: '6000',
-  wholesaleMinQty: '12',
+  offers: [{ kind: 'FROM', qty: '12', price: '6000', name: '' }],
 };
 
 describe('productFormToBody', () => {
@@ -23,8 +23,7 @@ describe('productFormToBody', () => {
         description: null,
         unitLabel: 'pièce',
         unitPrice: 7500,
-        wholesalePrice: 6000,
-        wholesaleMinQty: 12,
+        offers: [{ kind: 'FROM', qty: 12, price: 6000, name: null }],
         costPrice: 5000,
         photos: [],
         optionLabel: null,
@@ -35,10 +34,11 @@ describe('productFormToBody', () => {
 
   it('puts each problem under its field', () => {
     const cases: Array<[Partial<typeof filled>, string]> = [
-      [{ wholesaleMinQty: '' }, 'wholesaleMinQty'],
+      [{ offers: [{ kind: 'FROM', qty: '', price: '6000', name: '' }] }, 'offers'],
       [{ unitPrice: '7,5' }, 'unitPrice'],
       [{ name: '  ' }, 'name'],
-      [{ wholesalePrice: '8000' }, 'wholesalePrice'],
+      [{ offers: [{ kind: 'FROM', qty: '12', price: '8000', name: '' }] }, 'offers'],
+      [{ offers: [{ kind: 'PACK', qty: '1', price: '26000', name: '' }] }, 'offers'],
       [{ options: ['Rouge'] }, 'optionLabel'],
     ];
     for (const [patch, field] of cases) {
@@ -58,8 +58,7 @@ describe('productToForm', () => {
       description: null,
       unitLabel: 'pièce',
       unitPrice: 7500,
-      wholesalePrice: 6000,
-      wholesaleMinQty: 12,
+      offers: [{ kind: 'PACK', qty: 12, price: 26000, name: 'Demi-lot' }],
       costPrice: null,
       photos: ['https://res.cloudinary.com/demo/image/upload/v1/m.jpg'],
       optionLabel: 'Couleur',
@@ -73,8 +72,7 @@ describe('productToForm', () => {
       description: '',
       unitLabel: 'pièce',
       unitPrice: '7 500',
-      wholesalePrice: '6 000',
-      wholesaleMinQty: '12',
+      offers: [{ kind: 'PACK', qty: '12', price: '26 000', name: 'Demi-lot' }],
       costPrice: '',
       photos: saved.photos,
       optionLabel: 'Couleur',
@@ -89,6 +87,35 @@ describe('productFormToBody in the shop currency (lot 7b)', () => {
     expect(productFormToBody({ ...filled, unitPrice: 'beaucoup' }, 'GNF')).toEqual({
       ok: false,
       errors: { unitPrice: 'Écris le prix en FG, sans virgule, par exemple 7 500.' },
+    });
+  });
+});
+
+describe('productFormToBody offers', () => {
+  it('drops the empty rows and names the offer that breaks a rule', () => {
+    expect(
+      productFormToBody(
+        {
+          ...filled,
+          offers: [
+            { kind: 'PACK', qty: '', price: '', name: '' },
+            { kind: 'PACK', qty: '12', price: '26 000', name: ' Demi-lot ' },
+          ],
+        },
+        'XOF',
+      ),
+    ).toMatchObject({
+      ok: true,
+      body: { offers: [{ kind: 'PACK', qty: 12, price: 26000, name: 'Demi-lot' }] },
+    });
+    expect(
+      productFormToBody(
+        { ...filled, offers: [{ kind: 'FROM', qty: '12', price: '8 000', name: '' }] },
+        'XOF',
+      ),
+    ).toEqual({
+      ok: false,
+      errors: { offers: "Offre 1 : le prix de gros doit être plus bas que le prix à l'unité." },
     });
   });
 });

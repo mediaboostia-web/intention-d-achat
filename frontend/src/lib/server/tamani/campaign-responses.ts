@@ -4,6 +4,7 @@
 import 'server-only';
 import type { Prisma } from '@prisma/client';
 import type { BuyerType, NotInterestedReason } from '@/lib/tamani/labels';
+import { picksShortText, readPicks } from '@/lib/tamani/offers';
 import { optionSplit, optionText } from '@/lib/tamani/option-split';
 import type { InterestedPage, InterestedRow } from '@/lib/tamani/results-view';
 import type { Timing } from '@/lib/tamani/timing';
@@ -39,8 +40,10 @@ export const ROW_SELECT = {
   quantity: true,
   option: true,
   optionQuantities: true,
+  offerPicks: true,
   timing: true,
   wantsDelivery: true,
+  fulfillment: true,
   deliveryPlace: true,
   completedAt: true,
   zone: { select: { name: true } },
@@ -53,6 +56,15 @@ export const ROW_SELECT = {
 } satisfies Prisma.ResponseSelect;
 
 export type ResponseRow = Prisma.ResponseGetPayload<{ select: typeof ROW_SELECT }>;
+
+/** The picks as the lists read them, null without. */
+function offersText(json: unknown): string | null {
+  const picks = readPicks(json);
+  return picks ? picksShortText(picks) : null;
+}
+
+const fulfillmentOf = (v: string | null) =>
+  v === 'PICKUP' || v === 'DELIVERY' || v === 'SHIPPING' ? v : null;
 
 export function toRow(r: ResponseRow, canSeeContacts: boolean): InterestedRow {
   const who = r.respondent && !r.respondent.anonymizedAt ? r.respondent : null;
@@ -68,8 +80,10 @@ export function toRow(r: ResponseRow, canSeeContacts: boolean): InterestedRow {
     quantity: r.quantity,
     // « Rouge × 3, Noir × 2 » for a split answer, the option alone otherwise.
     option: optionText(optionSplit(r)),
+    offers: offersText(r.offerPicks),
     timing: (r.timing as Timing | null) ?? null,
     wantsDelivery: r.wantsDelivery,
+    fulfillment: fulfillmentOf(r.fulfillment),
     zoneName: r.zone?.name ?? null,
     deliveryPlace: r.deliveryPlace,
     // The country says no more than the dial code a masked number shows.

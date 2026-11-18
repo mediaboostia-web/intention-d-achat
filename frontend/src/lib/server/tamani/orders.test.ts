@@ -246,6 +246,7 @@ describe('convertResponseToOrder', () => {
         responseId: 'resp_1',
         buyerType: 'CONSUMER',
         notes: null,
+        offerPicks: null,
         zone: { name: 'Médina' },
         product: { name: 'Marmites inox 5 L', unitLabel: 'pièce' },
         campaign: { title: 'Marmites' },
@@ -294,5 +295,56 @@ describe('convertResponseToOrder', () => {
     prismaMock.response.findFirst.mockResolvedValue(answer({ respondentId: null }) as never);
     await expect(convert()).rejects.toMatchObject({ code: 'RESPONSE_NOT_FOUND', status: 404 });
     expect(prismaMock.saleOrder.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('convertResponseToOrder with offers and shipping (2026-11-18)', () => {
+  const picks = [
+    { offer: 0, kind: 'PACK', qty: 12, price: 26_000, name: null, count: 2 },
+    { offer: 'UNIT', kind: 'UNIT', qty: 1, price: 12_000, name: null, count: 3 },
+  ];
+  const split = [
+    { option: 'Noir', quantity: 20 },
+    { option: 'Rouge', quantity: 7 },
+  ];
+  beforeEach(() => {
+    prismaMock.response.findFirst.mockResolvedValue({
+      id: 'resp_1',
+      campaignId: 'camp_1',
+      respondentId: 'r1',
+      interested: true,
+      buyerType: 'RESELLER',
+      quantity: 27,
+      wantsDelivery: true,
+      fulfillment: 'SHIPPING',
+      zoneId: null,
+      deliveryPlace: 'Lomé, Togo',
+      option: null,
+      optionQuantities: split,
+      offerPicks: picks,
+      campaign: {
+        productId: 'prod_1',
+        product: { ...product, optionLabel: 'Couleur' },
+        organization: { currency: 'XOF' },
+      },
+      order: null,
+    } as never);
+    prismaMock.saleOrder.create.mockResolvedValue({ id: 'order_1' } as never);
+  });
+
+  it('prices the order from the picked offers and keeps the split and the shipping', async () => {
+    await convertResponseToOrder(prismaMock, 'org_1', 'resp_1', now);
+    const data = prismaMock.saleOrder.create.mock.calls[0]![0]!.data;
+    expect(data).toMatchObject({
+      quantity: 27,
+      totalAmount: 88_000,
+      unitPrice: 3259,
+      fulfillment: 'SHIPPING',
+      zoneId: null,
+      offerPicks: picks,
+      optionQuantities: split,
+    });
+    expect(data.notes).toContain("Offres : 2 × Lot de 12, 3 à l'unité");
+    expect(data.notes).toContain('Expédition : Lomé, Togo');
   });
 });

@@ -11,6 +11,7 @@ import { prisma } from '@/lib/server/prisma';
 import { activeCampaignWhere } from '@/lib/server/tamani/campaign-status';
 import { tamaniError } from '@/lib/server/tamani/errors';
 import { jsonOk, readJson, validationFailed } from '@/lib/server/tamani/http';
+import { legacyColumns, offersOf } from '@/lib/tamani/offers';
 import { ProductPatch, checkProductRules, compact } from '@/lib/server/tamani/inputs';
 import { shopHandler } from '@/lib/server/tamani/route';
 import { toShopProduct } from '@/lib/server/tamani/serializers';
@@ -32,9 +33,18 @@ export const PATCH = shopHandler<Params>('MEMBER', async (req, { params }) => {
   const existing = await findProduct(params);
   if (!existing) return tamaniError('PRODUCT_NOT_FOUND', 404);
   const data = compact(parsed.data);
-  const broken = checkProductRules({ ...existing, ...data });
+  const merged = { ...existing, ...data };
+  const broken = checkProductRules({
+    unitPrice: merged.unitPrice,
+    offers: data.offers ?? offersOf(existing),
+    optionLabel: merged.optionLabel,
+    options: merged.options,
+  });
   if (broken) return validationFailed(broken);
-  const product = await prisma.product.update({ where: { id: existing.id }, data });
+  const product = await prisma.product.update({
+    where: { id: existing.id },
+    data: data.offers ? { ...data, ...legacyColumns(data.offers) } : data,
+  });
   return jsonOk({ product: toShopProduct(product) });
 });
 

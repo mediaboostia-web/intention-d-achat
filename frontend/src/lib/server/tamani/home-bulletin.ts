@@ -97,7 +97,13 @@ export async function buildHomeBulletin(
         plannedQuantity: true,
         stockQuantity: true,
         product: {
-          select: { unitLabel: true, costPrice: true, unitPrice: true, wholesalePrice: true },
+          select: {
+            unitLabel: true,
+            costPrice: true,
+            unitPrice: true,
+            offers: true,
+            wholesalePrice: true,
+          },
         },
       },
     }),

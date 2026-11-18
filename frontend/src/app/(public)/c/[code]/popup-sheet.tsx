@@ -49,13 +49,16 @@ import {
   thanksCopy,
 } from '@/lib/tamani/popup-copy';
 import { formatMoney } from '@/lib/tamani/currency';
+import { freezePicks, picksText } from '@/lib/tamani/offers';
 import { TIMING_LABELS } from '@/lib/tamani/timing';
 import { phoneCountryChoices } from '@/lib/tamani/phone-countries';
 import { optionEntries, optionSplit, optionText, splitTotal } from '@/lib/tamani/option-split';
 import { pluralizeUnit } from '@/lib/tamani/verdict-display';
 import { cn } from '@/lib/utils';
+import { OfferPickerStep } from './offer-picker';
 import { PhotoGallery } from './photo-gallery';
 import { popupErrorMessage, postStep, postView } from './popup-client';
+import { MAX_PIECES, Stepper } from './stepper';
 import { ThanksDialog } from './thanks-dialog';
 
 const MIN_COUNTER = 3;
@@ -145,74 +148,13 @@ function ProductHeader({ c, count }: { c: PublicCampaign; count: number | null }
   );
 }
 
-function WholesaleLine({ c, buyerType }: { c: PublicCampaign; buyerType: string }) {
-  const { product } = c;
-  if (buyerType !== 'RESELLER' || product.wholesalePrice === null) return null;
-  if (product.wholesaleMinQty === null) return null;
-  return (
-    <p className="-mt-1 mb-3 font-bold text-ink-soft">
-      Prix de gros : {formatMoney(product.wholesalePrice, c.shop.currency)} dès{' '}
-      {product.wholesaleMinQty}
-    </p>
-  );
-}
-
-const MAX_PIECES = 100_000;
-
-/** − / number / +, for one option. The number takes typing for big orders. */
-function Stepper({
-  id,
-  label,
-  value,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  value: number;
-  onChange: (n: number) => void;
-}) {
-  const square =
-    'frame flex size-11 shrink-0 items-center justify-center rounded-control bg-surface text-xl font-bold text-ink active:translate-y-px disabled:opacity-40 motion-reduce:transition-none';
-  return (
-    <div className="flex shrink-0 items-center gap-2">
-      <button
-        type="button"
-        aria-label={`Un de moins : ${label}`}
-        disabled={value === 0}
-        onClick={() => onChange(value - 1)}
-        className={square}
-      >
-        −
-      </button>
-      <input
-        id={id}
-        aria-label={`Quantité : ${label}`}
-        inputMode="numeric"
-        pattern="[0-9]*"
-        autoComplete="off"
-        placeholder="0"
-        value={value === 0 ? '' : String(value)}
-        onChange={(e) => onChange(Number(e.target.value.replace(/\D/g, '').slice(0, 6)) || 0)}
-        className="frame h-11 w-16 rounded-control bg-surface text-center text-lg font-bold text-ink placeholder:text-ink-muted"
-      />
-      <button
-        type="button"
-        aria-label={`Un de plus : ${label}`}
-        disabled={value >= MAX_PIECES}
-        onClick={() => onChange(value + 1)}
-        className={square}
-      >
-        +
-      </button>
-    </div>
-  );
-}
-
 /**
  * A product with colours or sizes (porteur, 2026-11-04): how many of each,
- * then « Valider ». The total is the answer's quantity.
+ * then « Valider ». The total is the answer's quantity. After the offers
+ * (2026-11-18), `target` is the pieces to split. In stock, never above what
+ * is left of each (2026-11-18): an option at 0 reads « épuisé ».
  */
-function OptionQuantityStep({ c, answers, onAction }: StepProps) {
+function OptionQuantityStep({ c, answers, onAction, target }: StepProps & { target?: number }) {
   const { product } = c;
   const [counts, setCounts] = useState<Record<string, number>>(() =>
     Object.fromEntries(
@@ -227,33 +169,55 @@ function OptionQuantityStep({ c, answers, onAction }: StepProps) {
   const total = splitTotal(entries);
   const set = (option: string, n: number) =>
     setCounts((cur) => ({ ...cur, [option]: Math.max(0, Math.min(MAX_PIECES, n)) }));
+  const left = (o: string) => c.stock.byOption?.[o];
+  const showLeft = c.stockQuantity !== null;
+  const ready = target === undefined ? total > 0 : total === target;
   return (
     <>
-      <Question>Combien ?</Question>
-      <WholesaleLine c={c} buyerType={answers.buyerType ?? 'CONSUMER'} />
+      <Question>
+        {target === undefined
+          ? 'Combien ?'
+          : target === 1
+            ? `Quelle ${(product.optionLabel ?? 'option').toLocaleLowerCase('fr')} ?`
+            : `Répartis tes ${target} ${pluralizeUnit(product.unitLabel, target)}`}
+      </Question>
       <p className="mb-2 text-sm font-bold text-ink-soft">
         {product.optionLabel ?? 'Choix'} : combien de chaque ?
       </p>
       <ul className="frame divide-y-2 divide-grid overflow-hidden rounded-card bg-surface">
         {product.options.map((o, i) => (
           <li key={o} className="flex items-center justify-between gap-3 px-3 py-2">
-            <span className="min-w-0 font-bold break-words text-ink">{o}</span>
-            <Stepper
-              id={`popup-qty-${i}`}
-              label={o}
-              value={counts[o] ?? 0}
-              onChange={(n) => set(o, n)}
-            />
+            <span className="min-w-0 break-words text-ink">
+              <span className="block font-bold">{o}</span>
+              {left(o) === 0 ? (
+                <span className="block text-sm font-bold text-danger">épuisé</span>
+              ) : (
+                showLeft &&
+                left(o) !== undefined && (
+                  <span className="block text-sm text-ink-soft">reste {left(o)}</span>
+                )
+              )}
+            </span>
+            {left(o) !== 0 && (
+              <Stepper
+                id={`popup-qty-${i}`}
+                label={o}
+                value={counts[o] ?? 0}
+                max={left(o) ?? MAX_PIECES}
+                onChange={(n) => set(o, n)}
+              />
+            )}
           </li>
         ))}
       </ul>
       <p className="mt-3 font-bold text-ink" aria-live="polite">
         Total : {total} {pluralizeUnit(product.unitLabel, total)}
+        {target !== undefined && ` sur ${target}`}
       </p>
       <Button
         size="lg"
         className="mt-3 w-full"
-        disabled={total === 0}
+        disabled={!ready}
         onClick={() =>
           onAction({
             type: 'quantity',
@@ -270,7 +234,7 @@ function OptionQuantityStep({ c, answers, onAction }: StepProps) {
 }
 
 /** A product without options: one tap on a preset, or « + » to type. */
-function QuantityStep({ c, answers, onAction }: StepProps) {
+function QuantityStep({ answers, onAction }: Omit<StepProps, 'c'>) {
   const buyerType = answers.buyerType ?? 'CONSUMER';
   const [custom, setCustom] = useState(false);
   const [typed, setTyped] = useState('');
@@ -279,7 +243,6 @@ function QuantityStep({ c, answers, onAction }: StepProps) {
   return (
     <>
       <Question>Combien ?</Question>
-      <WholesaleLine c={c} buyerType={buyerType} />
       {custom ? (
         <form
           className="flex items-end gap-2"
@@ -320,19 +283,30 @@ function QuantityStep({ c, answers, onAction }: StepProps) {
   );
 }
 
-function PlaceField({ answers, onAction }: Pick<StepProps, 'answers' | 'onAction'>) {
+function PlaceField({
+  answers,
+  onAction,
+  shipping = false,
+}: Pick<StepProps, 'answers' | 'onAction'> & { shipping?: boolean }) {
   const [place, setPlace] = useState(answers.deliveryPlace ?? '');
   const ok = place.trim().length >= 2;
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (ok) onAction({ type: 'delivery', wantsDelivery: true, zoneId: null, place: place.trim() });
+    if (!ok) return;
+    onAction({
+      type: 'delivery',
+      wantsDelivery: true,
+      zoneId: null,
+      place: place.trim(),
+      fulfillment: shipping ? 'SHIPPING' : 'DELIVERY',
+    });
   };
   return (
     <form onSubmit={submit}>
-      <Question>Où te livrer ?</Question>
+      <Question>{shipping ? "Où t'expédier ?" : 'Où te livrer ?'}</Question>
       <Input
         id="popup-place"
-        label="Où ? (quartier, ville ou pays)"
+        label={shipping ? 'Ta ville et ton pays' : 'Où ? (quartier, ville ou pays)'}
         maxLength={80}
         required
         value={place}
@@ -347,13 +321,16 @@ function PlaceField({ answers, onAction }: Pick<StepProps, 'answers' | 'onAction
 
 function DeliveryStep({ c, answers, onAction }: StepProps) {
   // Coming back to this step shows the choice made before.
-  const [mode, setMode] = useState<'ask' | 'zones' | 'place'>(() =>
+  const [mode, setMode] = useState<'ask' | 'zones' | 'place' | 'ship'>(() =>
     answers.wantsDelivery !== true
       ? 'ask'
-      : c.zones.length === 0 || (answers.zoneId === null && answers.deliveryPlace)
-        ? 'place'
-        : 'zones',
+      : answers.fulfillment === 'SHIPPING'
+        ? 'ship'
+        : c.zones.length === 0 || (answers.zoneId === null && answers.deliveryPlace)
+          ? 'place'
+          : 'zones',
   );
+  if (mode === 'ship') return <PlaceField answers={answers} onAction={onAction} shipping />;
   if (mode === 'place') return <PlaceField answers={answers} onAction={onAction} />;
   if (mode === 'zones') {
     return (
@@ -381,14 +358,24 @@ function DeliveryStep({ c, answers, onAction }: StepProps) {
   }
   return (
     <>
-      <Question>Livraison ?</Question>
+      <Question>{c.deliveryEnabled ? 'Livraison ?' : 'Comment le recevoir ?'}</Question>
       <div className="grid gap-3">
-        <ChoiceButton
-          selected={answers.wantsDelivery === true}
-          onClick={() => setMode(c.zones.length > 0 ? 'zones' : 'place')}
-        >
-          Oui, livre-moi
-        </ChoiceButton>
+        {c.deliveryEnabled && (
+          <ChoiceButton
+            selected={answers.wantsDelivery === true && answers.fulfillment !== 'SHIPPING'}
+            onClick={() => setMode(c.zones.length > 0 ? 'zones' : 'place')}
+          >
+            Oui, livre-moi
+          </ChoiceButton>
+        )}
+        {c.shippingEnabled && (
+          <ChoiceButton
+            selected={answers.fulfillment === 'SHIPPING'}
+            onClick={() => setMode('ship')}
+          >
+            Expédition (autre ville ou pays)
+          </ChoiceButton>
+        )}
         <ChoiceButton
           selected={answers.wantsDelivery === false}
           onClick={() => onAction({ type: 'delivery', wantsDelivery: false, zoneId: null })}
@@ -560,7 +547,13 @@ function recap(c: PublicCampaign, a: PopupAnswers): string[] {
     lines.push(`${a.quantity} ${pluralizeUnit(c.product.unitLabel, a.quantity)}${option}, ${who}.`);
   }
   if (a.timing !== null) lines.push(`${TIMING_LABELS[a.timing]}.`);
-  if (a.wantsDelivery === true) {
+  if (a.offerPicks && a.offerPicks.length > 0) {
+    const frozen = freezePicks(c.product.offers, c.product.unitPrice, a.offerPicks);
+    if (frozen.ok) lines.push(`${picksText(frozen.picks, c.shop.currency)}.`);
+  }
+  if (a.fulfillment === 'SHIPPING') {
+    lines.push(a.deliveryPlace ? `Expédition : ${a.deliveryPlace}.` : 'Expédition.');
+  } else if (a.wantsDelivery === true) {
     const zone = c.zones.find((z) => z.id === a.zoneId)?.name;
     lines.push(zone ? `Livraison à ${zone}.` : 'Livraison.');
   }
@@ -658,11 +651,16 @@ function StepContent({
         </>
       );
     case 'quantity':
+      if (a.buyerType === 'RESELLER' && c.product.offers.length > 0) {
+        return <OfferPickerStep c={c} answers={a} onAction={onAction} />;
+      }
       return c.product.options.length > 0 ? (
         <OptionQuantityStep c={c} answers={a} onAction={onAction} />
       ) : (
-        <QuantityStep c={c} answers={a} onAction={onAction} />
+        <QuantityStep answers={a} onAction={onAction} />
       );
+    case 'split':
+      return <OptionQuantityStep c={c} answers={a} onAction={onAction} target={a.quantity ?? 0} />;
     case 'timing':
       return (
         <>
@@ -855,6 +853,8 @@ export function PopupSheet({ campaign, homeUrl }: { campaign: PublicCampaign; ho
   const [state, dispatch] = useReducer(popupReducer, campaign, (c) =>
     initialPopupState({
       deliveryEnabled: c.deliveryEnabled,
+      shippingEnabled: c.shippingEnabled,
+      hasOptions: c.product.options.length > 0,
       memory: null,
       campaignId: c.campaignId,
     }),

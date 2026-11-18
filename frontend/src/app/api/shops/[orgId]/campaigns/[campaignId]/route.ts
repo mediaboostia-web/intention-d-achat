@@ -7,7 +7,7 @@
 export const runtime = 'nodejs';
 
 import 'server-only';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/server/prisma';
 import { CampaignLimitReached, assertActivationAllowed } from '@/lib/server/tamani/campaign-limit';
 import { removeCampaign } from '@/lib/server/tamani/campaign-remove';
@@ -19,6 +19,7 @@ import {
 import { tamaniError } from '@/lib/server/tamani/errors';
 import { jsonOk, readJson, validationFailed } from '@/lib/server/tamani/http';
 import { CampaignPatch, compact } from '@/lib/server/tamani/inputs';
+import { unknownStockOption } from '@/lib/tamani/stock';
 import { shopHandler } from '@/lib/server/tamani/route';
 import { toCampaign, toLink } from '@/lib/server/tamani/serializers';
 import { shopCurrency } from '@/lib/server/tamani/shop';
@@ -43,8 +44,12 @@ export const PATCH = shopHandler<Params>('MEMBER', async (req, { params }) => {
   if (!parsed.success) return validationFailed();
   const existing = await prisma.campaign.findFirst({
     where: { id: params.campaignId, organizationId: params.orgId },
+    include: { product: { select: { options: true } } },
   });
   if (!existing) return tamaniError('CAMPAIGN_NOT_FOUND', 404);
+  if (unknownStockOption(parsed.data.optionStock, existing.product.options) !== null) {
+    return validationFailed('optionStock names an option the product does not have');
+  }
 
   const now = new Date();
   const { status, ...fields } = compact(parsed.data);
@@ -63,7 +68,9 @@ export const PATCH = shopHandler<Params>('MEMBER', async (req, { params }) => {
     return validationFailed('availableAt must not be in the past');
   }
 
-  const data: Prisma.CampaignUpdateInput = { ...fields };
+  const { optionStock, ...rest } = fields;
+  const data: Prisma.CampaignUpdateInput = { ...rest };
+  if (optionStock !== undefined) data.optionStock = optionStock ?? Prisma.DbNull;
   if (status !== undefined) {
     data.status = status;
     if (status === 'CLOSED' && !existing.closedAt) data.closedAt = now;

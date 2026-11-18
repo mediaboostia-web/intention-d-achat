@@ -435,3 +435,179 @@ describe('upsertResponse', () => {
     expect(prismaMock.response.update).not.toHaveBeenCalled();
   });
 });
+
+describe('wholesale offers, stock per option and shipping (2026-11-18)', () => {
+  const offers = [
+    { kind: 'PACK', qty: 12, price: 26_000, name: null },
+    { kind: 'FROM', qty: 12, price: 6000, name: null },
+  ];
+  const reseller = { ...base, interested: true, buyerType: 'RESELLER' } as const;
+  const picks = [
+    { offer: 0, count: 2 },
+    { offer: 'UNIT', count: 3 },
+  ] as const;
+  const invalid = { code: 'VALIDATION_FAILED', status: 400 };
+
+  it('freezes the picked offers and counts their pieces as the quantity', async () => {
+    const { responses } = fakePublicDb(publicLink({ product: { offers } }));
+    await upsertResponse(prismaMock, { ...reseller, offerPicks: [...picks] } as never, NOW);
+    expect(responses[0]).toMatchObject({
+      quantity: 27,
+      offerPicks: [
+        { offer: 0, kind: 'PACK', qty: 12, price: 26_000, name: null, count: 2 },
+        { offer: 'UNIT', kind: 'UNIT', qty: 1, price: 7500, name: null, count: 3 },
+      ],
+    });
+  });
+
+  it('refuses offers from someone buying for themselves, or an offer that does not exist', async () => {
+    fakePublicDb(publicLink({ product: { offers } }));
+    expect(
+      await failure(
+        upsertResponse(
+          prismaMock,
+          { ...reseller, buyerType: 'CONSUMER', offerPicks: [...picks] } as never,
+          NOW,
+        ),
+      ),
+    ).toEqual(invalid);
+    expect(
+      await failure(
+        upsertResponse(
+          prismaMock,
+          { ...reseller, offerPicks: [{ offer: 5, count: 1 }] } as never,
+          NOW,
+        ),
+      ),
+    ).toEqual(invalid);
+    expect(prismaMock.response.create).not.toHaveBeenCalled();
+  });
+
+  it('keeps a split only when it adds up to the pieces of the offers', async () => {
+    fakePublicDb(publicLink({ product: { offers } }));
+    expect(
+      await failure(
+        upsertResponse(
+          prismaMock,
+          {
+            ...reseller,
+            offerPicks: [...picks],
+            optionQuantities: [{ option: 'Rouge', quantity: 5 }],
+          } as never,
+          NOW,
+        ),
+      ),
+    ).toEqual(invalid);
+    const { responses } = fakePublicDb(publicLink({ product: { offers } }));
+    const split = [
+      { option: 'Rouge', quantity: 20 },
+      { option: 'Noir', quantity: 7 },
+    ];
+    await upsertResponse(
+      prismaMock,
+      { ...reseller, offerPicks: [...picks], optionQuantities: split } as never,
+      NOW,
+    );
+    expect(responses[0]).toMatchObject({ quantity: 27, optionQuantities: split });
+  });
+
+  it('a split sent alone must add up to the offers already picked', async () => {
+    const { responses } = fakePublicDb(publicLink({ product: { offers } }));
+    const first = await upsertResponse(
+      prismaMock,
+      { ...reseller, offerPicks: [...picks] } as never,
+      NOW,
+    );
+    const again = { ...base, token: first.token };
+    expect(
+      await failure(
+        upsertResponse(
+          prismaMock,
+          { ...again, optionQuantities: [{ option: 'Rouge', quantity: 5 }] } as never,
+          NOW,
+        ),
+      ),
+    ).toEqual(invalid);
+    await upsertResponse(
+      prismaMock,
+      { ...again, optionQuantities: [{ option: 'Rouge', quantity: 27 }] } as never,
+      NOW,
+    );
+    expect(responses[0]).toMatchObject({ quantity: 27, option: 'Rouge' });
+  });
+
+  it('a plain quantity drops the offers', async () => {
+    fakePublicDb(publicLink({ product: { offers } }));
+    await upsertResponse(prismaMock, { ...base, interested: true, quantity: 6 }, NOW);
+    expect(prismaMock.response.create.mock.calls[0]![0].data).toMatchObject({
+      quantity: 6,
+      offerPicks: Prisma.DbNull,
+    });
+  });
+
+  it('refuses more than the stock left of a colour, paid orders taken off', async () => {
+    fakePublicDb(
+      publicLink({
+        campaign: {
+          availability: 'IN_STOCK',
+          availableAt: null,
+          stockQuantity: null,
+          optionStock: [
+            { option: 'Rouge', count: 4 },
+            { option: 'Noir', count: 30 },
+          ],
+        },
+      }),
+      { paidOrders: [{ quantity: 2, optionQuantities: [{ option: 'Rouge', quantity: 2 }] }] },
+    );
+    const err = await upsertResponse(
+      prismaMock,
+      { ...base, interested: true, optionQuantities: [{ option: 'Rouge', quantity: 3 }] },
+      NOW,
+    ).catch((e: unknown) => e as InstanceType<typeof ResponseWriteError>);
+    expect(err).toMatchObject({
+      code: 'STOCK_EXCEEDED',
+      status: 409,
+      message: "Il n'en reste que 2 en Rouge.",
+    });
+    expect(prismaMock.response.create).not.toHaveBeenCalled();
+  });
+
+  it('keeps a shipping with its city and country', async () => {
+    const { responses } = fakePublicDb(publicLink({ campaign: { shippingEnabled: true } }));
+    await upsertResponse(
+      prismaMock,
+      {
+        ...base,
+        interested: true,
+        fulfillment: 'SHIPPING',
+        wantsDelivery: true,
+        zoneId: null,
+        deliveryPlace: 'Lomé, Togo',
+      } as never,
+      NOW,
+    );
+    expect(responses[0]).toMatchObject({
+      fulfillment: 'SHIPPING',
+      wantsDelivery: true,
+      deliveryPlace: 'Lomé, Togo',
+    });
+  });
+
+  it('refuses a shipping the campaign does not offer, or without a place', async () => {
+    fakePublicDb();
+    expect(
+      await failure(
+        upsertResponse(
+          prismaMock,
+          { ...base, fulfillment: 'SHIPPING', deliveryPlace: 'Lomé, Togo' } as never,
+          NOW,
+        ),
+      ),
+    ).toEqual(invalid);
+    fakePublicDb(publicLink({ campaign: { shippingEnabled: true } }));
+    expect(
+      await failure(upsertResponse(prismaMock, { ...base, fulfillment: 'SHIPPING' } as never, NOW)),
+    ).toEqual(invalid);
+  });
+});

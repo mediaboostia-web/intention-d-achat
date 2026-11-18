@@ -32,7 +32,9 @@ export const GET = shopHandler<Params>('MEMBER', async (_req, { params }) => {
       availability: true,
       plannedQuantity: true,
       stockQuantity: true,
-      product: { select: { costPrice: true, unitPrice: true, wholesalePrice: true } },
+      product: {
+        select: { costPrice: true, unitPrice: true, offers: true, wholesalePrice: true },
+      },
       links: { select: { id: true, label: true, openCount: true, isDefault: true } },
     },
   });

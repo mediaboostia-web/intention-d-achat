@@ -12,6 +12,8 @@ import type {
   Subscription,
 } from '@prisma/client';
 import type { BuyerType } from '@/lib/tamani/labels';
+import { offersOf } from '@/lib/tamani/offers';
+import { readOptionStock } from '@/lib/tamani/stock';
 import { isBusinessType, isSalesChannel } from '@/lib/tamani/shop-profile';
 import type { Fulfillment, OrderRow, OrderStatus } from '@/lib/tamani/orders-view';
 import {
@@ -68,8 +70,7 @@ export function toPublicProduct(p: Product) {
     description: p.description,
     unitLabel: p.unitLabel,
     unitPrice: p.unitPrice,
-    wholesalePrice: p.wholesalePrice,
-    wholesaleMinQty: p.wholesaleMinQty,
+    offers: offersOf(p),
     photos: photoUrls(p.photos),
     optionLabel: p.optionLabel,
     options: p.options,
@@ -79,7 +80,15 @@ export function toPublicProduct(p: Product) {
 /** The shop's own view, purchase price included. */
 export function toShopProduct(p: Product) {
   return {
-    ...toPublicProduct(p),
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    unitLabel: p.unitLabel,
+    unitPrice: p.unitPrice,
+    offers: offersOf(p),
+    photos: photoUrls(p.photos),
+    optionLabel: p.optionLabel,
+    options: p.options,
     costPrice: p.costPrice,
     archivedAt: p.archivedAt?.toISOString() ?? null,
     createdAt: p.createdAt.toISOString(),
@@ -125,8 +134,9 @@ export function toCampaign(
       name: c.product.name,
       unitLabel: c.product.unitLabel,
       unitPrice: c.product.unitPrice,
-      wholesalePrice: c.product.wholesalePrice,
-      wholesaleMinQty: c.product.wholesaleMinQty,
+      offers: offersOf(c.product),
+      optionLabel: c.product.optionLabel,
+      options: c.product.options,
       photos: photoUrls(c.product.photos),
     },
     availability,
@@ -136,6 +146,8 @@ export function toCampaign(
     showStock: c.showStock,
     endsAt: c.endsAt?.toISOString() ?? null,
     deliveryEnabled: c.deliveryEnabled,
+    shippingEnabled: c.shippingEnabled,
+    optionStock: readOptionStock(c.optionStock),
     showLiveCounter: c.showLiveCounter,
     shareTemplate: c.shareTemplate,
     status: effectiveStatus(c, now),
@@ -145,7 +157,10 @@ export function toCampaign(
     defaultLink,
     shareMessage: renderShareMessage(c.shareTemplate, {
       produit: c.product.name,
-      prix: formatPriceLine(c.product, currency),
+      prix: formatPriceLine(
+        { unitPrice: c.product.unitPrice, offers: offersOf(c.product) },
+        currency,
+      ),
       disponibilite: formatAvailability({ availability, availableAt: c.availableAt }, now),
       lien: defaultLink?.url ?? '',
     }),
@@ -172,6 +187,7 @@ export const ORDER_SELECT = {
   responseId: true,
   buyerType: true,
   notes: true,
+  offerPicks: true,
   zone: { select: { name: true } },
   product: { select: { name: true, unitLabel: true } },
   campaign: { select: { title: true } },
@@ -206,7 +222,9 @@ export function toOrderRow(o: OrderSelectRow, canSeeContacts: boolean): OrderRow
     quantity: o.quantity,
     unitPrice: o.unitPrice,
     totalAmount: o.totalAmount,
-    fulfillment: (o.fulfillment === 'PICKUP' ? 'PICKUP' : 'DELIVERY') satisfies Fulfillment,
+    fulfillment: (o.fulfillment === 'PICKUP' || o.fulfillment === 'SHIPPING'
+      ? o.fulfillment
+      : 'DELIVERY') satisfies Fulfillment,
     zoneId: o.zoneId,
     zoneName: o.zone?.name ?? null,
     productId: o.productId,

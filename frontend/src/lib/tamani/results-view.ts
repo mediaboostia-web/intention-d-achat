@@ -112,8 +112,12 @@ export interface InterestedRow {
   buyerType: BuyerType | null;
   quantity: number | null;
   option: string | null;
+  /** The wholesale offers picked (2026-11-18): « 2 × Lot de 12, 3 à l'unité ». */
+  offers?: string | null;
   timing: Timing | null;
   wantsDelivery: boolean | null;
+  /** PICKUP, DELIVERY or SHIPPING (2026-11-18); older answers have none. */
+  fulfillment?: 'PICKUP' | 'DELIVERY' | 'SHIPPING' | null;
   zoneName: string | null;
   /** « Autre endroit »: where to deliver outside the zones. */
   deliveryPlace: string | null;
@@ -375,14 +379,17 @@ export function interestedDetail(row: InterestedRow, unitLabel: string): string 
     return row.reason ? NOT_INTERESTED_REASON_LABELS[row.reason] : 'Pas intéressé';
   }
   const where =
-    row.zoneName ??
-    (row.wantsDelivery === false
-      ? 'Retrait'
-      : row.deliveryPlace
-        ? `Livraison · ${row.deliveryPlace}`
-        : null);
+    row.fulfillment === 'SHIPPING'
+      ? ['Expédition', row.deliveryPlace].filter(Boolean).join(' · ')
+      : (row.zoneName ??
+        (row.wantsDelivery === false
+          ? 'Retrait'
+          : row.deliveryPlace
+            ? `Livraison · ${row.deliveryPlace}`
+            : null));
   return [
     row.quantity === null ? null : `${row.quantity} ${pluralizeUnit(unitLabel, row.quantity)}`,
+    row.offers ?? null,
     row.option,
     row.buyerType ? BUYER_TYPE_LABELS[row.buyerType] : null,
     where,

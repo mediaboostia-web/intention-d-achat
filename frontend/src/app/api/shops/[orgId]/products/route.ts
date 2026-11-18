@@ -10,6 +10,7 @@ import { prisma } from '@/lib/server/prisma';
 import { buildPage, clampLimit, cursorWhere, decodeCursor } from '@/lib/server/pagination/paginate';
 import { jsonOk, readJson, validationFailed } from '@/lib/server/tamani/http';
 import { activeCampaignWhere } from '@/lib/server/tamani/campaign-status';
+import { legacyColumns } from '@/lib/tamani/offers';
 import { ProductCreate, SEARCH_MAX, checkProductRules } from '@/lib/server/tamani/inputs';
 import { advisoryXactLock } from '@/lib/server/tamani/locks';
 import { shopHandler } from '@/lib/server/tamani/route';
@@ -62,7 +63,9 @@ export const POST = shopHandler('MEMBER', async (req, { params }) => {
   // The shop-country lock: a country change running now waits, then sees this product (lot 7b).
   const product = await prisma.$transaction(async (tx) => {
     await advisoryXactLock(tx, shopCountryLock(params.orgId));
-    return tx.product.create({ data: { ...parsed.data, organizationId: params.orgId } });
+    return tx.product.create({
+      data: { ...parsed.data, ...legacyColumns(parsed.data.offers), organizationId: params.orgId },
+    });
   });
   return jsonOk({ product: toShopProduct(product) }, 201);
 });

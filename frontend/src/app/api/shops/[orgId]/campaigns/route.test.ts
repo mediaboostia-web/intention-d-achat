@@ -500,3 +500,35 @@ describe('campaign share message in the shop currency (lot 7b)', () => {
     });
   });
 });
+
+describe('campaign stock per option and shipping (2026-11-18)', () => {
+  const withOptions = { ...product, optionLabel: 'Couleur', options: ['Noir', 'Rouge'] };
+
+  it('POST saves the counts per option and the shipping switch', async () => {
+    prismaMock.product.findFirst.mockResolvedValue(withOptions as never);
+    const res = await create({
+      ...valid,
+      optionStock: [{ option: 'Noir', count: 30 }],
+      shippingEnabled: true,
+    });
+    expect(res.status).toBe(201);
+    expect(prismaMock.campaign.create.mock.calls[0]![0].data).toMatchObject({
+      optionStock: [{ option: 'Noir', count: 30 }],
+      shippingEnabled: true,
+    });
+  });
+
+  it('POST refuses a count for an option the product does not have', async () => {
+    prismaMock.product.findFirst.mockResolvedValue(withOptions as never);
+    const res = await create({ ...valid, optionStock: [{ option: 'Blond', count: 3 }] });
+    expect(res.status).toBe(400);
+    expect(prismaMock.campaign.create).not.toHaveBeenCalled();
+  });
+
+  it('PATCH refuses a count for an option the product does not have', async () => {
+    prismaMock.campaign.findFirst.mockResolvedValue(campaign({ product: withOptions }) as never);
+    const res = await patch({ optionStock: [{ option: 'Blond', count: 3 }] });
+    expect(res.status).toBe(400);
+    expect(prismaMock.campaign.update).not.toHaveBeenCalled();
+  });
+});

@@ -5,6 +5,7 @@ import 'server-only';
 import { z } from 'zod';
 import { isShopCountry } from '@/lib/tamani/countries';
 import { isPlanId } from '@/lib/tamani/plans';
+import { OFFERS_MAX, OFFER_NAME_MAX, OFFER_QTY_MAX } from '@/lib/tamani/offers';
 import { checkProductRules } from '@/lib/tamani/product-rules';
 import { BUYER_TYPES, NOT_INTERESTED_REASONS } from '@/lib/tamani/labels';
 import { ORDER_STATUSES } from '@/lib/tamani/orders-view';
@@ -87,13 +88,22 @@ export const ZonePatch = z
 /** Integer FCFA, strictly positive. "7 500", 7500.5 and 0 are refused. */
 const price = z.number().int().min(1).max(100_000_000);
 
+/** A wholesale offer (2026-11-18, lib/tamani/offers.ts); a name only on a pack. */
+const offer = z
+  .object({
+    kind: z.enum(['FROM', 'PACK']),
+    qty: z.number().int().min(2).max(OFFER_QTY_MAX),
+    price,
+    name: z.string().trim().max(OFFER_NAME_MAX).nullable().default(null),
+  })
+  .transform((o) => ({ ...o, name: o.kind === 'PACK' && o.name ? o.name : null }));
+
 const ProductFields = z.object({
   name: z.string().trim().min(1).max(80),
   description: z.string().trim().max(1000).nullable(),
   unitLabel: z.string().trim().min(1).max(30),
   unitPrice: price,
-  wholesalePrice: price.nullable(),
-  wholesaleMinQty: z.number().int().min(2).max(100_000).nullable(),
+  offers: z.array(offer).max(OFFERS_MAX),
   costPrice: price.nullable(),
   photos: z.array(cloudinaryUrl).max(6),
   optionLabel: z.string().trim().min(1).max(30).nullable(),
@@ -106,8 +116,7 @@ const ProductFields = z.object({
 export const ProductCreate = ProductFields.extend({
   description: ProductFields.shape.description.default(null),
   unitLabel: ProductFields.shape.unitLabel.default('pièce'),
-  wholesalePrice: ProductFields.shape.wholesalePrice.default(null),
-  wholesaleMinQty: ProductFields.shape.wholesaleMinQty.default(null),
+  offers: ProductFields.shape.offers.default([]),
   costPrice: ProductFields.shape.costPrice.default(null),
   photos: ProductFields.shape.photos.default([]),
   optionLabel: ProductFields.shape.optionLabel.default(null),
@@ -131,6 +140,13 @@ const CampaignFields = z.object({
   showStock: z.boolean(),
   endsAt: isoDate.nullable(),
   deliveryEnabled: z.boolean(),
+  // 2026-11-18: « J'expédie aussi »; a count per option (in stock: the cap).
+  shippingEnabled: z.boolean(),
+  optionStock: z
+    .array(z.object({ option: z.string().trim().min(1).max(30), count: quantity.min(0) }))
+    .max(12)
+    .refine((s) => new Set(s.map((o) => o.option)).size === s.length, 'Duplicate option')
+    .nullable(),
   showLiveCounter: z.boolean(),
   shareTemplate: z.string().trim().min(1).max(1000),
 });
@@ -144,6 +160,8 @@ export const CampaignCreate = CampaignFields.extend({
   showStock: CampaignFields.shape.showStock.default(false),
   endsAt: CampaignFields.shape.endsAt.default(null),
   deliveryEnabled: CampaignFields.shape.deliveryEnabled.default(false),
+  shippingEnabled: CampaignFields.shape.shippingEnabled.default(false),
+  optionStock: CampaignFields.shape.optionStock.default(null),
   showLiveCounter: CampaignFields.shape.showLiveCounter.default(true),
   shareTemplate: CampaignFields.shape.shareTemplate.default(DEFAULT_SHARE_TEMPLATE),
   status: z.enum(['DRAFT', 'ACTIVE']).default('ACTIVE'),
@@ -166,7 +184,7 @@ export const OrderCreate = z.object({
   phone: rawPhone,
   quantity: orderQuantity,
   buyerType: z.enum(BUYER_TYPES),
-  fulfillment: z.enum(['DELIVERY', 'PICKUP']),
+  fulfillment: z.enum(['DELIVERY', 'PICKUP', 'SHIPPING']),
   zoneId: entityId.nullable().default(null),
   campaignId: entityId.nullable().default(null),
 });
@@ -229,7 +247,27 @@ export const responseStepSchema = z
       .max(12)
       .refine((s) => new Set(s.map((e) => e.option)).size === s.length, 'Duplicate option')
       .optional(),
+    /** The wholesale offers a reseller picked (2026-11-18): an offer's index, or the unit price. */
+    offerPicks: z
+      .array(
+        z.object({
+          offer: z.union([
+            z.literal('UNIT'),
+            z
+              .number()
+              .int()
+              .min(0)
+              .max(OFFERS_MAX - 1),
+          ]),
+          count: z.number().int().min(1).max(100_000),
+        }),
+      )
+      .min(1)
+      .max(OFFERS_MAX + 1)
+      .optional(),
     timing: z.enum(TIMINGS).optional(),
+    /** Pickup, delivery or shipping (2026-11-18). */
+    fulfillment: z.enum(['PICKUP', 'DELIVERY', 'SHIPPING']).optional(),
     wantsDelivery: z.boolean().optional(),
     zoneId: z.string().min(1).max(40).nullable().optional(),
     // « Autre endroit »: a place outside the shop's zones, never a control character.

@@ -6,6 +6,7 @@
 import { addDays } from './dates';
 import { parseCount } from './fcfa-input';
 import { DEFAULT_SHARE_TEMPLATE } from './share-message';
+import { optionStockFromForm } from './stock';
 import type { Availability } from './timing';
 
 export const WIZARD_STEPS = [
@@ -26,9 +27,13 @@ export interface WizardValues {
   stockQuantity: string;
   showStock: boolean;
   plannedQuantity: string;
+  /** A count per option, as typed (2026-11-18): in stock, the cap; incoming, the plan. */
+  optionStock: Record<string, string>;
   /** null = no end date. */
   endsInDays: number | null;
   deliveryEnabled: boolean;
+  /** « J'expédie aussi » (2026-11-18). */
+  shippingEnabled: boolean;
   showLiveCounter: boolean;
   shareTemplate: string;
 }
@@ -60,8 +65,10 @@ export function initialWizardState(productId: string | null = null): WizardState
     stockQuantity: '',
     showStock: false,
     plannedQuantity: '',
+    optionStock: {},
     endsInDays: 14,
     deliveryEnabled: false,
+    shippingEnabled: false,
     showLiveCounter: true,
     shareTemplate: DEFAULT_SHARE_TEMPLATE,
     step: 0,
@@ -108,7 +115,11 @@ export function canAdvance(s: WizardState, now: Date): boolean {
     case 'availability':
       return s.availability === 'IN_STOCK' || isArrivalDay(s.availableOn, now);
     case 'quantities':
-      return optionalCount(s.stockQuantity, 0) && optionalCount(s.plannedQuantity, 1);
+      return (
+        optionalCount(s.stockQuantity, 0) &&
+        optionalCount(s.plannedQuantity, 1) &&
+        optionStockFromForm(Object.keys(s.optionStock), s.optionStock).ok
+      );
     case 'message':
       return s.shareTemplate.trim().length > 0 && s.shareTemplate.length <= 1000;
     default:
@@ -125,20 +136,29 @@ export function wizardAvailableAt(s: WizardValues): Date | null {
 
 const countOrNull = (raw: string, min: number) => (raw.trim() === '' ? null : parseCount(raw, min));
 
+/** `options`: the product's colours or sizes, for the counts per option. */
 export function toCampaignBody(
   s: WizardState,
   status: 'DRAFT' | 'ACTIVE',
   now: Date,
+  options: readonly string[] = [],
 ): Record<string, unknown> {
+  const typed = optionStockFromForm(options, s.optionStock);
+  const optionStock = typed.ok ? typed.stock : null;
+  // With counts per option, their sum is the campaign's stock (or its plan when incoming).
+  const sum = optionStock ? optionStock.reduce((total, o) => total + o.count, 0) : null;
+  const inStock = s.availability === 'IN_STOCK';
   return {
     productId: s.productId,
     availability: s.availability,
     availableAt: wizardAvailableAt(s)?.toISOString() ?? null,
-    stockQuantity: countOrNull(s.stockQuantity, 0),
-    plannedQuantity: countOrNull(s.plannedQuantity, 1),
+    stockQuantity: inStock && sum !== null ? sum : countOrNull(s.stockQuantity, 0),
+    plannedQuantity: !inStock && sum !== null && sum > 0 ? sum : countOrNull(s.plannedQuantity, 1),
     showStock: s.showStock,
     endsAt: s.endsInDays === null ? null : addDays(now, s.endsInDays).toISOString(),
     deliveryEnabled: s.deliveryEnabled,
+    shippingEnabled: s.shippingEnabled,
+    optionStock,
     showLiveCounter: s.showLiveCounter,
     shareTemplate: s.shareTemplate.trim(),
     status,

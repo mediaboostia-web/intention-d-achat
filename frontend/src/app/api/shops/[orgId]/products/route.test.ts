@@ -26,6 +26,7 @@ function product(overrides: Record<string, unknown> = {}) {
     unitPrice: 7500,
     wholesalePrice: 6000,
     wholesaleMinQty: 12,
+    offers: [{ kind: 'FROM', qty: 12, price: 6000, name: null }],
     costPrice: 5000,
     photos: [],
     optionLabel: null,
@@ -58,8 +59,10 @@ describe('POST /api/shops/[orgId]/products', () => {
   it('creates a product with integer prices, in the shop of the URL', async () => {
     const res = await create({
       ...valid,
-      wholesalePrice: 6000,
-      wholesaleMinQty: 12,
+      offers: [
+        { kind: 'PACK', qty: 12, price: 26000, name: 'Demi-lot' },
+        { kind: 'FROM', qty: 24, price: 6000, name: null },
+      ],
       costPrice: 5000,
       organizationId: 'org_evil',
     });
@@ -70,8 +73,13 @@ describe('POST /api/shops/[orgId]/products', () => {
       name: 'Marmites inox 5 L',
       unitLabel: 'pièce',
       unitPrice: 7500,
+      offers: [
+        { kind: 'PACK', qty: 12, price: 26000, name: 'Demi-lot' },
+        { kind: 'FROM', qty: 24, price: 6000, name: null },
+      ],
+      // The old columns mirror the first FROM offer until the readers move (lot 19).
       wholesalePrice: 6000,
-      wholesaleMinQty: 12,
+      wholesaleMinQty: 24,
       costPrice: 5000,
       photos: [],
       options: [],
@@ -89,16 +97,22 @@ describe('POST /api/shops/[orgId]/products', () => {
     },
   );
 
-  it.each([{ wholesalePrice: 6000 }, { wholesaleMinQty: 12 }])(
-    'requires wholesaleMinQty with wholesalePrice and the reverse: %o',
-    async (extra) => {
-      const res = await create({ ...valid, ...extra });
-      expect(res.status).toBe(400);
-    },
-  );
+  it('rejects more than 10 offers', async () => {
+    const offers = Array.from({ length: 11 }, (_, i) => ({
+      kind: 'PACK',
+      qty: 2 + i,
+      price: 1000,
+      name: null,
+    }));
+    const res = await create({ ...valid, offers });
+    expect(res.status).toBe(400);
+  });
 
   it('rejects a wholesale price at or above the unit price', async () => {
-    const res = await create({ ...valid, wholesalePrice: 7500, wholesaleMinQty: 12 });
+    const res = await create({
+      ...valid,
+      offers: [{ kind: 'FROM', qty: 12, price: 7500, name: null }],
+    });
     expect(res.status).toBe(400);
   });
 
@@ -216,7 +230,7 @@ describe('/api/shops/[orgId]/products/[productId]', () => {
     const res = await PATCH(
       apiRequest('/api/shops/org_1/products/prod_1', {
         method: 'PATCH',
-        body: { wholesaleMinQty: null },
+        body: { unitPrice: 6000 },
       }),
       one,
     );

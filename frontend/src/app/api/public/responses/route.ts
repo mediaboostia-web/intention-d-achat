@@ -58,7 +58,11 @@ export async function POST(req: NextRequest) {
       log.info('public response refused', { code: err.code });
       return err.code === 'VALIDATION_FAILED'
         ? validationFailed(err.message)
-        : tamaniError(err.code, err.status);
+        : tamaniError(
+            err.code,
+            err.status,
+            err.code === 'STOCK_EXCEEDED' ? err.message : undefined,
+          );
     }
   });
 }
