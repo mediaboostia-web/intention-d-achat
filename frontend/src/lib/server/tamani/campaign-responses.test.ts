@@ -71,6 +71,8 @@ describe('listCampaignResponses', () => {
       buyerType: 'RESELLER',
       quantity: 12,
       option: 'Rouge',
+      offers: null,
+      fulfillment: null,
       timing: 'ON_ARRIVAL',
       wantsDelivery: true,
       zoneName: 'Médina',

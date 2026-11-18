@@ -4,6 +4,7 @@
 import { formatMoney } from './currency';
 import { parseCount } from './fcfa-input';
 import type { BuyerType } from './labels';
+import { offersOf } from './offers';
 import { orderUnitPrice, type Fulfillment } from './orders-view';
 
 export interface OrderFormValues {
@@ -56,8 +57,10 @@ function quantityOf(raw: string): number | null {
 
 export interface PricedProduct {
   unitPrice: number;
-  wholesalePrice: number | null;
-  wholesaleMinQty: number | null;
+  /** The wholesale offers (2026-11-18); a product saved before reads its old price. */
+  offers?: unknown;
+  wholesalePrice?: number | null;
+  wholesaleMinQty?: number | null;
 }
 
 export interface OrderPricePreview {
@@ -78,15 +81,18 @@ export function orderPricePreview(
   const quantity = quantityOf(quantityRaw);
   if (!product || quantity === null) return null;
   const unitPrice = orderUnitPrice(product, buyerType, quantity);
-  const hasWholesale =
-    buyerType === 'RESELLER' && product.wholesalePrice !== null && product.wholesaleMinQty !== null;
-  const wholesale = hasWholesale && quantity >= (product.wholesaleMinQty ?? 0);
+  // The first « dès » a reseller can reach: what the form hints under the quantity.
+  const from = offersOf(product)
+    .filter((o) => o.kind === 'FROM')
+    .reduce<number | null>((low, o) => (low === null ? o.qty : Math.min(low, o.qty)), null);
+  const hasWholesale = buyerType === 'RESELLER' && from !== null;
+  const wholesale = hasWholesale && unitPrice < product.unitPrice;
   return {
     wholesale,
     unitPrice,
     quantity,
     total: unitPrice * quantity,
-    wholesaleFrom: hasWholesale && !wholesale ? product.wholesaleMinQty : null,
+    wholesaleFrom: hasWholesale && !wholesale ? from : null,
   };
 }
 

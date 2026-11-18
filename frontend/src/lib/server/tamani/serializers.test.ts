@@ -193,6 +193,7 @@ describe('toOrderRow', () => {
     responseId: 'resp_1',
     buyerType: 'RESELLER',
     notes: 'Après 18 h',
+    offerPicks: null,
     zone: { name: 'Médina' },
     product: { name: 'Marmites inox 5 L', unitLabel: 'pièce' },
     campaign: { title: 'Marmites' },

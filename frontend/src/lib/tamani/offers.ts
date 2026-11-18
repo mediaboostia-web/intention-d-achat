@@ -190,7 +190,7 @@ export function priceLine(unitPrice: number, offers: readonly Offer[], currency:
 
 /** A product's offers: the stored ones, else its old single wholesale price (before migration 9l). */
 export function offersOf(p: {
-  offers: unknown;
+  offers?: unknown;
   wholesalePrice?: number | null;
   wholesaleMinQty?: number | null;
 }): Offer[] {
@@ -229,4 +229,15 @@ export function legacyColumns(offers: readonly Offer[]): {
 } {
   const from = offers.find((o) => o.kind === 'FROM');
   return { wholesalePrice: from?.price ?? null, wholesaleMinQty: from?.qty ?? null };
+}
+
+/** « 2 × Lot de 12, 15 dès 12, 3 à l'unité »: the picks without prices, for the lists. */
+export function picksShortText(picks: readonly OfferPick[]): string {
+  return picks
+    .map((p) => {
+      if (p.kind === 'UNIT') return `${p.count} à l'unité`;
+      if (p.kind === 'FROM') return `${p.count} dès ${p.qty}`;
+      return `${p.count} × ${p.name ?? `Lot de ${p.qty}`}`;
+    })
+    .join(', ');
 }

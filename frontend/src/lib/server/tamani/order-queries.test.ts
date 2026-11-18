@@ -1,5 +1,6 @@
 // Lot 7 order queries: the list, « À livrer par quartier », the manual
 // order, the changes of an order and a campaign's quantities.
+import { Prisma } from '@prisma/client';
 import { prismaMock } from '@/test-utils/prisma-mock';
 import { beforeEach, describe, it, expect, type Mock } from 'vitest';
 import { encodeCursor } from '@/lib/server/notifications/cursor';
@@ -561,5 +562,21 @@ describe('getOrder', () => {
     });
     prismaMock.saleOrder.findFirst.mockResolvedValue(null);
     expect(await getOrder(prismaMock, 'org_1', 'o9', { canSeeContacts: true })).toBeNull();
+  });
+});
+
+describe('updateOrder on an order with offers (2026-11-18)', () => {
+  it('a new quantity or price drops the picked offers: the shop priced it by hand', async () => {
+    prismaMock.saleOrder.findFirst.mockResolvedValue(
+      order('o1', {
+        offerPicks: [{ offer: 'UNIT', kind: 'UNIT', qty: 1, price: 7500, name: null, count: 2 }],
+      }) as never,
+    );
+    prismaMock.saleOrder.updateMany.mockResolvedValue({ count: 1 });
+    await updateOrder(prismaMock, 'org_1', 'o1', { quantity: 30 }, now, { canSeeContacts: true });
+    expect(prismaMock.saleOrder.updateMany.mock.calls[0]![0]!.data).toMatchObject({
+      quantity: 30,
+      offerPicks: Prisma.DbNull,
+    });
   });
 });

@@ -115,6 +115,24 @@ describe('interestedDetail', () => {
       ),
     ).toBe('Trop cher');
   });
+
+  it('reads the offers picked and a shipping (2026-11-18)', () => {
+    expect(
+      interestedDetail(
+        {
+          ...awa,
+          quantity: 27,
+          offers: "2 × Lot de 12, 3 à l'unité",
+          zoneName: null,
+          fulfillment: 'SHIPPING',
+          deliveryPlace: 'Lomé, Togo',
+        },
+        'pièce',
+      ),
+    ).toBe(
+      "27 pièces · 2 × Lot de 12, 3 à l'unité · Revendeur · Expédition · Lomé, Togo · Dès l'arrivée",
+    );
+  });
 });
 
 describe('InterestedView', () => {

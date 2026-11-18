@@ -9,6 +9,7 @@ import {
   offerViolation,
   pickAmount,
   pickPieces,
+  picksShortText,
   picksText,
   picksTotal,
   offersOf,
@@ -195,5 +196,18 @@ describe('offersOf', () => {
       { kind: 'FROM', qty: 12, price: 6000, name: null },
     ]);
     expect(offersOf({ offers: [] })).toEqual([]);
+  });
+});
+
+describe('picksShortText', () => {
+  it('names the picks without prices, for the lists', () => {
+    const r = freezePicks([PACK_12, FROM_12, HALF], 12_000, [
+      { offer: 0, count: 2 },
+      { offer: 1, count: 15 },
+      { offer: 2, count: 1 },
+      { offer: 'UNIT', count: 3 },
+    ]);
+    if (!r.ok) throw new Error('picks');
+    expect(picksShortText(r.picks)).toBe("2 × Lot de 12, 15 dès 12, 1 × Demi-lot, 3 à l'unité");
   });
 });

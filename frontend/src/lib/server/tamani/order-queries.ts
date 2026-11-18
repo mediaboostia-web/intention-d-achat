@@ -4,7 +4,7 @@
 // carries the shop's organizationId; without the plan's contacts (Free) no
 // full number leaves here.
 import 'server-only';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import type { CountryCode } from 'libphonenumber-js/min';
 import type { BuyerType } from '@/lib/tamani/labels';
 import {
@@ -197,7 +197,13 @@ export async function createManualOrder(
 
   const product = await tx.product.findFirst({
     where: { id: input.productId, organizationId },
-    select: { id: true, unitPrice: true, wholesalePrice: true, wholesaleMinQty: true },
+    select: {
+      id: true,
+      unitPrice: true,
+      offers: true,
+      wholesalePrice: true,
+      wholesaleMinQty: true,
+    },
   });
   if (!product) throw new OrderError('PRODUCT_NOT_FOUND', 404);
 
@@ -287,6 +293,8 @@ interface OrderChange {
   unitPrice?: number;
   quantity?: number;
   totalAmount?: number;
+  /** A price or quantity set by hand drops the picked offers (2026-11-18). */
+  offerPicks?: typeof Prisma.DbNull;
   notes?: string | null;
 }
 
@@ -321,6 +329,7 @@ export async function updateOrder(
     data.unitPrice = unitPrice;
     data.quantity = quantity;
     data.totalAmount = orderTotal(unitPrice, quantity);
+    if (order.offerPicks != null) data.offerPicks = Prisma.DbNull;
   }
 
   const to = patch.status;
@@ -350,7 +359,11 @@ export async function updateOrder(
       ? new OrderError('INVALID_ORDER_TRANSITION', 409)
       : new OrderError('ORDER_NOT_FOUND', 404);
   }
-  return toOrderRow({ ...order, ...data }, opts.canSeeContacts);
+  const { offerPicks: dropped, ...changed } = data;
+  return toOrderRow(
+    { ...order, ...changed, offerPicks: dropped ? null : order.offerPicks },
+    opts.canSeeContacts,
+  );
 }
 
 /**

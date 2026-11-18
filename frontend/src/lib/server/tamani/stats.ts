@@ -35,7 +35,12 @@ export interface StatsCampaign {
   availability: Availability;
   plannedQuantity: number | null;
   stockQuantity: number | null;
-  product: { costPrice: number | null; unitPrice: number; wholesalePrice: number | null };
+  product: {
+    costPrice: number | null;
+    unitPrice: number;
+    offers?: unknown;
+    wholesalePrice: number | null;
+  };
   links: ReadonlyArray<{ id: string; label: string; openCount: number; isDefault: boolean }>;
 }
 

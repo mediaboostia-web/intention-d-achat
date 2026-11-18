@@ -3,12 +3,13 @@
 // rule and the WhatsApp message of a confirmed order. Pure and shared: the
 // server freezes the price with the same rule the form previews.
 import { formatMoney } from './currency';
+import { offersOf } from './offers';
 import type { BuyerType } from './labels';
 import { pluralizeUnit } from './verdict-display';
 
 export const ORDER_STATUSES = ['TO_CONFIRM', 'CONFIRMED', 'FULFILLED', 'CANCELLED'] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
-export type Fulfillment = 'DELIVERY' | 'PICKUP';
+export type Fulfillment = 'DELIVERY' | 'PICKUP' | 'SHIPPING';
 
 export function orderStatusLabel(status: OrderStatus, fulfillment: Fulfillment): string {
   if (status === 'TO_CONFIRM') return 'À confirmer';
@@ -56,23 +57,36 @@ export function productQuantity(o: {
   return `${o.quantity} ${pluralizeUnit(o.unitLabel, o.quantity)} de ${o.productName}`;
 }
 
-/** "Retrait à la boutique", "Livraison à Médina", "Livraison, sans quartier". */
-export function fulfillmentText(fulfillment: Fulfillment, zoneName: string | null): string {
+/** "Retrait à la boutique", "Livraison à Médina", "Livraison, sans quartier", "Expédition à Lomé, Togo". */
+export function fulfillmentText(
+  fulfillment: Fulfillment,
+  zoneName: string | null,
+  place: string | null = null,
+): string {
   if (fulfillment === 'PICKUP') return 'Retrait à la boutique';
+  if (fulfillment === 'SHIPPING') return place ? `Expédition à ${place}` : 'Expédition';
   return zoneName ? `Livraison à ${zoneName}` : 'Livraison, sans quartier';
 }
 
-/** The wholesale price for a reseller who reaches the minimum, else the unit price. */
+/**
+ * An order without picked offers: a reseller gets the best « dès » price
+ * the quantity reaches (2026-11-18: many offers), else the unit price. Packs
+ * need picking; a product saved before reads its old single wholesale price.
+ */
 export function orderUnitPrice(
-  product: { unitPrice: number; wholesalePrice: number | null; wholesaleMinQty: number | null },
+  product: {
+    unitPrice: number;
+    offers?: unknown;
+    wholesalePrice?: number | null;
+    wholesaleMinQty?: number | null;
+  },
   buyerType: BuyerType,
   quantity: number,
 ): number {
-  const { unitPrice, wholesalePrice, wholesaleMinQty } = product;
-  if (buyerType !== 'RESELLER' || wholesalePrice === null || wholesaleMinQty === null) {
-    return unitPrice;
-  }
-  return quantity >= wholesaleMinQty ? wholesalePrice : unitPrice;
+  if (buyerType !== 'RESELLER') return product.unitPrice;
+  return offersOf(product)
+    .filter((o) => o.kind === 'FROM' && quantity >= o.qty)
+    .reduce((best, o) => Math.min(best, o.price), product.unitPrice);
 }
 
 export interface OrderClient {

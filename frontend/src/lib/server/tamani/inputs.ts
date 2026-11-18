@@ -184,7 +184,7 @@ export const OrderCreate = z.object({
   phone: rawPhone,
   quantity: orderQuantity,
   buyerType: z.enum(BUYER_TYPES),
-  fulfillment: z.enum(['DELIVERY', 'PICKUP']),
+  fulfillment: z.enum(['DELIVERY', 'PICKUP', 'SHIPPING']),
   zoneId: entityId.nullable().default(null),
   campaignId: entityId.nullable().default(null),
 });

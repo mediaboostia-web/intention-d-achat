@@ -187,6 +187,7 @@ export const ORDER_SELECT = {
   responseId: true,
   buyerType: true,
   notes: true,
+  offerPicks: true,
   zone: { select: { name: true } },
   product: { select: { name: true, unitLabel: true } },
   campaign: { select: { title: true } },
@@ -221,7 +222,9 @@ export function toOrderRow(o: OrderSelectRow, canSeeContacts: boolean): OrderRow
     quantity: o.quantity,
     unitPrice: o.unitPrice,
     totalAmount: o.totalAmount,
-    fulfillment: (o.fulfillment === 'PICKUP' ? 'PICKUP' : 'DELIVERY') satisfies Fulfillment,
+    fulfillment: (o.fulfillment === 'PICKUP' || o.fulfillment === 'SHIPPING'
+      ? o.fulfillment
+      : 'DELIVERY') satisfies Fulfillment,
     zoneId: o.zoneId,
     zoneName: o.zone?.name ?? null,
     productId: o.productId,
