@@ -74,18 +74,30 @@ describe('ProductCard', () => {
 });
 
 describe('ProductForm', () => {
-  it('shows the units as chips, the current one pressed', () => {
+  it('shows the units in a dropdown, the current one selected, then Personnalisé', () => {
     const out = html(
       form({ initial: { ...emptyProductForm, unitLabel: 'carton' }, units: ['bidon de 20 L'] }),
     );
-    const chips =
-      out.match(/<button [^>]*aria-pressed="(?:true|false)"[^>]*>[^<]*<\/button>/g) ?? [];
-    const labels = chips.map((c) => c.replace(/<[^>]+>/g, ''));
-    expect(labels).toContain('pièce');
-    expect(labels).toContain('bidon de 20 L');
-    expect(chips.find((c) => c.endsWith('>carton</button>'))).toContain('aria-pressed="true"');
-    expect(chips.find((c) => c.endsWith('>pièce</button>'))).toContain('aria-pressed="false"');
-    expect(out).not.toContain('<datalist');
+    expect(tag(out, 'product-unit')).toMatch(/^<select /);
+    const options = (out.match(/<option [^>]*>[^<]*<\/option>/g) ?? []).map((o) =>
+      o.replace(/<[^>]+>/g, ''),
+    );
+    expect(options.slice(0, 2)).toEqual(['pièce', 'carton']);
+    expect(options).toContain('bidon de 20 L');
+    expect(options.at(-1)).toBe('Personnalisé…');
+    expect(out).toMatch(/<option value="carton" selected="">carton<\/option>/);
+    expect(out).not.toContain('id="product-unit-custom"');
+    expect(out).not.toContain('aria-pressed');
+  });
+
+  it('opens a unit of its own as Personnalisé with the text filled', () => {
+    const out = html(form({ initial: { ...emptyProductForm, unitLabel: 'bassine' } }));
+    expect(out).toMatch(/<option value="__custom__" selected="">Personnalisé…<\/option>/);
+    expect(tag(out, 'product-unit-custom')).toContain('value="bassine"');
+    expect(tag(out, 'product-unit-custom')).toContain('maxLength="30"');
+    expect(text(form({ initial: { ...emptyProductForm, unitLabel: 'bassine' } }))).toContain(
+      'Ton unité',
+    );
   });
 
   it('ProductForm labels the purchase price as never shown to clients', () => {
@@ -94,8 +106,6 @@ describe('ProductForm', () => {
     expect(tag(out, 'product-cost')).toContain('aria-describedby="product-cost-hint"');
     expect(text(form())).toContain('Pour calculer ton bénéfice. Jamais montré à tes clients.');
     expect(tag(out, 'product-unit-price')).toContain('inputMode="numeric"');
-    // The units are chips under the field (lot 5b), no longer a datalist.
-    expect(out).toContain('aria-label="Unités"');
   });
 
   it('keeps the field order of the spec', () => {
