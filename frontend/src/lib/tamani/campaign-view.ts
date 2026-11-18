@@ -1,6 +1,7 @@
 // A campaign as the shop space reads it (lib/server/tamani/serializers.ts
 // toCampaign / toLink) and the lines its screens write about it.
 import type { Offer } from './offers';
+import type { OptionStock } from './stock';
 import type { CampaignStatus } from './campaign-actions';
 import { formatDateFr } from './dates';
 import { formatAvailability, formatPriceLine, renderShareMessage } from './share-message';
@@ -25,6 +26,8 @@ export interface ShopCampaign {
     unitLabel: string;
     unitPrice: number;
     offers: Offer[];
+    optionLabel: string | null;
+    options: string[];
     photos: string[];
   };
   availability: Availability;
@@ -34,6 +37,9 @@ export interface ShopCampaign {
   showStock: boolean;
   endsAt: string | null;
   deliveryEnabled: boolean;
+  shippingEnabled: boolean;
+  /** A count per option (2026-11-18); null: none. */
+  optionStock: OptionStock[] | null;
   showLiveCounter: boolean;
   shareTemplate: string;
   status: CampaignStatus;

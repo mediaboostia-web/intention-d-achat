@@ -43,6 +43,8 @@ const campaign: ShopCampaign = {
     unitLabel: 'pièce',
     unitPrice: 7500,
     offers: [{ kind: 'FROM', qty: 12, price: 6000, name: null }],
+    optionLabel: null,
+    options: [],
     photos: ['https://res.cloudinary.com/demo/image/upload/v1/m.jpg'],
   },
   availability: 'INCOMING',
@@ -52,6 +54,8 @@ const campaign: ShopCampaign = {
   showStock: false,
   endsAt: '2026-11-03T10:00:00.000Z',
   deliveryEnabled: true,
+  shippingEnabled: false,
+  optionStock: null,
   showLiveCounter: true,
   shareTemplate: '🔔 *{produit}* à {prix}. {disponibilite}. 👉 {lien}',
   status: 'ACTIVE',
@@ -268,6 +272,29 @@ describe('CampaignEditForm', () => {
     expect(input('edit-ends')).toContain('value="2026-11-03"');
     expect(input('edit-planned')).toContain('value="400"');
     expect(out).toContain('{produit}');
+    expect(out).toContain('id="edit-shipping"');
+  });
+
+  it('asks a count per option on a product with options', () => {
+    const withOptions = {
+      ...campaign,
+      availability: 'IN_STOCK' as const,
+      optionStock: [{ option: 'Rouge', count: 4 }],
+      shippingEnabled: true,
+      product: { ...campaign.product, optionLabel: 'Couleur', options: ['Noir', 'Rouge'] },
+    };
+    const out = html(
+      <CampaignEditForm campaign={withOptions} currency="XOF" onSave={async () => {}} />,
+    );
+    const input = (id: string) =>
+      (out.match(/<input [^>]*>/g) ?? []).find((t) => t.includes(`id="${id}"`)) ?? '';
+    expect(input('edit-option-stock-0')).toContain('value=""');
+    expect(input('edit-option-stock-1')).toContain('value="4"');
+    expect(
+      text(<CampaignEditForm campaign={withOptions} currency="XOF" onSave={async () => {}} />),
+    ).toContain('Rouge');
+    expect(input('edit-stock')).toBe('');
+    expect(input('edit-shipping')).toContain('checked');
   });
 });
 

@@ -32,6 +32,7 @@ import { addDays, formatDateFr } from '@/lib/tamani/dates';
 import { parseCount } from '@/lib/tamani/fcfa-input';
 import type { ShopProduct } from '@/lib/tamani/product-form';
 import { formatAvailability, formatPriceLine } from '@/lib/tamani/share-message';
+import { OptionStockFields } from './OptionStockFields';
 import { WhatsAppBubble } from './ShareCard';
 import { cloudinaryVariant, THUMB } from '@/lib/tamani/cloudinary-url';
 
@@ -78,6 +79,10 @@ export function CampaignWizard({
   const step = WIZARD_STEPS[s.step] ?? 'product';
   const last = s.step === WIZARD_STEPS.length - 1;
   const product = products.find((p) => p.id === s.productId) ?? null;
+  const hasStock =
+    product && product.options.length > 0
+      ? s.availability === 'IN_STOCK' && Object.values(s.optionStock).some((c) => c.trim() !== '')
+      : s.stockQuantity.trim() !== '';
   const ready = WIZARD_STEPS.every((_, i) => canAdvance({ ...s, step: i }, now));
 
   // A new question starts at the top of the screen, and screen readers read it.
@@ -197,21 +202,33 @@ export function CampaignWizard({
 
     quantities: (
       <div className="flex flex-col gap-6">
-        <Input
-          id="wizard-stock"
-          label="Combien en as-tu ? (facultatif)"
-          inputMode="numeric"
-          placeholder="0"
-          value={s.stockQuantity}
-          error={countError(s.stockQuantity, 0)}
-          onChange={(e) => set('stockQuantity', e.target.value)}
-        />
+        {product && product.options.length > 0 && (
+          <OptionStockFields
+            idPrefix="wizard-option-stock"
+            optionLabel={product.optionLabel}
+            options={product.options}
+            values={s.optionStock}
+            onChange={(v) => set('optionStock', v)}
+            inStock={s.availability === 'IN_STOCK'}
+          />
+        )}
+        {!(product && product.options.length > 0) && (
+          <Input
+            id="wizard-stock"
+            label="Combien en as-tu ? (facultatif)"
+            inputMode="numeric"
+            placeholder="0"
+            value={s.stockQuantity}
+            error={countError(s.stockQuantity, 0)}
+            onChange={(e) => set('stockQuantity', e.target.value)}
+          />
+        )}
         <Switch
           id="wizard-show-stock"
           label="Montrer le stock à tes clients"
           hint="Ils voient combien il en reste."
-          checked={s.showStock && s.stockQuantity.trim() !== ''}
-          disabled={s.stockQuantity.trim() === ''}
+          checked={s.showStock && hasStock}
+          disabled={!hasStock}
           onChange={(on) => set('showStock', on)}
         />
         <Input
@@ -266,6 +283,14 @@ export function CampaignWizard({
             ? 'Tes clients choisissent leur quartier en répondant.'
             : 'Tes clients viennent chercher leur commande.'}
         </Pencil>
+        <Switch
+          id="wizard-shipping"
+          className="mt-6"
+          label="J'expédie aussi"
+          hint="Dans une autre ville ou un autre pays. Le client écrit sa ville et son pays ; les frais se règlent sur WhatsApp."
+          checked={s.shippingEnabled}
+          onChange={(on) => set('shippingEnabled', on)}
+        />
         {s.deliveryEnabled && zonesCount === 0 && (
           <Notice tone="warning" className="mt-4">
             Tu n&apos;as pas encore de zone de livraison. Ajoute tes quartiers dans Réglages juste

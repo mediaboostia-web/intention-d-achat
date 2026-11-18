@@ -80,6 +80,8 @@ describe('campaign wizard', () => {
       showStock: false,
       endsAt: '2026-11-07T10:00:00.000Z',
       deliveryEnabled: false,
+      shippingEnabled: false,
+      optionStock: null,
       showLiveCounter: true,
       shareTemplate: DEFAULT_SHARE_TEMPLATE,
       status: 'ACTIVE',
@@ -107,5 +109,30 @@ describe('wizardAvailableAt', () => {
       '2026-12-01T12:00:00.000Z',
     );
     expect(wizardAvailableAt(initialWizardState('p1'))).toBeNull();
+  });
+});
+
+describe('campaign wizard with options (2026-11-18)', () => {
+  const now = new Date('2026-10-24T10:00:00Z');
+
+  it('sends a count per option and their sum as the stock', () => {
+    let s = initialWizardState('prod_1');
+    s = wizardReducer(s, { type: 'set', field: 'optionStock', value: { Noir: '30', Rouge: '4' } });
+    s = wizardReducer(s, { type: 'set', field: 'shippingEnabled', value: true });
+    expect(toCampaignBody(s, 'ACTIVE', now, ['Noir', 'Rouge', 'Blond'])).toMatchObject({
+      optionStock: [
+        { option: 'Noir', count: 30 },
+        { option: 'Rouge', count: 4 },
+      ],
+      stockQuantity: 34,
+      shippingEnabled: true,
+    });
+  });
+
+  it('waits for a count it can read before the next step', () => {
+    let s = initialWizardState('prod_1');
+    s = wizardReducer(s, { type: 'goto', step: 2 });
+    s = wizardReducer(s, { type: 'set', field: 'optionStock', value: { Noir: 'trente' } });
+    expect(canAdvance(s, now)).toBe(false);
   });
 });

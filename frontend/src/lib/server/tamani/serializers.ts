@@ -13,6 +13,7 @@ import type {
 } from '@prisma/client';
 import type { BuyerType } from '@/lib/tamani/labels';
 import { offersOf } from '@/lib/tamani/offers';
+import { readOptionStock } from '@/lib/tamani/stock';
 import { isBusinessType, isSalesChannel } from '@/lib/tamani/shop-profile';
 import type { Fulfillment, OrderRow, OrderStatus } from '@/lib/tamani/orders-view';
 import {
@@ -136,6 +137,8 @@ export function toCampaign(
       unitLabel: c.product.unitLabel,
       unitPrice: c.product.unitPrice,
       offers: offersOf(c.product),
+      optionLabel: c.product.optionLabel,
+      options: c.product.options,
       photos: photoUrls(c.product.photos),
     },
     availability,
@@ -145,6 +148,8 @@ export function toCampaign(
     showStock: c.showStock,
     endsAt: c.endsAt?.toISOString() ?? null,
     deliveryEnabled: c.deliveryEnabled,
+    shippingEnabled: c.shippingEnabled,
+    optionStock: readOptionStock(c.optionStock),
     showLiveCounter: c.showLiveCounter,
     shareTemplate: c.shareTemplate,
     status: effectiveStatus(c, now),

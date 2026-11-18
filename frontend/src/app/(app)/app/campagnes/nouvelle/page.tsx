@@ -40,7 +40,12 @@ function NewCampaign() {
     try {
       const res = await api<{ campaign: ShopCampaign }>(`/api/shops/${shop.id}/campaigns`, {
         method: 'POST',
-        body: toCampaignBody(state, status, new Date()),
+        body: toCampaignBody(
+          state,
+          status,
+          new Date(),
+          products?.find((p) => p.id === state.productId)?.options ?? [],
+        ),
       });
       router.push(`/app/campagnes/${res.campaign.id}?partager=1`);
       return null;

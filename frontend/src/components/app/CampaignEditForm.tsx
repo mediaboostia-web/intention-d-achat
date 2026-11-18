@@ -6,7 +6,9 @@ import { useState, type FormEvent } from 'react';
 import { Button, Input, Notice, Switch, Textarea } from '@/components/ui';
 import { previewMessage, type ShopCampaign } from '@/lib/tamani/campaign-view';
 import { parseCount } from '@/lib/tamani/fcfa-input';
+import { optionStockFromForm, optionStockToForm, type OptionStock } from '@/lib/tamani/stock';
 import { cn } from '@/lib/utils';
+import { OptionStockFields } from './OptionStockFields';
 import { WhatsAppBubble } from './ShareCard';
 
 export interface CampaignPatchBody {
@@ -16,11 +18,13 @@ export interface CampaignPatchBody {
   plannedQuantity: number | null;
   showStock: boolean;
   deliveryEnabled: boolean;
+  shippingEnabled: boolean;
+  optionStock: OptionStock[] | null;
   showLiveCounter: boolean;
   shareTemplate: string;
 }
 
-type Errors = Partial<Record<'title' | 'stock' | 'planned' | 'message', string>>;
+type Errors = Partial<Record<'title' | 'stock' | 'planned' | 'optionStock' | 'message', string>>;
 
 const day = (iso: string | null) => (iso ? iso.slice(0, 10) : '');
 const count = (n: number | null) => (n === null ? '' : String(n));
@@ -46,19 +50,47 @@ export function CampaignEditForm({
   const [planned, setPlanned] = useState(count(campaign.plannedQuantity));
   const [showStock, setShowStock] = useState(campaign.showStock);
   const [delivery, setDelivery] = useState(campaign.deliveryEnabled);
+  const [shipping, setShipping] = useState(campaign.shippingEnabled);
+  const options = campaign.product.options;
+  const inStock = campaign.availability === 'IN_STOCK';
+  const [optionCounts, setOptionCounts] = useState(() =>
+    optionStockToForm(options, campaign.optionStock),
+  );
   const [counter, setCounter] = useState(campaign.showLiveCounter);
   const [message, setMessage] = useState(campaign.shareTemplate);
   const [errors, setErrors] = useState<Errors>({});
   const [saving, setSaving] = useState(false);
   const now = new Date();
+  const hasStock =
+    options.length > 0
+      ? inStock && Object.values(optionCounts).some((c) => c.trim() !== '')
+      : stock.trim() !== '';
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const found: Errors = {};
     if (!title.trim()) found.title = 'Donne un titre à ta campagne.';
-    const stockQuantity = stock.trim() === '' ? null : parseCount(stock, 0);
-    if (stock.trim() !== '' && stockQuantity === null) found.stock = COUNT_HINT;
-    const plannedQuantity = planned.trim() === '' ? null : parseCount(planned, 1);
+    const typed = optionStockFromForm(options, optionCounts);
+    if (!typed.ok) found.optionStock = `${typed.option} : ${COUNT_HINT}`;
+    const optionStock = typed.ok ? typed.stock : null;
+    // With counts per option, their sum is the stock (or the plan when incoming).
+    const sum = optionStock ? optionStock.reduce((total, o) => total + o.count, 0) : null;
+    const stockQuantity =
+      options.length > 0
+        ? inStock
+          ? sum
+          : null
+        : stock.trim() === ''
+          ? null
+          : parseCount(stock, 0);
+    if (options.length === 0 && stock.trim() !== '' && stockQuantity === null)
+      found.stock = COUNT_HINT;
+    const plannedQuantity =
+      options.length > 0 && !inStock
+        ? sum || null
+        : planned.trim() === ''
+          ? null
+          : parseCount(planned, 1);
     if (planned.trim() !== '' && plannedQuantity === null) found.planned = COUNT_HINT;
     if (!message.trim()) found.message = 'Écris le message à partager.';
     setErrors(found);
@@ -74,6 +106,8 @@ export function CampaignEditForm({
         plannedQuantity,
         showStock: showStock && stockQuantity !== null,
         deliveryEnabled: delivery,
+        shippingEnabled: shipping,
+        optionStock,
         showLiveCounter: counter,
         shareTemplate: message.trim(),
       });
@@ -104,32 +138,54 @@ export function CampaignEditForm({
         value={ends}
         onChange={(e) => setEnds(e.target.value)}
       />
+      {options.length > 0 && (
+        <OptionStockFields
+          idPrefix="edit-option-stock"
+          optionLabel={campaign.product.optionLabel}
+          options={options}
+          values={optionCounts}
+          onChange={setOptionCounts}
+          inStock={inStock}
+          error={errors.optionStock}
+        />
+      )}
       <div className="grid gap-6 sm:grid-cols-2">
-        <Input
-          id="edit-stock"
-          label="Stock (facultatif)"
-          inputMode="numeric"
-          value={stock}
-          error={errors.stock}
-          onChange={(e) => setStock(e.target.value)}
-        />
-        <Input
-          id="edit-planned"
-          label="Quantité prévue (facultatif)"
-          inputMode="numeric"
-          value={planned}
-          error={errors.planned}
-          onChange={(e) => setPlanned(e.target.value)}
-        />
+        {options.length === 0 && (
+          <Input
+            id="edit-stock"
+            label="Stock (facultatif)"
+            inputMode="numeric"
+            value={stock}
+            error={errors.stock}
+            onChange={(e) => setStock(e.target.value)}
+          />
+        )}
+        {(options.length === 0 || inStock) && (
+          <Input
+            id="edit-planned"
+            label="Quantité prévue (facultatif)"
+            inputMode="numeric"
+            value={planned}
+            error={errors.planned}
+            onChange={(e) => setPlanned(e.target.value)}
+          />
+        )}
       </div>
       <Switch
         id="edit-show-stock"
         label="Montrer le stock à tes clients"
-        checked={showStock && stock.trim() !== ''}
-        disabled={stock.trim() === ''}
+        checked={showStock && hasStock}
+        disabled={!hasStock}
         onChange={setShowStock}
       />
       <Switch id="edit-delivery" label="Je livre" checked={delivery} onChange={setDelivery} />
+      <Switch
+        id="edit-shipping"
+        label="J'expédie aussi"
+        hint="Dans une autre ville ou un autre pays. Le client écrit sa ville et son pays."
+        checked={shipping}
+        onChange={setShipping}
+      />
       <Switch
         id="edit-counter"
         label="Afficher le nombre d'intéressés"

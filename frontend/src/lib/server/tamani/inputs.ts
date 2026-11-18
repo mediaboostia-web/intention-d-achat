@@ -140,6 +140,13 @@ const CampaignFields = z.object({
   showStock: z.boolean(),
   endsAt: isoDate.nullable(),
   deliveryEnabled: z.boolean(),
+  // 2026-11-18: « J'expédie aussi »; a count per option (in stock: the cap).
+  shippingEnabled: z.boolean(),
+  optionStock: z
+    .array(z.object({ option: z.string().trim().min(1).max(30), count: quantity.min(0) }))
+    .max(12)
+    .refine((s) => new Set(s.map((o) => o.option)).size === s.length, 'Duplicate option')
+    .nullable(),
   showLiveCounter: z.boolean(),
   shareTemplate: z.string().trim().min(1).max(1000),
 });
@@ -153,6 +160,8 @@ export const CampaignCreate = CampaignFields.extend({
   showStock: CampaignFields.shape.showStock.default(false),
   endsAt: CampaignFields.shape.endsAt.default(null),
   deliveryEnabled: CampaignFields.shape.deliveryEnabled.default(false),
+  shippingEnabled: CampaignFields.shape.shippingEnabled.default(false),
+  optionStock: CampaignFields.shape.optionStock.default(null),
   showLiveCounter: CampaignFields.shape.showLiveCounter.default(true),
   shareTemplate: CampaignFields.shape.shareTemplate.default(DEFAULT_SHARE_TEMPLATE),
   status: z.enum(['DRAFT', 'ACTIVE']).default('ACTIVE'),

@@ -21,7 +21,9 @@ import {
 } from '@/lib/server/tamani/campaign-status';
 import { tamaniError } from '@/lib/server/tamani/errors';
 import { jsonOk, readJson, validationFailed } from '@/lib/server/tamani/http';
+import { Prisma } from '@prisma/client';
 import { CampaignCreate, SEARCH_MAX } from '@/lib/server/tamani/inputs';
+import { unknownStockOption } from '@/lib/tamani/stock';
 import { shopHandler } from '@/lib/server/tamani/route';
 import { toCampaign } from '@/lib/server/tamani/serializers';
 import { shopCurrency } from '@/lib/server/tamani/shop';
@@ -110,6 +112,9 @@ export const POST = shopHandler('MEMBER', async (req, { params }) => {
     where: { id: productId, organizationId: params.orgId, archivedAt: null },
   });
   if (!product) return tamaniError('PRODUCT_NOT_FOUND', 404);
+  if (unknownStockOption(fields.optionStock, product.options) !== null) {
+    return validationFailed('optionStock names an option the product does not have');
+  }
 
   try {
     const campaign = await withUniqueCode((code) =>
@@ -118,6 +123,7 @@ export const POST = shopHandler('MEMBER', async (req, { params }) => {
         return tx.campaign.create({
           data: {
             ...fields,
+            optionStock: fields.optionStock ?? Prisma.DbNull,
             title: title ?? product.name,
             status,
             organizationId: params.orgId,

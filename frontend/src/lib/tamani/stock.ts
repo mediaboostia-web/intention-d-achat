@@ -2,6 +2,7 @@
 // wrote, minus what clients paid for. Answers are intentions and never lower
 // it; an order un-paid or cancelled gives its pieces back, since nothing is
 // stored. Per option when the product has colours or sizes.
+import { parseCount } from './fcfa-input';
 import type { OptionQuantity } from './option-split';
 
 export interface OptionStock {
@@ -48,4 +49,41 @@ export function stockLeft(
     0,
     paidQuantities.reduce((left, q) => left - q, declared),
   );
+}
+
+/** The first count naming an option the product does not have, or null. */
+export function unknownStockOption(
+  stock: readonly OptionStock[] | null | undefined,
+  options: readonly string[],
+): string | null {
+  return stock?.find((s) => !options.includes(s.option))?.option ?? null;
+}
+
+/** The campaign forms: one field per option, the saved count or blank. */
+export function optionStockToForm(
+  options: readonly string[],
+  stored: readonly OptionStock[] | null,
+): Record<string, string> {
+  return Object.fromEntries(
+    options.map((option) => {
+      const saved = stored?.find((s) => s.option === option);
+      return [option, saved ? String(saved.count) : ''];
+    }),
+  );
+}
+
+/** The typed counts in the product's order; a blank option has no count; null when none. */
+export function optionStockFromForm(
+  options: readonly string[],
+  typed: Readonly<Record<string, string>>,
+): { ok: true; stock: OptionStock[] | null } | { ok: false; option: string } {
+  const stock: OptionStock[] = [];
+  for (const option of options) {
+    const raw = (typed[option] ?? '').trim();
+    if (raw === '') continue;
+    const count = parseCount(raw, 0);
+    if (count === null) return { ok: false, option };
+    stock.push({ option, count });
+  }
+  return { ok: true, stock: stock.length > 0 ? stock : null };
 }
