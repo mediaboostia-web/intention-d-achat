@@ -7,13 +7,29 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import type { PublicCampaign } from '@/lib/server/tamani/public-campaign';
-import { formatMoney } from '@/lib/tamani/currency';
+import { CURRENCY_LABEL, formatMoney } from '@/lib/tamani/currency';
 import { freezePicks, offerLabel, picksTotal, type PickInput } from '@/lib/tamani/offers';
 import type { PopupAction, PopupAnswers } from '@/lib/tamani/popup-machine';
 import { pluralizeUnit } from '@/lib/tamani/verdict-display';
 import { Stepper } from './stepper';
 
 type Key = number | 'UNIT';
+
+const CURRENCIES = [...new Set(Object.values(CURRENCY_LABEL))].join('|');
+const MONEY = new RegExp(String.raw`(\d[\d\s]*\s(?:${CURRENCIES}))`);
+
+/** « Lot de 85 · 350 000 » + currency: an amount never breaks between its digits and its currency. */
+function NoBreakPrices({ text }: { text: string }) {
+  return text.split(MONEY).map((part, i) =>
+    i % 2 === 1 ? (
+      <span key={i} className="whitespace-nowrap">
+        {part}
+      </span>
+    ) : (
+      part
+    ),
+  );
+}
 
 export function OfferPickerStep({
   c,
@@ -65,7 +81,9 @@ export function OfferPickerStep({
         {rows.map(({ key, label, hint }) => (
           <li key={String(key)} className="flex items-center justify-between gap-3 px-3 py-2">
             <span className="min-w-0 break-words text-ink">
-              <span className="block font-bold">{label}</span>
+              <span className="block font-bold">
+                <NoBreakPrices text={label} />
+              </span>
               {hint && <span className="block text-sm text-ink-soft">{hint}</span>}
             </span>
             <Stepper

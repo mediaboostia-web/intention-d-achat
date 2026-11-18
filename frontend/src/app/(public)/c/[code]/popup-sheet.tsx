@@ -177,7 +177,9 @@ function OptionQuantityStep({ c, answers, onAction, target }: StepProps & { targ
       <Question>
         {target === undefined
           ? 'Combien ?'
-          : `Répartis tes ${target} ${pluralizeUnit(product.unitLabel, target)}`}
+          : target === 1
+            ? `Quelle ${(product.optionLabel ?? 'option').toLocaleLowerCase('fr')} ?`
+            : `Répartis tes ${target} ${pluralizeUnit(product.unitLabel, target)}`}
       </Question>
       <p className="mb-2 text-sm font-bold text-ink-soft">
         {product.optionLabel ?? 'Choix'} : combien de chaque ?

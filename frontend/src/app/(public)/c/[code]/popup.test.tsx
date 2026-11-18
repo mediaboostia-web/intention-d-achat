@@ -314,6 +314,22 @@ describe('PopupView', () => {
     expect(out).toMatch(/<button[^>]*aria-label="Un de plus : Rouge"[^>]*disabled=""/);
     expect(out).not.toContain('aria-label="Un de plus : Blond"');
     expect(out).toMatch(/<button[^>]*disabled=""[^>]*>Valider<\/button>/);
+    const one = { ...split, answers: { ...split.answers, quantity: 1, optionQuantities: null } };
+    expect(text(<PopupView campaign={withStock} state={one} />)).toContain('Quelle couleur ?');
+    // A price never breaks between its digits and its currency.
+    const pack = {
+      ...withStock,
+      product: {
+        ...withStock.product,
+        offers: [{ kind: 'PACK' as const, qty: 85, price: 350_000, name: null }],
+      },
+    };
+    const reseller = at('quantity', {
+      answers: { ...EMPTY_ANSWERS, interested: true, buyerType: 'RESELLER' },
+    });
+    expect(html(<PopupView campaign={pack} state={reseller} />)).toMatch(
+      /<span class="whitespace-nowrap">350[^<]*FCFA<\/span>/,
+    );
   });
 
   it('offers shipping with the city and country', () => {
