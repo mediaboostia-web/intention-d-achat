@@ -18,16 +18,16 @@ const campaign: PublicCampaign = {
   timingOptions: ['ON_ARRIVAL', 'WEEK_AFTER', 'LATER'],
   deliveryEnabled: true,
   zones: [{ id: 'zone_1', name: 'Médina' }],
+  shippingEnabled: false,
   interestedCount: 64,
   stockQuantity: null,
+  stock: { total: null, byOption: null },
   product: {
     id: 'prod_1',
     name: 'Marmites inox 5 L',
     description: null,
     unitLabel: 'pièce',
     unitPrice: 7500,
-    wholesalePrice: 6000,
-    wholesaleMinQty: 12,
     offers: [{ kind: 'FROM', qty: 12, price: 6000, name: null }],
     photos: ['https://res.cloudinary.com/demo/image/upload/v1/m.jpg'],
     optionLabel: null,
@@ -230,17 +230,103 @@ describe('PopupView', () => {
     ).toMatch(/<span class="whitespace-nowrap">77 •• •• 12<\/span>/);
   });
 
-  it('shows the wholesale price to a reseller', () => {
+  // Porteur, 2026-11-18: « il peut choisir une offre une ou plusieurs fois ».
+  it('lets a reseller pick each offer, the unit price too, with the total', () => {
+    const offers = {
+      ...campaign,
+      product: {
+        ...campaign.product,
+        unitPrice: 12_000,
+        offers: [
+          { kind: 'PACK' as const, qty: 12, price: 26_000, name: null },
+          { kind: 'FROM' as const, qty: 12, price: 10_000, name: null },
+        ],
+      },
+    };
     const reseller = at('quantity', {
       answers: { ...EMPTY_ANSWERS, interested: true, buyerType: 'RESELLER' },
     });
-    const t = text(<PopupView campaign={campaign} state={reseller} />);
-    expect(t).toContain('Prix de gros : 6 000 FCFA dès 12');
-    const gn = { ...campaign, shop: { ...campaign.shop, currency: 'GNF' } };
-    const gnText = text(<PopupView campaign={gn} state={reseller} />);
-    expect(gnText).toContain('Prix de gros : 6 000 FG dès 12');
-    expect(gnText).not.toContain('FCFA');
-    for (const n of ['6', '12', '24', '50']) expect(t).toContain(n);
+    const t = text(<PopupView campaign={offers} state={reseller} />);
+    expect(t).toContain('Lot de 12 · 26 000 FCFA');
+    expect(t).toContain("10 000 FCFA l'unité dès 12");
+    expect(t).toContain("À l'unité · 12 000 FCFA");
+    expect(html(<PopupView campaign={offers} state={reseller} />)).toMatch(
+      /<button[^>]*disabled=""[^>]*>Continuer<\/button>/,
+    );
+    const picked = at('quantity', {
+      answers: {
+        ...EMPTY_ANSWERS,
+        interested: true,
+        buyerType: 'RESELLER',
+        offerPicks: [
+          { offer: 0, count: 2 },
+          { offer: 'UNIT', count: 3 },
+        ],
+      },
+    });
+    expect(text(<PopupView campaign={offers} state={picked} />)).toContain(
+      'Total : 27 pièces · 88 000 FCFA',
+    );
+    const under = at('quantity', {
+      answers: {
+        ...EMPTY_ANSWERS,
+        interested: true,
+        buyerType: 'RESELLER',
+        offerPicks: [{ offer: 1, count: 5 }],
+      },
+    });
+    expect(text(<PopupView campaign={offers} state={under} />)).toContain(
+      'À partir de 12 pour cette offre.',
+    );
+  });
+
+  it('asks a buyer for themselves the quantity, not the offers', () => {
+    const consumer = at('quantity', {
+      answers: { ...EMPTY_ANSWERS, interested: true, buyerType: 'CONSUMER' },
+    });
+    const t = text(<PopupView campaign={campaign} state={consumer} />);
+    expect(t).not.toContain("l'unité dès");
+  });
+
+  it('splits the pieces of the offers by colour, never above the stock left', () => {
+    const withStock = {
+      ...campaign,
+      stockQuantity: 34,
+      stock: { total: 34, byOption: { Noir: 30, Rouge: 4, Blond: 0 } },
+      product: { ...campaign.product, optionLabel: 'Couleur', options: ['Noir', 'Rouge', 'Blond'] },
+    };
+    const split = at('split', {
+      hasOptions: true,
+      answers: {
+        ...EMPTY_ANSWERS,
+        interested: true,
+        buyerType: 'RESELLER',
+        quantity: 24,
+        offerPicks: [{ offer: 0, count: 2 }],
+        optionQuantities: [{ option: 'Rouge', quantity: 4 }],
+      },
+    });
+    const t = text(<PopupView campaign={withStock} state={split} />);
+    expect(t).toContain('Répartis tes 24 pièces');
+    expect(t).toContain('reste 30');
+    expect(t).toContain('épuisé');
+    const out = html(<PopupView campaign={withStock} state={split} />);
+    expect(out).toMatch(/<button[^>]*aria-label="Un de plus : Rouge"[^>]*disabled=""/);
+    expect(out).not.toContain('aria-label="Un de plus : Blond"');
+    expect(out).toMatch(/<button[^>]*disabled=""[^>]*>Valider<\/button>/);
+  });
+
+  it('offers shipping with the city and country', () => {
+    const ships = { ...campaign, deliveryEnabled: false, zones: [], shippingEnabled: true };
+    const t = text(
+      <PopupView
+        campaign={ships}
+        state={at('delivery', { deliveryEnabled: false, shippingEnabled: true })}
+      />,
+    );
+    expect(t).toContain('Expédition');
+    expect(t).toContain('Je passe récupérer');
+    expect(t).not.toContain('livre-moi');
   });
 
   // Porteur, 2026-11-04: « des nombres différents par couleur ou taille ».

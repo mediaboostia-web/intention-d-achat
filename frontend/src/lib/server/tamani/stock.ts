@@ -14,18 +14,22 @@ export interface CampaignStock {
 
 export const NO_CAP: CampaignStock = { total: null, byOption: null };
 
-export async function campaignStock(db: Db, campaignId: string): Promise<CampaignStock> {
-  const campaign = await db.campaign.findUnique({
-    where: { id: campaignId },
-    select: { availability: true, stockQuantity: true, optionStock: true },
-  });
-  if (!campaign || campaign.availability !== 'IN_STOCK') return NO_CAP;
+export async function campaignStock(
+  db: Db,
+  campaign: {
+    id: string;
+    availability: string;
+    stockQuantity: number | null;
+    optionStock: unknown;
+  },
+): Promise<CampaignStock> {
+  if (campaign.availability !== 'IN_STOCK') return NO_CAP;
   const declared = readOptionStock(campaign.optionStock);
   const totalDeclared =
     campaign.stockQuantity ?? (declared ? declared.reduce((sum, d) => sum + d.count, 0) : null);
   if (totalDeclared === null && declared === null) return NO_CAP;
   const paid = await db.saleOrder.findMany({
-    where: { campaignId, paid: true, status: { not: 'CANCELLED' } },
+    where: { campaignId: campaign.id, paid: true, status: { not: 'CANCELLED' } },
     select: { quantity: true, optionQuantities: true },
   });
   return {

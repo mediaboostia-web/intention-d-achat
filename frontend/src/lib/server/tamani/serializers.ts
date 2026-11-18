@@ -70,8 +70,6 @@ export function toPublicProduct(p: Product) {
     description: p.description,
     unitLabel: p.unitLabel,
     unitPrice: p.unitPrice,
-    wholesalePrice: p.wholesalePrice,
-    wholesaleMinQty: p.wholesaleMinQty,
     offers: offersOf(p),
     photos: photoUrls(p.photos),
     optionLabel: p.optionLabel,

@@ -9,6 +9,7 @@ import { TIMING_OPTIONS, type Availability, type Timing } from '@/lib/tamani/tim
 import { effectiveStatus, isAcceptingResponses, type CampaignStatus } from './campaign-status';
 import type { Db } from './locks';
 import { toPublicProduct } from './serializers';
+import { campaignStock, type CampaignStock } from './stock';
 import { answersClosed } from './quota';
 import { SHORT_CODE_REGEX } from './short-code';
 import { effectivePlan } from './subscription';
@@ -26,9 +27,13 @@ export interface PublicCampaign {
   availabilityText: string;
   timingOptions: readonly Timing[];
   deliveryEnabled: boolean;
+  /** « J'expédie aussi » (2026-11-18): the client writes a city and a country. */
+  shippingEnabled: boolean;
   zones: Array<{ id: string; name: string }>;
   interestedCount: number | null;
   stockQuantity: number | null;
+  /** What a client may still ask for (2026-11-18), shown or not: the popup caps its steppers. */
+  stock: CampaignStock;
   product: ReturnType<typeof toPublicProduct>;
   shop: {
     name: string;
@@ -79,6 +84,7 @@ export async function getPublicCampaign(
     ? await db.response.count({ where: interestedWhere(campaign.id) })
     : null;
   const accepting = isAcceptingResponses(campaign, now) && product.archivedAt === null;
+  const stock = await campaignStock(db, campaign);
 
   return {
     code: link.code,
@@ -92,9 +98,12 @@ export async function getPublicCampaign(
     availabilityText: formatAvailability({ availability, availableAt: campaign.availableAt }, now),
     timingOptions: TIMING_OPTIONS[availability],
     deliveryEnabled: campaign.deliveryEnabled,
+    shippingEnabled: campaign.shippingEnabled,
     zones,
     interestedCount,
-    stockQuantity: campaign.showStock ? campaign.stockQuantity : null,
+    // What is left: the stock goes down with paid orders.
+    stockQuantity: campaign.showStock ? (stock.total ?? campaign.stockQuantity) : null,
+    stock,
     product: toPublicProduct(product),
     shop: {
       name: org.name,

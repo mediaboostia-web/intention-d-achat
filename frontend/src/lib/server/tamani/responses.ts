@@ -4,7 +4,8 @@
 // folds a second phone into the answer that number already gave.
 import 'server-only';
 import { Prisma, type Response } from '@prisma/client';
-import { splitTotal } from '@/lib/tamani/option-split';
+import { freezePicks, offersOf, picksTotal, readPicks, type OfferPick } from '@/lib/tamani/offers';
+import { optionSplit, splitTotal } from '@/lib/tamani/option-split';
 import { TIMING_OPTIONS } from '@/lib/tamani/timing';
 import { isAcceptingResponses } from './campaign-status';
 import type { TamaniErrorCode } from './errors';
@@ -14,6 +15,7 @@ import type { CountryCode } from 'libphonenumber-js/min';
 import { maskPhone, normalizePhone, shopCountry } from './phone';
 import { interestedWhere } from './public-campaign';
 import { recordDeviceNumber } from './public-limits';
+import { campaignStock } from './stock';
 import { answersClosed, shouldLockNewCompletion } from './quota';
 import { signResponseToken, verifyResponseToken } from './response-token';
 
@@ -54,15 +56,26 @@ type AnswerFields = Pick<
   | 'wantsDelivery'
   | 'zoneId'
   | 'deliveryPlace'
+  | 'fulfillment'
 > & {
   /** The split per option (2026-11-04), [{ option, quantity }]; DbNull clears it. */
   optionQuantities: Prisma.InputJsonValue | typeof Prisma.DbNull;
+  /** The wholesale offers picked, frozen (2026-11-18); DbNull clears them. */
+  offerPicks: Prisma.InputJsonValue | typeof Prisma.DbNull;
 };
 
 const invalid = (message: string) => new ResponseWriteError('VALIDATION_FAILED', 400, message);
 
-/** The fields this step sends; a "no" empties the yes-only ones. */
-function answerData(input: ResponseStepInput): Partial<AnswerFields> {
+/**
+ * The fields this step sends; a "no" empties the yes-only ones. `picks`: the
+ * offers of this step, checked and frozen; `keepSplit`: the split already
+ * saved still adds up to them.
+ */
+function answerData(
+  input: ResponseStepInput,
+  picks: OfferPick[] | null = null,
+  keepSplit = false,
+): Partial<AnswerFields> {
   const data: Partial<AnswerFields> = compact({
     interested: input.interested,
     notInterestedReason: input.notInterestedReason,
@@ -73,6 +86,7 @@ function answerData(input: ResponseStepInput): Partial<AnswerFields> {
     wantsDelivery: input.wantsDelivery,
     zoneId: input.zoneId,
     deliveryPlace: input.deliveryPlace,
+    fulfillment: input.fulfillment,
   });
   // A split gives the total and, alone, the option; a bare quantity drops a split.
   if (input.optionQuantities !== undefined) {
@@ -85,6 +99,23 @@ function answerData(input: ResponseStepInput): Partial<AnswerFields> {
   } else if (input.quantity !== undefined) {
     data.optionQuantities = Prisma.DbNull;
   }
+  // Offers give the pieces; a split sent with them, or kept, splits the same pieces.
+  if (picks) {
+    data.offerPicks = picks as unknown as Prisma.InputJsonValue;
+    if (input.optionQuantities === undefined) {
+      data.quantity = picksTotal(picks).pieces;
+      if (!keepSplit) Object.assign(data, { optionQuantities: Prisma.DbNull, option: null });
+    }
+  } else if (input.quantity !== undefined || input.buyerType === 'CONSUMER') {
+    data.offerPicks = Prisma.DbNull;
+  }
+  // The way to receive it sets wantsDelivery; an older popup sends wantsDelivery alone.
+  if (input.fulfillment !== undefined) {
+    data.wantsDelivery = input.fulfillment !== 'PICKUP';
+    if (input.fulfillment === 'SHIPPING') data.zoneId = null;
+  } else if (input.wantsDelivery !== undefined) {
+    data.fulfillment = input.wantsDelivery ? 'DELIVERY' : 'PICKUP';
+  }
   // A place is a delivery outside the zones: a zone drops it, and it drops a zone
   // chosen before. Sent together, the zone wins.
   if (input.zoneId != null) data.deliveryPlace = null;
@@ -96,8 +127,10 @@ function answerData(input: ResponseStepInput): Partial<AnswerFields> {
       quantity: null,
       option: null,
       optionQuantities: Prisma.DbNull,
+      offerPicks: Prisma.DbNull,
       timing: null,
       wantsDelivery: null,
+      fulfillment: null,
       zoneId: null,
       deliveryPlace: null,
     });
@@ -116,8 +149,12 @@ function answersOf(r: Response): AnswerFields {
     optionQuantities: Array.isArray(r.optionQuantities)
       ? (r.optionQuantities as Prisma.InputJsonArray)
       : Prisma.DbNull,
+    offerPicks: Array.isArray(r.offerPicks)
+      ? (r.offerPicks as Prisma.InputJsonArray)
+      : Prisma.DbNull,
     timing: r.timing,
     wantsDelivery: r.wantsDelivery,
+    fulfillment: r.fulfillment,
     zoneId: r.zoneId,
     deliveryPlace: r.deliveryPlace,
   };
@@ -173,7 +210,13 @@ export async function upsertResponse(
       : null;
     if (!zone) throw invalid('Unknown delivery zone');
   }
-  if (input.deliveryPlace != null && !campaign.deliveryEnabled) {
+  if (input.fulfillment === 'DELIVERY' && !campaign.deliveryEnabled) {
+    throw invalid('This campaign does not deliver');
+  }
+  if (input.fulfillment === 'SHIPPING' && !campaign.shippingEnabled) {
+    throw invalid('This campaign does not ship');
+  }
+  if (input.deliveryPlace != null && !campaign.deliveryEnabled && !campaign.shippingEnabled) {
     throw invalid('This campaign does not deliver');
   }
   let phoneE164: string | null = null;
@@ -208,7 +251,55 @@ export async function upsertResponse(
     }
   }
 
-  const answers = answerData(input);
+  // Offers (2026-11-18): a reseller's, checked against the product and frozen.
+  let picks: OfferPick[] | null = null;
+  if (input.offerPicks !== undefined) {
+    if ((input.buyerType ?? row?.buyerType) !== 'RESELLER')
+      throw invalid('Offers are for resellers');
+    const frozen = freezePicks(offersOf(product), product.unitPrice, input.offerPicks);
+    if (!frozen.ok) throw invalid(frozen.message);
+    picks = frozen.picks;
+  }
+  const dropsPicks = input.quantity !== undefined || input.buyerType === 'CONSUMER';
+  const activePicks = picks ?? (dropsPicks ? null : readPicks(row?.offerPicks));
+  const pieces = activePicks ? picksTotal(activePicks).pieces : null;
+  if (
+    input.optionQuantities !== undefined &&
+    pieces !== null &&
+    splitTotal(input.optionQuantities) !== pieces
+  ) {
+    throw invalid('The split must add up to the offers');
+  }
+  const savedSplit = row ? optionSplit(row) : [];
+  const keepSplit =
+    picks !== null && row?.optionQuantities != null && splitTotal(savedSplit) === pieces;
+
+  // In stock, never more than what is left (paid orders taken off).
+  const split = input.optionQuantities ?? (keepSplit ? savedSplit : null);
+  const wanted = split ? splitTotal(split) : picks ? pieces : (input.quantity ?? null);
+  if (wanted !== null) {
+    const stock = await campaignStock(db, campaign);
+    for (const e of split ?? []) {
+      const left = stock.byOption?.[e.option];
+      if (left !== undefined && e.quantity > left) {
+        throw new ResponseWriteError(
+          'STOCK_EXCEEDED',
+          409,
+          `Il n'en reste que ${left} en ${e.option}.`,
+        );
+      }
+    }
+    if (stock.total !== null && wanted > stock.total) {
+      throw new ResponseWriteError('STOCK_EXCEEDED', 409, `Il n'en reste que ${stock.total}.`);
+    }
+  }
+
+  // Shipping needs the city and country, sent now or before.
+  if (input.fulfillment === 'SHIPPING' && !(input.deliveryPlace ?? row?.deliveryPlace)) {
+    throw invalid('Shipping needs a place');
+  }
+
+  const answers = answerData(input, picks, keepSplit);
   row = row
     ? await db.response.update({ where: { id: row.id }, data: answers })
     : await db.response.create({
@@ -225,7 +316,9 @@ export async function upsertResponse(
   let contactShared = false;
   let firstCompletion = false;
   if (phoneE164 !== null && input.firstName !== undefined) {
-    if (!isComplete(row, campaign.deliveryEnabled)) throw invalid('Incomplete answer');
+    if (!isComplete(row, campaign.deliveryEnabled || campaign.shippingEnabled)) {
+      throw invalid('Incomplete answer');
+    }
     const person = await db.respondent.upsert({
       where: { organizationId_phoneE164: { organizationId: org.id, phoneE164 } },
       create: {

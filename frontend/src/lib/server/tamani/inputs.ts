@@ -247,7 +247,27 @@ export const responseStepSchema = z
       .max(12)
       .refine((s) => new Set(s.map((e) => e.option)).size === s.length, 'Duplicate option')
       .optional(),
+    /** The wholesale offers a reseller picked (2026-11-18): an offer's index, or the unit price. */
+    offerPicks: z
+      .array(
+        z.object({
+          offer: z.union([
+            z.literal('UNIT'),
+            z
+              .number()
+              .int()
+              .min(0)
+              .max(OFFERS_MAX - 1),
+          ]),
+          count: z.number().int().min(1).max(100_000),
+        }),
+      )
+      .min(1)
+      .max(OFFERS_MAX + 1)
+      .optional(),
     timing: z.enum(TIMINGS).optional(),
+    /** Pickup, delivery or shipping (2026-11-18). */
+    fulfillment: z.enum(['PICKUP', 'DELIVERY', 'SHIPPING']).optional(),
     wantsDelivery: z.boolean().optional(),
     zoneId: z.string().min(1).max(40).nullable().optional(),
     // « Autre endroit »: a place outside the shop's zones, never a control character.
