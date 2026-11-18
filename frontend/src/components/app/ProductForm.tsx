@@ -1,13 +1,15 @@
 'use client';
 
-// A product, field by field in the spec's order (§5.2). The wholesale price
-// and the options stay folded until the wholesaler switches them on; values
+// A product, field by field in the spec's order (§5.2). The wholesale offers
+// (many since 2026-11-18) and the options stay folded until the wholesaler switches them on; values
 // are kept as typed and checked by productFormToBody on submit.
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button, Input, Notice, Select, Switch, Textarea } from '@/components/ui';
 import { currencyLabel } from '@/lib/tamani/currency';
 import { parseCount, parseAmount } from '@/lib/tamani/fcfa-input';
+import type { Offer } from '@/lib/tamani/offers';
 import {
+  emptyOfferRow,
   emptyProductForm,
   productFormToBody,
   type ProductBody,
@@ -18,6 +20,7 @@ import { formatPriceLine } from '@/lib/tamani/share-message';
 import { CUSTOM_UNIT, unitChoices, unitSelectValue } from '@/lib/tamani/units';
 import { cn } from '@/lib/utils';
 import { ChipsInput } from './ChipsInput';
+import { OffersInput, offerFieldId } from './OffersInput';
 import { PhotoPicker } from './PhotoPicker';
 
 const FIELD_IDS: Record<keyof ProductFormValues, string> = {
@@ -25,8 +28,7 @@ const FIELD_IDS: Record<keyof ProductFormValues, string> = {
   photos: 'product-photos',
   unitPrice: 'product-unit-price',
   unitLabel: 'product-unit',
-  wholesalePrice: 'product-wholesale-price',
-  wholesaleMinQty: 'product-wholesale-min',
+  offers: offerFieldId(0, 'qty'),
   costPrice: 'product-cost',
   optionLabel: 'product-option-label',
   options: 'product-options',
@@ -41,14 +43,17 @@ const used = (s: string) => s.trim() !== '';
 function pricePreview(v: ProductFormValues, wholesale: boolean, currency: string): string | null {
   const unitPrice = parseAmount(v.unitPrice);
   if (unitPrice === null) return null;
-  return formatPriceLine(
-    {
-      unitPrice,
-      wholesalePrice: wholesale ? parseAmount(v.wholesalePrice) : null,
-      wholesaleMinQty: wholesale ? parseCount(v.wholesaleMinQty, 2) : null,
-    },
-    currency,
-  );
+  const offers = wholesale
+    ? v.offers.flatMap((r): Offer[] => {
+        const qty = parseCount(r.qty, 2);
+        const price = parseAmount(r.price);
+        if (qty === null || price === null) return [];
+        return [
+          { kind: r.kind, qty, price, name: r.kind === 'PACK' ? r.name.trim() || null : null },
+        ];
+      })
+    : [];
+  return formatPriceLine({ unitPrice, offers }, currency);
 }
 
 export function ProductForm({
@@ -75,9 +80,7 @@ export function ProductForm({
   className?: string | undefined;
 }) {
   const [v, setV] = useState(initial);
-  const [wholesale, setWholesale] = useState(
-    used(initial.wholesalePrice) || used(initial.wholesaleMinQty),
-  );
+  const [wholesale, setWholesale] = useState(initial.offers.length > 0);
   const [hasOptions, setHasOptions] = useState(
     used(initial.optionLabel) || initial.options.length > 0,
   );
@@ -112,7 +115,7 @@ export function ProductForm({
     e.preventDefault();
     const values: ProductFormValues = {
       ...v,
-      ...(wholesale ? {} : { wholesalePrice: '', wholesaleMinQty: '' }),
+      ...(wholesale ? {} : { offers: [] }),
       ...(hasOptions ? {} : { optionLabel: '', options: [] }),
     };
     const result = productFormToBody(values, currency);
@@ -208,29 +211,18 @@ export function ProductForm({
           id="product-wholesale"
           label="Je vends aussi en gros"
           checked={wholesale}
-          onChange={setWholesale}
+          onChange={(on) => {
+            setWholesale(on);
+            if (on && v.offers.length === 0) set('offers', [emptyOfferRow()]);
+          }}
         />
         {wholesale && (
-          <div className="grid gap-6 sm:grid-cols-2">
-            <Input
-              id={FIELD_IDS.wholesalePrice}
-              label={`Prix de gros (${money})`}
-              inputMode="numeric"
-              placeholder="6 000"
-              value={v.wholesalePrice}
-              error={errors.wholesalePrice}
-              onChange={(e) => set('wholesalePrice', e.target.value)}
-            />
-            <Input
-              id={FIELD_IDS.wholesaleMinQty}
-              label="À partir de (articles)"
-              inputMode="numeric"
-              placeholder="12"
-              value={v.wholesaleMinQty}
-              error={errors.wholesaleMinQty}
-              onChange={(e) => set('wholesaleMinQty', e.target.value)}
-            />
-          </div>
+          <OffersInput
+            rows={v.offers}
+            onChange={(offers) => set('offers', offers)}
+            currency={currency}
+            error={errors.offers}
+          />
         )}
         {preview && <p className="font-hand text-lg text-ink-muted">Sur WhatsApp : {preview}</p>}
       </div>

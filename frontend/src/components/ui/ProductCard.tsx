@@ -1,4 +1,5 @@
 import { BANNER, cloudinaryVariant, THUMB } from '@/lib/tamani/cloudinary-url';
+import type { Offer } from '@/lib/tamani/offers';
 import { formatPriceLine } from '@/lib/tamani/share-message';
 import { cn } from '@/lib/utils';
 import { Badge } from './Badge';
@@ -9,8 +10,7 @@ export interface ProductCardData {
   name: string;
   unitLabel: string;
   unitPrice: number;
-  wholesalePrice: number | null;
-  wholesaleMinQty: number | null;
+  offers: readonly Offer[];
   photos: readonly string[];
   archivedAt: string | null;
 }

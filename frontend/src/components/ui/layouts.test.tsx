@@ -23,8 +23,7 @@ const product = (photos: string[], name = 'Marmites inox 5 L') => ({
   name,
   unitLabel: 'pièce',
   unitPrice: 7500,
-  wholesalePrice: null,
-  wholesaleMinQty: null,
+  offers: [],
   photos,
   archivedAt: null,
 });

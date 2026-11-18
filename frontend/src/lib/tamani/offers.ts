@@ -168,15 +168,36 @@ export function offerLabel(o: Offer, currency: string): string {
 
 const SHOWN_IN_LINE = 2;
 
-/** The WhatsApp price: the unit price, two offers at most, then « + N offres ». */
+/** An offer in the price line: « 6 000 FCFA dès 12 », « 12 pour 26 000 FCFA », « Demi-lot 45 pour 175 000 FCFA ». */
+function shortOffer(o: Offer, currency: string): string {
+  const price = formatMoney(o.price, currency);
+  if (o.kind === 'FROM') return `${price} dès ${o.qty}`;
+  return `${o.name ? `${o.name} ` : ''}${o.qty} pour ${price}`;
+}
+
+/**
+ * The WhatsApp price: « 7 500 FCFA (gros : 6 000 FCFA dès 12) », two offers
+ * at most, then « + N offres »; the unit price alone without offers.
+ */
 export function priceLine(unitPrice: number, offers: readonly Offer[], currency: string): string {
-  const parts = [
-    formatMoney(unitPrice, currency),
-    ...offers.slice(0, SHOWN_IN_LINE).map((o) => offerLabel(o, currency)),
-  ];
+  const unit = formatMoney(unitPrice, currency);
+  if (offers.length === 0) return unit;
+  const parts = offers.slice(0, SHOWN_IN_LINE).map((o) => shortOffer(o, currency));
   const more = offers.length - SHOWN_IN_LINE;
   if (more > 0) parts.push(`+ ${more} ${more > 1 ? 'offres' : 'offre'}`);
-  return parts.join(' · ');
+  return `${unit} (gros : ${parts.join(', ')})`;
+}
+
+/** A product's offers: the stored ones, else its old single wholesale price (before migration 9l). */
+export function offersOf(p: {
+  offers: unknown;
+  wholesalePrice?: number | null;
+  wholesaleMinQty?: number | null;
+}): Offer[] {
+  const stored = readOffers(p.offers);
+  return stored.length > 0
+    ? stored
+    : legacyOffers(p.wholesalePrice ?? null, p.wholesaleMinQty ?? null);
 }
 
 /** « 2 × Lot de 12, 15 à 10 000 FCFA, 3 à l'unité ». */
@@ -196,4 +217,16 @@ export function lowestPiecePrice(unitPrice: number, offers: readonly Offer[]): n
     (low, o) => Math.min(low, Math.round(o.kind === 'PACK' ? o.price / o.qty : o.price)),
     unitPrice,
   );
+}
+
+/**
+ * The old single wholesale price, kept in step with the first FROM offer while
+ * readers move to offers (lot 19); the columns are dropped in a later lot.
+ */
+export function legacyColumns(offers: readonly Offer[]): {
+  wholesalePrice: number | null;
+  wholesaleMinQty: number | null;
+} {
+  const from = offers.find((o) => o.kind === 'FROM');
+  return { wholesalePrice: from?.price ?? null, wholesaleMinQty: from?.qty ?? null };
 }

@@ -25,8 +25,7 @@ const product: ShopProduct = {
   description: null,
   unitLabel: 'pièce',
   unitPrice: 7500,
-  wholesalePrice: 6000,
-  wholesaleMinQty: 12,
+  offers: [{ kind: 'FROM', qty: 12, price: 6000, name: null }],
   costPrice: 5000,
   photos: [PHOTO_1],
   optionLabel: null,
@@ -138,22 +137,36 @@ describe('ProductForm', () => {
 
   it('opens the wholesale and option sections only when they are used', () => {
     const closed = html(form({ initial: emptyProductForm }));
-    expect(tag(closed, 'product-wholesale-price')).toBe('');
+    expect(tag(closed, 'product-offer-0-price')).toBe('');
     expect(tag(closed, 'product-option-label')).toBe('');
 
     const open = html(
       form({
         initial: {
           ...emptyProductForm,
-          wholesalePrice: '6 000',
-          wholesaleMinQty: '12',
+          offers: [
+            { kind: 'FROM', qty: '12', price: '6 000', name: '' },
+            { kind: 'PACK', qty: '45', price: '175 000', name: 'Demi-lot' },
+          ],
           optionLabel: 'Couleur',
           options: ['Rouge'],
         },
       }),
     );
-    expect(tag(open, 'product-wholesale-price')).toContain('value="6 000"');
-    expect(tag(open, 'product-wholesale-min')).toContain('value="12"');
+    expect(tag(open, 'product-offer-0-price')).toContain('value="6 000"');
+    expect(tag(open, 'product-offer-0-qty')).toContain('value="12"');
+    expect(tag(open, 'product-offer-0-name')).toBe('');
+    expect(tag(open, 'product-offer-1-name')).toContain('value="Demi-lot"');
+    expect(
+      text(
+        form({
+          initial: {
+            ...emptyProductForm,
+            offers: [{ kind: 'PACK', qty: '45', price: '175 000', name: '' }],
+          },
+        }),
+      ),
+    ).toContain('Ajouter une offre');
     expect(tag(open, 'product-option-label')).toContain('value="Couleur"');
     expect(open).toContain('aria-label="Retirer Rouge"');
   });
@@ -164,8 +177,7 @@ describe('ProductForm', () => {
         initial: {
           ...emptyProductForm,
           unitPrice: '7.500',
-          wholesalePrice: '6000',
-          wholesaleMinQty: '12',
+          offers: [{ kind: 'FROM', qty: '12', price: '6000', name: '' }],
         },
       }),
     );
@@ -176,14 +188,13 @@ describe('ProductForm', () => {
         initial: {
           ...emptyProductForm,
           unitPrice: '7.500',
-          wholesalePrice: '6000',
-          wholesaleMinQty: '12',
+          offers: [{ kind: 'FROM', qty: '12', price: '6000', name: '' }],
         },
       }),
     );
     expect(gn).toContain('Sur WhatsApp : 7 500 FG (gros : 6 000 FG dès 12)');
     expect(gn).toContain("Prix à l'unité (FG)");
-    expect(gn).toContain('Prix de gros (FG)');
+    expect(gn).toContain('Prix par pièce (FG)');
     expect(gn).toContain("Prix d'achat (FG)");
     expect(gn).not.toContain('FCFA');
   });

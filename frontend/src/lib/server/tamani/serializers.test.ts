@@ -91,6 +91,7 @@ describe('product serializers', () => {
         'unitPrice',
         'wholesalePrice',
         'wholesaleMinQty',
+        'offers',
         'photos',
         'optionLabel',
         'options',

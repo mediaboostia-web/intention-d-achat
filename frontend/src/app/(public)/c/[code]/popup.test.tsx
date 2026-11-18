@@ -28,6 +28,7 @@ const campaign: PublicCampaign = {
     unitPrice: 7500,
     wholesalePrice: 6000,
     wholesaleMinQty: 12,
+    offers: [{ kind: 'FROM', qty: 12, price: 6000, name: null }],
     photos: ['https://res.cloudinary.com/demo/image/upload/v1/m.jpg'],
     optionLabel: null,
     options: [],

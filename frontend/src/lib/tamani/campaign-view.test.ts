@@ -6,8 +6,7 @@ const now = new Date('2026-10-24T10:00:00Z');
 const product = {
   name: 'Marmites inox 5 L',
   unitPrice: 7500,
-  wholesalePrice: 6000,
-  wholesaleMinQty: 12,
+  offers: [{ kind: 'FROM' as const, qty: 12, price: 6000, name: null }],
 };
 
 describe('endLine', () => {

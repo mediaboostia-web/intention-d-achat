@@ -11,6 +11,7 @@ import {
   pickPieces,
   picksText,
   picksTotal,
+  offersOf,
   priceLine,
   readOffers,
   readPicks,
@@ -153,8 +154,14 @@ describe('labels', () => {
 
   it('writes the WhatsApp price line with two offers at most', () => {
     expect(priceLine(12_000, [], 'XOF')).toBe(m(12_000));
+    expect(priceLine(7500, [{ ...FROM_12, price: 6000 }], 'XOF')).toBe(
+      `${m(7500)} (gros : ${m(6000)} dès 12)`,
+    );
     expect(priceLine(12_000, [PACK_12, FROM_12, HALF], 'XOF')).toBe(
-      `${m(12_000)} · Lot de 12 · ${m(26_000)} · ${m(10_000)} l'unité dès 12 · + 1 offre`,
+      `${m(12_000)} (gros : 12 pour ${m(26_000)}, ${m(10_000)} dès 12, + 1 offre)`,
+    );
+    expect(priceLine(12_000, [HALF], 'XOF')).toBe(
+      `${m(12_000)} (gros : Demi-lot 45 pour ${m(175_000)})`,
     );
     expect(priceLine(12_000, [PACK_12, FROM_12, HALF, { ...HALF, qty: 85 }], 'XOF')).toContain(
       '+ 2 offres',
@@ -176,5 +183,17 @@ describe('lowestPiecePrice', () => {
   it('takes the cheapest piece across the offers', () => {
     expect(lowestPiecePrice(12_000, [PACK_12, FROM_12])).toBe(2167);
     expect(lowestPiecePrice(12_000, [])).toBe(12_000);
+  });
+});
+
+describe('offersOf', () => {
+  it('reads the stored offers, else the old single wholesale price', () => {
+    expect(offersOf({ offers: [PACK_12], wholesalePrice: 6000, wholesaleMinQty: 12 })).toEqual([
+      PACK_12,
+    ]);
+    expect(offersOf({ offers: [], wholesalePrice: 6000, wholesaleMinQty: 12 })).toEqual([
+      { kind: 'FROM', qty: 12, price: 6000, name: null },
+    ]);
+    expect(offersOf({ offers: [] })).toEqual([]);
   });
 });

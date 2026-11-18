@@ -9,6 +9,7 @@ import { useShop } from '@/components/app/ShopProvider';
 import { Button, EmptyState, FormSkeleton, Notice, PageHeader } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorMessage } from '@/lib/tamani/api-messages';
+import { legacyColumns } from '@/lib/tamani/offers';
 import type { ShopCampaign } from '@/lib/tamani/campaign-view';
 import type { OrderBody } from '@/lib/tamani/order-form';
 import type { OrderRow } from '@/lib/tamani/orders-view';
@@ -50,8 +51,8 @@ export default function NewOrderPage() {
               name: p.name,
               unitLabel: p.unitLabel,
               unitPrice: p.unitPrice,
-              wholesalePrice: p.wholesalePrice,
-              wholesaleMinQty: p.wholesaleMinQty,
+              // The order form still prices one wholesale offer until lot 19 task 7.
+              ...legacyColumns(p.offers),
             })),
             campaigns: campaigns.items.map((c) => ({
               id: c.id,

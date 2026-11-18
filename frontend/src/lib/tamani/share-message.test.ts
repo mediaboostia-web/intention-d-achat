@@ -24,14 +24,15 @@ describe('formatPriceLine', () => {
 
   it('adds the wholesale price and its minimum', () => {
     expect(
-      formatPriceLine({ unitPrice: 7500, wholesalePrice: 6000, wholesaleMinQty: 12 }, 'XOF'),
+      formatPriceLine(
+        { unitPrice: 7500, offers: [{ kind: 'FROM', qty: 12, price: 6000, name: null }] },
+        'XOF',
+      ),
     ).toBe('7 500 FCFA (gros : 6 000 FCFA dès 12)');
   });
 
   it('shows the unit price alone without a wholesale price', () => {
-    expect(
-      formatPriceLine({ unitPrice: 7500, wholesalePrice: null, wholesaleMinQty: null }, 'XOF'),
-    ).toBe('7 500 FCFA');
+    expect(formatPriceLine({ unitPrice: 7500, offers: [] }, 'XOF')).toBe('7 500 FCFA');
   });
 });
 
@@ -82,10 +83,11 @@ describe('renderShareMessage', () => {
 describe('formatPriceLine in the shop currency (lot 7b)', () => {
   it('writes the local name of the currency', () => {
     expect(
-      formatPriceLine({ unitPrice: 65000, wholesalePrice: 60000, wholesaleMinQty: 10 }, 'GNF'),
+      formatPriceLine(
+        { unitPrice: 65000, offers: [{ kind: 'FROM', qty: 10, price: 60000, name: null }] },
+        'GNF',
+      ),
     ).toBe('65 000 FG (gros : 60 000 FG dès 10)');
-    expect(
-      formatPriceLine({ unitPrice: 18000, wholesalePrice: null, wholesaleMinQty: null }, 'CDF'),
-    ).toBe('18 000 FC');
+    expect(formatPriceLine({ unitPrice: 18000, offers: [] }, 'CDF')).toBe('18 000 FC');
   });
 });

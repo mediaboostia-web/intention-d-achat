@@ -5,6 +5,7 @@ import 'server-only';
 import { z } from 'zod';
 import { isShopCountry } from '@/lib/tamani/countries';
 import { isPlanId } from '@/lib/tamani/plans';
+import { OFFERS_MAX, OFFER_NAME_MAX, OFFER_QTY_MAX } from '@/lib/tamani/offers';
 import { checkProductRules } from '@/lib/tamani/product-rules';
 import { BUYER_TYPES, NOT_INTERESTED_REASONS } from '@/lib/tamani/labels';
 import { ORDER_STATUSES } from '@/lib/tamani/orders-view';
@@ -87,13 +88,22 @@ export const ZonePatch = z
 /** Integer FCFA, strictly positive. "7 500", 7500.5 and 0 are refused. */
 const price = z.number().int().min(1).max(100_000_000);
 
+/** A wholesale offer (2026-11-18, lib/tamani/offers.ts); a name only on a pack. */
+const offer = z
+  .object({
+    kind: z.enum(['FROM', 'PACK']),
+    qty: z.number().int().min(2).max(OFFER_QTY_MAX),
+    price,
+    name: z.string().trim().max(OFFER_NAME_MAX).nullable().default(null),
+  })
+  .transform((o) => ({ ...o, name: o.kind === 'PACK' && o.name ? o.name : null }));
+
 const ProductFields = z.object({
   name: z.string().trim().min(1).max(80),
   description: z.string().trim().max(1000).nullable(),
   unitLabel: z.string().trim().min(1).max(30),
   unitPrice: price,
-  wholesalePrice: price.nullable(),
-  wholesaleMinQty: z.number().int().min(2).max(100_000).nullable(),
+  offers: z.array(offer).max(OFFERS_MAX),
   costPrice: price.nullable(),
   photos: z.array(cloudinaryUrl).max(6),
   optionLabel: z.string().trim().min(1).max(30).nullable(),
@@ -106,8 +116,7 @@ const ProductFields = z.object({
 export const ProductCreate = ProductFields.extend({
   description: ProductFields.shape.description.default(null),
   unitLabel: ProductFields.shape.unitLabel.default('pièce'),
-  wholesalePrice: ProductFields.shape.wholesalePrice.default(null),
-  wholesaleMinQty: ProductFields.shape.wholesaleMinQty.default(null),
+  offers: ProductFields.shape.offers.default([]),
   costPrice: ProductFields.shape.costPrice.default(null),
   photos: ProductFields.shape.photos.default([]),
   optionLabel: ProductFields.shape.optionLabel.default(null),

@@ -19,8 +19,7 @@ describe('thumbnails', () => {
       name: 'Marmites inox 5 L',
       unitLabel: 'pièce',
       unitPrice: 7500,
-      wholesalePrice: null,
-      wholesaleMinQty: null,
+      offers: [],
       photos: [UPLOADED],
       archivedAt: null,
     };

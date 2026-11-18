@@ -3,15 +3,30 @@
 import { formatPrice } from '@/lib/utils';
 import { currencyLabel } from './currency';
 import { parseCount, parseAmount } from './fcfa-input';
+import { OFFER_NAME_MAX, type Offer, type OfferKind } from './offers';
 import { productRuleViolation } from './product-rules';
+
+/** One wholesale offer as typed (2026-11-18): « 12 » pour « 26 000 ». */
+export interface OfferRow {
+  kind: OfferKind;
+  qty: string;
+  price: string;
+  name: string;
+}
+
+export const emptyOfferRow = (kind: OfferKind = 'FROM'): OfferRow => ({
+  kind,
+  qty: '',
+  price: '',
+  name: '',
+});
 
 export interface ProductFormValues {
   name: string;
   description: string;
   unitLabel: string;
   unitPrice: string;
-  wholesalePrice: string;
-  wholesaleMinQty: string;
+  offers: OfferRow[];
   costPrice: string;
   photos: string[];
   optionLabel: string;
@@ -23,8 +38,7 @@ export const emptyProductForm: ProductFormValues = {
   description: '',
   unitLabel: 'pièce',
   unitPrice: '',
-  wholesalePrice: '',
-  wholesaleMinQty: '',
+  offers: [],
   costPrice: '',
   photos: [],
   optionLabel: '',
@@ -36,8 +50,7 @@ export interface ProductBody {
   description: string | null;
   unitLabel: string;
   unitPrice: number;
-  wholesalePrice: number | null;
-  wholesaleMinQty: number | null;
+  offers: Offer[];
   costPrice: number | null;
   photos: string[];
   optionLabel: string | null;
@@ -62,8 +75,12 @@ export function productToForm(p: ShopProduct): ProductFormValues {
     description: p.description ?? '',
     unitLabel: p.unitLabel,
     unitPrice: typed(p.unitPrice),
-    wholesalePrice: typed(p.wholesalePrice),
-    wholesaleMinQty: p.wholesaleMinQty === null ? '' : String(p.wholesaleMinQty),
+    offers: p.offers.map((o) => ({
+      kind: o.kind,
+      qty: String(o.qty),
+      price: typed(o.price),
+      name: o.name ?? '',
+    })),
     costPrice: typed(p.costPrice),
     photos: [...p.photos],
     optionLabel: p.optionLabel ?? '',
@@ -74,17 +91,35 @@ export function productToForm(p: ShopProduct): ProductFormValues {
 const priceHint = (currency: string) =>
   `Écris le prix en ${currencyLabel(currency)}, sans virgule, par exemple 7 500.`;
 
+const isBlank = (r: OfferRow) => r.qty.trim() === '' && r.price.trim() === '';
+
+/** « Offre 2 : le prix… »: the message names the row it is about. */
+const aboutOffer = (index: number, message: string) =>
+  `Offre ${index + 1} : ${message.charAt(0).toLocaleLowerCase('fr')}${message.slice(1)}`;
+
+/** The typed offers, the empty rows dropped; or the first row to fix. */
+function offersOf(
+  rows: readonly OfferRow[],
+  currency: string,
+): { ok: true; offers: Offer[] } | { ok: false; message: string } {
+  const offers: Offer[] = [];
+  for (const [index, row] of rows.filter((r) => !isBlank(r)).entries()) {
+    const qty = parseCount(row.qty, 2);
+    if (qty === null)
+      return { ok: false, message: aboutOffer(index, 'Écris une quantité de 2 au moins.') };
+    const price = parseAmount(row.price);
+    if (price === null) return { ok: false, message: aboutOffer(index, priceHint(currency)) };
+    const name = row.kind === 'PACK' ? row.name.trim().slice(0, OFFER_NAME_MAX) || null : null;
+    offers.push({ kind: row.kind, qty, price, name });
+  }
+  return { ok: true, offers };
+}
+
 export function productFormToBody(
   v: ProductFormValues,
   currency: string,
 ): { ok: true; body: ProductBody } | { ok: false; errors: ProductFormErrors } {
   const errors: ProductFormErrors = {};
-  const optionalPrice = (raw: string, field: keyof ProductFormValues) => {
-    if (raw.trim() === '') return null;
-    const n = parseAmount(raw);
-    if (n === null) errors[field] = priceHint(currency);
-    return n;
-  };
 
   const name = v.name.trim();
   if (name === '') errors.name = 'Donne un nom à ton produit.';
@@ -92,28 +127,35 @@ export function productFormToBody(
 
   const unitPrice = parseAmount(v.unitPrice);
   if (unitPrice === null) errors.unitPrice = priceHint(currency);
-  const wholesalePrice = optionalPrice(v.wholesalePrice, 'wholesalePrice');
-  const costPrice = optionalPrice(v.costPrice, 'costPrice');
-
-  let wholesaleMinQty: number | null = null;
-  if (v.wholesaleMinQty.trim() !== '') {
-    wholesaleMinQty = parseCount(v.wholesaleMinQty, 2);
-    if (wholesaleMinQty === null) errors.wholesaleMinQty = 'À partir de 2 articles au moins.';
+  let costPrice: number | null = null;
+  if (v.costPrice.trim() !== '') {
+    costPrice = parseAmount(v.costPrice);
+    if (costPrice === null) errors.costPrice = priceHint(currency);
   }
+
+  const typedOffers = offersOf(v.offers, currency);
+  if (!typedOffers.ok) errors.offers = typedOffers.message;
 
   const optionLabel = v.optionLabel.trim() || null;
   const options = [...new Set(v.options.map((o) => o.trim()).filter(Boolean))];
 
-  if (Object.keys(errors).length > 0 || unitPrice === null) return { ok: false, errors };
+  if (Object.keys(errors).length > 0 || unitPrice === null || !typedOffers.ok) {
+    return { ok: false, errors };
+  }
 
   const broken = productRuleViolation({
     unitPrice,
-    wholesalePrice,
-    wholesaleMinQty,
+    offers: typedOffers.offers,
     optionLabel,
     options,
   });
-  if (broken) return { ok: false, errors: { [broken.field]: broken.message } };
+  if (broken) {
+    const message =
+      broken.offerIndex === undefined
+        ? broken.message
+        : aboutOffer(broken.offerIndex, broken.message);
+    return { ok: false, errors: { [broken.field]: message } };
+  }
 
   return {
     ok: true,
@@ -122,8 +164,7 @@ export function productFormToBody(
       description: v.description.trim() || null,
       unitLabel: v.unitLabel.trim() || 'pièce',
       unitPrice,
-      wholesalePrice,
-      wholesaleMinQty,
+      offers: typedOffers.offers,
       costPrice,
       photos: v.photos,
       optionLabel,

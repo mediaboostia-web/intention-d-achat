@@ -29,6 +29,7 @@ export function publicLink(
     unitPrice: 7500,
     wholesalePrice: 6000,
     wholesaleMinQty: 12,
+    offers: [{ kind: 'FROM', qty: 12, price: 6000, name: null }],
     costPrice: 4100,
     photos: [],
     optionLabel: 'Couleur',
