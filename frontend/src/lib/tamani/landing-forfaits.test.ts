@@ -105,20 +105,20 @@ describe('the comparison table', () => {
 
 describe('the pricing page for search engines', () => {
   it('forfaitsMetadata: own title, canonical /forfaits, the lowest and dearest pass in the description', () => {
-    const m = forfaitsMetadata('https://tamani.app/');
+    const m = forfaitsMetadata('https://tamani.win/');
     expect(m.title).toEqual({
       absolute: 'Tarifs Tamani | Forfaits pour grossistes et vendeurs en ligne',
     });
-    expect(m.alternates?.canonical).toBe('https://tamani.app/forfaits');
+    expect(m.alternates?.canonical).toBe('https://tamani.win/forfaits');
     expect(String(m.description)).toContain('Compare les forfaits Tamani : 7, 14 ou 30 jours');
     expect(String(m.description)).toContain(formatMoney(PLANS.MONTH_MAX.priceXof ?? 0, 'XOF'));
     expect(String(m.description)).toContain('Aucun renouvellement automatique.');
     expect(String(m.description).length).toBeLessThanOrEqual(160);
-    expect(m.openGraph).toMatchObject({ url: 'https://tamani.app/forfaits' });
+    expect(m.openGraph).toMatchObject({ url: 'https://tamani.win/forfaits' });
   });
 
   it('forfaitsJsonLd has its own FAQPage with the six pricing questions', () => {
-    const ld = forfaitsJsonLd('https://tamani.app/');
+    const ld = forfaitsJsonLd('https://tamani.win/');
     expect(ld['@type']).toBe('FAQPage');
     const q = ld['mainEntity'] as { name: string; acceptedAnswer: { text: string } }[];
     expect(q.map((x) => x.name)).toEqual(FORFAITS_FAQ.map((f) => f.question));

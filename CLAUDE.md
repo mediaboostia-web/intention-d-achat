@@ -127,6 +127,7 @@ The lot-by-lot notes moved out of this file on 2026-11-04, copied verbatim under
 | Wholesale offers (many « dès N » and pack offers, picked one or more times), stock per option that drops with paid orders, shipping, the unit dropdown (lot 19) | [docs/claude/tamani-lot-19-wholesale-offers.md](docs/claude/tamani-lot-19-wholesale-offers.md) |
 | The public site v2: home sections and their ids, the menu, `/forfaits` (duration switch, comparison table), SEO and AI files (`robots`, `sitemap`, `llms.txt`, JSON-LD), the big picture of the sign-in pages, motion, `CountUp`, touch targets (lot 12); the copy brief rules and the presentation film (lots 15, 16) | [docs/claude/tamani-lot-12-site-public.md](docs/claude/tamani-lot-12-site-public.md) |
 | The pre-launch waitlist: `/liste-attente`, its form and public route, `WaitlistEntry`, the sign-up buttons switched to it (`LANDING_SIGNUP_HREF`), the support-admin list and export (lot 14) | [docs/claude/tamani-lot-14-liste-attente.md](docs/claude/tamani-lot-14-liste-attente.md) |
+| The domain `tamani.win`: what reads `APP_URL`, and the steps outside the code (Vercel, Cloudflare DNS, Resend, Email Routing, Google, SasPay, cron-job.org) | [docs/claude/tamani-domain.md](docs/claude/tamani-domain.md) |
 | Removing a feature (pruning), recommending a provider (real-time → Ably, queues, storage…), what the fork may change | [docs/claude/providers-and-pruning.md](docs/claude/providers-and-pruning.md) |
 
 **Rules that cross every lot** (the files above give the detail and the test behind each):

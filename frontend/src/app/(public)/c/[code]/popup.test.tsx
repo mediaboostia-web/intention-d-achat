@@ -511,9 +511,9 @@ describe('PopupView', () => {
   });
 
   it('links Propulsé par Tamani to the app, in a new tab, on the free plan', () => {
-    const out = html(<PopupView campaign={campaign} state={start} homeUrl="https://tamani.app" />);
+    const out = html(<PopupView campaign={campaign} state={start} homeUrl="https://tamani.win" />);
     const link = (out.match(/<a [^>]*>/g) ?? []).find((a) => a.includes('?ref=diallo-import'));
-    expect(link).toContain('href="https://tamani.app/?ref=diallo-import"');
+    expect(link).toContain('href="https://tamani.win/?ref=diallo-import"');
     expect(link).toContain('target="_blank"');
     expect(link).toContain('rel="noopener"');
     const paid = { ...campaign, poweredByBadge: false };

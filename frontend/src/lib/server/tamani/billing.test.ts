@@ -315,7 +315,7 @@ describe('startCheckout', () => {
     userId: 'user_1',
     offer: 'MONTH' as const,
     now: NOW,
-    appUrl: 'https://tamani.app',
+    appUrl: 'https://tamani.win',
   };
 
   beforeEach(() => {
@@ -362,7 +362,7 @@ describe('startCheckout', () => {
       customerEmail: 'awa@example.com',
       customerName: 'Awa Diallo',
       description: 'Tamani · Pass Mois',
-      returnUrl: 'https://tamani.app/app/abonnement/retour?achat=ord_1',
+      returnUrl: 'https://tamani.win/app/abonnement/retour?achat=ord_1',
       metadata: { orderId: 'ord_1', organizationId: 'org_1', offer: 'MONTH' },
       expiresAt,
     });

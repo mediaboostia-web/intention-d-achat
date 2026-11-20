@@ -12,7 +12,7 @@ import {
 
 const VALID = {
   displayName: 'Tamani',
-  contactEmail: 'contact@tamani.app',
+  contactEmail: 'contact@tamani.win',
   whatsappContact: 'https://wa.me/2290195831126',
   community: 'https://chat.whatsapp.com/I7fReiTTlvO8WAyAjLVEu5',
   facebook: 'https://www.facebook.com/tamani',
@@ -25,7 +25,7 @@ const VALID = {
 const row = (over: Partial<PlatformSettingRow> = {}): PlatformSettingRow => ({
   id: 'platform',
   displayName: 'Tamani',
-  contactEmail: 'contact@tamani.app',
+  contactEmail: 'contact@tamani.win',
   whatsappContact: null,
   community: null,
   facebook: null,
@@ -128,7 +128,7 @@ describe('platform settings', () => {
     const r = rowFromInput(PlatformSettingsInput.parse(VALID));
     expect(r).toMatchObject({
       displayName: 'Tamani',
-      contactEmail: 'contact@tamani.app',
+      contactEmail: 'contact@tamani.win',
       captionsUrl: null,
     });
     expect(r).not.toHaveProperty('id');
@@ -144,7 +144,7 @@ describe('platform settings', () => {
     const defaults = columnsFromSettings(DEFAULT_PLATFORM_SETTINGS);
     expect(defaults.whatsappContact).toBe(LANDING_LINKS.whatsappContact);
     expect(defaults.videoUrl).toBe(LANDING_VIDEO?.src ?? null);
-    expect(changedFields(defaults, { ...defaults, contactEmail: 'autre@tamani.app' })).toEqual([
+    expect(changedFields(defaults, { ...defaults, contactEmail: 'autre@tamani.win' })).toEqual([
       'contactEmail',
     ]);
   });

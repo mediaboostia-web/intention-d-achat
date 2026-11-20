@@ -8,7 +8,7 @@ import { FORFAITS_FAQ } from '@/lib/tamani/landing-forfaits';
 const { SETTINGS } = vi.hoisted(() => ({
   SETTINGS: {
     displayName: 'Tamani',
-    contactEmail: 'bonjour@tamani.app',
+    contactEmail: 'bonjour@tamani.win',
     links: {
       whatsappContact: 'https://wa.me/2290100000001',
       community: null,
@@ -87,7 +87,7 @@ describe('/forfaits', () => {
 
   it('writes the saved contact address in the footer', () => {
     const foot = out.slice(out.indexOf('id="contact"'));
-    expect(foot).toContain('href="mailto:bonjour@tamani.app"');
+    expect(foot).toContain('href="mailto:bonjour@tamani.win"');
   });
 
   it('the trial card greys out what it lacks, a pass card says the rest is included', () => {
@@ -151,8 +151,8 @@ describe('/forfaits', () => {
   });
 
   it('generateMetadata reads APP_URL', () => {
-    vi.stubEnv('APP_URL', 'https://tamani.app/');
-    expect(generateMetadata().alternates?.canonical).toBe('https://tamani.app/forfaits');
+    vi.stubEnv('APP_URL', 'https://tamani.win/');
+    expect(generateMetadata().alternates?.canonical).toBe('https://tamani.win/forfaits');
   });
 
   it('the menu marks Forfaits as the current page, the skip link leads to the content', () => {

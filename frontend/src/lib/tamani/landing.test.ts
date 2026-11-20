@@ -125,13 +125,13 @@ describe('clampPercent', () => {
 });
 
 describe('landingJsonLd', () => {
-  const ld = landingJsonLd('https://tamani.app/');
+  const ld = landingJsonLd('https://tamani.win/');
   const graph = ld['@graph'] as Record<string, unknown>[];
   const byType = (t: string) => graph.find((n) => n['@type'] === t) as Record<string, unknown>;
 
   it('names the organisation and the site at APP_URL', () => {
-    expect(byType('Organization')['url']).toBe('https://tamani.app/');
-    expect(byType('WebSite')['@id']).toBe('https://tamani.app/#site');
+    expect(byType('Organization')['url']).toBe('https://tamani.win/');
+    expect(byType('WebSite')['@id']).toBe('https://tamani.win/#site');
   });
 
   it('JSON-LD sells one aggregate offer in XOF, from the trial to the dearest pass', () => {
@@ -147,7 +147,7 @@ describe('landingJsonLd', () => {
 
   it('the organisation gives its WhatsApp contact and only the social links that exist', () => {
     const org = (links: typeof ALL_LINKS | typeof NO_LINKS) =>
-      (landingJsonLd('https://tamani.app/', links)['@graph'] as Record<string, unknown>[]).find(
+      (landingJsonLd('https://tamani.win/', links)['@graph'] as Record<string, unknown>[]).find(
         (n) => n['@type'] === 'Organization',
       ) as Record<string, unknown>;
     expect(org(ALL_LINKS)['sameAs']).toEqual([
@@ -178,16 +178,16 @@ describe('landingJsonLd', () => {
 
 describe('landingMetadata', () => {
   it('uses APP_URL for canonical and og:url', () => {
-    const m = landingMetadata('https://tamani.app/');
+    const m = landingMetadata('https://tamani.win/');
     expect(m.title).toEqual({ absolute: LANDING_TITLE });
     expect(m.description).toBe(LANDING_DESCRIPTION);
-    expect(m.alternates?.canonical).toBe('https://tamani.app/');
+    expect(m.alternates?.canonical).toBe('https://tamani.win/');
     expect(m.openGraph).toMatchObject({
-      url: 'https://tamani.app/',
+      url: 'https://tamani.win/',
       locale: 'fr_FR',
       siteName: 'Tamani',
     });
-    expect(JSON.stringify(m.openGraph)).toContain('https://tamani.app/brand/og-default.png');
+    expect(JSON.stringify(m.openGraph)).toContain('https://tamani.win/brand/og-default.png');
     expect(m.twitter).toMatchObject({ card: 'summary_large_image' });
   });
 });
@@ -292,7 +292,7 @@ describe('the menu, the titles and the questions of the new site', () => {
   });
 
   it('shares the promise in Open Graph', () => {
-    const m = landingMetadata('https://tamani.app/');
+    const m = landingMetadata('https://tamani.win/');
     expect(m.openGraph).toMatchObject({
       title: "Teste l'intérêt de tes clients avant de commander ton stock | Tamani",
       description:
@@ -301,8 +301,8 @@ describe('the menu, the titles and the questions of the new site', () => {
   });
 
   it('the JSON-LD links default to the porteur ones', () => {
-    expect(landingJsonLd('https://tamani.app/')).toEqual(
-      landingJsonLd('https://tamani.app/', LANDING_LINKS),
+    expect(landingJsonLd('https://tamani.win/')).toEqual(
+      landingJsonLd('https://tamani.win/', LANDING_LINKS),
     );
   });
 });

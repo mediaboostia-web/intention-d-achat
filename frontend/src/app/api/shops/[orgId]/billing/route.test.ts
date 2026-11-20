@@ -39,7 +39,7 @@ beforeEach(async () => {
   billing.startCheckout.mockReset();
   billing.reconcileOrder.mockReset();
   billing.reconcileOrder.mockResolvedValue('PENDING');
-  vi.stubEnv('APP_URL', 'https://tamani.app');
+  vi.stubEnv('APP_URL', 'https://tamani.win');
 });
 
 describe('POST /api/shops/[orgId]/billing/checkout', () => {
@@ -59,7 +59,7 @@ describe('POST /api/shops/[orgId]/billing/checkout', () => {
       userId: 'user_1',
       offer: 'MONTH',
       now: expect.any(Date),
-      appUrl: 'https://tamani.app',
+      appUrl: 'https://tamani.win',
     });
   });
 

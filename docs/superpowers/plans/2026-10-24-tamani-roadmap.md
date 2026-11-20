@@ -727,7 +727,7 @@ Plan détaillé : [2026-10-29-tamani-08-forfaits-saspay.md](2026-10-29-tamani-08
 4. **Mise en production** (étapes humaines signalées) :
    - projet Vercel et variables d'environnement ;
    - choix du planificateur des tâches ;
-   - achat de `tamani.app` et configuration DNS ;
+   - achat de `tamani.win` (fait le 2026-11-20, Cloudflare) et configuration DNS ;
    - domaine vérifié chez Resend ;
    - clés SasPay live et webhook déclaré dans le tableau de bord SasPay ;
    - Sentry ;

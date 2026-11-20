@@ -194,7 +194,7 @@ export function Orbit({ startCount = 58 }: { startCount?: number }) {
         <Logo variant="mark" size={52} />
         <span className="lp-linkpill">
           <Icon name="link" />
-          tamani.app/c/tAByq3A
+          tamani.win/c/tAByq3A
         </span>
         <p className="lp-orbit__count">
           <b>{formatPrice(count)}</b>réponses reçues

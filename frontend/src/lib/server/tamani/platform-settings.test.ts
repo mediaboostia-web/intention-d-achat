@@ -7,7 +7,7 @@ describe('loadPlatformSettings', () => {
     const findUnique = vi.fn().mockResolvedValue({
       id: 'platform',
       displayName: 'Tamani',
-      contactEmail: 'contact@tamani.app',
+      contactEmail: 'contact@tamani.win',
       whatsappContact: 'https://wa.me/229',
       community: null,
       facebook: 'https://www.facebook.com/tamani',
@@ -21,7 +21,7 @@ describe('loadPlatformSettings', () => {
     const s = await loadPlatformSettings({ platformSetting: { findUnique } } as never);
     expect(findUnique).toHaveBeenCalledWith({ where: { id: 'platform' } });
     expect(s.links.facebook).toBe('https://www.facebook.com/tamani');
-    expect(s.contactEmail).toBe('contact@tamani.app');
+    expect(s.contactEmail).toBe('contact@tamani.win');
   });
 
   it('keeps the site up when the database cannot be reached', async () => {

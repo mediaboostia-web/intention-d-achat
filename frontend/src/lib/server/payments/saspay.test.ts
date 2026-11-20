@@ -31,7 +31,7 @@ const session = {
   customerEmail: 'awa@example.com',
   customerName: 'Awa Diallo',
   description: 'Tamani · Pass Mois',
-  returnUrl: 'https://tamani.app/app/abonnement/retour?achat=ord_1',
+  returnUrl: 'https://tamani.win/app/abonnement/retour?achat=ord_1',
   metadata: { orderId: 'ord_1', organizationId: 'org_1', offer: 'MONTH' },
   expiresAt: new Date('2026-10-29T11:00:00.000Z'),
 };
@@ -80,7 +80,7 @@ describe('createCheckoutSession', () => {
       customer_email: 'awa@example.com',
       customer_name: 'Awa Diallo',
       description: 'Tamani · Pass Mois',
-      return_url: 'https://tamani.app/app/abonnement/retour?achat=ord_1',
+      return_url: 'https://tamani.win/app/abonnement/retour?achat=ord_1',
       metadata: { orderId: 'ord_1', organizationId: 'org_1', offer: 'MONTH' },
       fee_charge_mode: 'ADD_ON',
       expires_at: '2026-10-29T11:00:00.000Z',

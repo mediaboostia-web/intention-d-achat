@@ -64,11 +64,11 @@ describe('thanksCopy', () => {
 
 describe('poweredByHref', () => {
   it('points to the app at its production address, with the shop as referrer', () => {
-    expect(poweredByHref('https://tamani.app', 'diallo-import')).toBe(
-      'https://tamani.app/?ref=diallo-import',
+    expect(poweredByHref('https://tamani.win', 'diallo-import')).toBe(
+      'https://tamani.win/?ref=diallo-import',
     );
-    expect(poweredByHref('https://tamani.app/', 'sow & fils')).toBe(
-      'https://tamani.app/?ref=sow%20%26%20fils',
+    expect(poweredByHref('https://tamani.win/', 'sow & fils')).toBe(
+      'https://tamani.win/?ref=sow%20%26%20fils',
     );
   });
 });

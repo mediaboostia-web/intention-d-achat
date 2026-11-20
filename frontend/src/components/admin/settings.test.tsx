@@ -7,7 +7,7 @@ vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigati
 
 const SETTINGS: PlatformSettings = {
   displayName: 'Tamani',
-  contactEmail: 'contact@tamani.app',
+  contactEmail: 'contact@tamani.win',
   links: {
     whatsappContact: 'https://wa.me/2290195831126',
     community: null,
@@ -19,7 +19,7 @@ const SETTINGS: PlatformSettings = {
 };
 
 const view = (canEdit: boolean) => (
-  <SettingsView settings={SETTINGS} canEdit={canEdit} appUrl="https://tamani.app" />
+  <SettingsView settings={SETTINGS} canEdit={canEdit} appUrl="https://tamani.win" />
 );
 
 describe('SettingsView', () => {
@@ -48,7 +48,7 @@ describe('SettingsView', () => {
     expect(out).not.toContain('<form');
     expect(out).not.toContain('<input');
     const t = text(view(false));
-    expect(t).toContain('contact@tamani.app');
+    expect(t).toContain('contact@tamani.win');
     expect(t).toContain('https://www.facebook.com/tamani');
     expect(t).toContain('Réservé au super-admin');
   });
@@ -56,9 +56,9 @@ describe('SettingsView', () => {
   it('shows the domain as text that is changed in Vercel', () => {
     for (const canEdit of [true, false]) {
       const t = text(view(canEdit));
-      expect(t).toContain('https://tamani.app');
+      expect(t).toContain('https://tamani.win');
       expect(t).toContain('Se change dans Vercel');
-      expect(html(view(canEdit))).not.toContain('value="https://tamani.app"');
+      expect(html(view(canEdit))).not.toContain('value="https://tamani.win"');
     }
   });
 });

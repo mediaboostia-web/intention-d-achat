@@ -15,7 +15,7 @@ const campaign = {
 
 describe('popupMetadata', () => {
   it('previews the product photo, its name, its price and the shop', () => {
-    const m = popupMetadata(campaign, 'https://tamani.app');
+    const m = popupMetadata(campaign, 'https://tamani.win');
     expect(m.title).toBe('Marmites inox 5 L · 7 500 FCFA');
     expect(m.description).toBe(
       'Diallo Import · Arrivage dans 10 jours. Réponds en moins de 30 secondes.',
@@ -24,7 +24,7 @@ describe('popupMetadata', () => {
       type: 'website',
       siteName: 'Tamani',
       locale: 'fr_FR',
-      url: 'https://tamani.app/c/Ab3dE7x',
+      url: 'https://tamani.win/c/Ab3dE7x',
       title: 'Marmites inox 5 L · 7 500 FCFA',
       images: [
         {
@@ -41,15 +41,15 @@ describe('popupMetadata', () => {
 
   it('falls back to the brand image without a photo', () => {
     const bare = { ...campaign, product: { ...campaign.product, photos: [] } };
-    const m = popupMetadata(bare, 'https://tamani.app/');
+    const m = popupMetadata(bare, 'https://tamani.win/');
     expect(m.openGraph).toMatchObject({
-      url: 'https://tamani.app/c/Ab3dE7x',
-      images: [{ url: 'https://tamani.app/brand/og-default.png', width: 1200, height: 630 }],
+      url: 'https://tamani.win/c/Ab3dE7x',
+      images: [{ url: 'https://tamani.win/brand/og-default.png', width: 1200, height: 630 }],
     });
   });
 
   it('names an unknown link without leaking anything', () => {
-    const m = popupMetadata(null, 'https://tamani.app');
+    const m = popupMetadata(null, 'https://tamani.win');
     expect(m.title).toBe('Lien introuvable · Tamani');
     expect(m.robots).toMatchObject({ index: false, follow: false });
     expect(m.openGraph).toBeUndefined();
@@ -59,6 +59,6 @@ describe('popupMetadata', () => {
 describe('popupMetadata in the shop currency (lot 7b)', () => {
   it('previews a Guinean price in FG', () => {
     const gn = { ...campaign, shop: { ...campaign.shop, currency: 'GNF' } };
-    expect(popupMetadata(gn, 'https://tamani.app').title).toBe('Marmites inox 5 L · 7 500 FG');
+    expect(popupMetadata(gn, 'https://tamani.win').title).toBe('Marmites inox 5 L · 7 500 FG');
   });
 });

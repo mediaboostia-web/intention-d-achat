@@ -12,7 +12,7 @@ describe('GET /api/push/public-key', () => {
   it('returns the VAPID public key when push is configured', async () => {
     vi.stubEnv('VAPID_PUBLIC_KEY', 'BPublicKey');
     vi.stubEnv('VAPID_PRIVATE_KEY', 'private');
-    vi.stubEnv('VAPID_SUBJECT', 'mailto:notifications@tamani.app');
+    vi.stubEnv('VAPID_SUBJECT', 'mailto:notifications@tamani.win');
     const res = await GET(req());
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ publicKey: 'BPublicKey' });
