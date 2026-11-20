@@ -13,7 +13,7 @@ const payload = { title: 'T', body: 'B', url: '/app', tag: 'campaign:c1' };
 beforeEach(() => {
   vi.stubEnv('VAPID_PUBLIC_KEY', 'pub');
   vi.stubEnv('VAPID_PRIVATE_KEY', 'priv');
-  vi.stubEnv('VAPID_SUBJECT', 'mailto:notifications@tamani.app');
+  vi.stubEnv('VAPID_SUBJECT', 'mailto:notifications@tamani.win');
 });
 
 afterEach(() => {
@@ -42,7 +42,7 @@ describe('web push', () => {
         TTL: 86400,
         urgency: 'high',
         vapidDetails: {
-          subject: 'mailto:notifications@tamani.app',
+          subject: 'mailto:notifications@tamani.win',
           publicKey: 'pub',
           privateKey: 'priv',
         },
@@ -53,12 +53,12 @@ describe('web push', () => {
   // 2026-11-04: pushes never rang. A value pasted with its quotes in Vercel
   // makes web-push throw, and every push failed without a word.
   it('reads keys pasted with their quotes', async () => {
-    vi.stubEnv('VAPID_SUBJECT', '"mailto:notifications@tamani.app"');
+    vi.stubEnv('VAPID_SUBJECT', '"mailto:notifications@tamani.win"');
     vi.stubEnv('VAPID_PUBLIC_KEY', "'pub'");
     lib.sendNotification.mockResolvedValue({ statusCode: 201 });
     expect(await sendPush(sub, payload)).toBe('SENT');
     expect(lib.sendNotification.mock.calls.at(-1)?.[2].vapidDetails).toEqual({
-      subject: 'mailto:notifications@tamani.app',
+      subject: 'mailto:notifications@tamani.win',
       publicKey: 'pub',
       privateKey: 'priv',
     });

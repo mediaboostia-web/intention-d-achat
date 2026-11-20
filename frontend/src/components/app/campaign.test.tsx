@@ -204,7 +204,7 @@ describe('CampaignWizard', () => {
     const t = text(wizard(s));
     expect(t).toContain('Enregistrer en brouillon');
     expect(t).toContain('Lancer la campagne');
-    expect(t).toContain('Marmites dispo ! tamani.app/c/');
+    expect(t).toContain('Marmites dispo ! tamani.win/c/');
   });
 });
 

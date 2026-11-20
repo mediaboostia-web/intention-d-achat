@@ -10,7 +10,7 @@ import HomePage, { generateMetadata } from './page';
 
 const SAVED: PlatformSettings = {
   displayName: 'Tamani',
-  contactEmail: 'bonjour@tamani.app',
+  contactEmail: 'bonjour@tamani.win',
   links: {
     whatsappContact: 'https://wa.me/2290100000000',
     community: null,
@@ -68,7 +68,7 @@ describe('/ (the home page)', () => {
   });
 
   it('embeds the JSON-LD graph, readable by JSON.parse', async () => {
-    vi.stubEnv('APP_URL', 'https://tamani.app');
+    vi.stubEnv('APP_URL', 'https://tamani.win');
     const ld = jsonLdOf(await page());
     expect(ld).toBeDefined();
     const graph = JSON.parse(ld!) as { '@graph': { '@type': string }[] };
@@ -98,8 +98,8 @@ describe('/ (the home page)', () => {
   });
 
   it('generateMetadata reads APP_URL', () => {
-    vi.stubEnv('APP_URL', 'https://tamani.app/');
-    expect(generateMetadata().alternates?.canonical).toBe('https://tamani.app/');
+    vi.stubEnv('APP_URL', 'https://tamani.win/');
+    expect(generateMetadata().alternates?.canonical).toBe('https://tamani.win/');
   });
 });
 
@@ -116,7 +116,7 @@ describe('/ reads the platform settings (lot 13a)', () => {
       '@graph': { sameAs?: string[]; contactPoint?: { email: string } }[];
     };
     expect(graph['@graph'][0]?.sameAs).toEqual(['https://www.facebook.com/tamani.app']);
-    expect(graph['@graph'][0]?.contactPoint?.email).toBe('bonjour@tamani.app');
+    expect(graph['@graph'][0]?.contactPoint?.email).toBe('bonjour@tamani.win');
   });
 
   it('shows the sign-up button in the community section when no group is saved', async () => {
@@ -129,7 +129,7 @@ describe('/ reads the platform settings (lot 13a)', () => {
   it('writes the saved contact address in the footer', async () => {
     const out = await page();
     const foot = out.slice(out.indexOf('id="contact"'));
-    expect(foot).toContain('href="mailto:bonjour@tamani.app"');
-    expect(text(await HomePage())).toContain('bonjour@tamani.app');
+    expect(foot).toContain('href="mailto:bonjour@tamani.win"');
+    expect(text(await HomePage())).toContain('bonjour@tamani.win');
   });
 });

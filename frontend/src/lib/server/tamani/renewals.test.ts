@@ -38,7 +38,7 @@ function given(reminders: object[], graces: object[] = [], trials: object[] = []
 
 beforeEach(() => {
   mail.enqueue.mockClear();
-  vi.stubEnv('APP_URL', 'https://tamani.app');
+  vi.stubEnv('APP_URL', 'https://tamani.win');
   prismaMock.organizationMember.findMany.mockImplementation((async (args: {
     where: { organizationId: { in: string[] } };
   }) =>
@@ -86,7 +86,7 @@ describe('runRenewals', () => {
     expect(mail.enqueue).toHaveBeenCalledWith({
       to: 'org_1@example.com',
       subject: 'Ton pass Tamani finit le 12 novembre',
-      html: expect.stringContaining('https://tamani.app/app/abonnement'),
+      html: expect.stringContaining('https://tamani.win/app/abonnement'),
       text: expect.stringContaining('Rachète-le pour garder tes réponses ouvertes.'),
     });
 

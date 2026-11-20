@@ -291,7 +291,7 @@ Pourquoi (observations du porteur dans les communautés du Bénin, du Togo et du
 - Bictorys, prévu par défaut dans le kit, est **retiré** [choix].
 
 ### 5.8 Identité visuelle
-- **Nom** [décidé] : Tamani. Le domaine `tamani.app` est libre au 2026-10-24 et sera acheté plus tard par le porteur du projet. `gettamani.com` est également libre.
+- **Nom** [décidé] : Tamani. Le domaine est `tamani.win`, acheté chez Cloudflare par le porteur (2026-11-20) ; `tamani.app` n'a pas été pris.
 - **Direction** [hypothèse, à produire avec le skill `ui-ux-pro-max`] : chaleureuse et humaine. Couleurs inspirées du bois et du cuir du tambour (ocre, terracotta) et de l'indigo des tissus d'Afrique de l'Ouest, avec un neutre crème. Logo : silhouette du *tamani* (tambour en sablier) qui se lit aussi comme une bulle de parole ou une onde sonore. Typographie de titres avec du caractère, et une police de texte très lisible sur petit écran.
 - **Exigence du porteur du projet** [décidé] : la maquette du 2026-10-24 valide la **structure** du tableau de bord, **pas son style**. L'identité et les écrans doivent atteindre un niveau de design exceptionnel, sans rien de générique. On présentera plusieurs pistes sur maquettes avant de valider.
 - **Outils** : le skill `ui-ux-pro-max` (déjà installé) produit le logo SVG, la palette, la typographie et les tokens. Le dépôt `claudedesignskills` (fourni par le porteur du projet) ne contient **pas** d'outil de design system ni de logo : uniquement de l'animation et de la 3D. On ne l'utilise que pour les animations du tableau de bord et de la page d'accueil (par exemple `motion-framer`), **jamais dans le pop-up**, où les animations restent en CSS pour respecter le budget de performance (§6.6).
@@ -459,4 +459,4 @@ Ensuite :
 - **Faux numéros** sans vérification par SMS : limités par le contrôle de format, les répondants suspects et le fait que le répondant a intérêt à être prévenu.
 - **Rattachement des paiements SasPay** : à confirmer dans la spécification OpenAPI (§6.7).
 - **Coût d'hébergement** des tâches planifiées chaque minute (§6.8).
-- **Disponibilité du nom de domaine** : `tamani.app` était libre le 2026-10-24, mais n'est pas réservé.
+- **Nom de domaine** : réglé le 2026-11-20, `tamani.win` (Cloudflare). Les étapes de branchement sont dans [docs/claude/tamani-domain.md](../../claude/tamani-domain.md).

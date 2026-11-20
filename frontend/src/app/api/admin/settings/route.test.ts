@@ -29,7 +29,7 @@ import { GET, PUT } from './route';
 
 const BODY = {
   displayName: 'Tamani',
-  contactEmail: 'contact@tamani.app',
+  contactEmail: 'contact@tamani.win',
   whatsappContact: 'https://wa.me/2290195831126',
   community: '',
   facebook: 'https://www.facebook.com/tamani',
@@ -42,7 +42,7 @@ const BODY = {
 const SAVED = {
   id: 'platform',
   displayName: 'Tamani',
-  contactEmail: 'contact@tamani.app',
+  contactEmail: 'contact@tamani.win',
   whatsappContact: 'https://wa.me/2290195831126',
   community: null,
   facebook: 'https://www.facebook.com/tamani',
@@ -133,7 +133,7 @@ describe('GET /api/admin/settings', () => {
     const res = await GET(adminRequest('/api/admin/settings', 'GET'));
     expect(res.status).toBe(200);
     const json = (await res.json()) as { settings: { contactEmail: string } };
-    expect(json.settings.contactEmail).toBe('contact@tamani.app');
+    expect(json.settings.contactEmail).toBe('contact@tamani.win');
     expect(requireAdmin).toHaveBeenCalledWith('ADMIN');
   });
 });

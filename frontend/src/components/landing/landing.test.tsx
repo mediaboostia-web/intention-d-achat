@@ -600,8 +600,8 @@ describe('LandingFooter', () => {
   });
 
   it('writes the contact address it is given (lot 13a settings)', () => {
-    const out = html(<LandingFooter links={NO_LINKS} contactEmail="bonjour@tamani.app" />);
-    expect(out).toContain('href="mailto:bonjour@tamani.app"');
+    const out = html(<LandingFooter links={NO_LINKS} contactEmail="bonjour@tamani.win" />);
+    expect(out).toContain('href="mailto:bonjour@tamani.win"');
     expect(out).not.toContain(`mailto:${LANDING_CONTACT_EMAIL}`);
   });
 });

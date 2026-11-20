@@ -51,7 +51,7 @@ export interface ShopCampaign {
 }
 
 /** Stands for the share link before the campaign exists (the code is drawn at creation). */
-export const PREVIEW_LINK = 'tamani.app/c/•••••••';
+export const PREVIEW_LINK = 'tamani.win/c/•••••••';
 
 /** "jusqu'au 3 novembre", "sans date de fin", "terminée le 20 octobre", "arrivée le 23 octobre". */
 export function endLine(

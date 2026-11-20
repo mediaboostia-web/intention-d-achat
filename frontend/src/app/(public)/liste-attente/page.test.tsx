@@ -70,7 +70,7 @@ describe('/liste-attente', () => {
   });
 
   it('has its own canonical address', () => {
-    vi.stubEnv('APP_URL', 'https://tamani.app/');
-    expect(generateMetadata().alternates?.canonical).toBe('https://tamani.app/liste-attente');
+    vi.stubEnv('APP_URL', 'https://tamani.win/');
+    expect(generateMetadata().alternates?.canonical).toBe('https://tamani.win/liste-attente');
   });
 });

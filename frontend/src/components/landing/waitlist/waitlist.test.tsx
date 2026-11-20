@@ -5,7 +5,7 @@ import { WaitlistForm } from './WaitlistForm';
 import { WaitlistThanks, inviteHref } from './WaitlistThanks';
 
 describe('WaitlistForm', () => {
-  const out = html(<WaitlistForm appUrl="https://tamani.app" community={null} />);
+  const out = html(<WaitlistForm appUrl="https://tamani.win" community={null} />);
 
   it('labels every field and asks for the consent', () => {
     for (const id of ['wait-firstName', 'wait-phone', 'wait-email', 'wait-consent']) {
@@ -14,7 +14,7 @@ describe('WaitlistForm', () => {
     for (const id of ['wait-firstName', 'wait-phone', 'wait-email']) {
       expect(out, id).toContain(`<label for="${id}"`);
     }
-    const t = text(<WaitlistForm appUrl="https://tamani.app" community={null} />);
+    const t = text(<WaitlistForm appUrl="https://tamani.win" community={null} />);
     expect(t).toContain('Ton prénom');
     expect(t).toContain('Ton numéro WhatsApp');
     expect(t).toContain('Ton adresse e-mail (facultative si le numéro WhatsApp est renseigné)');
@@ -65,7 +65,7 @@ describe('WaitlistThanks', () => {
       <WaitlistThanks
         firstName="Awa"
         position={12}
-        appUrl="https://tamani.app/"
+        appUrl="https://tamani.win/"
         community="https://chat.whatsapp.com/abc"
       />
     );
@@ -75,19 +75,19 @@ describe('WaitlistThanks', () => {
     expect(t).toContain('Tu es n° 12');
     const out = html(view);
     expect(out).toContain('href="https://wa.me/?text=');
-    expect(inviteHref('https://tamani.app/')).toContain(
-      encodeURIComponent('https://tamani.app/liste-attente?src=parrainage'),
+    expect(inviteHref('https://tamani.win/')).toContain(
+      encodeURIComponent('https://tamani.win/liste-attente?src=parrainage'),
     );
     expect(out).toContain('href="https://chat.whatsapp.com/abc"');
     expect(t).toContain('Rejoindre le groupe WhatsApp');
-    expect(decodeURIComponent(inviteHref('https://tamani.app'))).toContain(
+    expect(decodeURIComponent(inviteHref('https://tamani.win'))).toContain(
       "Je viens de m'inscrire sur la liste d'attente de Tamani",
     );
   });
 
   it('shows no rank for a bot and no group without its link', () => {
     const t = text(
-      <WaitlistThanks firstName="Awa" position={0} appUrl="https://tamani.app" community={null} />,
+      <WaitlistThanks firstName="Awa" position={0} appUrl="https://tamani.win" community={null} />,
     );
     expect(t).not.toContain('Tu es n°');
     expect(t).not.toContain('Rejoindre le groupe');

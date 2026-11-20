@@ -11,10 +11,10 @@ afterEach(() => {
 
 describe('robots.txt', () => {
   it('keeps crawlers out of the shop space, the admin and the API, and points to the sitemap', () => {
-    vi.stubEnv('APP_URL', 'https://tamani.app/');
+    vi.stubEnv('APP_URL', 'https://tamani.win/');
     const r = robots();
     expect(r.rules).toEqual([{ userAgent: '*', allow: '/', disallow: ['/app', '/admin', '/api'] }]);
-    expect(r.sitemap).toBe('https://tamani.app/sitemap.xml');
+    expect(r.sitemap).toBe('https://tamani.win/sitemap.xml');
   });
 
   it('never names the back-office, which its own noindex keeps out of search', () => {
@@ -42,16 +42,16 @@ describe('robots.txt', () => {
 
 describe('sitemap.xml', () => {
   it('lists the home page, /forfaits, the waitlist, then the legal pages', () => {
-    vi.stubEnv('APP_URL', 'https://tamani.app');
+    vi.stubEnv('APP_URL', 'https://tamani.win');
     const legal = (path: string) => ({
-      url: `https://tamani.app${path}`,
+      url: `https://tamani.win${path}`,
       changeFrequency: 'yearly',
       priority: 0.2,
     });
     expect(sitemap()).toEqual([
-      { url: 'https://tamani.app/', changeFrequency: 'weekly', priority: 1 },
-      { url: 'https://tamani.app/forfaits', changeFrequency: 'monthly', priority: 0.9 },
-      { url: 'https://tamani.app/liste-attente', changeFrequency: 'weekly', priority: 0.9 },
+      { url: 'https://tamani.win/', changeFrequency: 'weekly', priority: 1 },
+      { url: 'https://tamani.win/forfaits', changeFrequency: 'monthly', priority: 0.9 },
+      { url: 'https://tamani.win/liste-attente', changeFrequency: 'weekly', priority: 0.9 },
       legal('/cgu'),
       legal('/confidentialite'),
       legal('/securite'),
@@ -62,15 +62,15 @@ describe('sitemap.xml', () => {
 
 describe('llms.txt', () => {
   it('says what Tamani is and links the home, pricing and FAQ', async () => {
-    vi.stubEnv('APP_URL', 'https://tamani.app/');
+    vi.stubEnv('APP_URL', 'https://tamani.win/');
     const res = llmsTxt();
     expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8');
     const body = await res.text();
     expect(body.startsWith('# Tamani')).toBe(true);
     for (const url of [
-      'https://tamani.app/',
-      'https://tamani.app/forfaits',
-      'https://tamani.app/#faq',
+      'https://tamani.win/',
+      'https://tamani.win/forfaits',
+      'https://tamani.win/#faq',
     ]) {
       expect(body).toContain(url);
     }

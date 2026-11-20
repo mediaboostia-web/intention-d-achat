@@ -19,7 +19,7 @@ function load(windows: FakeWindow[] = []) {
     addEventListener: (type: string, fn: (e: unknown) => void) => (handlers[type] = fn),
     registration: { showNotification: vi.fn(async () => {}) },
     clients: { matchAll: vi.fn(async () => windows), openWindow: vi.fn(async () => null) },
-    location: { origin: 'https://tamani.app' },
+    location: { origin: 'https://tamani.win' },
   };
   vm.runInNewContext(SW, { self, URL });
   const fire = async (type: string, event: object) => {
@@ -58,12 +58,12 @@ describe('service worker', () => {
     const close = vi.fn();
     await fire('notificationclick', { notification: { close, data: { url: payload.url } } });
     expect(close).toHaveBeenCalled();
-    expect(self.clients.openWindow).toHaveBeenCalledWith('https://tamani.app/app/campagnes/camp_1');
+    expect(self.clients.openWindow).toHaveBeenCalledWith('https://tamani.win/app/campagnes/camp_1');
   });
 
   it('brings an open Tamani tab forward instead of opening another', async () => {
     const tab: FakeWindow = {
-      url: 'https://tamani.app/app',
+      url: 'https://tamani.win/app',
       focus: vi.fn(async () => tab),
       navigate: vi.fn(async () => tab),
     };
@@ -72,7 +72,7 @@ describe('service worker', () => {
       notification: { close: vi.fn(), data: { url: payload.url } },
     });
     expect(tab.focus).toHaveBeenCalled();
-    expect(tab.navigate).toHaveBeenCalledWith('https://tamani.app/app/campagnes/camp_1');
+    expect(tab.navigate).toHaveBeenCalledWith('https://tamani.win/app/campagnes/camp_1');
     expect(self.clients.openWindow).not.toHaveBeenCalled();
   });
 
@@ -94,7 +94,7 @@ describe('service worker', () => {
     const net = vi.fn(async () => page);
     const match = vi.fn(async () => offline);
     const { respond } = loadWith({ fetch: net, caches: { match } });
-    const request = { mode: 'navigate', method: 'GET', url: 'https://tamani.app/app' };
+    const request = { mode: 'navigate', method: 'GET', url: 'https://tamani.win/app' };
     expect(await respond(request)).toBe(page);
     net.mockRejectedValueOnce(new TypeError('Failed to fetch'));
     expect(await respond(request)).toBe(offline);
@@ -104,12 +104,12 @@ describe('service worker', () => {
   it('leaves the API, the files and sent forms to the browser', async () => {
     const { respond } = loadWith({ fetch: vi.fn() });
     expect(
-      await respond({ mode: 'cors', method: 'GET', url: 'https://tamani.app/api/shops/me' }),
+      await respond({ mode: 'cors', method: 'GET', url: 'https://tamani.win/api/shops/me' }),
     ).toBe(undefined);
-    expect(await respond({ mode: 'no-cors', method: 'GET', url: 'https://tamani.app/sw.js' })).toBe(
+    expect(await respond({ mode: 'no-cors', method: 'GET', url: 'https://tamani.win/sw.js' })).toBe(
       undefined,
     );
-    expect(await respond({ mode: 'navigate', method: 'POST', url: 'https://tamani.app/app' })).toBe(
+    expect(await respond({ mode: 'navigate', method: 'POST', url: 'https://tamani.win/app' })).toBe(
       undefined,
     );
   });
@@ -133,7 +133,7 @@ function loadWith(globals: { fetch?: unknown; caches?: Record<string, unknown> }
     addEventListener: (type: string, fn: (e: unknown) => void) => (handlers[type] = fn),
     skipWaiting: vi.fn(async () => {}),
     clients: { claim: vi.fn(async () => {}) },
-    location: { origin: 'https://tamani.app' },
+    location: { origin: 'https://tamani.win' },
   };
   vm.runInNewContext(SW, {
     self,

@@ -149,22 +149,22 @@ describe('campaign serializers', () => {
   };
 
   it('shareUrl strips the trailing slash of APP_URL', () => {
-    vi.stubEnv('APP_URL', 'https://tamani.app/');
-    expect(shareUrl('k3P9xQa')).toBe('https://tamani.app/c/k3P9xQa');
+    vi.stubEnv('APP_URL', 'https://tamani.win/');
+    expect(shareUrl('k3P9xQa')).toBe('https://tamani.win/c/k3P9xQa');
   });
 
   it('toCampaign renders the share message with the default link', () => {
-    vi.stubEnv('APP_URL', 'https://tamani.app');
+    vi.stubEnv('APP_URL', 'https://tamani.win');
     const c = toCampaign(campaign, now, 'XOF');
-    expect(c.defaultLink).toMatchObject({ code: 'k3P9xQa', url: 'https://tamani.app/c/k3P9xQa' });
+    expect(c.defaultLink).toMatchObject({ code: 'k3P9xQa', url: 'https://tamani.win/c/k3P9xQa' });
     expect(c.shareMessage).toBe(
-      '🔔 Nouveau : *Marmites inox 5 L* à 7 500 FCFA (gros : 6 000 FCFA dès 12). Arrivage dans 10 jours. 👉 https://tamani.app/c/k3P9xQa',
+      '🔔 Nouveau : *Marmites inox 5 L* à 7 500 FCFA (gros : 6 000 FCFA dès 12). Arrivage dans 10 jours. 👉 https://tamani.win/c/k3P9xQa',
     );
     expect(c.product).not.toHaveProperty('costPrice');
   });
 
   it('toCampaign writes a Guinean shop price in FG, never FCFA (lot 7b)', () => {
-    vi.stubEnv('APP_URL', 'https://tamani.app');
+    vi.stubEnv('APP_URL', 'https://tamani.win');
     const c = toCampaign(campaign, now, 'GNF');
     expect(c.shareMessage).toContain('7 500 FG (gros : 6 000 FG dès 12)');
     expect(c.shareMessage).not.toContain('FCFA');

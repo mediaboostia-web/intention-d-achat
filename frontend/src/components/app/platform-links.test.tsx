@@ -13,7 +13,7 @@ vi.mock('@/lib/server/prisma', () => ({ prisma: {} }));
 vi.mock('@/lib/server/tamani/platform-settings', () => ({
   loadPlatformSettings: vi.fn(async () => ({
     displayName: 'Tamani',
-    contactEmail: 'bonjour@tamani.app',
+    contactEmail: 'bonjour@tamani.win',
     links: { ...LANDING_LINKS, whatsappContact: 'https://wa.me/2290100000003' },
     video: null,
   })),
