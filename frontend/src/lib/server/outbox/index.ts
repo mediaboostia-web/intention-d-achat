@@ -18,7 +18,11 @@
  * because the row stays PENDING; the next dispatcher run picks it up.
  */
 import type { Prisma } from '@prisma/client';
+import { markWork } from '@/lib/server/cron/wake';
 import type { OutboxEvent } from './types';
+
+/** How long the drain keeps running after a row is written. */
+const OUTBOX_AWAKE_MS = 15 * 60_000;
 
 export type OutboxTxClient = Pick<Prisma.TransactionClient, 'outboxEvent'>;
 
@@ -33,6 +37,9 @@ export async function enqueueOutbox(
     },
     select: { id: true },
   });
+  // The drain cron leaves Neon asleep unless something is marked (2026-11-21).
+  // Marked before the commit: the drain then keeps looking for 15 minutes.
+  await markWork('outbox', OUTBOX_AWAKE_MS);
   return row;
 }
 

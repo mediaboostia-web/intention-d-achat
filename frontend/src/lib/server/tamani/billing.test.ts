@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PrismaClient } from '@prisma/client';
 import { SaspayError, type SaspayClient } from '@/lib/server/payments/saspay';
 import { runTransactionsInline } from '@/test-utils/shop-fixtures';
+
+const wake = vi.hoisted(() => ({ markWork: vi.fn(async () => {}) }));
+vi.mock('@/lib/server/cron/wake', () => wake);
 import {
   BillingError,
   SESSION_TTL_MS,
@@ -370,6 +373,8 @@ describe('startCheckout', () => {
       where: { id: 'ord_1' },
       data: { providerChargeId: 'sess_1', paymentUrl: 'https://checkout.saspay.me/abc' },
     });
+    // The billing cron wakes the database for the next two hours (Neon free plan).
+    expect(wake.markWork).toHaveBeenCalledWith('billing', 2 * 3_600_000);
   });
 
   it('startCheckout reuses the pending session on a double tap', async () => {

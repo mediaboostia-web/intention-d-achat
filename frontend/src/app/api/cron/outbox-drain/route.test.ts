@@ -6,6 +6,11 @@ vi.mock('@/lib/server/leader-lease', () => ({
   withLease: vi.fn(async (_r: unknown, _n: string, _t: number, fn: () => Promise<void>) => fn()),
 }));
 vi.mock('@/lib/server/redis', () => ({ redis: null }));
+const wake = vi.hoisted(() => ({
+  hasWork: vi.fn(async () => true),
+  markWork: vi.fn(async () => {}),
+}));
+vi.mock('@/lib/server/cron/wake', () => wake);
 
 const drainOutboxMock = vi.fn();
 vi.mock('@/lib/server/outbox/dispatcher', () => ({ drainOutbox: drainOutboxMock }));
@@ -37,6 +42,30 @@ function makeReq(name: string): NextRequest {
 }
 
 describe('POST /api/cron/outbox-drain (CRON-01, CRON-06)', () => {
+  it('lets the database sleep when nothing was marked (Neon free plan, 2026-11-21)', async () => {
+    wake.hasWork.mockResolvedValueOnce(false);
+    const { POST } = await import('./route');
+    const res = await POST(makeReq('outbox-drain'));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, processed: 0, skipped: true });
+    expect(wake.hasWork).toHaveBeenCalledWith('outbox');
+    expect(updateManyMock).not.toHaveBeenCalled();
+    expect(drainOutboxMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps itself awake a while after it processed rows (retries, backlog)', async () => {
+    drainOutboxMock.mockResolvedValueOnce({ processed: 3, succeeded: 2, failed: 1, dead: 0 });
+    const { POST } = await import('./route');
+    await POST(makeReq('outbox-drain'));
+    expect(wake.markWork).toHaveBeenCalledWith('outbox', 15 * 60_000);
+  });
+
+  it('does not mark when it processed nothing', async () => {
+    const { POST } = await import('./route');
+    await POST(makeReq('outbox-drain'));
+    expect(wake.markWork).not.toHaveBeenCalled();
+  });
+
   it('returns 401 when verifyCronSecret fails (CRON-06)', async () => {
     const { verifyCronSecret } = await import('@/lib/server/cron/auth');
     (verifyCronSecret as Mock).mockReturnValueOnce(
