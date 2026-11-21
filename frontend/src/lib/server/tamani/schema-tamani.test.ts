@@ -299,7 +299,7 @@ describe('Tamani core schema (lot 3)', () => {
     for (const name of ['Actualités', 'Opportunités', 'Outils', 'Problèmes et solutions']) {
       expect(sql).toContain(`'${name}'`);
     }
-    expect(sql).not.toMatch(/bDROPb|ALTER TABLE "(?!Blog)/);
+    expect(sql).not.toMatch(/\bDROP\b|ALTER TABLE "(?!Blog)/);
   });
 
   it('keeps the monthly marketing spend as migration 9h_marketing_spend (lot 11)', () => {
