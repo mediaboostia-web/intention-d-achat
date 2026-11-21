@@ -1,6 +1,7 @@
 // The shape every /api/admin/blog route shares (lot 13d): any admin reads,
 // a super-admin writes; a write runs in one transaction with its journal
-// line, then the public blog and the sitemap are rebuilt.
+// line, then the public blog and the sitemap are rebuilt. Each route names
+// its own gate (gatedAdmin / gatedSuperadmin), as the door contract asks.
 import 'server-only';
 import { revalidatePath } from 'next/cache';
 import { NextResponse, type NextRequest } from 'next/server';
@@ -13,7 +14,7 @@ import { makeRequestContext, withRequestContext } from '@/lib/server/observabili
 import { prisma } from '@/lib/server/prisma';
 import { BlogError } from '@/lib/server/tamani/blog';
 import { tamaniError } from '@/lib/server/tamani/errors';
-import { gatedAdmin, gatedSuperadmin } from './gate';
+import type { AdminContext } from '@/lib/server/middleware';
 
 type Tx = Prisma.TransactionClient;
 
@@ -41,13 +42,16 @@ export function rebuildBlog(): void {
   revalidatePath('/sitemap.xml');
 }
 
+type Gate = () => Promise<AdminContext | NextResponse>;
+
 export async function blogRead(
   req: NextRequest,
+  gate: Gate,
   read: () => Promise<unknown>,
 ): Promise<NextResponse> {
   const ctx = makeRequestContext(req.headers);
   return withRequestContext(ctx, async () => {
-    const auth = await gatedAdmin('ADMIN');
+    const auth = await gate();
     if (auth instanceof NextResponse) return auth;
     const limited = await enforceAdminRateLimit(auth.admin.id);
     if (limited) return limited;
@@ -65,6 +69,7 @@ export async function blogRead(
  */
 export async function blogWrite<S extends z.ZodType>(
   req: NextRequest,
+  gate: Gate,
   schema: S | null,
   write: (
     tx: Tx,
@@ -76,7 +81,7 @@ export async function blogWrite<S extends z.ZodType>(
   return withRequestContext(ctx, async () => {
     const csrfFail = verifyCsrf(req);
     if (csrfFail) return csrfFail;
-    const auth = await gatedSuperadmin();
+    const auth = await gate();
     if (auth instanceof NextResponse) return auth;
     const limited = await enforceAdminRateLimit(auth.admin.id);
     if (limited) return limited;

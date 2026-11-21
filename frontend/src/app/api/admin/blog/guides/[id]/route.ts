@@ -4,6 +4,7 @@ export const runtime = 'nodejs';
 
 import 'server-only';
 import type { NextRequest } from 'next/server';
+import { gatedSuperadmin } from '@/lib/server/tamani/admin/gate';
 import { blogWrite } from '@/lib/server/tamani/admin/blog-routes';
 import { deleteGuide, saveGuide } from '@/lib/server/tamani/blog';
 import { BlogGuideInput } from '@/lib/tamani/blog';
@@ -12,27 +13,37 @@ type Params = { params: Promise<{ id: string }> };
 
 export async function PATCH(req: NextRequest, { params }: Params) {
   const { id } = await params;
-  return blogWrite(req, BlogGuideInput, async (tx, input) => {
-    await saveGuide(tx, { id, input });
-    return {
-      json: { guide: { id } },
-      journal: {
-        action: 'blog.guide_update',
-        targetType: 'BlogGuide',
-        targetId: id,
-        metadata: { isDefault: input.isDefault },
-      },
-    };
-  });
+  return blogWrite(
+    req,
+    async () => await gatedSuperadmin(),
+    BlogGuideInput,
+    async (tx, input) => {
+      await saveGuide(tx, { id, input });
+      return {
+        json: { guide: { id } },
+        journal: {
+          action: 'blog.guide_update',
+          targetType: 'BlogGuide',
+          targetId: id,
+          metadata: { isDefault: input.isDefault },
+        },
+      };
+    },
+  );
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {
   const { id } = await params;
-  return blogWrite(req, null, async (tx) => {
-    await deleteGuide(tx, id);
-    return {
-      json: { deleted: true },
-      journal: { action: 'blog.guide_delete', targetType: 'BlogGuide', targetId: id },
-    };
-  });
+  return blogWrite(
+    req,
+    async () => await gatedSuperadmin(),
+    null,
+    async (tx) => {
+      await deleteGuide(tx, id);
+      return {
+        json: { deleted: true },
+        journal: { action: 'blog.guide_delete', targetType: 'BlogGuide', targetId: id },
+      };
+    },
+  );
 }

@@ -10,6 +10,7 @@ export const ADMIN_NAV = [
   { href: `${ADMIN_HOME}/liste-attente`, label: "Liste d'attente", icon: 'rows' },
   { href: `${ADMIN_HOME}/boutiques`, label: 'Boutiques', icon: 'home' },
   { href: `${ADMIN_HOME}/utilisateurs`, label: 'Utilisateurs', icon: 'people' },
+  { href: `${ADMIN_HOME}/blog`, label: 'Blog', icon: 'pencil' },
   { href: `${ADMIN_HOME}/journal`, label: 'Journal', icon: 'clock' },
   { href: `${ADMIN_HOME}/parametres`, label: 'Paramètres', icon: 'gear' },
 ] as const;

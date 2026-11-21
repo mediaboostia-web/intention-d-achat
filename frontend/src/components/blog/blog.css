@@ -342,3 +342,25 @@
 .blog-dialog::backdrop {
   background: rgb(16 32 74 / 0.55);
 }
+
+/* The admin editor (Tiptap) */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--color-ink-muted);
+  pointer-events: none;
+}
+
+.tiptap img.ProseMirror-selectednode,
+.tiptap div[data-youtube-video].ProseMirror-selectednode {
+  outline: 3px solid var(--color-admin);
+}
+
+.tiptap div[data-youtube-video] iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border: 0;
+  border-radius: var(--radius-card);
+}
