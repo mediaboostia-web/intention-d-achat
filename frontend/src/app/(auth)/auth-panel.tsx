@@ -29,7 +29,7 @@ export function AuthPanel() {
   const pathname = usePathname();
   const copy = SIGN_UP.some((p) => pathname.startsWith(p)) ? COPY.up : COPY.in;
   return (
-    <aside className="relative m-3 flex h-56 flex-col justify-between overflow-hidden rounded-card border-[2.5px] border-ink bg-surface p-4 sm:h-64 lg:sticky lg:top-4 lg:m-4 lg:h-[calc(100dvh-2rem)] lg:p-8">
+    <aside className="relative m-3 flex h-40 flex-col justify-between overflow-hidden rounded-card border-[2.5px] border-ink bg-surface p-4 sm:h-64 lg:sticky lg:top-4 lg:m-4 lg:h-[calc(100dvh-2rem)] lg:p-8">
       <Illustration
         name={copy.image}
         alt=""
@@ -52,8 +52,10 @@ export function AuthPanel() {
         </Link>
       </div>
       <div className="relative max-w-lg text-deep-ink">
-        <p className="font-hand text-2xl leading-tight font-bold lg:text-4xl">{copy.title}</p>
-        <p className="mt-1 text-sm lg:mt-3 lg:text-lg">{copy.line}</p>
+        <p className="font-hand text-xl leading-tight font-bold sm:text-2xl lg:text-4xl">
+          {copy.title}
+        </p>
+        <p className="mt-1 hidden text-sm sm:block lg:mt-3 lg:text-lg">{copy.line}</p>
       </div>
     </aside>
   );

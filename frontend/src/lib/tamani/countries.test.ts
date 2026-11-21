@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { SHOP_COUNTRIES, currencyForCountry, dialCodeFor, nationalNumber } from './countries';
+import {
+  SHOP_COUNTRIES,
+  currencyForCountry,
+  dialCodeFor,
+  guessShopCountry,
+  nationalNumber,
+} from './countries';
 
 describe('shop countries', () => {
   it('lists Senegal first with its dial code', () => {
@@ -70,5 +76,19 @@ describe('currencyForCountry (lot 7b)', () => {
       GQ: '+240',
       CD: '+243',
     });
+  });
+});
+
+describe('guessShopCountry (onboarding, 2026-11-21)', () => {
+  it("reads the phone's time zone", () => {
+    expect(guessShopCountry('Africa/Porto-Novo')).toBe('BJ');
+    expect(guessShopCountry('Africa/Abidjan')).toBe('CI');
+    expect(guessShopCountry('Africa/Douala')).toBe('CM');
+    expect(guessShopCountry('Africa/Lubumbashi')).toBe('CD');
+    expect(guessShopCountry('Africa/Lome')).toBe('TG');
+  });
+  it('falls back to Senegal elsewhere or without a zone', () => {
+    expect(guessShopCountry('Europe/Paris')).toBe('SN');
+    expect(guessShopCountry(undefined)).toBe('SN');
   });
 });

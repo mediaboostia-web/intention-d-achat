@@ -86,6 +86,7 @@ export function ShopForm({
   formId,
   hideSubmit = false,
   countryLocked = false,
+  foldExtras = false,
 }: {
   initial?: ShopFormValues;
   withZones?: boolean;
@@ -103,6 +104,8 @@ export function ShopForm({
   hideSubmit?: boolean;
   /** A product exists: the country, and so the currency, stay (lot 7b). */
   countryLocked?: boolean;
+  /** Onboarding (2026-11-21): the logo and the zones folded as optional. */
+  foldExtras?: boolean;
 }) {
   const [values, setValues] = useState(initial);
   const [localErrors, setLocalErrors] = useState<ShopFormErrors>({});
@@ -127,6 +130,25 @@ export function ShopForm({
       onSubmit({ ...values, name: values.name.trim(), whatsappPhone: values.whatsappPhone.trim() });
     }
   }
+
+  const logo = (
+    <PhotoPicker
+      id="shop-logo"
+      label="Logo (facultatif)"
+      max={1}
+      value={values.logoUrl ? [values.logoUrl] : []}
+      onChange={(urls) => set('logoUrl', urls[0] ?? null)}
+    />
+  );
+  const zonesField = (
+    <ZonesInput
+      id="shop-zones"
+      label="Zones de livraison (facultatif)"
+      hint="Les quartiers ou les villes où tu livres. Tu pourras les changer plus tard."
+      value={values.zones}
+      onChange={(zones) => set('zones', zones)}
+    />
+  );
 
   return (
     <form id={formId} onSubmit={submit} noValidate className="flex flex-col gap-6">
@@ -158,13 +180,7 @@ export function ShopForm({
         error={errors.whatsappPhone}
         onChange={(e) => set('whatsappPhone', e.target.value)}
       />
-      <PhotoPicker
-        id="shop-logo"
-        label="Logo (facultatif)"
-        max={1}
-        value={values.logoUrl ? [values.logoUrl] : []}
-        onChange={(urls) => set('logoUrl', urls[0] ?? null)}
-      />
+      {!foldExtras && logo}
       {mode === 'edit' && (
         <Textarea
           id="shop-description"
@@ -198,14 +214,17 @@ export function ShopForm({
           />
         </div>
       )}
-      {withZones && (
-        <ZonesInput
-          id="shop-zones"
-          label="Zones de livraison (facultatif)"
-          hint="Les quartiers ou les villes où tu livres. Tu pourras les changer plus tard."
-          value={values.zones}
-          onChange={(zones) => set('zones', zones)}
-        />
+      {withZones && !foldExtras && zonesField}
+      {foldExtras && (
+        <details className="frame rounded-card bg-surface p-4">
+          <summary className="flex min-h-11 cursor-pointer items-center font-bold text-ink">
+            Ajouter ton logo et tes zones de livraison (facultatif)
+          </summary>
+          <div className="mt-4 flex flex-col gap-6">
+            {logo}
+            {withZones && zonesField}
+          </div>
+        </details>
       )}
       {error && <Notice tone="danger">{error}</Notice>}
       {!hideSubmit && (
