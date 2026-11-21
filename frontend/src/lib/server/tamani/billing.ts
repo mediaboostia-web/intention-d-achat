@@ -6,6 +6,7 @@
 // and the billing-verify cron all run it; Order.activatedAt makes it safe.
 import 'server-only';
 import type { PrismaClient, Subscription } from '@prisma/client';
+import { markWork } from '@/lib/server/cron/wake';
 import { createNotification } from '@/lib/server/notifications';
 import { passActivated } from '@/lib/server/notifications/templates';
 import { log } from '@/lib/server/observability/log';
@@ -28,6 +29,7 @@ import { applyPurchase, type PassState } from './subscription';
 export const SESSION_TTL_MS = 3_600_000;
 /** How long an unfinished purchase is still reconciled. */
 const RECONCILE_WINDOW_MS = 48 * 3_600_000;
+const BILLING_AWAKE_MS = 2 * 3_600_000;
 /** Activation is a dozen queries; Neon can take seconds each on a bad day. */
 export const ACTIVATION_TX = { maxWait: 10_000, timeout: 30_000 };
 
@@ -142,6 +144,9 @@ export async function startCheckout(
     where: { id: order.id },
     data: { providerChargeId: session.id, paymentUrl: session.checkoutUrl },
   });
+  // The reconciliation cron wakes Neon only after a checkout (2026-11-21); the
+  // webhook usually lands first, the hourly sweep covers the rest of the window.
+  await markWork('billing', BILLING_AWAKE_MS);
   return { orderId: order.id, checkoutUrl: session.checkoutUrl };
 }
 

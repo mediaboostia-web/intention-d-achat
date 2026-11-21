@@ -5,6 +5,8 @@ vi.mock('@/lib/server/leader-lease', () => ({
   withLease: vi.fn(async (_r: unknown, _n: string, _t: number, fn: () => Promise<void>) => fn()),
 }));
 vi.mock('@/lib/server/redis', () => ({ redis: null }));
+const wake = vi.hoisted(() => ({ hasWork: vi.fn(async () => true) }));
+vi.mock('@/lib/server/cron/wake', () => wake);
 vi.mock('@/lib/server/prisma', () => ({ prisma: {} }));
 const billing = vi.hoisted(() => ({ reconcilePendingOrders: vi.fn(async () => 2) }));
 vi.mock('@/lib/server/tamani/billing', () => billing);
@@ -52,6 +54,14 @@ describe('/api/cron/billing-verify', () => {
       client.saspay,
       expect.any(Date),
     );
+  });
+
+  it('lets the database sleep when no checkout was opened lately (Neon free plan)', async () => {
+    wake.hasWork.mockResolvedValueOnce(false);
+    const res = await GET(req('GET'));
+    expect(await res.json()).toEqual({ ok: true, activated: 0, skipped: true });
+    expect(wake.hasWork).toHaveBeenCalledWith('billing');
+    expect(billing.reconcilePendingOrders).not.toHaveBeenCalled();
   });
 
   it('does nothing without a SasPay key', async () => {

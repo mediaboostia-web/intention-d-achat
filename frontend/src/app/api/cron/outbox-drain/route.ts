@@ -28,6 +28,7 @@ export const maxDuration = 60; // D-10
 import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { verifyCronSecret } from '@/lib/server/cron/auth';
+import { hasWork, markWork } from '@/lib/server/cron/wake';
 import { withLease } from '@/lib/server/leader-lease';
 import { drainOutbox } from '@/lib/server/outbox/dispatcher';
 import { getEmailQueue } from '@/lib/server/queues/email-queue-singleton';
@@ -40,6 +41,8 @@ const log = createLogger();
 const BATCH_SIZE = 100; // D-08 — not env-configurable in v1
 const STUCK_RESET_MS = 90_000; // D-09 — 90 seconds
 const LEASE_TTL_MS = 120_000; // ~2× maxDuration (Pitfall 3)
+/** After a run that sent something, keep draining this long (retries, backlog). */
+const AWAKE_AFTER_WORK_MS = 15 * 60_000;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const fail = verifyCronSecret(req);
@@ -47,6 +50,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const ctx = makeRequestContext(req.headers);
   return withRequestContext(ctx, async () => {
+    // Neon free plan (2026-11-21): without a mark in Redis, leave Postgres asleep.
+    if (!(await hasWork('outbox'))) {
+      return NextResponse.json(
+        { ok: true, processed: 0, skipped: true },
+        { headers: { 'x-request-id': ctx.requestId } },
+      );
+    }
     let processed = 0;
 
     await withLease(redis ?? undefined, 'outbox-drain', LEASE_TTL_MS, async () => {
@@ -84,6 +94,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       });
     });
 
+    if (processed > 0) await markWork('outbox', AWAKE_AFTER_WORK_MS);
     return NextResponse.json(
       { ok: true, processed },
       { headers: { 'x-request-id': ctx.requestId } },
