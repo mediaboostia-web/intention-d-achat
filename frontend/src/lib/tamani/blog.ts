@@ -169,6 +169,12 @@ export interface BlogGuideView {
   description: string | null;
 }
 
+/** The ?page= of the index: a whole number from 2, else 1. */
+export function pageNumber(raw: string | string[] | undefined): number {
+  const n = Number(Array.isArray(raw) ? raw[0] : raw);
+  return Number.isInteger(n) && n > 1 ? Math.min(n, 1000) : 1;
+}
+
 /** « 18 nov. 2026 ». */
 export function blogDate(iso: string | null): string {
   if (!iso) return '';

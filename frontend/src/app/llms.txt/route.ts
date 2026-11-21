@@ -22,6 +22,7 @@ export function GET(): Response {
     `- [Accueil](${base}/) : ce que fait Tamani, comment ça marche, les bénéfices`,
     `- [Forfaits](${base}/forfaits) : l'essai gratuit et les pass, payés par Mobile Money`,
     `- [Questions fréquentes](${base}/#faq) : les réponses courtes aux questions des vendeurs`,
+    `- [Blog](${base}/blog) : actualités, opportunités, outils et solutions pour les grossistes`,
     '',
   ].join('\n');
   return new Response(body, { headers: { 'content-type': 'text/plain; charset=utf-8' } });

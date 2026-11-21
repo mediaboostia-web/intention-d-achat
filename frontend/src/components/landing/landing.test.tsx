@@ -138,7 +138,7 @@ describe('LandingNav', () => {
     for (const n of LANDING_NAV) expect(text(<LandingNav />)).toContain(n.label);
   });
 
-  it('on a computer the bar keeps three entries and the two buttons; the drawer keeps all six', () => {
+  it('on a computer the bar keeps three entries and the two buttons; the drawer keeps them all', () => {
     const out = html(<LandingNav />);
     const bar = out.match(/<nav class="lp-nav__links"[\s\S]*?<\/nav>/)?.[0] ?? '';
     expect([...bar.matchAll(/href="([^"]+)"/g)].map((m) => m[1])).toEqual([
@@ -561,6 +561,7 @@ describe('LandingFooter', () => {
     );
     for (const href of [
       '/forfaits',
+      '/blog',
       '/#comment-ca-marche',
       '/#faq',
       '/login',

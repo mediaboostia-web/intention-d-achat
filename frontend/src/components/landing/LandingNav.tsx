@@ -65,7 +65,7 @@ export function LandingNav({
 }: {
   links?: LandingLinks;
   /** The page showing the bar: its own entry is marked aria-current="page". */
-  current?: '/' | '/forfaits' | '/liste-attente';
+  current?: '/' | '/forfaits' | '/liste-attente' | '/blog';
 }) {
   const help = [
     ...(links.whatsappContact
