@@ -44,6 +44,9 @@ export const TAMANI_ERRORS = [
   'ADMIN_CODE_INVALID',
   'ADMIN_CODE_TOO_MANY',
   'ADMIN_CODE_UNAVAILABLE',
+  'BLOG_NOT_FOUND',
+  'BLOG_SLUG_TAKEN',
+  'BLOG_CATEGORY_NOT_EMPTY',
 ] as const;
 
 export type TamaniErrorCode = (typeof TAMANI_ERRORS)[number];
@@ -87,6 +90,11 @@ const DEFAULT_MESSAGES: Record<TamaniErrorCode, string> = {
   ADMIN_CODE_INVALID: 'Ce code est faux ou a expiré. Demande un nouveau code.',
   ADMIN_CODE_TOO_MANY: 'Trop de codes demandés. Réessaie dans 10 minutes.',
   ADMIN_CODE_UNAVAILABLE: "L'envoi du code est indisponible pour le moment.",
+  BLOG_NOT_FOUND: 'Cet article est introuvable.',
+  BLOG_SLUG_TAKEN:
+    'Cette adresse est déjà prise par un autre article ou une autre catégorie. Change-la.',
+  BLOG_CATEGORY_NOT_EMPTY:
+    'Cette catégorie contient des articles. Déplace-les avant de la supprimer.',
 };
 
 export function tamaniError(code: TamaniErrorCode, status: number, message?: string): NextResponse {

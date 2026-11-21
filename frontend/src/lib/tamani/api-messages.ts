@@ -43,6 +43,9 @@ export const TAMANI_ERROR_CODES = [
   'ADMIN_CODE_INVALID',
   'ADMIN_CODE_TOO_MANY',
   'ADMIN_CODE_UNAVAILABLE',
+  'BLOG_NOT_FOUND',
+  'BLOG_SLUG_TAKEN',
+  'BLOG_CATEGORY_NOT_EMPTY',
 ] as const;
 
 const NETWORK = 'Pas de connexion au serveur. Vérifie ton réseau et réessaie.';
@@ -92,6 +95,11 @@ const MESSAGES: Record<string, string> = {
   ADMIN_CODE_INVALID: 'Ce code est faux ou a expiré. Demande un nouveau code.',
   ADMIN_CODE_TOO_MANY: 'Trop de codes demandés. Réessaie dans 10 minutes.',
   ADMIN_CODE_UNAVAILABLE: "L'envoi du code est indisponible pour le moment.",
+  BLOG_NOT_FOUND: 'Cet article est introuvable.',
+  BLOG_SLUG_TAKEN:
+    'Cette adresse est déjà prise par un autre article ou une autre catégorie. Change-la.',
+  BLOG_CATEGORY_NOT_EMPTY:
+    'Cette catégorie contient des articles. Déplace-les avant de la supprimer.',
   // Kit: auth
   INVALID_CREDENTIALS: 'Email ou mot de passe incorrect.',
   EMAIL_NOT_VERIFIED: "Confirme d'abord ton email avec le code reçu.",
