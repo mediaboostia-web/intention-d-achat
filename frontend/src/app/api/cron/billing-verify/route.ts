@@ -8,6 +8,7 @@ export const maxDuration = 30;
 import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { verifyCronSecret } from '@/lib/server/cron/auth';
+import { hasWork } from '@/lib/server/cron/wake';
 import { withLease } from '@/lib/server/leader-lease';
 import { createLogger } from '@/lib/server/logger';
 import { makeRequestContext, withRequestContext } from '@/lib/server/observability/request-context';
@@ -25,6 +26,13 @@ async function run(req: NextRequest): Promise<NextResponse> {
 
   const ctx = makeRequestContext(req.headers);
   return withRequestContext(ctx, async () => {
+    // Neon free plan (2026-11-21): no checkout opened lately → leave Postgres asleep.
+    if (!(await hasWork('billing'))) {
+      return NextResponse.json(
+        { ok: true, activated: 0, skipped: true },
+        { headers: { 'x-request-id': ctx.requestId } },
+      );
+    }
     let activated = 0;
     const saspay = getSaspay();
     if (saspay) {
