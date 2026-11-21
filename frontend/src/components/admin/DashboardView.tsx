@@ -2,6 +2,12 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Icon } from '@/components/ui';
 import type { AdminDashboard } from '@/lib/tamani/admin-dashboard';
+import {
+  deltaText,
+  payingShops,
+  type AdminGrowth,
+  type GrowthPair,
+} from '@/lib/tamani/admin-growth';
 import { ADMIN_HOME } from '@/lib/tamani/admin-nav';
 import {
   CHANNEL_ORDER,
@@ -135,12 +141,111 @@ const TONES = {
   flat: { className: 'text-ink-soft', icon: null },
 } as const;
 
+/** One growth tile: the last 30 days, its trend, the total, and where to look. */
+function GrowthTile({
+  label,
+  pair,
+  totalText,
+  href,
+}: {
+  label: string;
+  pair: GrowthPair;
+  totalText: string;
+  href: string;
+}) {
+  const delta = deltaText(pair.last30, pair.prev30);
+  const tone = delta ? TONES[delta.tone] : null;
+  return (
+    <Link href={href} className="admin-card block p-4 hover:ring-2 hover:ring-admin">
+      <p className="text-sm font-bold text-ink-soft">{label}</p>
+      <p className="mt-2 text-3xl font-bold text-ink tabular-nums">{pair.last30}</p>
+      {delta && tone && (
+        <p
+          data-tone={delta.tone}
+          className={cn('mt-1 inline-flex items-center gap-1 text-sm font-bold', tone.className)}
+        >
+          {tone.icon && <Icon name={tone.icon} className="size-4" />}
+          {delta.text}
+        </p>
+      )}
+      <p className="mt-1 text-sm text-ink-soft">{totalText}</p>
+    </Link>
+  );
+}
+
+/**
+ * The porteur's growth panel (2026-11-21): accounts, shops, paying shops and
+ * MRR, client answers, waitlist and blog, each a link to its page.
+ */
+function GrowthPanel({
+  growth,
+  paying,
+  mrr,
+}: {
+  growth: AdminGrowth;
+  paying: number;
+  mrr: number;
+}) {
+  return (
+    <section aria-labelledby="croissance" className="space-y-3">
+      <h2 id="croissance" className="text-lg font-bold text-ink">
+        Croissance · 30 derniers jours
+      </h2>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <GrowthTile
+          label="Nouveaux comptes"
+          pair={growth.users}
+          totalText={`${growth.users.total} en tout`}
+          href={`${ADMIN_HOME}/utilisateurs`}
+        />
+        <GrowthTile
+          label="Nouvelles boutiques"
+          pair={growth.shops}
+          totalText={`${growth.shops.total} en tout`}
+          href={`${ADMIN_HOME}/boutiques`}
+        />
+        <Link
+          href={`${ADMIN_HOME}/boutiques`}
+          className="admin-card block p-4 hover:ring-2 hover:ring-admin"
+        >
+          <p className="text-sm font-bold text-ink-soft">Boutiques payantes</p>
+          <p className="mt-2 text-3xl font-bold text-admin tabular-nums">{paying}</p>
+          <p className="mt-1 text-sm text-ink-soft">
+            MRR {adminMoney(mrr)} · pass payants en cours
+          </p>
+        </Link>
+        <GrowthTile
+          label="Réponses des clients"
+          pair={growth.answers}
+          totalText={`${growth.answers.total} en tout`}
+          href={`${ADMIN_HOME}/boutiques`}
+        />
+        <GrowthTile
+          label="Liste d'attente"
+          pair={growth.waitlist}
+          totalText={`${growth.waitlist.total} inscrits en tout`}
+          href={`${ADMIN_HOME}/liste-attente`}
+        />
+        <GrowthTile
+          label="Blog · contacts des guides"
+          pair={growth.blogLeads}
+          totalText={`${growth.articles} article${growth.articles > 1 ? 's' : ''} en ligne · ${growth.blogLeads.total} contacts en tout`}
+          href={`${ADMIN_HOME}/blog`}
+        />
+      </div>
+    </section>
+  );
+}
+
 export function DashboardView({
   data,
   prevMonth,
   nextMonth,
   canEdit,
+  growth: growthFigures,
 }: {
+  /** The 30-day growth panel; absent, the page starts on the month's figures. */
+  growth?: AdminGrowth;
   data: AdminDashboard;
   prevMonth: string;
   /** `null` on the current month: the future has no figures. */
@@ -199,6 +304,10 @@ export function DashboardView({
           )}
         </nav>
       </header>
+
+      {growthFigures && (
+        <GrowthPanel growth={growthFigures} paying={payingShops(shops.byPlan)} mrr={data.mrr} />
+      )}
 
       <section aria-label="Chiffres clés" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Figure

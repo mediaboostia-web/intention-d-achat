@@ -87,10 +87,45 @@ describe('POST /api/admin/admins', () => {
       action: 'admin.add',
       targetType: 'User',
       targetId: 'a_2',
-      metadata: { created: true, role: 'ADMIN' },
+      metadata: { created: true, role: 'ADMIN', passwordChosen: false },
     });
     // The password is never journaled.
     expect(JSON.stringify(vi.mocked(logAdminAction).mock.calls)).not.toContain('abcdEFGH2345');
+  });
+
+  it('opens an account with the password the super-admin chose: never answered, never journaled', async () => {
+    vi.mocked(addAdmin).mockResolvedValue({
+      kind: 'CREATED',
+      user: DB_USER,
+      temporaryPassword: null,
+    } as never);
+    const res = await post({
+      email: 'fatou@test.local',
+      role: 'ADMIN',
+      password: 'Choisi-par-moi-2026',
+    });
+    expect(res.status).toBe(201);
+    expect(vi.mocked(addAdmin).mock.calls[0]?.[1]).toEqual({
+      email: 'fatou@test.local',
+      role: 'ADMIN',
+      password: 'Choisi-par-moi-2026',
+    });
+    const body = await res.text();
+    expect(body).not.toContain('Choisi-par-moi-2026');
+    expect(body).not.toContain('temporaryPassword');
+    expect(logAdminAction).toHaveBeenCalledWith(
+      prismaMock,
+      expect.objectContaining({
+        metadata: { created: true, role: 'ADMIN', passwordChosen: true },
+      }),
+    );
+    expect(JSON.stringify(vi.mocked(logAdminAction).mock.calls)).not.toContain('Choisi-par-moi');
+  });
+
+  it('refuses a chosen password shorter than 10 characters', async () => {
+    const res = await post({ email: 'fatou@test.local', role: 'ADMIN', password: 'court' });
+    expect(res.status).toBe(400);
+    expect(addAdmin).not.toHaveBeenCalled();
   });
 
   it('promotes an account with no password in the answer', async () => {
@@ -101,6 +136,7 @@ describe('POST /api/admin/admins', () => {
     expect(vi.mocked(logAdminAction).mock.calls[0]?.[1].metadata).toEqual({
       created: false,
       role: 'ADMIN',
+      passwordChosen: false,
     });
   });
 

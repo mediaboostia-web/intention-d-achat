@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigation')).navigation);
+
 import { html, text } from '@/components/ui/test-html';
 import type { WaitlistRow } from '@/lib/tamani/waitlist';
 import { WaitlistView } from './WaitlistView';
@@ -52,6 +55,13 @@ describe('WaitlistView', () => {
     const out = html(<WaitlistView rows={ROWS} stats={STATS} />);
     expect(out).toContain('href="https://wa.me/2290197000000"');
     expect(out).toContain('href="/api/admin/waitlist/export"');
+  });
+
+  it('a super-admin can delete an entry, an admin cannot', () => {
+    const su = html(<WaitlistView rows={ROWS} stats={STATS} canDelete />);
+    expect(su.match(/>Supprimer</g)).toHaveLength(2);
+    expect(su).toContain('aria-label="Supprimer Awa de la liste"');
+    expect(html(<WaitlistView rows={ROWS} stats={STATS} />)).not.toContain('Supprimer');
   });
 
   it('says so when nobody is on the list yet', () => {

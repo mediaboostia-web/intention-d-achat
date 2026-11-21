@@ -60,7 +60,51 @@ const view = (over: Partial<Parameters<typeof DashboardView>[0]> = {}) => (
   <DashboardView data={DATA} prevMonth="2026-10" nextMonth={null} canEdit={false} {...over} />
 );
 
+const GROWTH = {
+  users: { last30: 12, prev30: 8, total: 140 },
+  shops: { last30: 5, prev30: 5, total: 60 },
+  answers: { last30: 300, prev30: 350, total: 4000 },
+  waitlist: { last30: 20, prev30: 0, total: 90 },
+  blogLeads: { last30: 7, prev30: 3, total: 10 },
+  articles: 4,
+};
+
 describe('DashboardView', () => {
+  it('opens on the growth panel: what moved in 30 days, each with its trend and its page', () => {
+    const t = text(view({ growth: GROWTH }));
+    expect(t).toContain('Croissance · 30 derniers jours');
+    for (const s of [
+      'Nouveaux comptes',
+      '12',
+      '+4 vs les 30 jours d’avant',
+      '140 en tout',
+      'Nouvelles boutiques',
+      'Autant que les 30 jours d’avant',
+      'Boutiques payantes',
+      'Réponses des clients',
+      '−50 vs les 30 jours d’avant',
+      "Liste d'attente",
+      'Premiers sur la période',
+      'Blog',
+      '4 articles en ligne',
+    ]) {
+      expect(t, s).toContain(s);
+    }
+    const out = html(view({ growth: GROWTH }));
+    for (const href of [
+      '/support-admin/utilisateurs',
+      '/support-admin/boutiques',
+      '/support-admin/liste-attente',
+      '/support-admin/blog',
+    ]) {
+      expect(out, href).toContain(`href="${href}"`);
+    }
+  });
+
+  it('has no growth panel when its figures are not given', () => {
+    expect(text(view())).not.toContain('Croissance · 30 derniers jours');
+  });
+
   it('shows the month’s figures, each with its calculation', () => {
     const t = text(view());
     expect(t).toContain('Les chiffres de novembre 2026');
