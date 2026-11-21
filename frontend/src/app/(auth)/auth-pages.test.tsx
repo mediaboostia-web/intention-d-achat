@@ -167,7 +167,8 @@ describe('layout', () => {
     return { out, panel: out.match(/<aside [^>]*>[\s\S]*?<\/aside>/)?.[0] ?? '' };
   };
 
-  // Porteur, 2026-11-05 (AMU capture): a bigger picture, seen on phones too.
+  // Porteur, 2026-11-05 (AMU capture): a bigger picture, seen on phones too;
+  // 2026-11-21 (« ultra accessible ») a lower band on a phone, so the form shows at once.
   it('the picture shows on phones as a band and on computers as a big rounded card', () => {
     const { out, panel } = panelOf('/login');
     const classes = panel.match(/^<aside [^>]*class="([^"]*)"/)?.[1]?.split(' ') ?? [];
@@ -175,7 +176,8 @@ describe('layout', () => {
     expect(classes).toEqual(
       expect.arrayContaining([
         'rounded-card',
-        'h-56',
+        'h-40',
+        'sm:h-64',
         'lg:sticky',
         'lg:top-4',
         'lg:h-[calc(100dvh-2rem)]',

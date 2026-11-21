@@ -50,3 +50,29 @@ export function nationalNumber(e164: string, country: string): string {
   const dial = dialCodeFor(country);
   return e164.startsWith(dial) ? e164.slice(dial.length) : e164;
 }
+
+/** The shop countries' time zones (IANA), to guess the country on the phone. */
+const ZONES: Record<string, string> = {
+  'Africa/Dakar': 'SN',
+  'Africa/Abidjan': 'CI',
+  'Africa/Bamako': 'ML',
+  'Africa/Ouagadougou': 'BF',
+  'Africa/Lome': 'TG',
+  'Africa/Porto-Novo': 'BJ',
+  'Africa/Niamey': 'NE',
+  'Africa/Bissau': 'GW',
+  'Africa/Douala': 'CM',
+  'Africa/Libreville': 'GA',
+  'Africa/Brazzaville': 'CG',
+  'Africa/Ndjamena': 'TD',
+  'Africa/Bangui': 'CF',
+  'Africa/Malabo': 'GQ',
+  'Africa/Conakry': 'GN',
+  'Africa/Kinshasa': 'CD',
+  'Africa/Lubumbashi': 'CD',
+};
+
+/** The onboarding's first guess (2026-11-21): the phone's time zone, else Senegal. */
+export function guessShopCountry(timeZone: string | undefined): string {
+  return (timeZone && ZONES[timeZone]) || 'SN';
+}

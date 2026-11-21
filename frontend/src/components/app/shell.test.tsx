@@ -20,7 +20,8 @@ vi.mock('./PushPrompt', () => ({ PushPrompt: () => <div data-push-prompt="" /> }
 
 const { AppShell } = await import('./AppShell');
 const { ShopForm, emptyShopForm } = await import('./ShopForm');
-const { ActivityStep } = await import('./Onboarding');
+const { ChoiceStep } = await import('./Onboarding');
+const { SALES_CHANNEL_OPTIONS } = await import('@/lib/tamani/shop-profile');
 const { ZonesInput } = await import('./ZonesInput');
 const { PhotoPicker } = await import('./PhotoPicker');
 const { default: WelcomePage } = await import('@/app/(app)/app/bienvenue/page');
@@ -163,9 +164,10 @@ describe('AppShell', () => {
 });
 
 describe('welcome', () => {
-  // Porteur, 2026-11-04: the onboarding asks what the shop is and where it
-  // sells, then the shop form.
-  it('welcome opens on the two activity questions', () => {
+  // Porteur, 2026-11-21: « simple et facile ». One question a screen, big
+  // cards, one tap moves on; the shop asks its name, country and number,
+  // the logo and zones are folded as optional.
+  it('welcome opens on « Tu es ? », one question a screen, three screens', () => {
     mockNextNavigation({ pathname: '/app/bienvenue' });
     const page = (
       <ShopTestProvider>
@@ -173,41 +175,33 @@ describe('welcome', () => {
       </ShopTestProvider>
     );
     const out = html(page);
-    const step =
-      out.match(
-        /<div data-step="1"[^>]*>[\s\S]*?<\/fieldset>\s*<fieldset[\s\S]*?<\/fieldset>/,
-      )?.[0] ?? '';
-    expect(step).toMatch(/<legend[^>]*>Tu es<\/legend>/);
-    expect(step).toMatch(/<legend[^>]*>Où tu vends<\/legend>/);
-    for (const label of [
-      'Grossiste',
-      'Importateur',
-      'Les deux',
-      'Autre',
-      'Vente en ligne',
-      'Boutique physique',
-    ]) {
-      expect(step, label).toContain(`>${label}</button>`);
+    expect(out).toContain('Étape 1 sur 3');
+    const step1 = out.match(/<div data-step="1"[^>]*>[\s\S]*?<\/fieldset>/)?.[0] ?? '';
+    expect(step1).toMatch(/<legend[^>]*>Tu es…<\/legend>/);
+    for (const label of ['Grossiste', 'Importateur', 'Les deux', 'Détaillant', 'Autre']) {
+      expect(step1, label).toContain(`>${label}</span>`);
     }
-    expect(out).toContain('Étape 1 sur 2');
     expect(out).toMatch(/<div data-step="2" hidden=""/);
-    expect(out).toMatch(/<button[^>]*disabled=""[^>]*>Continuer<\/button>/);
+    expect(out).toMatch(/<div data-step="3" hidden=""/);
+    expect(out).not.toContain('>Continuer<');
   });
 
-  it('the activity step continues once both questions are answered', () => {
+  it('a choice card says when it is picked, and carries its picture', () => {
     const out = html(
-      <ActivityStep
-        value={{ businessType: 'BOTH', salesChannel: 'STORE' }}
-        onChange={() => {}}
-        onNext={() => {}}
+      <ChoiceStep
+        legend="Où vends-tu ?"
+        options={SALES_CHANNEL_OPTIONS}
+        icons={{ ONLINE: 'megaphone', STORE: 'home', BOTH: 'grid' }}
+        value="STORE"
+        onPick={() => {}}
       />,
     );
-    expect(out).toMatch(/aria-pressed="true"[^>]*>Les deux<\/button>/);
-    expect(out).toMatch(/aria-pressed="true"[^>]*>Boutique physique<\/button>/);
-    expect(out).not.toMatch(/<button[^>]*disabled=""[^>]*>Continuer/);
+    expect(out).toMatch(/aria-pressed="true"[^>]*>[\s\S]*?Boutique physique<\/span>/);
+    expect(out.match(/<svg/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(out).toMatch(/class="[^"]*min-h-28/);
   });
 
-  it('welcome form labels every field and defaults to Senegal +221', () => {
+  it('welcome form labels every field and defaults to Senegal +221 before the phone answers', () => {
     mockNextNavigation({ pathname: '/app/bienvenue' });
     const page = (
       <ShopTestProvider>
@@ -222,15 +216,17 @@ describe('welcome', () => {
       /<option [^>]*value="SN"[^>]*selected=""|<option [^>]*selected=""[^>]*value="SN"/,
     );
     expect(out).toContain('+221');
+    expect(out).toMatch(
+      /<details[^>]*>\s*<summary[^>]*>Ajouter ton logo et tes zones de livraison/,
+    );
     expect(out).toMatch(/<legend[^>]*>Logo/);
     expect(out).toMatch(/<legend[^>]*>Zones de livraison/);
     const t = text(page);
     expect(t).toContain('Bienvenue ! Créons ta boutique.');
-    expect(t).toContain('Tu pourras les changer plus tard.');
     expect(t).toContain('Créer ma boutique');
     expect(t).toContain('Retour');
-    // One main gesture per step: « Continuer », then « Créer ma boutique ».
-    expect(out.match(/shadow-press/g)).toHaveLength(2);
+    // One main gesture: « Créer ma boutique ».
+    expect(out.match(/shadow-press/g)).toHaveLength(1);
   });
 });
 
