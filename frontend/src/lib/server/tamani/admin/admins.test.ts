@@ -78,6 +78,31 @@ describe('addAdmin', () => {
     expect(r.user.role).toBe('SUPERADMIN');
   });
 
+  it('opens the account with the password the super-admin chose, and gives no temporary one', async () => {
+    const { hashPassword } = await import('@/lib/server/auth');
+    prismaMock.user.findUnique.mockResolvedValue(null);
+    prismaMock.user.create.mockResolvedValue(user({ email: 'new@test.local' }) as never);
+    const r = await addAdmin(
+      prismaMock,
+      { email: 'new@test.local', role: 'ADMIN', password: 'Choisi-par-moi-2026' },
+      NOW,
+    );
+    expect(r.kind === 'CREATED' && r.temporaryPassword).toBeNull();
+    expect(hashPassword).toHaveBeenLastCalledWith('Choisi-par-moi-2026');
+  });
+
+  it("never changes an existing account's password when promoting it", async () => {
+    prismaMock.user.findUnique.mockResolvedValue(user() as never);
+    await addAdmin(
+      prismaMock,
+      { email: 'awa@test.local', role: 'ADMIN', password: 'Choisi-par-moi-2026' },
+      NOW,
+    );
+    expect(prismaMock.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { role: 'ADMIN' } }),
+    );
+  });
+
   it('names a new account after its e-mail when no name is given', async () => {
     prismaMock.user.findUnique.mockResolvedValue(null);
     prismaMock.user.create.mockResolvedValue(user({ email: 'fatou.diop@test.local' }) as never);

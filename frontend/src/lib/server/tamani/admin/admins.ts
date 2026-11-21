@@ -49,7 +49,7 @@ export async function listAdmins(db: Db): Promise<AdminRow[]> {
 
 export type AddAdminResult =
   | { kind: 'PROMOTED'; user: UserRecord }
-  | { kind: 'CREATED'; user: UserRecord; temporaryPassword: string }
+  | { kind: 'CREATED'; user: UserRecord; temporaryPassword: string | null }
   | { kind: 'ALREADY_ADMIN'; user: UserRecord };
 
 /**
@@ -58,7 +58,7 @@ export type AddAdminResult =
  */
 export async function addAdmin(
   tx: Tx,
-  input: { email: string; name?: string; role: AdminRole },
+  input: { email: string; name?: string; role: AdminRole; password?: string },
   now: Date,
 ): Promise<AddAdminResult> {
   const existing = await tx.user.findUnique({ where: { email: input.email }, select: ROW_SELECT });
@@ -72,7 +72,11 @@ export async function addAdmin(
     return { kind: 'PROMOTED', user };
   }
   const name = input.name?.trim() || input.email.split('@')[0] || input.email;
-  const created = await createUserByAdmin(tx, { email: input.email, name }, now);
+  const created = await createUserByAdmin(
+    tx,
+    { email: input.email, name, ...(input.password ? { password: input.password } : {}) },
+    now,
+  );
   // Another admin opened the same address at the same moment: the unique
   // e-mail refused this one, and the transaction can only roll back.
   if (!created) throw new Error('admin e-mail taken during the add');

@@ -27,12 +27,13 @@ const USER_FIELDS = { id: true, email: true, name: true, role: true, status: tru
  */
 export async function createUserByAdmin(
   db: Pick<PrismaClient, 'user'>,
-  input: { email: string; name: string },
+  input: { email: string; name: string; password?: string },
   now: Date,
 ) {
   const taken = await db.user.findUnique({ where: { email: input.email }, select: { id: true } });
   if (taken) return null;
-  const password = temporaryPassword();
+  // A password the super-admin chose (2026-11-21), else a temporary one shown once.
+  const password = input.password ?? temporaryPassword();
   try {
     const user = await db.user.create({
       data: {
@@ -43,7 +44,7 @@ export async function createUserByAdmin(
       },
       select: USER_FIELDS,
     });
-    return { user, temporaryPassword: password };
+    return { user, temporaryPassword: input.password ? null : password };
   } catch (err) {
     if ((err as { code?: string }).code === 'P2002') return null;
     throw err;

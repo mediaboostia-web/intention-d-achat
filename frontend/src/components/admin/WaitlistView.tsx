@@ -2,12 +2,24 @@ import { Button } from '@/components/ui';
 import { dateLabel } from '@/lib/tamani/admin-view';
 import { waitlistChannelsText, type WaitlistRow, type WaitlistStats } from '@/lib/tamani/waitlist';
 import { AdminTable } from './AdminTable';
+import { DeleteWaitlistEntry } from './DeleteWaitlistEntry';
 
 const NONE = '·';
 const waLink = (written: string) => `https://wa.me/${written.replace(/\D/g, '')}`;
 
-/** /support-admin/liste-attente (lot 14): who reserved a place, and from which video. */
-export function WaitlistView({ rows, stats }: { rows: WaitlistRow[]; stats: WaitlistStats }) {
+/**
+ * /support-admin/liste-attente (lot 14): who reserved a place, and from which
+ * video. A super-admin can remove an entry (a test, a double, a seller who asked).
+ */
+export function WaitlistView({
+  rows,
+  stats,
+  canDelete = false,
+}: {
+  rows: WaitlistRow[];
+  stats: WaitlistStats;
+  canDelete?: boolean;
+}) {
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
@@ -55,6 +67,7 @@ export function WaitlistView({ rows, stats }: { rows: WaitlistRow[]; stats: Wait
             { label: 'Où il vend' },
             { label: 'Source' },
             { label: 'Date' },
+            ...(canDelete ? [{ label: 'Action' }] : []),
           ]}
           rows={rows.map((r) => [
             r.position,
@@ -75,6 +88,7 @@ export function WaitlistView({ rows, stats }: { rows: WaitlistRow[]; stats: Wait
             waitlistChannelsText(r.channels) || NONE,
             r.source ?? NONE,
             dateLabel(r.createdAt),
+            ...(canDelete ? [<DeleteWaitlistEntry key="del" id={r.id} name={r.firstName} />] : []),
           ])}
         />
       )}

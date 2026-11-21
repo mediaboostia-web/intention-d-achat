@@ -17,10 +17,14 @@ import { addAdmin, adminRow, listAdmins } from '@/lib/server/tamani/admin/admins
 import { tamaniError } from '@/lib/server/tamani/errors';
 import { zEmail } from '@/lib/server/zod-helpers';
 
+// Mirrors AUTH_PASSWORD_MIN_LENGTH's default; a chosen password is optional (2026-11-21).
+const PASSWORD_MIN = 10;
+
 const AddBody = z.object({
   email: zEmail,
   name: z.string().trim().max(80).optional(),
   role: z.enum(['ADMIN', 'SUPERADMIN']),
+  password: z.string().min(PASSWORD_MIN).max(128).optional(),
 });
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -53,17 +57,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         { status: 400 },
       );
     }
-    const { email, name, role } = parsed.data;
+    const { email, name, role, password } = parsed.data;
     const now = new Date();
     const result = await prisma.$transaction(async (tx) => {
-      const r = await addAdmin(tx, { email, role, ...(name ? { name } : {}) }, now);
+      const r = await addAdmin(
+        tx,
+        { email, role, ...(name ? { name } : {}), ...(password ? { password } : {}) },
+        now,
+      );
       if (r.kind === 'ALREADY_ADMIN') return r;
       await logAdminAction(tx, {
         actorId: auth.admin.id,
         action: 'admin.add',
         targetType: 'User',
         targetId: r.user.id,
-        metadata: { created: r.kind === 'CREATED', role },
+        // Whether a password was chosen, never the password itself.
+        metadata: { created: r.kind === 'CREATED', role, passwordChosen: Boolean(password) },
       });
       return r;
     });
@@ -71,7 +80,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json(
       {
         admin: adminRow(result.user),
-        ...(result.kind === 'CREATED' && { temporaryPassword: result.temporaryPassword }),
+        ...(result.kind === 'CREATED' &&
+          result.temporaryPassword && { temporaryPassword: result.temporaryPassword }),
       },
       { status: 201, headers: { 'x-request-id': ctx.requestId, 'cache-control': 'no-store' } },
     );

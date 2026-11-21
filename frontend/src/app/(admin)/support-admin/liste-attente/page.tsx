@@ -4,10 +4,10 @@ import { adminOnly } from '@/lib/server/tamani/admin/guard';
 import { listWaitlist, waitlistStats } from '@/lib/server/tamani/waitlist';
 
 export default async function AdminWaitlistPage() {
-  await adminOnly();
+  const viewer = await adminOnly();
   const [rows, stats] = await Promise.all([
     listWaitlist(prisma),
     waitlistStats(prisma, new Date()),
   ]);
-  return <WaitlistView rows={rows} stats={stats} />;
+  return <WaitlistView rows={rows} stats={stats} canDelete={viewer.role === 'SUPERADMIN'} />;
 }

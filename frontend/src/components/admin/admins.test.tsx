@@ -50,6 +50,17 @@ describe('AdminsSection', () => {
     expect(text(<div dangerouslySetInnerHTML={{ __html: mine }} />)).toContain("C'est toi");
   });
 
+  it('the add form takes a password the super-admin chooses, optional', () => {
+    const out = html(<AdminsSection admins={TEAM} viewerId="s_1" canEdit />);
+    expect(out).toContain('for="add-admin-password"');
+    expect(out).toMatch(
+      /id="add-admin-password"[^>]*type="password"|type="password"[^>]*id="add-admin-password"/,
+    );
+    expect(text(<AdminsSection admins={TEAM} viewerId="s_1" canEdit />)).toContain(
+      'Mot de passe (facultatif)',
+    );
+  });
+
   it('shows an admin the team with no button', () => {
     const out = html(<AdminsSection admins={TEAM} viewerId="a_2" canEdit={false} />);
     expect(out).not.toContain('<button');
