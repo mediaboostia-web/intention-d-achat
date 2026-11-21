@@ -635,3 +635,78 @@ model WaitlistEntry {
 
   @@index([createdAt])
 }
+
+// ─── Blog (lot 13d, spec 2026-11-21) ────────────────────────────────────────
+// Articles written by the porteur in the support-admin (Tiptap JSON, rendered
+// through a whitelist), their categories, the guides offered for a contact,
+// and the contacts those guides bring.
+
+model BlogCategory {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  name        String
+  description String?
+  position    Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  posts       BlogPost[]
+
+  @@index([position])
+}
+
+model BlogGuide {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  url         String // an external link: a shop page, a PDF online…
+  isDefault   Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  posts       BlogPost[]
+  leads       BlogLead[]
+}
+
+model BlogPost {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  excerpt        String
+  coverUrl       String?
+  coverAlt       String?
+  content        Json // a Tiptap document
+  readMinutes    Int           @default(1)
+  seoTitle       String?
+  seoDescription String?
+  keywords       String[]
+  authorName     String
+  status         String        @default("DRAFT") // DRAFT | PUBLISHED
+  publishedAt    DateTime?
+  categoryId     String?
+  category       BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  guideId        String?
+  guide          BlogGuide?    @relation(fields: [guideId], references: [id], onDelete: SetNull)
+  createdById    String?
+  updatedById    String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  leads          BlogLead[]
+
+  @@index([status, publishedAt])
+  @@index([categoryId, status, publishedAt])
+}
+
+model BlogLead {
+  id        String     @id @default(cuid())
+  firstName String
+  phone     String // E.164, normalized on the server; never logged
+  country   String
+  postId    String?
+  post      BlogPost?  @relation(fields: [postId], references: [id], onDelete: SetNull)
+  guideId   String?
+  guide     BlogGuide? @relation(fields: [guideId], references: [id], onDelete: SetNull)
+  consentAt DateTime
+  createdAt DateTime   @default(now())
+
+  @@index([createdAt])
+  @@index([postId])
+}
