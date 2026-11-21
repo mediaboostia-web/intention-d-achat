@@ -43,6 +43,9 @@ describe('TAMANI_ERRORS', () => {
         'ADMIN_CODE_INVALID',
         'ADMIN_CODE_TOO_MANY',
         'ADMIN_CODE_UNAVAILABLE',
+        'BLOG_NOT_FOUND',
+        'BLOG_SLUG_TAKEN',
+        'BLOG_CATEGORY_NOT_EMPTY',
       ].sort(),
     );
   });

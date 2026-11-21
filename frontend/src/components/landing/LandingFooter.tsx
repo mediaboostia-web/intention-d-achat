@@ -97,6 +97,9 @@ export function LandingFooter({
               <li>
                 <Link href="/forfaits">Forfaits</Link>
               </li>
+              <li>
+                <Link href="/blog">Blog</Link>
+              </li>
             </ul>
           </nav>
           <nav aria-label="Compte">

@@ -5,6 +5,10 @@ import { html, text } from '@/components/ui/test-html';
 import { mockNextNavigation } from '@/test-utils/next-navigation';
 
 vi.mock('next/navigation', async () => (await import('@/test-utils/next-navigation')).navigation);
+vi.mock('@/lib/server/tamani/blog', () => ({
+  blogSitemap: async () => ({ posts: [], categories: [] }),
+}));
+vi.mock('@/lib/server/prisma', () => ({ prisma: {} }));
 
 const modules = {
   '/cgu': await import('./cgu/page'),
@@ -69,8 +73,8 @@ describe('legal pages', () => {
     }
   });
 
-  it('the sitemap lists them', () => {
-    const urls = sitemap().map((u) => new URL(u.url).pathname);
+  it('the sitemap lists them', async () => {
+    const urls = (await sitemap()).map((u) => new URL(u.url).pathname);
     for (const path of Object.keys(pages)) expect(urls).toContain(path);
   });
 });

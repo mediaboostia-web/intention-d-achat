@@ -279,6 +279,29 @@ describe('Tamani core schema (lot 3)', () => {
     expect(sql).not.toMatch(/\bDROP\b/);
   });
 
+  it('ships the blog as migration 9m_blog (lot 13d)', () => {
+    const post = modelBlock('BlogPost');
+    expect(field(post, 'slug String @unique')).toBe(true);
+    expect(field(post, 'content Json')).toBe(true);
+    expect(field(post, 'status String @default("DRAFT")')).toBe(true);
+    expect(field(post, 'keywords String[]')).toBe(true);
+    expect(field(modelBlock('BlogCategory'), 'slug String @unique')).toBe(true);
+    expect(field(modelBlock('BlogGuide'), 'isDefault Boolean @default(false)')).toBe(true);
+    expect(field(modelBlock('BlogLead'), 'phone String')).toBe(true);
+    const names = readdirSync(resolve(PRISMA, 'migrations'))
+      .filter((n) => !n.endsWith('.toml'))
+      .sort();
+    expect(names.indexOf('9m_blog')).toBe(names.indexOf('9l_wholesale_offers') + 1);
+    const sql = readFileSync(resolve(PRISMA, 'migrations/9m_blog/migration.sql'), 'utf8');
+    for (const table of ['BlogCategory', 'BlogGuide', 'BlogPost', 'BlogLead']) {
+      expect(sql).toContain(`CREATE TABLE "${table}"`);
+    }
+    for (const name of ['Actualités', 'Opportunités', 'Outils', 'Problèmes et solutions']) {
+      expect(sql).toContain(`'${name}'`);
+    }
+    expect(sql).not.toMatch(/\bDROP\b|ALTER TABLE "(?!Blog)/);
+  });
+
   it('keeps the monthly marketing spend as migration 9h_marketing_spend (lot 11)', () => {
     const block = modelBlock('MarketingSpend');
     expect(field(block, 'month       String   @id')).toBe(true);

@@ -11,6 +11,7 @@ describe('support-admin navigation', () => {
       '/support-admin/liste-attente',
       '/support-admin/boutiques',
       '/support-admin/utilisateurs',
+      '/support-admin/blog',
       '/support-admin/journal',
       '/support-admin/parametres',
     ]);
@@ -20,6 +21,7 @@ describe('support-admin navigation', () => {
       "Liste d'attente",
       'Boutiques',
       'Utilisateurs',
+      'Blog',
       'Journal',
       'Paramètres',
     ]);

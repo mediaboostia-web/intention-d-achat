@@ -1,4 +1,13 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
+
+const blog = vi.hoisted(() => ({
+  blogSitemap: vi.fn(async () => ({
+    posts: [{ slug: 'mon-article', updatedAt: new Date('2026-11-20T10:00:00Z') }],
+    categories: [{ slug: 'outils' }],
+  })),
+}));
+vi.mock('@/lib/server/tamani/blog', () => blog);
+vi.mock('@/lib/server/prisma', () => ({ prisma: {} }));
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { GET as llmsTxt } from './llms.txt/route';
@@ -41,17 +50,41 @@ describe('robots.txt', () => {
 });
 
 describe('sitemap.xml', () => {
-  it('lists the home page, /forfaits, the waitlist, then the legal pages', () => {
+  const legal = (path: string) => ({
+    url: `https://tamani.win${path}`,
+    changeFrequency: 'yearly',
+    priority: 0.2,
+  });
+  const STATIC = [
+    { url: 'https://tamani.win/', changeFrequency: 'weekly', priority: 1 },
+    { url: 'https://tamani.win/forfaits', changeFrequency: 'monthly', priority: 0.9 },
+    { url: 'https://tamani.win/liste-attente', changeFrequency: 'weekly', priority: 0.9 },
+    { url: 'https://tamani.win/blog', changeFrequency: 'daily', priority: 0.8 },
+  ];
+
+  it('lists the home page, /forfaits, the waitlist, the blog, its articles and categories, then the legal pages', async () => {
     vi.stubEnv('APP_URL', 'https://tamani.win');
-    const legal = (path: string) => ({
-      url: `https://tamani.win${path}`,
-      changeFrequency: 'yearly',
-      priority: 0.2,
-    });
-    expect(sitemap()).toEqual([
-      { url: 'https://tamani.win/', changeFrequency: 'weekly', priority: 1 },
-      { url: 'https://tamani.win/forfaits', changeFrequency: 'monthly', priority: 0.9 },
-      { url: 'https://tamani.win/liste-attente', changeFrequency: 'weekly', priority: 0.9 },
+    expect(await sitemap()).toEqual([
+      ...STATIC,
+      {
+        url: 'https://tamani.win/blog/mon-article',
+        lastModified: new Date('2026-11-20T10:00:00Z'),
+        changeFrequency: 'monthly',
+        priority: 0.7,
+      },
+      { url: 'https://tamani.win/blog/categorie/outils', changeFrequency: 'weekly', priority: 0.5 },
+      legal('/cgu'),
+      legal('/confidentialite'),
+      legal('/securite'),
+      legal('/mentions-legales'),
+    ]);
+  });
+
+  it('still answers when the database does not: the fixed pages only', async () => {
+    vi.stubEnv('APP_URL', 'https://tamani.win');
+    blog.blogSitemap.mockRejectedValueOnce(new Error('quota'));
+    expect(await sitemap()).toEqual([
+      ...STATIC,
       legal('/cgu'),
       legal('/confidentialite'),
       legal('/securite'),
@@ -71,6 +104,7 @@ describe('llms.txt', () => {
       'https://tamani.win/',
       'https://tamani.win/forfaits',
       'https://tamani.win/#faq',
+      'https://tamani.win/blog',
     ]) {
       expect(body).toContain(url);
     }

@@ -35,6 +35,7 @@ export const LANDING_NAV: readonly { href: string; label: string }[] = [
   { href: '/#fonctionnalites', label: 'Fonctionnalités' },
   { href: '/#benefices', label: 'Avantages' },
   { href: '/forfaits', label: 'Tarifs' },
+  { href: '/blog', label: 'Blog' },
   { href: '/#faq', label: 'Questions fréquentes' },
   { href: '/#contact', label: 'Contact' },
 ];

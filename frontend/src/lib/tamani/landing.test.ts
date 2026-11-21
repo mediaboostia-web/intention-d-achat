@@ -238,12 +238,13 @@ describe('the menu, the titles and the questions of the new site', () => {
     ]);
   });
 
-  it('LANDING_NAV lists the six menu entries, sections as /#anchors', () => {
+  it('LANDING_NAV lists the seven menu entries, sections as /#anchors, the blog (lot 13d)', () => {
     expect(LANDING_NAV.map((n) => [n.href, n.label])).toEqual([
       ['/#comment-ca-marche', 'Comment ça marche'],
       ['/#fonctionnalites', 'Fonctionnalités'],
       ['/#benefices', 'Avantages'],
       ['/forfaits', 'Tarifs'],
+      ['/blog', 'Blog'],
       ['/#faq', 'Questions fréquentes'],
       ['/#contact', 'Contact'],
     ]);
